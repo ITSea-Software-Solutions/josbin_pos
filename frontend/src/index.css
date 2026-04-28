@@ -1,0 +1,116 @@
+/* SuraPOS base styles */
+/* Design tokens — dark theme for POS terminal */
+
+:root {
+  /* Brand */
+  --color-primary: #4f8ef7;
+  --color-primary-hover: #3a7de6;
+  --color-accent: #00d4aa;
+
+  /* POS dark theme */
+  --bg-base: #0f0f1a;
+  --bg-surface: #1a1a2e;
+  --bg-elevated: #252540;
+  --bg-input: #1e1e35;
+
+  /* Text */
+  --text-primary: #f0f0f5;
+  --text-secondary: #9090b0;
+  --text-muted: #606080;
+
+  /* Borders */
+  --border-color: #2e2e50;
+  --border-radius: 8px;
+  --border-radius-lg: 12px;
+
+  /* Status */
+  --color-success: #00d4aa;
+  --color-warning: #f5a623;
+  --color-error: #e05252;
+  --color-info: #4f8ef7;
+
+  /* BTW / financial */
+  --color-btw: #9b7fe8;
+  --color-discount: #f5a623;
+  --color-total: #00d4aa;
+
+  /* Spacing — 4px base unit */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Typography */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'Cascadia Code', 'Fira Code', monospace;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 17px;
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 30px;
+
+  /* Touch targets — minimum 44px per SPOS-109 */
+  --touch-target: 44px;
+  --touch-target-lg: 56px;
+  --touch-target-xl: 64px;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  user-select: none; /* POS touchscreen — prevent text selection */
+}
+
+/* Allow text selection in inputs and textareas */
+input, textarea, [contenteditable] {
+  user-select: text;
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 3px;
+}
+
+/* App loading state */
+.app-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: var(--font-size-lg);
+  color: var(--text-secondary);
+}
+
+/* Currency formatting helper — SRD amounts use Dutch locale */
+.currency-srd {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-mono);
+}

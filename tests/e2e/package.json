@@ -1,0 +1,20 @@
+{
+  "name": "josbin_pos-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test":           "playwright test",
+    "test:headed":    "playwright test --headed",
+    "test:ui":        "playwright test --ui",
+    "test:login":     "playwright test 01_login",
+    "test:sale":      "playwright test 02_pos_sale",
+    "test:z-report":  "playwright test 03_z_report",
+    "test:receipt":   "playwright test 04_receipt",
+    "test:dashboard": "playwright test 05_dashboard_overview",
+    "report":         "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "typescript": "^5.4.0"
+  }
+}

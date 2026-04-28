@@ -1,0 +1,58 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Backend (Laravel)
+backend/.env
+backend/vendor/
+backend/node_modules/
+backend/storage/logs/*.log
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/bootstrap/cache/*.php
+backend/public/hot
+backend/public/storage
+backend/.phpunit.cache/
+
+# Frontend (Electron + React)
+frontend/node_modules/
+dashboard/node_modules/
+dashboard/dist/
+dashboard/.vite/
+frontend/dist/
+frontend/dist-electron/
+frontend/out/
+frontend/.vite/
+
+# Docker
+docker/postgres/data/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Secrets
+*.pem
+*.key
+.env.local
+.env.*.local
+
+# Build artifacts
+*.exe
+*.dmg
+*.AppImage
+*.snap
+*.deb
+*.rpm
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# Coverage
+coverage/
+.nyc_output/

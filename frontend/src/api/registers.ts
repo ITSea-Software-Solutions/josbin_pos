@@ -1,0 +1,92 @@
+import apiClient from './client'
+
+export interface Register {
+  id: string
+  name: string
+  number: number
+  status: 'open' | 'closed' | 'reopen_requested'
+  session: RegisterSession | null
+}
+
+export interface RegisterSession {
+  id: string
+  register_id: string
+  register_name: string | null
+  register_number: number | null
+  cashier_id: string
+  cashier_name: string | null
+  status: 'open' | 'closed' | 'reopen_requested' | 'reopen_approved'
+  opening_float: string
+  expected_cash: string | null
+  closing_cash_counted: string | null
+  discrepancy: string | null
+  opened_at: string
+  closed_at: string | null
+  closing_note: string | null
+  reopen_requested_at: string | null
+  reopen_reason: string | null
+  reopen_approved_by: string | null
+  reopen_approved_at: string | null
+  reopen_denial_reason: string | null
+}
+
+export interface SessionReport {
+  session: RegisterSession
+  transaction_count: number
+  void_count: number
+  total_sales: string
+  total_btw: string
+  payment_breakdown: { cash: string; card: string; mixed: string }
+  opening_float: string
+  expected_cash: string | null
+  closing_cash_counted: string | null
+  discrepancy: string | null
+}
+
+export async function getRegisters(storeId: string): Promise<Register[]> {
+  const res = await apiClient.get<{ data: Register[] }>('/registers', { params: { store_id: storeId } })
+  return res.data.data
+}
+
+export async function getMySession(storeId: string): Promise<RegisterSession | null> {
+  const res = await apiClient.get<{ data: RegisterSession | null }>('/registers/my-session', { params: { store_id: storeId } })
+  return res.data.data
+}
+
+export async function openRegister(registerId: string, openingFloat: number): Promise<RegisterSession> {
+  const res = await apiClient.post<{ data: RegisterSession }>(`/registers/${registerId}/open`, { opening_float: openingFloat })
+  return res.data.data
+}
+
+export async function closeRegister(sessionId: string, closingCashCounted: number, closingNote?: string): Promise<RegisterSession> {
+  const res = await apiClient.post<{ data: RegisterSession }>(`/registers/sessions/${sessionId}/close`, {
+    closing_cash_counted: closingCashCounted,
+    closing_note: closingNote,
+  })
+  return res.data.data
+}
+
+export async function requestReopen(sessionId: string, reason: string): Promise<RegisterSession> {
+  const res = await apiClient.post<{ data: RegisterSession }>(`/registers/sessions/${sessionId}/request-reopen`, { reopen_reason: reason })
+  return res.data.data
+}
+
+export async function getSessionReport(sessionId: string): Promise<SessionReport> {
+  const res = await apiClient.get<{ data: SessionReport }>(`/registers/sessions/${sessionId}/report`)
+  return res.data.data
+}
+
+export async function getStoreSessions(storeId: string, date?: string): Promise<RegisterSession[]> {
+  const res = await apiClient.get<{ data: RegisterSession[] }>('/registers/sessions', {
+    params: { store_id: storeId, date },
+  })
+  return res.data.data
+}
+
+export async function approveReopen(sessionId: string, approved: boolean, denialReason?: string): Promise<RegisterSession> {
+  const res = await apiClient.post<{ data: RegisterSession }>(`/registers/sessions/${sessionId}/approve-reopen`, {
+    approved,
+    denial_reason: denialReason,
+  })
+  return res.data.data
+}

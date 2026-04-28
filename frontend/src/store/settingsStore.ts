@@ -1,0 +1,48 @@
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+import type { PrinterConfig } from '@/lib/hardware'
+
+export type ProductDisplay = 'name' | 'photo' | 'both'
+
+interface SettingsState {
+  storeId: string | null
+  productDisplay: ProductDisplay
+  dateFormat: string
+  onScreenKeyboard: boolean
+  defaultBtwRate: string
+  printer: PrinterConfig
+
+  setStoreId: (storeId: string | null) => void
+  setProductDisplay: (display: ProductDisplay) => void
+  setDateFormat: (format: string) => void
+  setOnScreenKeyboard: (enabled: boolean) => void
+  setDefaultBtwRate: (rate: string) => void
+  setPrinter: (config: PrinterConfig) => void
+}
+
+export const useSettingsStore = create<SettingsState>()(
+  persist(
+    (set) => ({
+      storeId: null,
+      productDisplay: 'both',
+      dateFormat: 'DD-MM-YYYY',
+      onScreenKeyboard: false,
+      defaultBtwRate: '10',
+      printer: {
+        type: 'none',
+        ip: '',
+        port: 9100,
+        printerName: '',
+        drawerPin: 1,
+      },
+
+      setStoreId: (storeId) => set({ storeId: storeId ?? null }),
+      setProductDisplay: (productDisplay) => set({ productDisplay }),
+      setDateFormat: (dateFormat) => set({ dateFormat }),
+      setOnScreenKeyboard: (onScreenKeyboard) => set({ onScreenKeyboard }),
+      setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),
+      setPrinter: (printer) => set({ printer }),
+    }),
+    { name: 'josbin_pos-settings' }
+  )
+)

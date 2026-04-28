@@ -1,0 +1,690 @@
+Phase 1 — Discovery & Architecture (2 Weeks / 10 Working Days)
+Epic: SPOS-EPIC-01 — Project Foundation & Architecture
+
+SPOS-101
+Title: Project kickoff — requirements confirmation and stakeholder alignment
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: Highest
+Description: Conduct kickoff meeting with client to confirm all requirements. Validate product catalogue model (centralised vs per-store), government department specifics, sync preferences, hardware available on-site (POS terminals, receipt printers, local server machine), number of stores at launch, and BTW registration number. Document all decisions in a Requirements Confirmation document and obtain client sign-off before any architecture work begins.
+Acceptance Criteria:
+
+Requirements Confirmation document created and signed off by client
+Hardware inventory confirmed (printer model, terminal specs, server specs)
+Product catalogue model confirmed (centralised / per-store / hybrid)
+Government department requirements confirmed
+All open questions from proposal resolved and documented
+
+
+SPOS-102
+Title: Database schema design — all entities, relationships, and indexes
+Type: Task
+Story Points: 5
+Assignee: Backend Lead
+Priority: Highest
+Description: Design the complete PostgreSQL database schema covering all entities identified in the architecture document. Schema must use DECIMAL(12,2) for all SRD monetary values, include pgvector(1536) on products for AI embeddings, use UUIDs as primary keys on all main tables, implement timestamptz for all timestamps in AST (America/Paramaribo), and include field-level encryption plan for customer personal data (WBP-S compliance). Schema must support multi-tenancy via stancl/tenancy from day one.
+Tables to design: organisations, stores, users, products, categories, customers, sales, sale_items, daily_rates, audit_logs, api_integrations, held_bills, webhooks, licenses
+Acceptance Criteria:
+
+Full schema diagram produced (dbdiagram.io or similar)
+All foreign key relationships documented
+All indexes identified (barcode lookup, sale date range, store_id filters)
+DECIMAL precision confirmed for all monetary fields
+pgvector column included on products table
+Multi-tenancy tenant_id strategy confirmed
+Schema reviewed and approved by team lead
+
+
+SPOS-103
+Title: API contract design — all endpoints, request and response shapes
+Type: Task
+Story Points: 5
+Assignee: Backend Lead
+Priority: Highest
+Description: Design the complete REST API contract for all three layers before any code is written. Document every endpoint with HTTP method, URL, authentication requirement, request body schema, response body schema, error responses, and rate limiting rules. Use JSON:API specification (built into Laravel 13) for the open integration API (Layer 3). Document must be detailed enough that frontend developers can build against it before the backend is complete.
+Endpoints to cover: Auth (login, logout, 2FA, passkey), Products (CRUD, catalogue sync), Sales (create, void, refund, hold, restore), Customers (CRUD), Reports (all types), Z-Report / End of Day, Exchange Rate (fetch, lock, override), Users & Roles, Stores & Organisations, Open Integration API (v1/sales, v1/sales/batch, webhooks)
+Acceptance Criteria:
+
+All endpoints documented with full request/response examples
+Authentication requirements specified per endpoint
+Error response codes and messages documented
+Rate limiting rules specified
+JSON:API format confirmed for Layer 3 endpoints
+API contract document shared with frontend team
+
+
+SPOS-104
+Title: Security architecture design — authentication flows, RBAC model, encryption strategy
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: High
+Description: Design and document the complete security architecture before implementation begins. Define the six RBAC roles (Super Admin, Organisation Admin, Store Manager, Cashier, Auditor, API Integration) and map exact permissions for every API endpoint to each role. Document bcrypt cost factor configuration, Passkey flow (Laravel 13 Fortify), 2FA TOTP setup, session timeout values, hardware fingerprint components for license binding, AES-256 encryption key management strategy, and IonCube encoding plan. Identify which database fields require field-level encryption for WBP-S compliance.
+Acceptance Criteria:
+
+RBAC permissions matrix documented (role × endpoint × permission)
+Authentication flow diagrams produced (password, 2FA, passkey)
+Encryption key management strategy documented (where keys are stored, how rotated)
+WBP-S compliance field list confirmed (which fields encrypted)
+IonCube encoding plan documented (which files, how delivered in Docker)
+Security architecture document reviewed and signed off
+
+
+SPOS-105
+Title: Laravel 13 project scaffold — base application setup
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Create the base Laravel 13 application using PHP 8.3. Configure all required packages, environment structure, and project conventions. Set up the multi-tenancy foundation using stancl/tenancy. Configure Laravel Sanctum for API token authentication, spatie/laravel-permission for RBAC, owen-it/laravel-auditing for the immutable audit log, and Laravel Horizon for queue monitoring. Establish coding standards (PSR-12, PHP 8.3 Attributes on models) and document them for the team.
+Acceptance Criteria:
+
+Laravel 13 project created and running locally
+All required packages installed and configured (Sanctum, Horizon, Telescope, spatie/permission, laravel-auditing, stancl/tenancy, laravel-excel, dompdf)
+PHP 8.3 Attributes configured as default model syntax
+.env.example file complete with all required variables documented
+Coding standards document created and shared with team
+Application boots without errors
+
+
+SPOS-106
+Title: Docker Compose setup — local development and store installation environment
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Create the Docker Compose configuration that will be used for both local development and client store installation. The compose file must include containers for: Laravel application (PHP 8.3 + Nginx), PostgreSQL 16 (with pgvector extension), Redis 7, Laravel Reverb (WebSocket server), and Laravel Horizon (queue worker). The setup must be runnable with a single command on a clean Windows or Linux machine with no prior configuration. Write a plain-language installation guide in Dutch and English for store IT staff.
+Acceptance Criteria:
+
+docker-compose.yml file created and tested on clean machine
+PostgreSQL 16 with pgvector extension confirmed working
+Redis 7 container confirmed working
+Laravel Reverb container confirmed working
+Laravel Horizon container confirmed working
+Single command startup confirmed (docker-compose up -d)
+Installation guide written in Dutch and English
+Startup time under 5 minutes on standard hardware
+
+
+SPOS-107
+Title: GitHub Actions CI/CD pipeline — automated testing on every commit
+Type: Task
+Story Points: 2
+Assignee: Backend Developer
+Priority: High
+Description: Set up the GitHub Actions workflow that runs automatically on every pull request and every push to main branch. Pipeline must run PHP unit tests, integration tests, and a dependency vulnerability scan. No code can be merged to main if any test fails. Set up separate workflows for backend (Laravel PHPUnit) and frontend (Vitest). Configure environment secrets for test database and API keys.
+Acceptance Criteria:
+
+GitHub Actions workflow file created and active
+Backend test suite runs on every PR
+Frontend test suite runs on every PR
+Merge to main blocked if any test fails
+Dependency vulnerability scan runs weekly
+Pipeline completes in under 5 minutes
+Team notified on Slack or email on pipeline failure
+
+
+SPOS-108
+Title: React 19.2 + Electron project scaffold — base frontend setup
+Type: Task
+Story Points: 3
+Assignee: Frontend Lead
+Priority: High
+Description: Create the base React 19.2 + TypeScript project configured for Electron desktop app deployment. Set up Vite 6 as the build tool. Configure Electron main process with DevTools disabled in production, full-screen mode on startup, and code signing placeholder. Install and configure all required frontend dependencies: TanStack Query v5, Zustand, i18next with Dutch and English translation files, Laravel Echo for WebSocket, Quagga2 for barcode scanning, Recharts for charts. Establish component folder structure and TypeScript path aliases.
+Acceptance Criteria:
+
+React 19.2 + TypeScript project running in Electron
+Vite 6 build pipeline working for both development and production
+DevTools disabled in production Electron build confirmed
+Full-screen mode on startup confirmed
+i18next configured with nl.json and en.json translation files (base structure)
+All required packages installed and importing without errors
+Folder structure documented for team
+Electron .exe build confirmed on Windows machine
+
+
+SPOS-109
+Title: Design system — shared component library, colours, typography, spacing
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Create the shared design system that will be used across both the POS Electron app and the Super Admin Dashboard. Define colour palette (dark theme for POS, light theme for dashboard), typography scale, spacing system, and base component library. Build reusable components: Button, Input, Modal, Table, Badge, Toast notification, Loading spinner, Card, and Form elements. All components must be bilingual-ready (accept Dutch/English text without layout breaking). Optimised for touchscreen interaction on POS (minimum 44px tap targets).
+Acceptance Criteria:
+
+Colour palette defined and documented as CSS variables
+Typography scale defined (font sizes, weights, line heights)
+All base components built and documented
+Minimum 44px touch targets confirmed on all interactive elements
+Components render correctly in both Dutch and English without layout issues
+Components render correctly on 1024×768 (minimum POS screen resolution)
+Design system documentation page created (Storybook or equivalent)
+
+
+SPOS-110
+Title: Technical specification document — Phase 1 deliverable for client sign-off
+Type: Task
+Story Points: 2
+Assignee: Backend Lead
+Priority: Highest
+Description: Compile all Phase 1 outputs into a single Technical Specification Document to be delivered to the client for formal sign-off. The document must cover: confirmed requirements, database schema diagram, API endpoint list (summary, not full detail), security architecture summary, deployment architecture diagram, team structure, and updated project timeline with Phase 2 milestones. Written in plain language — not technical jargon. Client must sign off on this document before Phase 2 begins.
+Acceptance Criteria:
+
+Document written in English (Dutch version on request)
+Database schema diagram included
+Deployment architecture diagram included (store network topology)
+API endpoint list included (method, URL, purpose — one line each)
+Client receives document minimum 2 business days before sign-off meeting
+Client sign-off obtained in writing (email or signed PDF)
+Phase 2 cannot begin without this sign-off
+
+
+Phase 2 — POS System Build & Testing (5 Weeks / 25 Working Days)
+Epic: SPOS-EPIC-02 — POS Electron Application
+
+SPOS-201
+Title: Database migrations — all Phase 2 tables
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: Highest
+Description: Create Laravel 13 migration files for all database tables required for Phase 2. Use PHP 8.3 Attributes on all models. All monetary columns must use DECIMAL(12,2). All timestamp columns must use timestamptz. Include appropriate indexes for expected query patterns (barcode lookup, sale date range queries, store_id + date composite indexes). Include seed data for development — 50 Surinamese product names, categories, and test users for each role.
+Tables: organisations, stores, users, products, categories, customers, sales, sale_items, daily_rates, held_bills
+Acceptance Criteria:
+
+All migrations run successfully on clean database
+All indexes created as specified in schema design
+Rollback (migrate:rollback) works cleanly for all migrations
+Development seed data runs without errors
+All DECIMAL(12,2) columns confirmed for monetary values
+All timestamptz columns confirmed with America/Paramaribo default
+Models created with PHP 8.3 Attributes syntax
+
+
+SPOS-202
+Title: Authentication system — bcrypt, Sanctum, Passkeys, 2FA, RBAC
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Highest
+Description: Implement the complete authentication system. bcrypt password hashing at cost factor 12. Laravel Sanctum API token authentication for POS terminals. Laravel Fortify Passkey authentication for Super Admin and Organisation Admin accounts (new in Laravel 13). TOTP Two-Factor Authentication via Google/Microsoft Authenticator — mandatory for government-classified accounts, cannot be disabled by user at policy level. Six RBAC roles using spatie/laravel-permission with all endpoint permissions mapped as defined in SPOS-104. Session timeout middleware (15 minutes POS, 60 minutes dashboard). Forced session invalidation on role change.
+Acceptance Criteria:
+
+Login with email/password working and returning Sanctum token
+Passkey registration and authentication working (Laravel 13 Fortify)
+2FA setup flow working (QR code, TOTP verification, recovery codes generation)
+2FA enforcement cannot be bypassed for government-role accounts
+All six roles created with correct permissions
+API endpoint permission check working (403 returned for unauthorised roles)
+Session timeout middleware active and tested
+All existing sessions invalidated within 5 seconds of role change
+Rate limiting active: 5 failed attempts = lockout + email alert
+
+
+SPOS-203
+Title: Product & category management API
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build the full CRUD API for products and categories. Products must store both Dutch (name_nl) and English (name_en) names. BTW rate stored per product as DECIMAL(5,2), with btw_exempt boolean flag. Barcode field indexed for fast lookup. Stock quantity tracked. Products scoped to organisation (multi-tenancy). Catalogue sync endpoint that pushes product updates to all connected stores via Laravel Reverb WebSocket broadcast. CSV import endpoint for bulk product upload with validation and error reporting per row.
+Acceptance Criteria:
+
+CRUD endpoints working for products and categories
+Both name_nl and name_en fields required on create
+BTW rate and btw_exempt flag working correctly
+Barcode lookup endpoint returns product in under 100ms
+Catalogue sync broadcasts to all connected store terminals via Reverb
+CSV import validates and imports 200 products without timeout
+CSV import returns row-by-row error report for invalid rows
+All endpoints return 403 for unauthorised roles
+
+
+SPOS-204
+Title: BTW tax engine — calculation service with full unit test suite
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: Highest
+Description: Build the BTW calculation service class that handles all tax calculations across the platform. This is a critical financial component — it must be covered by a minimum of 50 unit test scenarios. BTW is calculated on the taxable base after all discounts are applied. Item-level and sale-level discounts must be applied in the correct order before BTW extraction. BTW-exempt products must never have BTW applied regardless of store default settings. Multiple BTW rates in a single sale must be correctly separated and reported.
+Calculation rules:
+
+Apply item-level discount to line item price
+Sum all line items to get pre-discount sale total
+Apply sale-level discount proportionally across all line items
+Extract BTW from each line item: btw_amount = line_total - (line_total / (1 + btw_rate/100))
+BTW-exempt items: btw_amount = 0 always
+Acceptance Criteria:
+
+
+BtwCalculationService class created as injectable service
+Minimum 50 PHPUnit test cases covering: standard 10% BTW, BTW-exempt products, item discount then BTW, sale discount then BTW, mixed BTW rates in one sale, zero-value lines, maximum discount scenarios, rounding edge cases
+All 50 tests pass
+No floating point arithmetic used anywhere — DECIMAL/BCMath only
+Code reviewed by second developer before merge
+
+
+SPOS-205
+Title: Sales API — create, complete, void, refund, hold, restore
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Highest
+Description: Build the complete sales transaction API. Sale creation must be wrapped in a database transaction — either all line items save or nothing saves. Exchange rate used must be fetched from daily_rates for today's date and stored on the sale record. Every sale create, void, refund, and restore action must write to the audit_log table automatically via the auditing package. Hold bill saves cart state as JSON to held_bills table. Restore bill loads from held_bills and deletes the held record. Void requires a mandatory reason field and a second authoriser for government-classified accounts (segregation of duties).
+Acceptance Criteria:
+
+Create sale: wraps in DB transaction, saves sale + all sale_items atomically
+Today's exchange rate stored on every sale record
+Void sale: requires reason, creates audit log entry with before/after
+Government void: requires second authoriser approval (403 without it)
+Refund: partial and full refund supported
+Hold bill: saves complete cart JSON to held_bills
+Restore bill: loads from held_bills, confirms deletion of held record
+All actions create audit_log entries
+Integration tests cover all happy paths and key error scenarios
+
+
+SPOS-206
+Title: Customer management API
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: Medium
+Description: Build the customer CRUD API. Customer personal data fields (name, phone, email, id_number) must be encrypted at rest using Laravel's built-in encryption before storage — WBP-S compliance requirement. Search endpoint must decrypt and search on name and phone fields. Customer scoped to organisation. total_spend_srd and visit_count cached fields updated automatically when a sale is linked to the customer. Customer can be created and linked to a sale in a single API call (on-the-fly creation from POS screen).
+Acceptance Criteria:
+
+CRUD endpoints working for customers
+Personal data fields encrypted in database confirmed (verify raw DB value is not readable)
+Search by name and phone working correctly despite encryption
+total_spend_srd updates automatically on sale completion
+Single-call create-and-link endpoint working
+All customer data scoped to organisation — cannot access other org's customers
+Data retention policy endpoint: soft delete with 90-day hard delete scheduled job
+
+
+SPOS-207
+Title: Daily exchange rate command — USD to SRD fetch, lock, and cache
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Build the Laravel scheduled Artisan command that fetches the daily USD→SRD exchange rate from ExchangeRate-API, applies the configured markup percentage, saves to the daily_rates table, and caches in Redis for instant POS access. Command must run at 06:00 AST (America/Paramaribo timezone) via Laravel Scheduler. Manual override endpoint for managers to set a custom rate. All rate operations logged in audit_log. Note: use ExchangeRate-API only — Frankfurter does NOT support SRD.
+Acceptance Criteria:
+
+Artisan command rates:lock created and tested
+Scheduled at 06:00 America/Paramaribo confirmed in routes/console.php
+Rate fetched from ExchangeRate-API and saved to daily_rates table
+Markup percentage applied (config value, default 0%)
+Rate cached in Redis with 86400 second TTL
+Manual override endpoint working (POST /api/rates/manual) with audit log entry
+If API unavailable, command uses previous day's rate and logs a warning
+Rate stored on every sale record via sales API (SPOS-205)
+
+
+SPOS-208
+Title: Receipt generation — PDF and email, Dutch and English
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Build the receipt generation service using DomPDF. Receipt must include: store name, address, BTW registration number, date and time in AST (DD-MM-YYYY format for Dutch), cashier name, all line items with individual BTW rates shown, subtotal excluding BTW, BTW amount per rate group, total including BTW, payment method, cash received and change (if cash), and configurable store header and footer text. Email receipt sends HTML version via Laravel Mail. Both Dutch and English versions must be identical in structure, different only in labels.
+Acceptance Criteria:
+
+PDF receipt generated correctly for standard sale
+PDF receipt generated correctly for sale with multiple BTW rates
+PDF receipt generated correctly for BTW-exempt items
+BTW registration number displayed on receipt
+Date/time displays in AST timezone in DD-MM-YYYY format
+Dutch receipt labels verified by native speaker (or translation file)
+Email receipt sends successfully with correct formatting
+Receipt configurable header and footer text per store working
+PDF file size under 50KB for standard receipt
+
+
+SPOS-209
+Title: Store-level reports API — daily, monthly, custom, top products, X-Report, Z-Report
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build all store-level report endpoints. Reports must aggregate from the sales and sale_items tables with efficient queries (no N+1 problems). All monetary totals in SRD with correct BTW breakdown. Z-Report endpoint closes the register for the day — sets a closed_at timestamp on the daily record, calculates final totals, stores cash reconciliation figures, and queues the data sync job. All reports available in JSON (for dashboard) and triggered as PDF/Excel export jobs via queue.
+Reports: Daily Sales, Monthly Sales, Custom Date Range, Top Products by quantity and revenue, Custom Product Report, X-Report (snapshot, no close), Z-Report (close + sync trigger)
+Acceptance Criteria:
+
+All report endpoints return correct aggregated totals
+BTW totals correctly separated by rate group
+Z-Report sets closed_at timestamp and prevents further sales being added to that day
+Z-Report queues data sync job automatically
+Top Products query uses indexes efficiently (query time under 200ms on 10,000 sales)
+PDF export job runs in background queue, not blocking the API response
+Excel export job runs in background queue
+Cash reconciliation fields (expected_cash, actual_cash, discrepancy) saved on Z-Report
+
+
+SPOS-210
+Title: POS main sell screen — product grid, cart, categories, search
+Type: Task
+Story Points: 8
+Assignee: Frontend Lead
+Priority: Highest
+Description: Build the core POS sell screen — the most important screen in the entire application. Product grid displays products with emoji/photo and price, organised in a scrollable grid. Category filter bar at top. Tap product to add to cart. Cart on the right side shows all line items with quantity controls. Zustand manages all cart state. React 19.2 useTransition used for category switches so the cart never becomes unresponsive. Product search in the top bar — typing filters the grid instantly. All text bilingual (Dutch/English). Optimised for 1024×768 touchscreen minimum.
+Acceptance Criteria:
+
+Product grid renders and is tappable within 100ms of screen load
+Category filter correctly filters product grid
+Tap to add product adds to cart immediately (optimistic, no API call yet)
+Quantity increase/decrease works correctly
+Remove item from cart works
+Cart subtotal, BTW, and total update correctly on every cart change
+Search filters products as user types with no noticeable lag
+Category switch does not block cart interaction (useTransition confirmed)
+Renders correctly on 1024×768 touchscreen
+Both Dutch and English labels display correctly without layout overflow
+
+
+SPOS-211
+Title: Barcode scanner — USB HID keyboard wedge and Quagga2 camera
+Type: Task
+Story Points: 5
+Assignee: Frontend Developer
+Priority: High
+Description: Implement dual-mode barcode scanning. USB HID mode: globally capture keyboard events in the Electron app, buffer rapid keypress sequences (scanner input is faster than human typing), detect barcode completion on Enter keypress, look up product by barcode via API, add to cart automatically. Camera mode: Quagga2 library opens device camera in a modal with animated scan frame, decodes EAN-13/Code128/UPC-A barcodes in real time, adds product to cart on successful decode and closes modal. Manual entry: 8–13 digit numeric string entered in search bar and Enter pressed triggers barcode lookup.
+Acceptance Criteria:
+
+USB HID scanner adds product to cart on scan without any clicks
+USB HID works while any screen element is focused (global event listener)
+Buffer clears correctly after 100ms timeout to prevent partial captures
+Quagga2 camera modal opens, shows animated scan frame
+Quagga2 correctly decodes EAN-13 barcode on demo product
+Camera scan adds product to cart and closes modal automatically
+Manual barcode entry via search bar works on Enter keypress
+Unknown barcode shows clear "Product not found" message
+Tested with physical USB barcode scanner (SPOS-223 covers hardware testing)
+
+
+SPOS-212
+Title: Hold bills — save and restore cart with React 19 Activity API
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Implement the hold bills feature using React 19.2 Activity API so held carts are kept pre-rendered in memory — restoring a held bill is instant with zero loading time. Hold button saves current cart (all items, quantities, discounts, customer) to the held_bills API endpoint and to local Activity state. Open Bills button shows all held bills for the current shift. Tapping a held bill restores it instantly from Activity state (if still in memory) or from API. New sale starts a fresh empty cart. Visual indicator shows count of currently held bills.
+Acceptance Criteria:
+
+Hold button saves cart to API and maintains in Activity state
+Open Bills panel shows all held bills with customer name, total, and time held
+Loading a held bill restores all items, quantities, discounts, and customer instantly
+Cart is empty and fresh after hold action
+Activity API keeps held bill pre-rendered — restore is instant (no loading state shown)
+Held bill count badge visible on Open Bills button
+If Electron app restarts, held bills still available (loaded from API on startup)
+
+
+SPOS-213
+Title: Cash payment numpad and card payment flow
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Build the payment completion flows. Cash payment: full-screen modal with on-screen numpad showing amount due prominently, cashier enters cash received, change calculated and displayed in real time, Complete Sale button triggers React 19 Action (async POST to sales API with optimistic UI — receipt shows immediately, any error handled gracefully). Card/PIN payment: presents amount, cashier confirms on physical terminal, clicks Confirm Payment. Mixed payment: allows partial cash entry with remainder shown as card amount.
+Acceptance Criteria:
+
+Cash numpad is large and tap-friendly (minimum 64px keys)
+Amount due displayed prominently at top
+Change calculates correctly as cashier types
+Complete Sale button triggers React 19 Action correctly
+Optimistic UI shows receipt immediately without waiting for API response
+Error state handled cleanly if API call fails (cart preserved, can retry)
+Card payment flow completes correctly
+Mixed payment calculates remainder correctly
+Payment modal cannot be dismissed accidentally
+
+
+SPOS-214
+Title: Discount engine UI — item-level and sale-level discounts
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Build the discount application UI. Two discount types: percentage (%) and fixed SRD amount. Two scopes: individual line item or entire sale. Discount modal accessible from both the cart (sale-level button) and each individual cart line item (edit button). Discount amount validated — cannot exceed item price or sale total. Discount tag displayed on each discounted line item showing the discount applied. Cart totals recalculate immediately on discount application. Discount data sent to sales API on completion.
+Acceptance Criteria:
+
+Sale-level discount modal works for both % and fixed SRD
+Item-level discount modal works for both % and fixed SRD
+Discount cannot exceed item price (validation error shown)
+Discount tag shown on each discounted line item
+Cart subtotal, BTW, and total all recalculate correctly after discount
+Both Dutch and English labels correct
+Discount values correctly sent in sale completion API call
+
+
+SPOS-215
+Title: Edit line item modal — price, quantity, BTW rate, discount
+Type: Task
+Story Points: 2
+Assignee: Frontend Developer
+Priority: Medium
+Description: Build the edit line item modal accessible from each cart line item. Allows the cashier (with appropriate permissions) to override the unit price, quantity, BTW rate, and discount for that specific line item without removing and re-adding the product. Changes apply immediately to the cart and all totals recalculate. Price override requires Store Manager role or above — cashier role shows price field as read-only. All changes reflected in the sale completion payload.
+Acceptance Criteria:
+
+Edit modal accessible from each line item in cart
+Price field editable for Store Manager+ roles, read-only for Cashier role
+Quantity field editable for all roles
+BTW rate field editable for Store Manager+ roles
+Discount field editable for all roles with same validation as SPOS-214
+All cart totals recalculate immediately on save
+Changes persist in cart until sale is completed or line removed
+
+
+SPOS-216
+Title: Customer add and search modal — on-screen, no navigation
+Type: Task
+Story Points: 2
+Assignee: Frontend Developer
+Priority: Medium
+Description: Build the customer panel accessible from the POS sell screen without any navigation away. Shows currently linked customer (or Walk-in Customer default). Change button opens a modal with: search field (by name or phone), list of matching results from the API, and an Add New Customer form (name, phone, email). Selecting an existing customer or saving a new one links them to the current sale. Walk-in button deselects any customer. Customer name displayed on cart header when linked.
+Acceptance Criteria:
+
+Customer modal opens without navigating away from POS screen
+Search returns results as user types (debounced, 300ms)
+New customer form validates required fields (name minimum)
+New customer saved to API and immediately linked to sale
+Walk-in option removes customer link
+Customer name shown on cart header when linked
+Modal closes and returns to sell screen without cart state loss
+
+
+SPOS-217
+Title: Today's sales slide-up panel
+Type: Task
+Story Points: 2
+Assignee: Frontend Developer
+Priority: Medium
+Description: Build the today's sales panel accessible from a button on the POS toolbar. Slides up as an overlay without navigating away from the sell screen. Shows: total sales amount in SRD, transaction count, total BTW collected, last 10 transactions (time, amount, payment method). Loads data from the store reports API with a brief loading state. Dismiss button or tap outside closes the panel and returns to the sell screen with cart state fully intact.
+Acceptance Criteria:
+
+Panel slides up as overlay without leaving sell screen
+Cart state fully preserved when panel is open
+Total SRD, transaction count, and BTW displayed correctly
+Last 10 transactions displayed with time, amount, and method
+Panel loads and displays data within 2 seconds
+Closing panel returns to sell screen with no state loss
+Both Dutch and English labels correct
+
+
+SPOS-218
+Title: Daily exchange rate screen — view, lock, and manual override
+Type: Task
+Story Points: 2
+Assignee: Frontend Developer
+Priority: Medium
+Description: Build the daily exchange rate management screen accessible from the manager role. Shows current USD→SRD rate (live from ExchangeRate-API or locked), rate status indicator (live/locked), last 7 days rate history, Get Live Rate button, Lock for Today button (locks the rate for all transactions), and Manual Rate input for manager to enter a custom rate. Status dot changes colour (blue = live, green = locked). Rate change vs yesterday shown with up/down arrow. Quick converter (USD → SRD and SRD → USD).
+Acceptance Criteria:
+
+Live rate fetch works and displays within 2 seconds
+Lock rate button locks rate and updates all displays
+Locked rate indicator clearly shown
+Locked rate used in quick converter
+Manual rate input validates (must be numeric, between 1 and 500)
+7-day history displays correctly from daily_rates table
+Quick converter calculates both directions correctly
+Accessible only to Store Manager role and above
+
+
+SPOS-219
+Title: POS settings screen — all configurable options
+Type: Task
+Story Points: 2
+Assignee: Frontend Developer
+Priority: Medium
+Description: Build the settings screen accessible from the manager role. All settings saved to the store configuration via the API and applied immediately without app restart. Settings: language toggle (Dutch/English), on-screen keyboard toggle, date format selector (6 options), product display mode (name/photo/both), default BTW rate, default discount, default category, barcode symbology, site name, receipt header text, receipt footer text. All setting changes immediately reflected in the UI and in new receipts.
+Acceptance Criteria:
+
+All settings render current values on load
+Language toggle switches UI language immediately without restart
+On-screen keyboard toggle shows/hides on-screen keyboard immediately
+Date format change reflected in all date displays immediately
+Product display mode change reflected in product grid immediately
+All settings saved to API and persist after app restart
+Receipt header and footer text saved and appears on next test receipt
+
+
+SPOS-220
+Title: Barcode label printing page
+Type: Task
+Story Points: 2
+Assignee: Frontend Developer
+Priority: Low
+Description: Build the barcode label printing page accessible from the store manager role. Displays all products in a selectable grid. Manager selects individual products or uses Select All. Configure label size and barcode symbology (EAN-13, Code 128, QR Code). Preview selected labels before printing. Print button sends print job to the connected label printer. Labels include product name (in store language), barcode, and price in SRD.
+Acceptance Criteria:
+
+Product grid displays all store products with selection checkbox
+Select All / Deselect All working
+Barcode symbology selector working (EAN-13, Code 128, QR)
+Label preview shows correct layout before printing
+Print job sent to system default label printer
+Labels include product name, barcode, and SRD price
+Accessible to Store Manager role and above only
+
+
+SPOS-221
+Title: Store-level report screens — all five report types
+Type: Task
+Story Points: 5
+Assignee: Frontend Developer
+Priority: High
+Description: Build all five store-level report screens accessible from the manager role. Each report screen has: date range selector (with quick presets — Today, Yesterday, This Week, This Month, Custom), data table with sortable columns, summary cards (total SRD, transaction count, BTW collected), a bar/line chart using Recharts, and export buttons (PDF and Excel — triggers background queue job). All monetary values formatted as SRD with correct Dutch number formatting. Both Dutch and English column headers.
+Reports: Daily Sales, Monthly Sales, Custom Date Range, Top Products (by qty and revenue), Custom Product Report (per product or category)
+Acceptance Criteria:
+
+All five report screens load and display data correctly
+Date range selector works with all presets and custom range
+Summary cards show correct totals
+Charts render correctly with Recharts
+PDF export button queues job and shows "Generating..." state
+Excel export button queues job and shows "Generating..." state
+Download link delivered via notification when export ready
+All columns correctly labelled in Dutch and English
+SRD formatting correct throughout (e.g. SRD 1.234,56 Dutch format)
+
+
+SPOS-222
+Title: Z-Report End of Day screen
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Build the End of Day screen accessible from the store manager role. Shows daily summary (total sales, transaction count, avg basket, BTW collected, payment method breakdown, top 5 products). Cash reconciliation section: system expected amount and input field for actual cash counted, discrepancy shown in red if mismatched, mandatory note field if discrepancy exists. Submit to Headquarters button (shows data summary before submit, disabled until cash reconciliation is entered). 7-day history table showing past Z-Reports with sync status badge. Print Z-Report button.
+Acceptance Criteria:
+
+Daily summary loads current day data correctly
+Cash reconciliation input calculates discrepancy in real time
+Discrepancy shown in red with mandatory note field when mismatch
+Submit button disabled until cash reconciliation is completed
+Submit modal shows full data summary before confirming
+Submit triggers data sync job via API
+Success state updates 7-day history row to "Sent ✓" with timestamp
+7-day history shows correct sync status for each day (Sent/Pending/Failed)
+Print Z-Report generates PDF via API and downloads
+Accessible to Store Manager role and above only
+
+
+SPOS-223
+Title: Hardware testing — receipt printer, label printer, barcode scanner, touchscreen
+Type: Task
+Story Points: 3
+Assignee: Frontend Lead
+Priority: High
+Description: Test the complete Electron app against the actual hardware that will be used in Surinamese stores. If physical hardware is not available in India, use emulation tools and document what needs to be verified on-site. Test EPSON TM-T20 receipt printer via ESC/POS commands, generic label printer via system print dialog, USB barcode scanner (keyboard wedge simulation), and touchscreen interaction (44px minimum targets, no hover-dependent interactions).
+Acceptance Criteria:
+
+Receipt prints correctly on EPSON TM-T20 or equivalent (tested or emulated)
+Receipt printer connection via USB and network both documented
+Label printer prints correct format for EAN-13 label
+USB HID barcode scanner correctly adds product to cart on scan
+All interactive elements have minimum 44px touch targets confirmed
+No feature requires hover state to be functional
+Hardware compatibility notes documented for on-site installation guide
+Known hardware limitations documented for client
+
+
+SPOS-224
+Title: IonCube license check middleware — startup validation and periodic check
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: High
+Description: Implement the license validation middleware that checks the installation's license against the license server on every application startup and every 24 hours during operation. Hardware fingerprint generated from server MAC address, CPU ID, and installation UUID. License check result cached locally for 72 hours to enable offline grace mode. If license is valid: application runs normally. If license expired: grace period logic triggered (see renewal enforcement spec). If license invalid/not found: application refuses to start. Middleware integrated into Laravel bootstrap process via IonCube-encoded files.
+Acceptance Criteria:
+
+License check runs on every application startup
+Hardware fingerprint generated correctly (MAC + CPU + UUID)
+License server API call made with fingerprint + license key
+Valid license: application boots normally
+Expired license: grace period mode triggered (warnings shown, sales continue)
+Invalid license: application refuses to boot with clear renewal message
+72-hour offline cache working — application continues if license server unreachable
+License check runs every 24 hours during operation silently
+All license events logged to local log file
+
+
+SPOS-225
+Title: Phase 2 integration testing — end-to-end POS workflows
+Type: Task
+Story Points: 5
+Assignee: Backend Lead
+Priority: Highest
+Description: Write and run comprehensive integration tests covering all complete POS workflows end-to-end. Tests must cover: complete sale with cash payment, complete sale with card payment, sale with item-level discount, sale with sale-level discount, sale with BTW-exempt product, void sale with reason, hold bill and restore, add new customer mid-sale, barcode scan to cart to payment, Z-Report close and sync trigger, exchange rate lock and use in sale. All tests run against a real test database, not mocks.
+Acceptance Criteria:
+
+All workflow tests listed above pass
+Tests run in under 3 minutes total
+All tests run in CI/CD pipeline via GitHub Actions
+Database state verified after each test (not just HTTP response)
+BTW calculation verified against expected amounts in each test
+No test uses mocked database — real PostgreSQL test database used
+Tests documented so junior developers can understand what each covers
+All tests pass before Phase 2 sign-off meeting is scheduled
+
+
+SPOS-226
+Title: Phase 2 staging environment and seed data for client UAT
+Type: Task
+Story Points: 2
+Assignee: Backend Developer
+Priority: High
+Description: Deploy the Phase 2 build to the staging environment and seed it with realistic Surinamese supermarket data so the client can test against a believable system. Seed data must include minimum 200 products across all categories (Droog, Dranken, Vlees, Vis, Groenten, Zuivel, Snacks, Huishoud) with Dutch and English names, realistic SRD prices, correct BTW rates (0% for fresh food, 10% for processed goods), and a full month of historical sale data showing realistic daily patterns.
+Acceptance Criteria:
+
+Staging environment deployed and accessible to client
+Minimum 200 products seeded with Dutch and English names
+All product categories seeded
+BTW rates correct for each product type
+30 days of historical sales data generated
+At least 3 user accounts created (Super Admin, Store Manager, Cashier)
+Client login credentials delivered securely
+Staging URL and credentials delivered to client with UAT checklist
+
+
+That is 10 Phase 1 tickets and 26 Phase 2 tickets — 36 total. Each is ready to paste directly into Jira as a new issue.

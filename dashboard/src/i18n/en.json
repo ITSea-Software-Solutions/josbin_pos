@@ -1,0 +1,20 @@
+{
+  "auth": {
+    "login": "Log in",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password"
+  },
+  "dashboard": {
+    "todayRevenue": "Today's revenue",
+    "transactions": "Transactions",
+    "totalBtw": "BTW today",
+    "storesOnline": "Stores online",
+    "avgBasket": "Avg. basket",
+    "allOrgs": "All organisations"
+  },
+  "errors": {
+    "serverError": "Server error. Please try again.",
+    "networkError": "Network error. Check your connection."
+  }
+}

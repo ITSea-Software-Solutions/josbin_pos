@@ -1,0 +1,967 @@
+
+Phase 3 — Super Admin Dashboard + Integration API (6 Weeks / 30 Working Days)
+Epic: SPOS-EPIC-03 — Super Admin Dashboard & Open Integration API
+
+SPOS-301
+Title: Multi-tenancy setup — stancl/tenancy configuration and tenant isolation
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Highest
+Description: Implement full multi-tenancy using stancl/tenancy package. Each organisation gets a completely isolated database — no shared schema between organisations. Tenant resolution based on the authenticated user's organisation_id. All Eloquent queries automatically scoped to the current tenant. Queue jobs must carry tenant context so background jobs (report generation, sync, webhooks) run in the correct tenant database. Government organisation databases must be completely separate from commercial organisation databases — even on shared infrastructure.
+Acceptance Criteria:
+
+Each organisation has its own isolated PostgreSQL database
+Tenant resolved correctly from authenticated user on every request
+All Eloquent queries automatically scoped — no manual where('organisation_id') needed
+Queue jobs carry and restore tenant context correctly
+Background jobs (BtwReportJob, SyncJob, WebhookJob) all run in correct tenant context
+Government organisation databases confirmed separate from commercial ones
+Migration:tenant command runs all tenant migrations on each new organisation creation
+Cross-tenant data access confirmed impossible — test returns empty result not 403
+Tenant creation completes in under 10 seconds on organisation registration
+
+
+SPOS-302
+Title: Laravel Reverb WebSocket server — configuration and broadcast events
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: Highest
+Description: Configure Laravel Reverb as the native WebSocket server. Define all broadcast events that the Super Admin Dashboard and POS terminals need to receive in real time. Events must carry tenant context and be broadcast on private channels scoped to the organisation. Reverb must run as a Docker container in the compose stack. Laravel Echo on the frontend subscribes to private channels authenticated via Sanctum.
+Events to implement: SaleCompleted (broadcast to store channel + org dashboard channel), ProductUpdated (broadcast to all store terminals in org), StoreStatusChanged (online/offline, broadcast to dashboard), ZReportSubmitted (broadcast to dashboard), SyncStatusChanged (broadcast to dashboard), LicenseWarning (broadcast to manager screens)
+Acceptance Criteria:
+
+Reverb container running in Docker Compose
+All broadcast events defined and firing correctly
+Private channels authenticated via Sanctum (unauthorised users cannot subscribe)
+SaleCompleted event received by dashboard within 500ms of sale completion
+ProductUpdated event received by all POS terminals in org within 1 second
+Channel scoping confirmed — org A's events not receivable by org B
+Laravel Echo subscription working on frontend
+Reconnection handling working — client reconnects automatically after network drop
+
+
+SPOS-303
+Title: Organisation and store management API
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build the complete API for managing organisations and stores. Organisation creation must automatically create the tenant database, run tenant migrations, and generate the first Organisation Admin account with a welcome email. Store creation must validate the organisation exists and the requesting user has permission. Deactivating a store must prevent new sales but preserve all historical data. Remote store settings update must broadcast to all connected terminals via Reverb.
+Endpoints: POST /organisations, GET /organisations, PUT /organisations/{id}, POST /organisations/{id}/stores, GET /organisations/{id}/stores, PUT /stores/{id}, DELETE /stores/{id} (soft delete), PUT /stores/{id}/settings (remote config push)
+Acceptance Criteria:
+
+Organisation creation triggers tenant DB creation automatically
+Welcome email sent to Organisation Admin on org creation
+Store creation scoped to organisation correctly
+Deactivated store cannot create new sales (403 on sale creation)
+Historical data preserved on store deactivation
+Remote settings update broadcasts to connected terminals via Reverb
+Super Admin can see all organisations and stores
+Organisation Admin can only see and manage their own organisation
+All endpoints return correct 403 for unauthorised roles
+
+
+SPOS-304
+Title: User hierarchy API — full CRUD for all six roles
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build the complete user management API supporting the full hierarchy. Super Admin creates Organisation Admins. Organisation Admins create Store Managers. Store Managers create Cashiers and Auditors. No user can create an account with a higher role than their own. Deactivating a user immediately invalidates all their active sessions via Reverb broadcast. Government organisation users must have 2FA mandatory — cannot be set to optional regardless of request payload. Password reset flow sends email with time-limited token.
+Endpoints: GET/POST /users, GET/PUT/DELETE /users/{id}, POST /users/{id}/deactivate, POST /users/{id}/reset-password, GET /users/{id}/sessions, DELETE /users/{id}/sessions
+Acceptance Criteria:
+
+Role hierarchy enforced — cannot create user with higher role than own role
+Deactivation invalidates all sessions within 5 seconds via Reverb
+Government org users have 2FA mandatory regardless of payload
+Password reset email sends with 60-minute expiry token
+Store assignment working — manager assigned to one or more stores
+Auditor role has read-only access confirmed on all endpoints
+Audit log entry created on every user create, update, deactivate action
+User cannot delete their own account
+
+
+SPOS-305
+Title: Consolidated reports API — cross-store aggregation
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: High
+Description: Build the consolidated reporting API that aggregates data across multiple stores or an entire organisation. All queries must use database indexes efficiently — no full table scans on large datasets. Reports must support filtering by store, date range, payment method, BTW rate group, and product category. Background queue jobs handle PDF and Excel export — API returns a job ID, frontend polls for completion, download link delivered via notification when ready. All monetary aggregations in SRD with correct decimal precision.
+Reports to build: Cross-store Daily Sales, Cross-store Monthly Sales, Custom Date Range (any combination of stores), Top Products across network, BTW Consolidated (by rate group, by store, by period — Belastingdienst Suriname format), Custom Product Performance Report
+Acceptance Criteria:
+
+All cross-store reports return correct aggregated totals
+BTW breakdown correct by rate group (0% and 10% shown separately)
+Queries complete in under 3 seconds for 12 months of data across 20 stores
+PDF export job queues correctly, download link delivered via notification
+Excel export job queues correctly, download link delivered via notification
+Exports use Dutch or English column headers based on requesting user locale
+SRD formatting correct throughout
+Super Admin sees all stores, Organisation Admin sees only their stores
+
+
+SPOS-306
+Title: Rekenkamer audit export — signed PDF generation
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build the formal audit export for the Rekenkamer van Suriname (Court of Audit). Export must include complete transaction history for the requested period — every sale, every void with reason, every refund, every price change, every user action — all with user identity, full name, role, timestamp in AST, IP address, and before/after values for changes. PDF must be digitally signed using the organisation's certificate to prove it has not been modified since generation. Export only accessible to Auditor role and above for government organisations, Organisation Admin and above for commercial organisations.
+Acceptance Criteria:
+
+Export includes every audit_log entry for the period in chronological order
+Every entry shows user name, role, timestamp in AST, IP address, event description
+Before/after values shown for all data changes
+Digital signature applied to PDF using organisation certificate
+Signature verifiable by standard PDF readers (Adobe Acrobat etc.)
+Export scoped to requesting user's organisation — cannot access other orgs
+Large exports (12 months) completed as background job, not blocking API
+Export format reviewed against Rekenkamer requirements
+Access restricted to Auditor and above for government orgs
+
+
+SPOS-307
+Title: BTW report — Belastingdienst Suriname format
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Build the dedicated BTW report formatted specifically for Belastingdienst Suriname tax filing. Report shows: reporting period, organisation BTW registration number, total taxable sales per BTW rate group, total BTW collected per rate group, total BTW-exempt sales, grand total sales, grand total BTW. Available per store or consolidated across all stores. PDF format must match the layout expected by Belastingdienst Suriname. Excel version for accountant use. Both Dutch and English versions.
+Acceptance Criteria:
+
+BTW registration number displayed on all exports
+Correct separation of 10% BTW and 0% BTW (exempt) categories
+Taxable base and BTW amount shown separately per rate group
+Period selection working (monthly, quarterly, custom range)
+Per-store and consolidated options working
+PDF layout reviewed against Belastingdienst Suriname requirements
+Dutch primary, English secondary on same document
+Export accessible to Store Manager and above
+
+
+SPOS-308
+Title: Data sync system — outbox queue and five-layer fallback
+Type: Task
+Story Points: 13
+Assignee: Backend Lead
+Priority: Highest
+Description: Build the complete data synchronisation system that moves completed day's data from the local store server to the Super Admin cloud dashboard. This is the most complex backend task in Phase 3. The system must implement all five fallback layers: real-time sync via outbox queue, auto-retry on failure, Z-Report forced retry, USB encrypted export, and catch-up sync on reconnection. All sync transmissions encrypted (TLS 1.3 in transit, AES-256 for USB export file). Sync status broadcast to dashboard via Reverb.
+Implementation details:
+Layer 1 — Outbox queue: every sale added to sync_outbox table on completion, background job picks up and sends to cloud API, marks as sent on 200 response
+Layer 2 — Retry schedule: failed jobs retry at 1min, 5min, 15min, 30min intervals using Laravel exponential backoff
+Layer 3 — Z-Report trigger: ZReportJob forces sync attempt for all pending outbox entries
+Layer 4 — USB export: AES-256 encrypted .surapos file containing all pending days as JSON, importable via Super Admin Dashboard upload endpoint
+Layer 5 — Catch-up: connectivity monitor pings every 60 seconds, on restore sends all pending outbox entries chronologically
+Acceptance Criteria:
+
+Outbox queue sends successfully on good connection within 60 seconds of sale
+Failed sync retries on correct schedule confirmed
+Z-Report triggers immediate sync attempt confirmed
+USB export file is AES-256 encrypted and unreadable without key
+USB export file imports correctly via dashboard upload endpoint
+Imported data appears identical to normally synced data
+Catch-up sync fires within 60 seconds of internet restoration
+Catch-up sends data in chronological order confirmed
+Sync status (sent/pending/failed) broadcast to dashboard via Reverb
+Manager screen shows correct indicator (green/yellow/red) for sync status
+5-day offline simulation test: all 5 days sync correctly on reconnection
+
+
+SPOS-309
+Title: USB encrypted export and import — .surapos file format
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build the USB file export and import system as Layer 4 of the sync fallback chain. Export: manager clicks Export on End of Day screen, system bundles all unsynced days as JSON, encrypts with AES-256 using a key derived from the organisation's license key (ensures only your system can decrypt it), saves as a .surapos file with naming convention: OrganisationName_StoreName_YYYY-MM-DD.surapos. Import: Super Admin uploads .surapos file in dashboard, system decrypts, validates structure, imports all transactions exactly as if they had synced normally, marks outbox entries as synced.
+Acceptance Criteria:
+
+.surapos file generated correctly with AES-256 encryption
+Filename follows naming convention correctly
+File is unreadable as plain text (binary confirmed)
+Import endpoint accepts .surapos file
+Import decrypts and validates structure before processing
+Invalid or tampered file rejected with clear error message
+Valid import creates all sales and marks outbox entries as synced
+Imported data appears in Super Admin Dashboard identically to normal sync
+Import is idempotent — re-importing same file produces no duplicates
+Import of file from wrong organisation correctly rejected
+
+
+SPOS-310
+Title: Open Integration API — REST endpoints for third-party POS systems
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: High
+Description: Build the open integration API (Layer 3 of the platform) that allows any third-party POS system to push sales data to the Super Admin Dashboard. Use Laravel 13 JSON:API resources for all responses. API key authentication via hashed keys — original key shown only once on creation, stored as hash. All endpoints rate limited to 1,000 calls per minute per API key. Payload validation is lenient — accept partial data, default missing optional fields gracefully, never reject a sale for a missing non-critical field.
+Endpoints:
+POST /api/v1/sales — single sale push
+POST /api/v1/sales/batch — array of sales, idempotent on sale_ref
+GET /api/v1/sales — pull own sales data
+GET /api/v1/reports/daily — pull daily summary
+POST /api/v1/webhooks — register webhook endpoint
+DELETE /api/v1/webhooks/{id} — remove webhook
+GET /api/v1/ping — health check, confirms API key valid
+Acceptance Criteria:
+
+API key creation generates key shown once, stores bcrypt hash
+Invalid API key returns 401 with clear message
+POST /v1/sales accepts full and partial payloads
+Duplicate sale_ref on batch returns 200 with skipped count (not error)
+Rate limiting returns 429 with Retry-After header
+All responses use JSON:API format
+Webhook registration stores URL and event types
+Synced external sale appears in Super Admin Dashboard correctly
+External sale marked with source=api in database
+Integration tests cover all endpoints
+
+
+SPOS-311
+Title: Webhook delivery system — outbound events with retry queue
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Build the outbound webhook delivery system. When events occur (sale.created, shift.closed, refund.issued), the system delivers an HTTP POST to all registered webhook endpoints for that store's API integration. Delivery uses a dedicated queue with exponential retry (immediate, 1min, 5min, 15min, 1hour, 24hour). After 24 hours of failed delivery, the webhook is marked as failed and the integration owner is emailed. Each delivery includes a signature header (HMAC-SHA256) so the receiver can verify the payload is genuine. Webhook delivery logs viewable in Super Admin Dashboard.
+Acceptance Criteria:
+
+Webhook fires within 5 seconds of triggering event
+HMAC-SHA256 signature header included on every delivery
+Retry schedule fires on correct intervals after failure
+After 24 hours failed delivery: webhook marked failed, email sent
+Delivery log shows all attempts with response code and timestamp
+Webhook can be manually re-triggered from dashboard for debugging
+Delivery visible in Super Admin Dashboard webhook log screen
+Test webhook button in dashboard sends a test payload to the registered URL
+
+
+SPOS-312
+Title: OpenAPI/Swagger documentation — auto-generated API docs
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: Medium
+Description: Generate complete OpenAPI 3.0 documentation for the open integration API using L5-Swagger or Scramble package. Documentation must include every endpoint with full request and response schemas, authentication requirements, error codes, and working examples. Serve the Swagger UI at a public URL so third-party POS developers can explore the API interactively. Include a Postman collection export. Sandbox environment credentials documented for testing without affecting production data.
+Acceptance Criteria:
+
+OpenAPI spec generated covering all Layer 3 endpoints
+Swagger UI accessible at /api/documentation
+All request schemas documented with field types and validation rules
+All response schemas documented with example payloads
+Authentication documented clearly (Bearer token format)
+Error codes and messages documented
+Postman collection exported and available for download
+Sandbox environment URL and credentials documented
+
+
+SPOS-313
+Title: License server application — standalone Laravel app
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: High
+Description: Build the license server as a separate small Laravel 13 application hosted independently from the main SuraPOS application. This is the service that all client installations ping to validate their license. Must be highly available — if the license server goes down, client installations enter 72-hour offline grace mode, not immediate lockout. Admin dashboard for you to manage all client licenses. Automated renewal reminder emails. License record stores: organisation name, hardware fingerprint hash, store count, terminal count, tier, expiry date, and renewal history.
+Endpoints (called by SuraPOS installations):
+POST /api/license/validate — checks key + fingerprint, returns valid/expired/invalid + days remaining
+POST /api/license/activate — first-time activation, binds fingerprint to key
+POST /api/license/heartbeat — silent 24-hour check during operation
+Admin dashboard features:
+
+List all licenses with status and expiry
+Create new license key (one-time display)
+Extend/upgrade/revoke license
+View all validation requests per license
+Manual renewal reminders
+Acceptance Criteria:
+License server deployed independently (separate domain or subdomain)
+Validate endpoint returns correct status for valid, expired, and invalid keys
+Hardware fingerprint correctly bound on first activation
+Different hardware fingerprint on validate returns invalid (not the same machine)
+72-hour grace mode confirmed — server unreachable does not immediately lock app
+Admin dashboard accessible to you only (separate auth)
+New license key generation working (shown once, hashed in DB)
+Renewal reminder emails send at 30 days and 14 days before expiry
+Revoke takes effect within 24 hours on target installation
+License server has 99.9% uptime target — hosted on reliable infrastructure
+
+
+SPOS-314
+Title: Renewal enforcement — notices, soft lock, hard lock, reactivation
+Type: Task
+Story Points: 5
+Assignee: Backend Developer
+Priority: High
+Description: Implement the full renewal enforcement flow on the SuraPOS application side. License check middleware receives the days_remaining value from the license server and triggers the appropriate state. Each state must be persisted locally so the app behaves correctly even without a license server connection during the grace period. Cashiers must never see license warning messages — only Store Manager and above. Soft lock must block new sales but never block report access, data export, or audit log access.
+States:
+30+ days: normal operation, no indication
+14–30 days: yellow warning banner on manager screens + email
+0–14 days (expired): red banner, daily email, full operation continues (grace period)
+14 days post-expiry: SOFT LOCK — new sales blocked, all data accessible
+44 days post-expiry: HARD LOCK — login blocked, data export tools remain 90 days
+Reactivation: immediate on valid license key entry — no restart required
+Acceptance Criteria:
+
+Warning banner appears only for Store Manager role and above
+Cashier POS screen shows no license warnings at any stage
+Soft lock blocks POST /sales with clear "License expired" message
+Soft lock does NOT block GET /reports, GET /audit-log, POST /export
+Hard lock blocks login endpoint, shows renewal contact details
+Data export accessible for 90 days after hard lock confirmed
+Reactivation via new key takes effect within 60 seconds, no restart
+All license state transitions logged in local audit log
+Grace period persists correctly across server restarts
+
+
+SPOS-315
+Title: Super Admin live dashboard — WebSocket store cards
+Type: Task
+Story Points: 8
+Assignee: Frontend Lead
+Priority: Highest
+Description: Build the Super Admin Dashboard main screen. A grid of store cards — one per store across all organisations (for Super Admin) or all stores in the organisation (for Organisation Admin). Each card shows: store name, today's total SRD, transaction count, average basket, last sync timestamp, and online/offline status indicator. Cards update in real time via Laravel Echo WebSocket subscription — no page refresh needed. Clicking a card drills into that store's full detail view. Summary bar at top shows total across all stores combined.
+Acceptance Criteria:
+
+Store cards render correctly for all stores in scope
+Real-time update confirmed: complete a sale on POS, card updates within 1 second
+Online/offline indicator reflects store connectivity status
+Summary bar totals update in real time
+Clicking store card navigates to store detail view
+Super Admin sees all stores across all organisations
+Organisation Admin sees only their organisation's stores
+Cards render correctly with 1, 5, 20, and 50 stores (responsive grid)
+Loading skeleton shown while initial data fetches
+Reconnection handling — WebSocket drops and reconnects without page refresh
+
+
+SPOS-316
+Title: Consolidated report screens — cross-store dashboard
+Type: Task
+Story Points: 8
+Assignee: Frontend Developer
+Priority: High
+Description: Build all consolidated report screens for the Super Admin Dashboard. Each screen has a store selector (all stores or specific stores), date range selector with presets, summary cards, sortable data table, Recharts chart, and PDF/Excel export buttons. Reports load via TanStack Query with caching — switching between reports is instant if data is already cached. Export buttons show loading state while background job runs, notification appears with download link when ready.
+Screens: Cross-store Daily Sales, Monthly Sales Comparison (stores side by side), Custom Date Range, Top Products Network-wide, BTW Consolidated Report (Belastingdienst format), Custom Product Performance
+Acceptance Criteria:
+
+All six report screens built and displaying correct data
+Store selector works — all stores and individual store selection
+Date range presets working (Today, This Week, This Month, Last Month, Custom)
+Recharts charts rendering correctly with correct data points
+PDF export triggers background job and shows loading state
+Download notification appears when export ready
+Dutch and English column headers correct
+SRD formatting correct throughout
+TanStack Query caching confirmed — switching away and back to report is instant
+Reports accessible to Organisation Admin and above only
+
+
+SPOS-317
+Title: Organisation and store management screens
+Type: Task
+Story Points: 5
+Assignee: Frontend Developer
+Priority: High
+Description: Build the organisation and store management screens in the Super Admin Dashboard. Organisation list with search and filter. Organisation detail showing all stores, total sales, and status. Store list with status indicators. Add organisation wizard (name, type, BTW number, language, default BTW rate). Add store form (name, address, city, receipt header/footer, sync preference). Edit store settings with immediate Reverb push to connected terminals. Deactivate store with confirmation dialog showing impact.
+Acceptance Criteria:
+
+Organisation list renders all organisations with search
+Add organisation wizard creates org, tenant DB, and Organisation Admin account
+Welcome email confirmed sent on organisation creation
+Store list shows all stores with online/offline status
+Add store form validates all required fields
+Edit store settings saves and confirms Reverb broadcast to terminals
+Deactivate store shows confirmation with "X active terminals will be disconnected" count
+All screens accessible to Super Admin only
+Organisation Admin can manage their stores but not create organisations
+
+
+SPOS-318
+Title: User management screen — all roles
+Type: Task
+Story Points: 5
+Assignee: Frontend Developer
+Priority: High
+Description: Build the user management screen in the Super Admin Dashboard. User list with role filter and search. Add user form (name, email, role, store assignment for Store Manager/Cashier roles). Role selector shows only roles the current user can assign. 2FA status indicator per user. Deactivate user button with immediate session invalidation feedback (shows "User sessions terminated" confirmation). Password reset button sends email. Audit log link per user showing all their actions.
+Acceptance Criteria:
+
+User list renders with role filter and name search
+Add user form shows only assignable roles (cannot assign higher than own role)
+Store assignment field appears when Store Manager or Cashier role selected
+2FA status shown per user with badge (Enabled/Disabled/Mandatory)
+Government org users show 2FA as Mandatory with no toggle option
+Deactivate button shows confirmation, fires API, shows success with session count
+Password reset button sends email and shows confirmation
+Audit log link navigates to filtered audit log for that user
+Super Admin sees all users across all orgs
+Organisation Admin sees only users in their organisation
+
+
+SPOS-319
+Title: Z-Report End of Day screen — Super Admin view
+Type: Task
+Story Points: 5
+Assignee: Frontend Developer
+Priority: High
+Description: Build the End of Day and Z-Report screen in the Super Admin Dashboard — this is the store manager's primary screen for closing the register and syncing data. Daily summary panel with all totals. Cash reconciliation input section. Submit to Headquarters button with preview modal. 7-day history table with sync status per day. Re-submit failed day button. Print Z-Report button. Sync settings panel (choose Option A/B/C and set scheduled time). All three sync options must be configurable from this screen.
+Acceptance Criteria:
+
+Daily summary shows correct totals from current day's sales
+Cash reconciliation input updates discrepancy in real time
+Discrepancy shown in red, mandatory note field appears when mismatch
+Submit button disabled until reconciliation completed
+Submit preview modal shows: date, store, transaction count, total SRD, BTW total
+Submit triggers sync job and updates row to "Sent ✓ [time]" on success
+Failed sync row shows "Failed" badge with Re-submit button
+Re-submit queues retry job and updates status
+7-day history loads correctly from API
+Sync preference selector (Option A/B/C) saves to store settings
+Scheduled time picker appears when Option B selected
+Print Z-Report generates and downloads PDF
+
+
+SPOS-320
+Title: API key management and webhook configuration screens
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: Medium
+Description: Build the API integration management screens for the Super Admin Dashboard. API keys list showing all integrations with POS system name, last ping timestamp, and status. Create API key button generates key — modal shows full key once with copy button and warning it will not be shown again. Revoke key button with confirmation. Webhook configuration per integration — URL, event types selection (checkboxes), test webhook button. Webhook delivery log showing last 20 deliveries with response codes and timestamps.
+Acceptance Criteria:
+
+API key list shows all integrations with status
+Create key modal shows full key once with copy button
+Warning clearly states key is shown only once
+Key masked to last 4 characters after creation
+Revoke key button shows confirmation dialog before action
+Webhook URL input validates URL format
+Event type checkboxes working (sale.created, shift.closed, refund.issued)
+Test webhook button sends test payload and shows response in modal
+Delivery log shows last 20 entries with status, response code, and timestamp
+Re-trigger delivery button on failed entries
+
+
+SPOS-321
+Title: Audit log viewer screen
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Build the audit log viewer screen accessible to Auditor role and above. Searchable, filterable table of all audit log entries. Filter by event type, user, date range, and store. Each row shows: timestamp in AST, user name and role, event type, affected record type and ID, summary of change. Click row to expand full detail showing before and after values as formatted JSON diff. Export filtered audit log as signed PDF (Rekenkamer format) or CSV. Immutable — no edit or delete controls anywhere on this screen.
+Acceptance Criteria:
+
+Audit log table renders with all filter options
+Filter by event type working (sale.created, sale.voided, user.login, etc.)
+Filter by user name working
+Date range filter working
+Click row expands to show full before/after JSON diff
+Before/after diff formatted clearly (old value red, new value green)
+Export PDF button generates Rekenkamer-formatted signed PDF
+Export CSV button generates structured CSV
+No edit or delete controls anywhere on screen
+Auditor role can access — confirmed read-only, no actions possible
+Performance: 12 months of logs load in under 3 seconds with pagination
+
+
+SPOS-322
+Title: AI features v1 — anomaly detection, weekly summary, smart search, auto categorisation
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Medium
+Description: Implement the four v1 AI features using Laravel AI SDK (stable in Laravel 13). All AI jobs run as background queue jobs — they never block the API response. Use OpenAI GPT-4o as the primary model. Configure a fallback to return a graceful default if the AI service is unavailable — AI features must never cause the core POS to fail.
+Feature 1 — Anomaly detection: AnomalyCheckJob dispatched after every SaleCompleted event. Analyses: void frequency for cashier, discount amounts vs store average, off-hours activity. Sends notification to Store Manager if anomaly detected.
+Feature 2 — Weekly summary: WeeklySummaryJob runs every Monday 07:00 AST. Generates plain-language paragraph in manager's locale (Dutch or English). Delivered via dashboard notification and email.
+Feature 3 — Smart product search: ProductSearchService uses pgvector semantic similarity search. Generate embeddings for all products on creation/update. Search query embedded and compared against product embeddings. Returns semantically similar products even without exact name match.
+Feature 4 — Auto categorisation: ProductCategorisationJob triggered on new product creation. Suggests category and BTW rate based on product name. Returns suggestion to frontend as non-blocking API response.
+Acceptance Criteria:
+
+AnomalyCheckJob dispatches correctly after every sale
+Anomaly notification delivered to Store Manager within 2 minutes of detection
+WeeklySummaryJob scheduled at 07:00 AST Monday confirmed
+Summary notification and email delivered correctly
+Summary in correct language per manager locale (Dutch/English)
+pgvector search returns relevant products for Dutch and English queries
+pgvector search handles typos (rijst returns Bruine Rijst)
+Product categorisation suggestion returns within 10 seconds
+All AI jobs gracefully handle OpenAI API unavailability (log warning, skip silently)
+AI features confirmed non-blocking — POS unaffected if AI service down
+
+
+SPOS-323
+Title: pgvector setup — product embeddings generation and storage
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: Medium
+Description: Set up the pgvector PostgreSQL extension and implement the product embedding pipeline. Generate 1536-dimension embeddings for all products using OpenAI text-embedding-3-small model. Embeddings generated on product create and update via a queue job. Bulk embedding generation command for initial population of existing products. Vector similarity search query returning top-N products by cosine similarity.
+Acceptance Criteria:
+
+pgvector extension enabled in PostgreSQL Docker container
+vector(1536) column on products table confirmed
+Embedding generated and stored on product create
+Embedding regenerated on product name update
+Bulk embedding command generates for all products without timeout
+Vector similarity search returns correct top-5 results for test queries
+Similarity search completes in under 200ms on 1,000 products
+Search handles Dutch and English queries correctly
+
+
+SPOS-324
+Title: Dutch/English i18n — full dashboard translation
+Type: Task
+Story Points: 3
+Assignee: Frontend Developer
+Priority: High
+Description: Apply complete Dutch and English translations to all Super Admin Dashboard screens. All navigation labels, table column headers, button text, error messages, confirmation dialogs, notification messages, report labels, and status badges must have translations in both nl.json and en.json. Language switches instantly per user preference stored in their profile. Date formatting follows locale convention — DD-MM-YYYY for Dutch. SRD number formatting follows Dutch convention (comma as decimal separator for Dutch locale).
+Acceptance Criteria:
+
+All dashboard screens fully translated in both Dutch and English
+Language switch works instantly without page reload
+Date format changes correctly per locale (Dutch: 23-03-2026, English: 03/23/2026)
+SRD number format correct per locale (Dutch: SRD 1.234,56 / English: SRD 1,234.56)
+No hardcoded Dutch or English strings remaining in any component
+Translation keys consistent with POS app (same key file structure)
+Missing translation key fallback to English (not blank space)
+Right-to-left layout not needed (Suriname languages are LTR)
+
+
+SPOS-325
+Title: Phase 3 integration testing — full platform connectivity
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Highest
+Description: Write and run comprehensive integration tests covering all Phase 3 workflows end-to-end. Focus on cross-system interactions: sale on POS → sync → appears in dashboard, external API push → appears in dashboard, Z-Report → sync → Rekenkamer export, webhook delivery → retry on failure, license expiry → soft lock → reactivation. All tests run against real databases (not mocks) with proper tenant isolation verification.
+Test scenarios to cover:
+
+Complete sale on POS → verify in Super Admin Dashboard via WebSocket
+External POS POST /v1/sales → verify in dashboard
+Z-Report submission → sync job queued → data appears in dashboard
+Webhook delivery → simulate 500 response → verify retry schedule
+License expired → verify soft lock blocks sales, allows report access
+License reactivated → verify immediate unlock
+Cross-tenant isolation → verify org A cannot access org B data
+USB export → import on dashboard → verify identical to synced data
+Anomaly detection → unusual void pattern → verify manager notification
+Acceptance Criteria:
+All test scenarios pass
+Cross-tenant isolation confirmed (critical — must pass before Phase 4)
+WebSocket update latency under 1 second confirmed by test
+Retry schedule fires at correct intervals confirmed
+Soft lock allows reports, blocks sales confirmed
+All tests run in CI/CD pipeline
+Tests complete in under 10 minutes total
+
+
+SPOS-326
+Title: Phase 3 staging deployment and client dashboard preview
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Deploy Phase 3 to the staging environment with full end-to-end connectivity — POS Electron app connected to local staging server, local server syncing to cloud staging dashboard. Seed multiple organisations and stores with realistic data. Create demo accounts at each role level. Prepare a 30-minute demo script showing the complete workflow: sale on POS → appears in dashboard → Z-Report → Rekenkamer export → external API push → dashboard update. Present to client for Phase 3 sign-off.
+Acceptance Criteria:
+
+Staging environment fully deployed and connected end-to-end
+POS Electron app connects to staging server successfully
+Sales on POS appear in Super Admin Dashboard
+Z-Report and sync working on staging
+Multiple organisations and stores seeded with realistic data
+Demo accounts at all role levels documented and working
+Demo script prepared and rehearsed
+Client sign-off obtained before Phase 4 begins
+
+
+Phase 4 — Integration, Testing, UAT & Go-Live (5 Weeks / 25 Working Days)
+Epic: SPOS-EPIC-04 — Quality Assurance, Security, Go-Live
+
+SPOS-401
+Title: End-to-end integration testing — all three layers connected
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Highest
+Description: Write and execute the complete end-to-end test suite covering all three platform layers working together. Every critical user journey from the proposal must have a corresponding automated test. Tests run against a production-equivalent environment — same Docker configuration, same database setup, same Redis configuration. No mocks permitted in these tests.
+Critical journeys to test:
+
+Cashier login → sell screen → scan barcode → add to cart → apply discount → cash payment → receipt print → today's sales panel shows updated total
+Store Manager → Z-Report → cash reconciliation → submit → Super Admin Dashboard updates
+Store Manager → exchange rate fetch → lock → complete sale → verify rate stored on sale record
+Super Admin → add organisation → tenant DB created → Organisation Admin email received → login works
+Third-party POS → POST /v1/sales → appears in dashboard → webhook delivered
+License expiry → grace period warnings → soft lock → reactivation
+USB export → physical file verified encrypted → import on dashboard → data identical
+5-day offline simulation → reconnect → all days sync in order
+Acceptance Criteria:
+All critical journeys pass in automated tests
+Tests run on production-equivalent Docker environment
+No mocks used anywhere in these tests
+All tests pass in CI/CD pipeline
+Test run completes in under 15 minutes
+Any failure blocks deployment to production
+
+
+SPOS-402
+Title: OWASP Top 10 security testing and compliance report
+Type: Task
+Story Points: 8
+Assignee: Backend Lead
+Priority: Highest
+Description: Conduct systematic security testing against all OWASP Top 10 vulnerabilities. Test every input field, every API endpoint, and every authentication flow. Use OWASP ZAP (free automated scanner) for initial scan, then manually verify and test each finding. Document every test performed, the result, and any remediation applied. Produce the final signed OWASP Top 10 Compliance Report as a PDF deliverable — this is a contractual deliverable to the client.
+OWASP Top 10 to test (2021 version):
+A01 Broken Access Control — test all role boundaries, attempt cross-tenant access
+A02 Cryptographic Failures — verify TLS 1.3, AES-256, bcrypt, no plain text secrets
+A03 Injection — SQL injection on all inputs, command injection, LDAP injection
+A04 Insecure Design — review auth flows, session management, business logic
+A05 Security Misconfiguration — Docker config, headers, error messages, debug mode
+A06 Vulnerable Components — dependency scan, check all packages against CVE database
+A07 Auth and Session Failures — brute force, session fixation, token expiry
+A08 Software and Data Integrity — verify IonCube, Electron code signing
+A09 Logging and Monitoring — verify audit log completeness, alert triggers
+A10 Server-Side Request Forgery — test webhook URLs, any URL parameters
+Acceptance Criteria:
+
+All 10 OWASP categories tested with documented results
+Zero critical or high severity findings remaining unresolved
+Medium findings either resolved or documented with accepted risk reason
+OWASP ZAP automated scan completed and results reviewed
+All SQL injection test attempts confirmed blocked
+Cross-tenant access attempts confirmed blocked
+Compliance report PDF produced and signed
+Report reviewed by second team member before delivery to client
+
+
+SPOS-403
+Title: BTW accuracy test suite execution and sign-off
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: Highest
+Description: Run the complete BTW accuracy test suite (from SPOS-204) against the production-equivalent environment and formally document the results. All 50+ test scenarios must pass. Additionally run 10 manual end-to-end BTW verification tests — create real sales in the staging environment, export the BTW report, and manually verify the totals against hand-calculated expected values. Any discrepancy must be investigated and resolved before go-live sign-off.
+Acceptance Criteria:
+
+All 50+ BTW unit tests pass on production-equivalent environment
+10 manual end-to-end BTW verification tests completed
+Manual test results documented with expected vs actual values
+Zero discrepancies between system BTW totals and manually calculated totals
+BTW exempt products confirmed never generate BTW amount
+Mixed BTW rate sales (some 10%, some 0%) produce correct split
+Discount-then-BTW calculation order verified correct
+Results document signed off by developer and shared with client
+
+
+SPOS-404
+Title: Performance and load testing — 50 concurrent stores
+Type: Task
+Story Points: 5
+Assignee: Backend Lead
+Priority: High
+Description: Run load tests simulating the maximum expected concurrent usage. Use k6 or Apache JMeter to simulate concurrent users and stores. Test API performance under load, database query times, WebSocket connection handling, and queue processing throughput. Identify and fix any query that exceeds 200ms under load before go-live.
+Load test scenarios:
+
+10 concurrent POS terminals all completing sales simultaneously
+50 stores syncing Z-Report data simultaneously
+100 concurrent Super Admin Dashboard users with WebSocket connections
+1,000 API calls per minute from third-party POS integration
+Report generation for 12 months of data with 10 concurrent requests
+Acceptance Criteria:
+All API endpoints respond under 200ms at expected load
+Database queries all under 200ms confirmed by query log review
+50 concurrent Z-Report syncs complete without data corruption
+WebSocket handles 100 concurrent connections without degradation
+Queue processes 1,000 jobs per minute without backlog growing
+No errors or timeouts at simulated peak load
+Slow query log reviewed and all slow queries optimised
+Load test results documented with before/after on any optimisations
+
+
+SPOS-405
+Title: Offline fallback testing — simulated connectivity outages
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Test all five layers of the offline fallback chain by simulating real connectivity outages in the staging environment. Physically disconnect the local server from the internet (or use network rules to block outbound connections) and verify the system behaves correctly at each fallback layer. Document the exact behaviour at each stage including what the manager sees on screen.
+Test scenarios:
+
+2-minute outage: verify auto-retry triggers, yellow indicator shows
+2-hour outage: verify retry schedule correct, data queues without loss
+End of day during outage: verify Z-Report runs locally, sync queues
+5-day outage: verify all 5 days queue correctly, sync in order on reconnect
+USB export during outage: generate file, verify encrypted, import on cloud dashboard
+License server unreachable: verify 72-hour grace mode activates, app continues
+Acceptance Criteria:
+2-minute outage: zero data loss, auto-retry fires correctly
+Yellow sync indicator shows during outage
+Z-Report runs correctly during outage, queues sync job
+5-day outage resolves correctly — all 5 days appear in dashboard in order
+USB file is AES-256 encrypted (verified as unreadable binary)
+USB import on dashboard produces identical result to normal sync
+License server unreachable: 72-hour grace confirmed, no lockout
+All test scenarios documented with screenshots for client reference
+
+
+SPOS-406
+Title: IonCube encoding — production codebase preparation
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: High
+Description: Encode the complete Laravel backend codebase with IonCube before production delivery. Set up the IonCube Loader in the Docker container. Test that the encoded application runs identically to the unencoded version. Verify that the PHP source files are unreadable after encoding. Document the encoding process and build pipeline so future updates can be encoded the same way. The unencoded source code stays in the private GitHub repository — only encoded files are delivered to clients.
+Acceptance Criteria:
+
+IonCube encoder license acquired and configured
+All PHP files in /backend/app, /backend/routes, /backend/database encoded
+IonCube Loader installed in Docker PHP container
+Encoded application boots and runs all features correctly
+Encoded PHP files confirmed unreadable as plain text
+All 50+ BTW unit tests pass on encoded codebase
+OWASP tests pass on encoded codebase
+Encoding step documented and repeatable for future releases
+Build script created: npm run encode:production
+
+
+SPOS-407
+Title: Electron production build — code signing and auto-update
+Type: Task
+Story Points: 5
+Assignee: Frontend Lead
+Priority: High
+Description: Prepare the Electron app for production distribution. Configure code signing for Windows (.exe). Set up electron-updater for automatic update delivery — app checks GitHub Releases on startup, downloads update in background, prompts manager to install. Produce the final production .exe installer tested on a clean Windows machine. Verify DevTools are disabled, full-screen mode works, and all environment variables are correctly embedded for the production server URL.
+Acceptance Criteria:
+
+Production .exe installer built via GitHub Actions Windows runner
+Code signing certificate applied to .exe
+Windows SmartScreen warning does not appear on signed installer
+Auto-update checks GitHub Releases on startup
+Update downloads in background without interrupting POS operation
+Manager sees update prompt with Install and Later options
+DevTools confirmed inaccessible in production build (F12, right-click disabled)
+Full-screen mode activates on startup confirmed
+Production server URL correctly embedded (not localhost)
+Installer tested on clean Windows machine (no prior installation)
+Installer file size documented
+
+
+SPOS-408
+Title: Staging environment — production-equivalent setup with UAT seed data
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: Highest
+Description: Set up the final UAT staging environment that the client will use for acceptance testing. Must be production-equivalent — same Docker configuration, same database setup, same Electron app version pointing to staging server. Seed with comprehensive realistic Surinamese supermarket data. Create accounts at every role level with clear credentials document. Prepare UAT checklist document listing every feature from the proposal with test steps and expected result. Client works through this checklist and marks each item as Pass or Fail.
+Seed data requirements:
+
+3 organisations (1 supermarket chain with 2 stores, 1 government department)
+200+ products with Dutch and English names, realistic SRD prices, correct BTW rates
+90 days of historical sales data (realistic daily patterns including weekends)
+At least 2 cashier accounts, 2 store manager accounts, 1 auditor account, 1 super admin
+1 external POS integration configured with test API key
+Acceptance Criteria:
+Staging environment fully deployed and all services running
+Electron .exe installer for staging built and tested
+All seed data loaded without errors
+All user accounts working with documented credentials
+UAT checklist document prepared (one row per feature, test steps, expected result)
+Client credentials and staging URL delivered securely
+UAT sign-off template prepared (client signs each section)
+
+
+SPOS-409
+Title: Client UAT — support, bug fixes, and change requests
+Type: Task
+Story Points: 8
+Assignee: Full Team
+Priority: Highest
+Description: Support the client through the User Acceptance Testing period on the staging environment. Client works through the UAT checklist and reports any items as Pass, Fail, or Change Request. Bug fixes (UAT failures) must be resolved and retested within 48 hours. Change requests (new requirements not in the original proposal) are logged, assessed, and either included if minor (under 2 hours) or quoted separately. UAT period target is 5 working days. UAT is not complete until all checklist items are marked Pass and the client signs the UAT sign-off document.
+Acceptance Criteria:
+
+UAT checklist completed by client on staging environment
+All Fail items investigated and resolved within 48 hours of report
+Resolved items retested by client and confirmed as Pass
+Minor change requests (under 2 hours) incorporated without extra charge
+Significant change requests documented and quoted separately
+Zero outstanding Fail items when UAT sign-off is requested
+Client signs UAT sign-off document — this is the gate to production deployment
+All UAT bug fixes also applied to main branch via pull request
+
+
+SPOS-410
+Title: WBP-S compliance documentation — Dutch language deliverable
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: High
+Description: Produce all required legal and compliance documentation in Dutch as a project deliverable. Documents must be reviewed for accuracy against current WBP-S requirements. Delivered as PDF documents to the client.
+Documents to produce:
+
+Privacybeleid (Privacy Policy) — what personal data is collected, how it is used, retention periods, data subject rights under WBP-S
+Verwerkersovereenkomst (Data Processing Agreement) — defines responsibilities between client (data controller) and us (data processor), required under WBP-S for government clients
+Register van Verwerkingsactiviteiten (Record of Processing Activities) — lists all personal data processing activities, legal basis, retention periods
+Datalekprocedure (Data Breach Procedure) — steps to follow if a data breach occurs, notification requirements under WBP-S
+Acceptance Criteria:
+
+
+All four documents produced in Dutch
+Privacy Policy covers all data collected by SuraPOS (customer names, phones, transaction data)
+Verwerkersovereenkomst correctly identifies parties and responsibilities
+Data breach procedure includes notification timeline requirements
+Documents reviewed by team lead before delivery
+Delivered as signed PDF documents
+English summaries provided alongside Dutch primary documents
+
+
+SPOS-411
+Title: Production Docker packaging — store installation package
+Type: Task
+Story Points: 3
+Assignee: Backend Developer
+Priority: High
+Description: Prepare the final production Docker package that will be installed on client store servers. Create a single ZIP archive containing: docker-compose.yml (production configuration), .env.example with all required variables documented, automated setup script (setup.bat for Windows, setup.sh for Linux) that installs Docker if not present and starts all containers, Dutch and English installation guide PDF, hardware requirements document. The setup script must work on a clean Windows machine with a single double-click.
+Acceptance Criteria:
+
+setup.bat tested on clean Windows 10 and Windows 11 machines
+Docker installs automatically if not present
+All containers start correctly on first run
+Database migrations run automatically on first start
+First-run setup wizard prompts for license key and server IP
+Installation completes in under 15 minutes on standard hardware
+Installation guide PDF clear enough for non-technical store IT staff
+Dutch and English versions of installation guide both produced
+Hardware requirements document specifies minimum specs clearly
+
+
+SPOS-412
+Title: First store on-site installation — go-live support
+Type: Task
+Story Points: 5
+Assignee: Backend Lead + Frontend Lead
+Priority: Highest
+Description: Support the installation of SuraPOS in the first real store location. If this is done remotely (from India via TeamViewer or AnyDesk), prepare a step-by-step remote installation guide and be available in real time during the installation. If on-site visit is agreed, coordinate travel and be present on the day. Test all hardware on actual store equipment: receipt printer, barcode scanner, touchscreen, local network. Confirm the Z-Report → sync → Super Admin Dashboard full workflow works on live production data.
+Acceptance Criteria:
+
+Local server Docker installation completed on store hardware
+Electron app installed on all POS terminals
+Receipt printer printing correctly (test receipt on actual EPSON or equivalent)
+USB barcode scanner adding products to cart correctly
+Touchscreen interaction working correctly on all terminals
+Store Manager account set up and logged in
+Cashier accounts set up for all cashiers
+First test sale completed end-to-end (sale → receipt print → appears in dashboard)
+Z-Report submitted and data visible in Super Admin Dashboard
+Store Manager and cashiers briefed on basic operation
+On-site issues documented and resolved or scheduled for follow-up
+
+
+SPOS-413
+Title: Staff training — cashiers (POS operation)
+Type: Task
+Story Points: 2
+Assignee: Frontend Lead
+Priority: High
+Description: Deliver cashier training on the SuraPOS POS application. Training covers: login and logout, adding products by tap and barcode scan, applying discounts, holding and restoring bills, adding customers, completing cash and card payments, printing receipts, and what to do if something goes wrong (printer offline, scanner not working, screen frozen). Training delivered in Dutch (primary) and English. Produce a one-page quick reference card for cashiers to keep at the till.
+Acceptance Criteria:
+
+Training session delivered to all cashiers (remote via video call or on-site)
+All cashiers can complete a full sale independently after training
+All cashiers know how to hold and restore a bill
+All cashiers know the basic troubleshooting steps
+One-page quick reference card produced in Dutch and English
+Quick reference card printed and laminated for each till
+Training session recorded (video) for future new staff onboarding
+
+
+SPOS-414
+Title: Staff training — store managers (dashboard, Z-Report, reports)
+Type: Task
+Story Points: 2
+Assignee: Backend Lead
+Priority: High
+Description: Deliver store manager training on the SuraPOS manager features. Training covers: daily exchange rate lock, viewing and running reports, the Z-Report end of day process including cash reconciliation, submitting data to headquarters, the USB export fallback procedure, managing cashier accounts, adjusting product prices, viewing the sync status indicator, and understanding the license renewal notice when it appears. Produce a manager user guide PDF in Dutch and English.
+Acceptance Criteria:
+
+Training session delivered to all store managers
+All managers can run the Z-Report and submit to headquarters independently
+All managers understand the USB export fallback procedure
+All managers know how to lock the daily exchange rate
+All managers know how to read the sync status indicator
+Manager user guide PDF produced in Dutch and English (minimum 15 pages)
+Managers know what to do when they see a license renewal warning
+Training session recorded for future manager onboarding
+
+
+SPOS-415
+Title: Go-live monitoring — first week post-launch
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: High
+Description: Monitor the production system intensively during the first week of live operation. Daily check of Laravel Telescope and Horizon dashboards for errors, slow queries, and failed jobs. Review audit logs for any unexpected patterns. Monitor WebSocket connection stability. Check sync status for each store every morning — confirm previous day's Z-Report data arrived. Be available within 2 hours during store operating hours (adjust for AST timezone from India — AST is UTC-3, IST is UTC+5:30, so Suriname business hours are approximately 14:30–23:30 IST).
+Daily checklist for first 7 days:
+
+Check Laravel Horizon — zero failed jobs
+Check error log — zero 500 errors in last 24 hours
+Check each store's sync status — yesterday's data present in dashboard
+Check BTW totals for reasonableness
+Check license server — all installations validating correctly
+Check WebSocket — all stores showing as connected
+Acceptance Criteria:
+Daily monitoring completed for 7 consecutive days post-launch
+All critical issues (POS cannot sell, data loss) resolved within 2 hours
+All non-critical issues resolved within 24 hours
+Daily monitoring summary emailed to client each morning
+Zero data loss incidents in first week
+All stores syncing correctly at end of each day
+Monitoring summary report produced at end of week 1
+
+
+SPOS-416
+Title: Bug fixes and final polish — UAT remediation and launch preparation
+Type: Task
+Story Points: 5
+Assignee: Full Team
+Priority: High
+Description: Ongoing ticket for bug fixes identified during UAT (SPOS-409) and final polish items before go-live. This is a buffer ticket — not all bugs can be anticipated. All production code changes must go through pull request review even during this phase. No direct commits to main. All fixes must be retested on staging before deployment to production.
+Acceptance Criteria:
+
+All UAT failures resolved and retested as Pass by client
+No critical bugs outstanding at go-live
+All pull requests reviewed by second developer before merge
+Regression tests run after every fix to confirm no new issues introduced
+Change log document maintained listing every fix applied during this phase
+Final production deployment completed from main branch only
+Production deployment verified working with smoke test (one complete sale end to end)
+
+
+SPOS-417
+Title: Post-launch documentation package — client handover
+Type: Task
+Story Points: 3
+Assignee: Backend Lead
+Priority: High
+Description: Produce and deliver the complete post-launch documentation package to the client. This is the final project deliverable alongside the working software. All documents in Dutch (primary) and English.
+Documents to deliver:
+
+System Architecture Overview — how the system works, what each component does
+Manager User Guide — full PDF (from SPOS-414)
+Cashier Quick Reference Card (from SPOS-413)
+Installation Guide — Docker setup, Electron installer, server requirements
+OWASP Compliance Report (from SPOS-402)
+WBP-S Documentation Package (from SPOS-410)
+API Integration Guide — for any future third-party POS connections
+Support & Escalation Procedure — how to report issues, response times
+Backup Verification Procedure — how to confirm backups are working
+License Renewal Guide — how to renew before expiry
+Acceptance Criteria:
+
+
+All 10 documents produced in Dutch and English
+Documents delivered as PDF via secure link or physical USB drive
+Client confirms receipt of all documents
+All documents reviewed for accuracy before delivery
+API Integration Guide includes sample code and Postman collection link
+Support procedure document includes your contact details and response time commitment

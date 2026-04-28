@@ -1,0 +1,614 @@
+openapi: 3.1.0
+
+info:
+  title: Josbin POS Open Integration API
+  version: 1.0.0
+  description: |
+    ## Josbin POS Layer 3 — Open Integration API
+
+    Allows third-party POS systems to push sales data to Josbin POS and pull reports.
+    All monetary values are in **SRD (Surinamese Dollar)**.
+    All timestamps are in **AST (UTC-3, America/Paramaribo)**.
+
+    ### Authentication
+    Every request must include an `X-API-Key` header with a valid API key.
+    API keys are scoped to a single store. Cross-store access is not permitted.
+
+    ```
+    X-API-Key: spos_live_xxxxxxxxxxxxxxxxxxxx
+    ```
+
+    ### Idempotency
+    `POST /v1/sales` and `POST /v1/sales/batch` are idempotent by `sale_ref`.
+    If you submit the same `sale_ref` for the same store twice, the second call
+    returns the existing record with HTTP 200 instead of 201. This makes
+    offline catch-up safe — replay your entire queue without worrying about duplicates.
+
+    ### Rate Limits
+    - 1,000 requests per minute per API key
+    - Batch endpoint: max 500 sales per request
+
+    ### BTW (VAT)
+    BTW is re-calculated server-side using the `btw_rate` you provide per line item.
+    The server stores and audits the BTW separately. For BTW-exempt items, set
+    `btw_exempt: true` and `btw_rate: 0`.
+
+    ### Webhooks
+    Configure an outbound webhook URL when creating your API key.
+    Josbin POS will POST JSON to your URL for each subscribed event.
+    Retries: exponential backoff, up to 5 attempts over 24 hours.
+
+    Supported events: `sale.created`, `shift.closed`, `refund.issued`
+
+  contact:
+    name: Josbin POS Support
+    email: support@josbin-pos.sr
+
+servers:
+  - url: https://api.josbin-pos.sr/v1
+    description: Production
+  - url: https://sandbox.josbin-pos.sr/v1
+    description: Sandbox (test keys, no real data)
+
+security:
+  - ApiKey: []
+
+# ─── Paths ────────────────────────────────────────────────────────────────────
+paths:
+
+  /sales:
+    post:
+      operationId: createSale
+      summary: Submit a single sale
+      description: |
+        Submit one completed sale from a third-party POS system.
+
+        **Idempotent:** if `sale_ref` already exists for this store, returns the
+        existing record with HTTP 200. Safe to retry on network failure.
+      tags: [Sales]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleRequest'
+            examples:
+              basic:
+                summary: Cash sale with two items
+                value:
+                  sale_ref: "POS-2026-00123"
+                  occurred_at: "2026-04-13T14:35:00-03:00"
+                  payment_method: cash
+                  items:
+                    - product_name: "Maggi Bouillon 10x"
+                      unit_price: 45.00
+                      quantity: 2
+                      btw_rate: 10
+                      btw_exempt: false
+                    - product_name: "Rijst Parboiled 5kg"
+                      unit_price: 89.50
+                      quantity: 1
+                      btw_rate: 0
+                      btw_exempt: true
+      responses:
+        '201':
+          description: Sale created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponse'
+        '200':
+          description: Sale already exists — returned existing record (idempotent)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SaleResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /sales/batch:
+    post:
+      operationId: batchSales
+      summary: Submit multiple sales (offline catch-up)
+      description: |
+        Submit up to 500 sales in one request. Designed for offline catch-up
+        after connectivity is restored.
+
+        - Each sale is processed independently — one failure does not abort the batch.
+        - Already-existing `sale_ref` values are silently skipped (counted as `skipped`).
+        - Failed items are described in the `errors` array.
+      tags: [Sales]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sales]
+              properties:
+                sales:
+                  type: array
+                  maxItems: 500
+                  items:
+                    $ref: '#/components/schemas/SaleRequest'
+      responses:
+        '200':
+          description: Batch processed (check `failed` count for errors)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  /reports/sales:
+    get:
+      operationId: getSalesReport
+      summary: List completed sales
+      description: |
+        Returns paginated completed sales for the API key's store within a date range.
+        Maximum range: **31 days** per request. For longer ranges, paginate using `date_from`.
+      tags: [Reports]
+      parameters:
+        - name: date_from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-04-01"
+          description: Start date (inclusive), format YYYY-MM-DD (AST)
+        - name: date_to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-04-30"
+          description: End date (inclusive), format YYYY-MM-DD (AST)
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 200
+            default: 50
+      responses:
+        '200':
+          description: Paginated sales list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSales'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /reports/summary:
+    get:
+      operationId: getReportSummary
+      summary: Aggregated totals for a date range
+      description: |
+        Returns aggregated financial totals for the API key's store.
+        Includes BTW breakdown by rate — useful for tax filing.
+      tags: [Reports]
+      parameters:
+        - name: date_from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-04-01"
+        - name: date_to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          example: "2026-04-30"
+      responses:
+        '200':
+          description: Aggregated summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+# ─── Components ───────────────────────────────────────────────────────────────
+components:
+
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        API key issued in the Josbin POS Super Admin Dashboard under API Keys.
+        Format: `spos_live_<40-char-hex>` (production) or `spos_sandbox_<40-char-hex>` (sandbox).
+
+  schemas:
+
+    SaleRequest:
+      type: object
+      required: [sale_ref, occurred_at, payment_method, items]
+      properties:
+        sale_ref:
+          type: string
+          maxLength: 100
+          description: Your POS system's unique sale identifier. Used for idempotency.
+          example: "POS-2026-00123"
+        occurred_at:
+          type: string
+          format: date-time
+          description: When the sale occurred, in AST (UTC-3). ISO 8601 with timezone offset.
+          example: "2026-04-13T14:35:00-03:00"
+        payment_method:
+          type: string
+          enum: [cash, card, mixed]
+          description: Primary payment method.
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: '#/components/schemas/SaleItemRequest'
+
+    SaleItemRequest:
+      type: object
+      required: [product_name, unit_price, quantity, btw_rate]
+      properties:
+        product_name:
+          type: string
+          maxLength: 200
+          description: Product name as it should appear in reports and receipts.
+          example: "Maggi Bouillon 10x"
+        unit_price:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Unit price in SRD (excluding BTW for BTW-inclusive pricing, the full inclusive price for BTW-exempt).
+          example: 45.00
+        quantity:
+          type: number
+          format: decimal
+          minimum: 0.001
+          description: Quantity sold. Supports up to 3 decimal places (e.g. 0.500 kg).
+          example: 2
+        btw_rate:
+          type: number
+          format: decimal
+          minimum: 0
+          maximum: 100
+          description: BTW percentage to apply. Use 10 for standard rate, 0 for exempt items.
+          example: 10
+        btw_exempt:
+          type: boolean
+          default: false
+          description: True if this item is BTW-exempt (basic foodstuffs, medicine). BTW will not be calculated regardless of btw_rate.
+        discount_srd:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Line-item discount in SRD (applied before BTW). Optional.
+          example: 5.00
+
+    SaleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Josbin POS internal sale ID.
+        sale_ref:
+          type: string
+          description: Your original sale_ref, echoed back.
+        store_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+        payment_method:
+          type: string
+          enum: [cash, card, mixed]
+        subtotal_srd:
+          type: string
+          description: Total before discounts, as a decimal string. SRD.
+          example: "179.00"
+        discount_srd:
+          type: string
+          description: Total discounts applied. SRD.
+          example: "5.00"
+        btw_srd:
+          type: string
+          description: Total BTW (VAT) amount. SRD.
+          example: "15.82"
+        total_srd:
+          type: string
+          description: Final total paid by customer. SRD.
+          example: "174.00"
+        status:
+          type: string
+          enum: [completed, voided]
+        created_at:
+          type: string
+          format: date-time
+
+    BatchResponse:
+      type: object
+      properties:
+        created:
+          type: integer
+          description: Number of new sales created.
+          example: 47
+        skipped:
+          type: integer
+          description: Number of sales skipped (already existed — idempotent).
+          example: 2
+        failed:
+          type: integer
+          description: Number of sales that failed validation or processing.
+          example: 1
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              index:
+                type: integer
+                description: Zero-based index in the submitted sales array.
+              sale_ref:
+                type: string
+                nullable: true
+              message:
+                type: string
+
+    PaginatedSales:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/SaleResponse'
+              - type: object
+                properties:
+                  items:
+                    type: array
+                    description: Line items included in this sale.
+                    items:
+                      $ref: '#/components/schemas/SaleItemResponse'
+        current_page:
+          type: integer
+        last_page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+
+    SaleItemResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_name_snapshot:
+          type: string
+        unit_price_srd:
+          type: string
+        quantity:
+          type: string
+        btw_rate:
+          type: string
+        btw_srd:
+          type: string
+        line_total_srd:
+          type: string
+
+    SummaryResponse:
+      type: object
+      properties:
+        store_id:
+          type: string
+          format: uuid
+        date_from:
+          type: string
+          format: date
+        date_to:
+          type: string
+          format: date
+        transaction_count:
+          type: integer
+          example: 312
+        total_sales:
+          type: string
+          description: Total revenue in SRD.
+          example: "47831.50"
+        total_btw:
+          type: string
+          description: Total BTW collected in SRD.
+          example: "4348.32"
+        total_discounts:
+          type: string
+          description: Total discounts given in SRD.
+          example: "823.00"
+        avg_basket:
+          type: string
+          description: Average basket size in SRD.
+          example: "153.31"
+        btw_breakdown:
+          type: array
+          description: BTW totals grouped by rate. Use this for Belastingdienst Suriname filing.
+          items:
+            type: object
+            properties:
+              btw_rate:
+                type: string
+                example: "10.00"
+              btw_exempt:
+                type: boolean
+              btw_total:
+                type: string
+                example: "4348.32"
+              net_base:
+                type: string
+                description: Net sales base (excluding BTW) for this rate.
+                example: "43483.18"
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "ValidationError"
+        message:
+          type: string
+          example: "The sale_ref field is required."
+        errors:
+          type: object
+          description: Field-level validation errors (Laravel format).
+          additionalProperties:
+            type: array
+            items:
+              type: string
+
+  responses:
+    Unauthorized:
+      description: Invalid or missing API key
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Unauthorized. Provide a valid X-API-Key header."
+
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    RateLimited:
+      description: Too many requests
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retrying
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: "Too Many Attempts."
+
+# ─── Tags ─────────────────────────────────────────────────────────────────────
+tags:
+  - name: Sales
+    description: Submit sales from third-party POS systems
+  - name: Reports
+    description: Pull sales data and financial summaries
+
+# ─── Webhooks ─────────────────────────────────────────────────────────────────
+webhooks:
+  sale.created:
+    post:
+      summary: Sale created event
+      description: |
+        Fired when any sale is completed in Josbin POS (native POS or API submission).
+        Configure your webhook URL in the API Keys section of the Super Admin Dashboard.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "sale.created"
+                store_id:
+                  type: string
+                  format: uuid
+                occurred_at:
+                  type: string
+                  format: date-time
+                data:
+                  $ref: '#/components/schemas/SaleResponse'
+      responses:
+        '200':
+          description: Webhook acknowledged (any 2xx is accepted)
+
+  shift.closed:
+    post:
+      summary: Z-Report / shift closed event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "shift.closed"
+                store_id:
+                  type: string
+                  format: uuid
+                closed_at:
+                  type: string
+                  format: date-time
+                totals:
+                  $ref: '#/components/schemas/SummaryResponse'
+      responses:
+        '200':
+          description: Webhook acknowledged
+
+  refund.issued:
+    post:
+      summary: Refund issued event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  example: "refund.issued"
+                store_id:
+                  type: string
+                  format: uuid
+                refunded_at:
+                  type: string
+                  format: date-time
+                original_sale_id:
+                  type: string
+                  format: uuid
+                amount_srd:
+                  type: string
+                  example: "89.50"
+      responses:
+        '200':
+          description: Webhook acknowledged

@@ -1,0 +1,147 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test:
+    name: Laravel PHPUnit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: josbin_pos_test
+          POSTGRES_USER: josbin_pos
+          POSTGRES_PASSWORD: secret
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo, pdo_pgsql, pgsql, redis, bcmath, mbstring, zip, intl, pcntl
+          coverage: xdebug
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install PHP dependencies
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Copy .env
+        working-directory: backend
+        run: cp .env.example .env.testing
+
+      - name: Configure test environment
+        working-directory: backend
+        run: |
+          sed -i 's/DB_HOST=postgres/DB_HOST=127.0.0.1/' .env.testing
+          sed -i 's/DB_DATABASE=josbin_pos/DB_DATABASE=josbin_pos_test/' .env.testing
+          sed -i 's/REDIS_HOST=redis/REDIS_HOST=127.0.0.1/' .env.testing
+          sed -i 's/REDIS_PASSWORD=secret/REDIS_PASSWORD=/' .env.testing
+
+      - name: Generate app key
+        working-directory: backend
+        run: php artisan key:generate --env=testing
+
+      - name: Enable pgvector
+        run: psql -h 127.0.0.1 -U josbin_pos -d josbin_pos_test -c "CREATE EXTENSION IF NOT EXISTS vector;" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+        env:
+          PGPASSWORD: secret
+
+      - name: Run migrations
+        working-directory: backend
+        run: php artisan migrate --env=testing --no-interaction
+        env:
+          APP_ENV: testing
+
+      - name: Run PHPUnit tests
+        working-directory: backend
+        run: php artisan test --parallel --coverage-clover coverage.xml
+        env:
+          APP_ENV: testing
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          file: backend/coverage.xml
+          flags: backend
+
+  security-scan:
+    name: Dependency vulnerability scan
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install dependencies
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Run security audit
+        working-directory: backend
+        run: composer audit
+
+  lint:
+    name: PHP Code Style
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: cs2pr, phpcs
+
+      - name: Install dependencies
+        working-directory: backend
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Check PSR-12 code style
+        working-directory: backend
+        run: vendor/bin/phpcs --standard=PSR12 app/ --report=checkstyle | cs2pr
+        continue-on-error: true

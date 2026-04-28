@@ -1,0 +1,72 @@
+name: Frontend CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  test:
+    name: Vitest Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Type check
+        working-directory: frontend
+        run: npm run type-check
+
+      - name: Run Vitest
+        working-directory: frontend
+        run: npm run test:run -- --reporter=verbose --coverage
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        with:
+          flags: frontend
+
+  build:
+    name: Production build check
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build renderer (no Electron binary on Linux CI)
+        working-directory: frontend
+        run: npx vite build
+        env:
+          NODE_ENV: production
