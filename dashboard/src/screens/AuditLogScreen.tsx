@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, keepPreviousData } from '@tanstack/react-query'
 import { getAuditLog, getAuditSummary, type AuditEntry, type AuditFilters } from '@/api/auditLog'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
@@ -186,7 +186,7 @@ function RekenkamerPanel({ isNl }: { isNl: boolean }) {
         </div>
         <div>
           <p style={labelSt}>{isNl ? 'Taal' : 'Language'}</p>
-          <select value={locale} onChange={e => setLocale(e.target.value)} style={inputSt}>
+          <select value={locale} onChange={e => setLocale(e.target.value as 'nl' | 'en')} style={inputSt}>
             <option value="nl">Nederlands</option>
             <option value="en">English</option>
           </select>
@@ -224,8 +224,8 @@ export default function AuditLogScreen() {
   const { data, isLoading } = useQuery({
     queryKey: ['audit-log', filters],
     queryFn: () => getAuditLog(filters),
-    keepPreviousData: true,
-  } as any)
+    placeholderData: keepPreviousData,
+  })
 
   const { data: summary } = useQuery({
     queryKey: ['audit-summary'],

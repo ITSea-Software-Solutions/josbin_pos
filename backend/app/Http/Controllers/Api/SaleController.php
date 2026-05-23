@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Events\SaleCompleted as SaleCompletedEvent;
 use App\Http\Controllers\Controller;
 use App\Jobs\DetectSaleAnomaly;
+use App\Models\RegisterSession;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Services\BtwCalculationService;
@@ -117,21 +118,41 @@ class SaleController extends Controller
         );
 
         $sale = DB::transaction(function () use ($data, $cart, $rate, $request) {
+            // Payment amounts — cash tendered, card paid, and change due.
+            $cashTendered = isset($data['cash_tendered']) ? (string) $data['cash_tendered'] : null;
+            $cardAmount   = isset($data['card_amount'])   ? (string) $data['card_amount']   : null;
+            $totalPaid    = bcadd($cashTendered ?? '0', $cardAmount ?? '0', 2);
+            $changeDue    = bccomp($totalPaid, (string) $cart['total'], 2) > 0
+                ? bcsub($totalPaid, (string) $cart['total'], 2)
+                : '0.00';
+
+            // Tie this sale to the cashier's currently open register session so
+            // per-session reports (mini Z-Report) reconcile against actual sales.
+            $registerSessionId = RegisterSession::where('cashier_id', $request->user()->id)
+                ->where('store_id', $data['store_id'])
+                ->where('status', 'open')
+                ->latest('opened_at')
+                ->value('id');
+
             $sale = Sale::create([
-                'store_id'           => $data['store_id'],
-                'cashier_id'         => $request->user()->id,
-                'customer_id'        => $data['customer_id'] ?? null,
-                'sale_number'        => Sale::nextNumber($data['store_id']),
-                'subtotal_srd'       => $cart['subtotal'],
-                'discount_srd'       => $cart['sale_discount'],
-                'btw_srd'            => $cart['btw_total'],
-                'total_srd'          => $cart['total'],
-                'payment_method'     => $data['payment_method'],
-                'status'             => 'completed',
-                'source'             => $data['source'] ?? 'pos',
-                'exchange_rate_used' => $rate->usd_to_srd,
-                'external_sale_ref'  => $data['external_sale_ref'] ?? null,
-                'occurred_at'        => $data['occurred_at'] ?? now(),
+                'store_id'            => $data['store_id'],
+                'cashier_id'          => $request->user()->id,
+                'register_session_id' => $registerSessionId,
+                'customer_id'         => $data['customer_id'] ?? null,
+                'sale_number'         => Sale::nextNumber($data['store_id']),
+                'subtotal_srd'        => $cart['subtotal'],
+                'discount_srd'        => $cart['sale_discount'],
+                'btw_srd'             => $cart['btw_total'],
+                'total_srd'           => $cart['total'],
+                'payment_method'      => $data['payment_method'],
+                'cash_received_srd'   => $cashTendered,
+                'card_amount_srd'     => $cardAmount,
+                'change_srd'          => $changeDue,
+                'status'              => 'completed',
+                'source'              => $data['source'] ?? 'pos',
+                'exchange_rate_used'  => $rate->usd_to_srd,
+                'external_sale_ref'   => $data['external_sale_ref'] ?? null,
+                'occurred_at'         => $data['occurred_at'] ?? now(),
             ]);
 
             foreach ($data['items'] as $i => $item) {
@@ -223,10 +244,21 @@ class SaleController extends Controller
             ]);
         }
 
-        // Single approver or second approver for govt
+        // Segregation of duties: a government void's second approval must be
+        // given by a DIFFERENT user than the one who requested it.
+        if ($needsSecondApproval && $sale->voided_by === $request->user()->id) {
+            return response()->json([
+                'message' => 'De tweede goedkeuring moet door een andere gebruiker worden gegeven.',
+                'code'    => 'VOID_SAME_APPROVER',
+            ], 422);
+        }
+
+        // Single approver or second approver for govt.
+        // voided_by stays as the requester (the first approver for govt; the
+        // acting user for a non-govt single-step void).
         $sale->update([
             'status'              => 'voided',
-            'voided_by'           => $request->user()->id,
+            'voided_by'           => $sale->voided_by ?? $request->user()->id,
             'voided_at'           => now(),
             'void_reason'         => $data['void_reason'],
             'void_approved_by'    => $needsSecondApproval ? $request->user()->id : null,

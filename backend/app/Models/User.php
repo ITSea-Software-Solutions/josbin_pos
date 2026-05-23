@@ -96,10 +96,27 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
-     * 2FA is mandatory and non-bypassable for Super Admin and government accounts.
+     * Setting key holding the list of roles the Super Admin has opted into
+     * mandatory 2FA for, in addition to the always-on roles below.
+     */
+    public const TWO_FACTOR_POLICY_KEY = 'two_factor_required_roles';
+
+    /** Roles for which 2FA is always required and cannot be disabled by policy. */
+    public const TWO_FACTOR_ALWAYS_ROLES = [self::ROLE_SUPER_ADMIN];
+
+    /**
+     * 2FA is mandatory and non-bypassable for Super Admin and government
+     * accounts. The Super Admin may additionally require it for other roles
+     * via the two_factor_required_roles policy setting.
      */
     public function requires2FA(): bool
     {
-        return $this->role === self::ROLE_SUPER_ADMIN || $this->isGovernmentUser();
+        if (in_array($this->role, self::TWO_FACTOR_ALWAYS_ROLES, true) || $this->isGovernmentUser()) {
+            return true;
+        }
+
+        $policyRoles = AppSetting::get(self::TWO_FACTOR_POLICY_KEY, []);
+
+        return is_array($policyRoles) && in_array($this->role, $policyRoles, true);
     }
 }

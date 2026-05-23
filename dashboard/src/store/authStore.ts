@@ -47,12 +47,14 @@ export const useDashboardAuthStore = create<AuthState>()(
         try {
           const res = await apiLogin(email, password)
 
-          if ('two_factor_required' in res && res.two_factor_required) {
+          // `in` checks alone discriminate the union — keep them un-compounded
+          // so TypeScript narrows `res` to LoginResponse after both early returns.
+          if ('two_factor_required' in res) {
             set({ isLoading: false, twoFactor: { type: 'challenge', preAuthToken: res.pre_auth_token } })
             return
           }
 
-          if ('two_factor_setup_required' in res && res.two_factor_setup_required) {
+          if ('two_factor_setup_required' in res) {
             localStorage.setItem('josbin_pos_dashboard_token', res.setup_token)
             set({
               isLoading: false,
@@ -61,7 +63,7 @@ export const useDashboardAuthStore = create<AuthState>()(
             return
           }
 
-          // Normal login
+          // Normal login — res is now narrowed to LoginResponse
           localStorage.setItem('josbin_pos_dashboard_token', res.token)
           set({
             user: res.user as DashboardUser,

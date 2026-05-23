@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\AuditLog;
 use App\Models\Sale;
 use App\Models\Store;
 use App\Services\AiService;
@@ -58,26 +59,27 @@ class DetectSaleAnomaly implements ShouldQueue
             ? $this->buildNarrative($ai, $sale, $flags)
             : null;
 
-        // Log to audit trail
-        DB::table('audit_logs')->insert([
+        // Log to the tamper-evident audit trail. AuditLog::create maintains the
+        // SHA-256 hash chain via the model's creating hook — a raw
+        // DB::table()->insert() would leave the row hash-less and break
+        // `audit:verify`, so it must not be used here.
+        AuditLog::create([
             'user_id'         => $sale->cashier_id,
             'organisation_id' => $sale->store->organisation_id ?? null,
             'event'           => 'anomaly_detected',
-            'auditable_type'  => 'App\\Models\\Sale',
+            'auditable_type'  => Sale::class,
             'auditable_id'    => $sale->id,
             'old_values'      => null,
-            'new_values'      => json_encode([
-                'sale_number'   => $sale->sale_number,
-                'flags'         => $flags,
-                'store'         => $sale->store->name ?? null,
-                'cashier'       => $sale->cashier->name ?? null,
-                'total_srd'     => $sale->total_srd,
-                'ai_narrative'  => $narrative,
-                'detected_at'   => now()->setTimezone('America/Paramaribo')->toIso8601String(),
-            ]),
-            'ip_address'  => null,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'new_values'      => [
+                'sale_number'  => $sale->sale_number,
+                'flags'        => $flags,
+                'store'        => $sale->store->name ?? null,
+                'cashier'      => $sale->cashier->name ?? null,
+                'total_srd'    => $sale->total_srd,
+                'ai_narrative' => $narrative,
+                'detected_at'  => now()->setTimezone('America/Paramaribo')->toIso8601String(),
+            ],
+            'ip_address'      => null,
         ]);
 
         Log::warning('[AnomalyDetection] Flagged sale', [

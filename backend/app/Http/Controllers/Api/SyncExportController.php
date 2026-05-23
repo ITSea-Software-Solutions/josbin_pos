@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Models\SaleItem;
 use App\Models\Store;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -173,7 +174,10 @@ class SyncExportController extends Controller
                 }
 
                 try {
-                    $sale = Sale::create([
+                    // forceFill so the original id and created_at are preserved
+                    // — they are not in $fillable, and preserving the id is what
+                    // makes the duplicate guard above (and re-imports) idempotent.
+                    $sale = (new Sale)->forceFill([
                         'id'                => $saleData['id'],
                         'store_id'          => $saleData['store_id'],
                         'cashier_id'        => $saleData['cashier_id'],
@@ -194,10 +198,12 @@ class SyncExportController extends Controller
                         'created_at'        => $saleData['created_at'],
                         'updated_at'        => now(),
                     ]);
+                    $sale->save();
 
                     foreach ($saleData['items'] ?? [] as $item) {
-                        $sale->items()->create([
+                        (new SaleItem)->forceFill([
                             'id'                    => $item['id'],
+                            'sale_id'               => $sale->id,
                             'product_id'            => $item['product_id'] ?? null,
                             'product_name_snapshot' => $item['product_name_snapshot'] ?? '',
                             'unit_price_srd'        => $item['unit_price_srd'],
@@ -207,7 +213,7 @@ class SyncExportController extends Controller
                             'btw_rate'              => $item['btw_rate'],
                             'btw_srd'               => $item['btw_srd'],
                             'line_total_srd'        => $item['line_total_srd'],
-                        ]);
+                        ])->save();
                     }
 
                     $imported++;

@@ -102,7 +102,3 @@ export async function updateStore(storeId: string, payload: Partial<CreateStoreP
 export async function deactivateStore(storeId: string): Promise<void> {
   await apiClient.delete(`/stores/${storeId}`)
 }
-
-export async function pushStoreSettings(storeId: string, settings: Record<string, unknown>): Promise<void> {
-  await apiClient.put(`/stores/${storeId}/settings`, settings)
-}

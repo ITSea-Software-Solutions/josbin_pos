@@ -339,7 +339,7 @@ export default function RegistersScreen() {
       {/* Manage tab */}
       {activeTab === 'manage' && (
         <ManageRegistersPanel
-          storeId={isSuperAdmin ? selectedStoreId : (currentUser?.store_id ?? currentUser?.organisation_id ?? '')}
+          storeId={isSuperAdmin ? selectedStoreId : (currentUser?.organisation_id ?? '')}
           isNl={isNl}
         />
       )}

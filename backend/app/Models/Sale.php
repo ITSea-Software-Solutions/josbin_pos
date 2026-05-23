@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 use OwenIt\Auditing\Contracts\Auditable;
 
 class Sale extends Model implements Auditable
@@ -80,10 +81,20 @@ class Sale extends Model implements Auditable
         return $this->status === 'held';
     }
 
-    /** Generate next sale number for a store: POS-YYYY-NNNNN */
+    /**
+     * Generate the next sale number for a store: POS-YYYY-NNNNN
+     *
+     * Called inside the sale-creation DB transaction. A per-store/year Postgres
+     * advisory lock serialises number allocation so two concurrent terminals
+     * cannot generate the same sale_number (which would violate the unique
+     * index and fail the second sale). The lock auto-releases at commit.
+     */
     public static function nextNumber(string $storeId): string
     {
-        $year  = now()->format('Y');
+        $year = now()->format('Y');
+
+        DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ["sale_number:{$storeId}:{$year}"]);
+
         $count = static::where('store_id', $storeId)
             ->whereYear('occurred_at', $year)
             ->count() + 1;

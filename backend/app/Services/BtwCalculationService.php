@@ -231,12 +231,34 @@ class BtwCalculationService
 
     private function round2(string $value): string
     {
-        return number_format(round((float) $value, 2, self::ROUND_HALF_UP), 2, '.', '');
+        return $this->bcRoundHalfUp($value, 2);
     }
 
     private function round4(string $value): string
     {
-        return number_format(round((float) $value, 4, self::ROUND_HALF_UP), 4, '.', '');
+        return $this->bcRoundHalfUp($value, 4);
+    }
+
+    /**
+     * Half-up rounding performed entirely with bcmath string arithmetic.
+     * Money is never cast to a PHP float, so there is no binary-representation
+     * drift (e.g. 2.675 mis-rounding because its float value is 2.67499…).
+     */
+    private function bcRoundHalfUp(string $value, int $scale): string
+    {
+        $negative = bccomp($value, '0', self::SCALE) < 0;
+        $abs      = $negative ? bcsub('0', $value, self::SCALE) : $value;
+
+        // Add half a unit at the target scale; bcadd then truncates to scale.
+        $halfUnit = '0.' . str_repeat('0', $scale) . '5';
+        $rounded  = bcadd($abs, $halfUnit, $scale);
+
+        // Re-apply the sign, but never return a negative zero.
+        if ($negative && bccomp($rounded, '0', $scale) !== 0) {
+            return '-' . $rounded;
+        }
+
+        return $rounded;
     }
 
     // ─── Guards ───────────────────────────────────────────────────────────

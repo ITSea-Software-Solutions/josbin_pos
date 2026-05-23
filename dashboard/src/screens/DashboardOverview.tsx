@@ -5,7 +5,7 @@ import { getPlatformSummary, type StoreOverview } from '@/api/dashboard'
 import { useDashboardAuthStore } from '@/store/authStore'
 import { useOrgChannel, usePlatformChannel } from '@/hooks/useEcho'
 import { formatSRD } from '@/utils/currency'
-import { getWeeklySummary, getAnomalies, type WeeklySummary, type AnomalyEntry } from '@/api/ai'
+import { getWeeklySummary, getAnomalies, type AnomalyEntry } from '@/api/ai'
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({
