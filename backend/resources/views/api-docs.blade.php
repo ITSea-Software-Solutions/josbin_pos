@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Josbin POS — Open Integration API</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+  <link rel="icon" type="image/png" href="{{ asset('vendor/swagger-ui/favicon-32x32.png') }}">
+  <link rel="stylesheet" href="{{ asset('vendor/swagger-ui/swagger-ui.css') }}">
   <style>
     body { margin: 0; background: #fafafa; }
     .topbar {
@@ -22,7 +23,8 @@
     <p>Layer 3 REST API for third-party POS integration · v1</p>
   </div>
   <div id="swagger-ui"></div>
-  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="{{ asset('vendor/swagger-ui/swagger-ui-bundle.js') }}"></script>
+  <script src="{{ asset('vendor/swagger-ui/swagger-ui-standalone-preset.js') }}"></script>
   <script>
     window.ui = SwaggerUIBundle({
       url: {!! json_encode(route('v1.docs.spec')) !!},
