@@ -38,16 +38,15 @@ class ZReportSubmitted implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'z_report_id'    => $this->zReport->id,
-            'store_id'       => $this->zReport->store_id,
-            'store_name'     => $this->zReport->store?->name,
-            'report_date'    => $this->zReport->report_date->toDateString(),
-            'total_srd'      => $this->zReport->total_srd,
-            'btw_srd'        => $this->zReport->btw_srd,
+            'z_report_id'       => $this->zReport->id,
+            'store_id'          => $this->zReport->store_id,
+            'store_name'        => $this->zReport->store?->name,
+            'report_date'       => $this->zReport->report_date->toDateString(),
+            'total_sales_srd'   => $this->zReport->total_sales_srd,
+            'total_btw_srd'     => $this->zReport->total_btw_srd,
             'transaction_count' => $this->zReport->transaction_count,
-            'sync_status'    => $this->zReport->sync_status,
-            'submitted_at'   => $this->zReport->submitted_at,
-            'submitted_by'   => $this->zReport->submittedBy?->name,
+            'sync_status'       => $this->zReport->sync_status,
+            'synced_at'         => $this->zReport->synced_at?->toIso8601String(),
         ];
     }
 }

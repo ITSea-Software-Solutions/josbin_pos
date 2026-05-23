@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getDailyReport, closeZReport, getZReportHistory } from '@/api/reports'
+import { getDailyReport, closeZReport, getZReportHistory, submitZReport } from '@/api/reports'
 import type { ZReportRecord } from '@/api/reports'
 import apiClient from '@/api/client'
+import Modal from '@/components/shared/Modal'
+import { useDateFormatter } from '@/utils/date'
 
 interface EndOfDayScreenProps {
   storeId: string
@@ -12,10 +14,12 @@ interface EndOfDayScreenProps {
 export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const fmtDate = useDateFormatter()
 
   const [actualCash, setActualCash] = useState('')
   const [discrepancyNote, setDiscrepancyNote] = useState('')
   const [exportingDate, setExportingDate] = useState<string | null>(null)
+  const [submitTarget, setSubmitTarget] = useState<ZReportRecord | null>(null)
 
   async function downloadSurapos(fromDate: string, toDate?: string) {
     const fd = fromDate
@@ -60,6 +64,14 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['z-report-history', storeId] })
       qc.invalidateQueries({ queryKey: ['today-summary', storeId] })
+    },
+  })
+
+  const submitMutation = useMutation({
+    mutationFn: (id: string) => submitZReport(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['z-report-history', storeId] })
+      setSubmitTarget(null)
     },
   })
 
@@ -234,25 +246,46 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
               <tbody>
                 {history.map((z: ZReportRecord) => (
                   <tr key={z.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '8px 12px', color: 'var(--text-primary)' }}>{z.date}</td>
-                    <td className="currency-srd" style={{ padding: '8px 12px' }}>SRD {parseFloat(z.summary.total_sales_srd).toFixed(2)}</td>
-                    <td className="currency-srd" style={{ padding: '8px 12px', color: 'var(--color-btw)' }}>SRD {parseFloat(z.summary.total_btw_srd).toFixed(2)}</td>
+                    <td style={{ padding: '8px 12px', color: 'var(--text-primary)' }}>{fmtDate(z.report_date)}</td>
+                    <td className="currency-srd" style={{ padding: '8px 12px' }}>SRD {parseFloat(z.total_sales_srd).toFixed(2)}</td>
+                    <td className="currency-srd" style={{ padding: '8px 12px', color: 'var(--color-btw)' }}>SRD {parseFloat(z.total_btw_srd).toFixed(2)}</td>
                     <td style={{ padding: '8px 12px' }}>
                       <SyncBadge status={z.sync_status} />
+                      {z.sync_status === 'sent' && z.synced_at && (
+                        <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>
+                          {fmtDate(z.synced_at)}{' '}
+                          {new Date(z.synced_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      )}
                     </td>
                     <td style={{ padding: '8px 12px' }}>
-                      <button
-                        onClick={() => downloadSurapos(z.date)}
-                        disabled={exportingDate === z.date}
-                        title={t('endOfDay.exportSurapos')}
-                        style={{
-                          padding: '3px 10px', borderRadius: 5, border: '1px solid var(--border-color)',
-                          background: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                          color: 'var(--text-secondary)',
-                        }}
-                      >
-                        {exportingDate === z.date ? '…' : '💾 .josbin_pos'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                        {z.sync_status !== 'sent' && (
+                          <button
+                            onClick={() => setSubmitTarget(z)}
+                            title={t('endOfDay.submitHq')}
+                            style={{
+                              padding: '3px 10px', borderRadius: 5, border: 'none',
+                              background: 'var(--color-primary)', cursor: 'pointer',
+                              fontSize: 11, fontWeight: 700, color: '#fff',
+                            }}
+                          >
+                            {t('endOfDay.submitHq')}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => downloadSurapos(z.report_date)}
+                          disabled={exportingDate === z.report_date}
+                          title={t('endOfDay.exportSurapos')}
+                          style={{
+                            padding: '3px 10px', borderRadius: 5, border: '1px solid var(--border-color)',
+                            background: 'none', cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          {exportingDate === z.report_date ? '…' : '💾 .josbin_pos'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -261,6 +294,68 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
           </div>
         )}
       </div>
+
+      {/* Submit to Headquarters — confirmation modal (shows exactly what will be sent) */}
+      <Modal
+        isOpen={submitTarget !== null}
+        onClose={() => !submitMutation.isPending && setSubmitTarget(null)}
+        title={t('endOfDay.submitHq')}
+        width={420}
+      >
+        {submitTarget && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', margin: 0 }}>
+              {t('endOfDay.confirmSubmit')}
+            </p>
+            <div style={{ ...cardSt, padding: '12px 16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                {[
+                  { label: t('reports.columns.date'), value: fmtDate(submitTarget.report_date) },
+                  { label: t('reports.summary.totalSales'), value: `SRD ${parseFloat(submitTarget.total_sales_srd).toFixed(2)}` },
+                  { label: t('reports.summary.totalBtw'), value: `SRD ${parseFloat(submitTarget.total_btw_srd).toFixed(2)}` },
+                  { label: t('reports.summary.transactionCount'), value: String(submitTarget.transaction_count) },
+                ].map((row) => (
+                  <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>{row.label}</span>
+                    <span style={{ fontSize: 'var(--font-size-sm)', fontWeight: 600 }}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {submitMutation.isError && (
+              <div style={{ color: 'var(--color-error)', fontSize: 'var(--font-size-sm)' }}>
+                {t('errors.serverError')}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setSubmitTarget(null)}
+                disabled={submitMutation.isPending}
+                style={{
+                  height: 40, padding: '0 16px', borderRadius: 'var(--border-radius)',
+                  border: '1px solid var(--border-color)', background: 'var(--bg-elevated)',
+                  color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 600,
+                  fontSize: 'var(--font-size-sm)',
+                }}
+              >
+                {t('app.cancel')}
+              </button>
+              <button
+                onClick={() => submitMutation.mutate(submitTarget.id)}
+                disabled={submitMutation.isPending}
+                style={{
+                  height: 40, padding: '0 18px', borderRadius: 'var(--border-radius)',
+                  border: 'none', background: 'var(--color-primary)', color: '#fff',
+                  cursor: 'pointer', fontWeight: 700, fontSize: 'var(--font-size-sm)',
+                  opacity: submitMutation.isPending ? 0.5 : 1,
+                }}
+              >
+                {submitMutation.isPending ? t('app.loading') : t('endOfDay.submitHq')}
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

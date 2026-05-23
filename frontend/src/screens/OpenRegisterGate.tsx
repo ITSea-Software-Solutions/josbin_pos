@@ -21,7 +21,7 @@ function Numpad({ value, onChange }: { value: string; onChange: (v: string) => v
   const keys = ['7','8','9','4','5','6','1','2','3','C','0','.','⌫']
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, maxWidth: 260, margin: '0 auto' }}>
-      {['7','8','9','4','5','6','1','2','3','C','0','.'].map(k => (
+      {keys.map(k => (
         <button key={k} onClick={() => press(k)} style={{
           height: 52, borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 18, fontWeight: 700,
           background: k === 'C' ? '#fef2f2' : '#f9fafb', color: k === 'C' ? '#dc2626' : '#1c1c2e',

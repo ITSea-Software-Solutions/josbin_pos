@@ -31,6 +31,11 @@
 <body>
 
 {{-- Store header --}}
+@if(!empty($store['logo']))
+  <div class="center" style="margin-bottom:4px;">
+    <img src="{{ $store['logo'] }}" alt="logo" style="max-width:160px;max-height:60px;">
+  </div>
+@endif
 <div class="center bold">{{ $store['name'] }}</div>
 @if(!empty($store['receipt_header']))
   <div class="center" style="font-size:10px;white-space:pre-wrap;">{{ $store['receipt_header'] }}</div>

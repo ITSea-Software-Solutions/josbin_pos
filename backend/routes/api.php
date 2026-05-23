@@ -17,9 +17,11 @@ use App\Http\Controllers\Api\OrganisationController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\SecurityPolicyController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\RegisterController;
+use App\Http\Controllers\V1\ApiDocsController;
 use App\Http\Controllers\V1\ReportController as V1ReportController;
 use App\Http\Controllers\V1\SaleController as V1SaleController;
 use Illuminate\Support\Facades\Route;
@@ -81,6 +83,12 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
     Route::prefix('sync')->name('sync.')->group(function () {
         Route::get('export',  [SyncExportController::class, 'export'])->name('export');
         Route::post('import', [SyncExportController::class, 'import'])->name('import');
+    });
+
+    // Security policy — per-role 2FA enforcement (Super Admin only)
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('two-factor-policy',  [SecurityPolicyController::class, 'show'])->name('2fa-policy.show');
+        Route::put('two-factor-policy',  [SecurityPolicyController::class, 'update'])->name('2fa-policy.update');
     });
 
     // Audit Log (SPOS-310)
@@ -230,6 +238,7 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::get('x-report',      [ReportController::class, 'xReport'])->name('x-report');
         Route::post('z-report',     [ReportController::class, 'zReport'])->name('z-report');
         Route::get('z-report/history', [ReportController::class, 'zReportHistory'])->name('z-report.history');
+        Route::post('z-report/{zReport}/submit', [ReportController::class, 'submitZReport'])->name('z-report.submit');
         Route::get('btw',           [ReportController::class, 'btwReport'])->name('btw');
         Route::get('export',        [ReportController::class, 'export'])->name('export');
         Route::get('rekenkamer',    [RekenkamerController::class, 'export'])->name('rekenkamer');
@@ -251,6 +260,12 @@ Route::prefix('v1')->name('v1.')->middleware('api.key')->group(function () {
         Route::get('sales',    [V1ReportController::class, 'sales'])->name('sales');
         Route::get('summary',  [V1ReportController::class, 'summary'])->name('summary');
     });
+});
+
+// ── Open Integration API — Documentation (public, no API key required) ────────
+Route::prefix('v1')->name('v1.')->group(function () {
+    Route::get('openapi.json', [ApiDocsController::class, 'spec'])->name('docs.spec');
+    Route::get('docs',         [ApiDocsController::class, 'ui'])->name('docs.ui');
 });
 
 // ── Receipt PDF — browser-safe (supports ?token= query param) ────────────────

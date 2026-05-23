@@ -1,0 +1,38 @@
+# Josbin POS License Server — local / single-host deployment.
+# The license server is intentionally small and runs independently of the
+# main Josbin POS platform, fully under the developer company's control.
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8090:8000"
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: pgsql
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: josbin_license
+      DB_USERNAME: josbin
+      DB_PASSWORD: ${DB_PASSWORD:-change-me}
+      LICENSE_ADMIN_KEY: ${LICENSE_ADMIN_KEY:-change-me-admin-key}
+      LICENSE_KEY_PREFIX: JOSBIN
+      CACHE_STORE: file
+      SESSION_DRIVER: file
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: josbin_license
+      POSTGRES_USER: josbin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change-me}
+    volumes:
+      - license_db:/var/lib/postgresql/data
+
+volumes:
+  license_db:

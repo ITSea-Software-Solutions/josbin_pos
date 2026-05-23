@@ -1,0 +1,66 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Josbin POS — API Sandbox overlay
+#
+# Runs an ISOLATED sandbox stack for third-party integration testing of the
+# Layer 3 Open Integration API (/v1/*). It is fully separate from production:
+# its own database, its own data directory, its own container names and ports.
+#
+# This is a Compose OVERRIDE file — always pass it alongside docker-compose.yml
+# and use a distinct project name (-p josbin_sandbox).
+#
+#   # 1. Start the sandbox stack
+#   docker compose -p josbin_sandbox \
+#     -f docker-compose.yml -f docker-compose.sandbox.yml up -d --build
+#
+#   # 2. Migrate the sandbox database
+#   docker compose -p josbin_sandbox \
+#     -f docker-compose.yml -f docker-compose.sandbox.yml \
+#     exec app php artisan migrate --force
+#
+#   # 3. Seed the sandbox test data (org, store, products, fixed API key)
+#   docker compose -p josbin_sandbox \
+#     -f docker-compose.yml -f docker-compose.sandbox.yml \
+#     exec app php artisan db:seed --class=SandboxSeeder --force
+#
+# The sandbox API is then reachable on  http://localhost:8091
+# Integrators authenticate with the fixed sandbox key from SandboxSeeder.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  app:
+    container_name: josbin_sandbox_app
+    environment:
+      APP_ENV: sandbox
+      JOSBIN_POS_SANDBOX: "true"
+      DB_DATABASE: josbin_pos_sandbox
+
+  nginx:
+    container_name: josbin_sandbox_nginx
+    ports:
+      - "8091:80"
+
+  postgres:
+    container_name: josbin_sandbox_postgres
+    environment:
+      POSTGRES_DB: josbin_pos_sandbox
+    # Separate data directory — sandbox data never mixes with production.
+    volumes:
+      - ./docker/postgres-sandbox/data:/var/lib/postgresql/data
+    ports:
+      - "55432:5432"
+
+  redis:
+    container_name: josbin_sandbox_redis
+
+  reverb:
+    container_name: josbin_sandbox_reverb
+
+  horizon:
+    container_name: josbin_sandbox_horizon
+
+  scheduler:
+    container_name: josbin_sandbox_scheduler
+
+  pgbouncer:
+    container_name: josbin_sandbox_pgbouncer
+    environment:
+      DB_NAME: josbin_pos_sandbox

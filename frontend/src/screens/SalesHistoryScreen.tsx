@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { useSettingsStore } from '@/store/settingsStore'
 import { getSales, voidSale, getReceiptPdfUrl } from '@/api/sales'
 import type { Sale } from '@/types/models'
 

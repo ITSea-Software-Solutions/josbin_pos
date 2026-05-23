@@ -1,0 +1,324 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Josbin POS — Open Integration API",
+    "version": "1.0.0",
+    "description": "Layer 3 of the Josbin POS platform — a REST API that lets third-party POS systems push sales into Josbin POS and pull their own store's reporting data.\n\n## Authentication\n\nEvery request must include an `X-API-Key` header containing the raw API key issued from the Super Admin Dashboard (API Integrations screen). The key is bound to a single store; all requests are automatically scoped to that store.\n\n```\nX-API-Key: sk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n```\n\n## Currency, BTW and timezone\n\n- All monetary values are in Surinamese Dollar (SRD) with 2 decimal places.\n- BTW (Suriname VAT) is re-calculated server-side from the `btw_rate` supplied on each line item — discounts are applied before BTW is extracted.\n- All timestamps are stored and returned in AST (America/Paramaribo, UTC-3).\n\n## Idempotency\n\n`POST /v1/sales` is idempotent on `sale_ref` per store. Re-submitting a sale with a `sale_ref` that already exists returns the existing sale with HTTP 200 instead of creating a duplicate (a new sale returns HTTP 201). This makes offline catch-up uploads safe to retry.\n\n## Rate limiting\n\nEach API key is limited to 1,000 requests per minute. Exceeding the limit returns HTTP 429.\n\n## Outbound webhooks\n\nIntegrations may register a `webhook_url` and subscribe to events. When a subscribed event occurs, Josbin POS sends an HTTP `POST` to the registered URL.\n\n**Events:** `sale.created`, `shift.closed`, `refund.issued`.\n\n**Delivery:** queue-backed with retries at 1 min → 5 min → 30 min → 2 hrs (4 attempts).\n\n**Request headers sent to your endpoint:**\n\n| Header | Description |\n|---|---|\n| `X-JosbinPOS-Event` | The event name |\n| `X-JosbinPOS-Signature` | `sha256=<hex>` HMAC-SHA256 of the raw request body, keyed with your webhook secret |\n| `X-JosbinPOS-Delivery` | Unique delivery id |\n\n**Body shape:**\n\n```json\n{\n  \"event\": \"sale.created\",\n  \"store_id\": \"uuid\",\n  \"occurred_at\": \"2026-05-23T10:15:00-03:00\",\n  \"data\": { }\n}\n```\n\n**Verifying the signature:** compute `hash_hmac('sha256', rawBody, webhookSecret)` and compare it (constant-time) against the hex portion of `X-JosbinPOS-Signature`.\n\n## Sandbox\n\nA sandbox environment is available for integration testing. It is fully isolated from production data and is seeded with sample Surinamese products and a test store.\n\nPoint your requests at the **Sandbox** server URL below and authenticate with the seeded sandbox key:\n\n```\nX-API-Key: sk_sandbox_josbin_pos_demo_2026\n```\n\nSandbox responses carry an `X-Josbin-Environment: sandbox` header so you can confirm you are not hitting production. The matching webhook signing secret for sandbox is `whsec_sandbox_josbin_pos_demo_2026`."
+  },
+  "servers": [
+    { "url": "https://api.josbin-pos.sr", "description": "Production" },
+    { "url": "https://sandbox.josbin-pos.sr", "description": "Sandbox (isolated test environment)" }
+  ],
+  "security": [{ "ApiKeyAuth": [] }],
+  "tags": [
+    { "name": "Sales", "description": "Push sales from a third-party POS system." },
+    { "name": "Reports", "description": "Pull the integration store's own reporting data." }
+  ],
+  "paths": {
+    "/v1/sales": {
+      "post": {
+        "tags": ["Sales"],
+        "summary": "Submit a single sale",
+        "description": "Creates a sale in Josbin POS from a third-party POS system. Idempotent on `sale_ref`: a new sale returns 201, a duplicate returns the existing sale with 200.",
+        "operationId": "createSale",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/SaleInput" },
+              "example": {
+                "sale_ref": "EXT-POS-000123",
+                "occurred_at": "2026-05-23T10:15:00-03:00",
+                "payment_method": "cash",
+                "items": [
+                  { "product_name": "Parbo Bier 1L", "unit_price": 18.50, "quantity": 2, "btw_rate": 10, "btw_exempt": false, "discount_srd": 0 },
+                  { "product_name": "Brood (heel)", "unit_price": 7.00, "quantity": 1, "btw_rate": 0, "btw_exempt": true }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Sale created.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sale" } } }
+          },
+          "200": {
+            "description": "Idempotent — a sale with this `sale_ref` already existed; the existing sale is returned.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Sale" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/sales/batch": {
+      "post": {
+        "tags": ["Sales"],
+        "summary": "Submit a batch of sales",
+        "description": "Uploads up to 500 sales in a single request — used for offline catch-up. Each entry is idempotent by `sale_ref`. A failed entry is reported in `errors` but does not fail the batch.",
+        "operationId": "createSalesBatch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/BatchInput" },
+              "example": {
+                "sales": [
+                  {
+                    "sale_ref": "EXT-POS-000124",
+                    "occurred_at": "2026-05-22T16:40:00-03:00",
+                    "payment_method": "card",
+                    "items": [
+                      { "product_name": "Rijst 5kg", "unit_price": 65.00, "quantity": 1, "btw_rate": 0, "btw_exempt": true }
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch processed. Inspect the counts and `errors` array.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/BatchResult" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/reports/sales": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "List completed sales",
+        "description": "Returns a paginated list of completed sales for the integration's store within a date range. Maximum range is 31 days.",
+        "operationId": "listSales",
+        "parameters": [
+          { "name": "date_from", "in": "query", "required": true, "schema": { "type": "string", "format": "date" }, "example": "2026-05-01" },
+          { "name": "date_to", "in": "query", "required": true, "schema": { "type": "string", "format": "date" }, "example": "2026-05-23" },
+          { "name": "per_page", "in": "query", "required": false, "schema": { "type": "integer", "minimum": 10, "maximum": 200, "default": 50 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated sales list.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SalesPage" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/reports/summary": {
+      "get": {
+        "tags": ["Reports"],
+        "summary": "Sales summary",
+        "description": "Returns aggregated totals and a BTW breakdown for the integration's store within a date range.",
+        "operationId": "salesSummary",
+        "parameters": [
+          { "name": "date_from", "in": "query", "required": true, "schema": { "type": "string", "format": "date" }, "example": "2026-05-01" },
+          { "name": "date_to", "in": "query", "required": true, "schema": { "type": "string", "format": "date" }, "example": "2026-05-23" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Aggregated summary.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SummaryReport" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/ValidationError" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Raw API key issued from the Super Admin Dashboard. Bound to a single store."
+      }
+    },
+    "schemas": {
+      "SaleItemInput": {
+        "type": "object",
+        "required": ["product_name", "unit_price", "quantity", "btw_rate"],
+        "properties": {
+          "product_name": { "type": "string", "maxLength": 200, "description": "Name of the product as it should appear on the sale." },
+          "unit_price": { "type": "number", "format": "float", "minimum": 0, "description": "Gross unit price in SRD." },
+          "quantity": { "type": "number", "format": "float", "minimum": 0.001, "description": "Quantity sold (supports decimals for weighed goods)." },
+          "btw_rate": { "type": "number", "format": "float", "minimum": 0, "maximum": 100, "description": "BTW (VAT) percentage for this line, e.g. 10." },
+          "btw_exempt": { "type": "boolean", "default": false, "description": "Set true for BTW-exempt goods (basic foodstuffs, medicine)." },
+          "discount_srd": { "type": "number", "format": "float", "minimum": 0, "description": "Fixed discount in SRD applied to this line before BTW extraction." }
+        }
+      },
+      "SaleInput": {
+        "type": "object",
+        "required": ["sale_ref", "occurred_at", "payment_method", "items"],
+        "properties": {
+          "sale_ref": { "type": "string", "maxLength": 100, "description": "Your system's unique reference for this sale. Idempotency key — must be unique per store." },
+          "occurred_at": { "type": "string", "format": "date-time", "description": "When the sale occurred (ISO 8601)." },
+          "payment_method": { "type": "string", "enum": ["cash", "card", "mixed"] },
+          "items": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/components/schemas/SaleItemInput" }
+          }
+        }
+      },
+      "BatchInput": {
+        "type": "object",
+        "required": ["sales"],
+        "properties": {
+          "sales": {
+            "type": "array",
+            "maxItems": 500,
+            "items": { "$ref": "#/components/schemas/SaleInput" }
+          }
+        }
+      },
+      "Sale": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "sale_ref": { "type": "string", "description": "The `sale_ref` you supplied." },
+          "store_id": { "type": "string", "format": "uuid" },
+          "occurred_at": { "type": "string", "format": "date-time" },
+          "payment_method": { "type": "string", "enum": ["cash", "card", "mixed"] },
+          "subtotal_srd": { "type": "string", "example": "44.00" },
+          "discount_srd": { "type": "string", "example": "0.00" },
+          "btw_srd": { "type": "string", "example": "3.36" },
+          "total_srd": { "type": "string", "example": "44.00" },
+          "status": { "type": "string", "enum": ["completed", "voided", "held"] },
+          "created_at": { "type": "string", "format": "date-time" }
+        }
+      },
+      "BatchResult": {
+        "type": "object",
+        "properties": {
+          "created": { "type": "integer", "description": "Number of new sales created." },
+          "skipped": { "type": "integer", "description": "Number of idempotent duplicates skipped." },
+          "failed": { "type": "integer", "description": "Number of entries that errored." },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": { "type": "integer", "description": "Zero-based position in the submitted `sales` array." },
+                "sale_ref": { "type": "string", "nullable": true },
+                "message": { "type": "string" }
+              }
+            }
+          }
+        }
+      },
+      "SaleReportItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "sale_id": { "type": "string", "format": "uuid" },
+          "product_name_snapshot": { "type": "string" },
+          "unit_price_srd": { "type": "string" },
+          "quantity": { "type": "string" },
+          "btw_rate": { "type": "string" },
+          "btw_srd": { "type": "string" },
+          "line_total_srd": { "type": "string" }
+        }
+      },
+      "SaleReportRow": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "store_id": { "type": "string", "format": "uuid" },
+          "sale_number": { "type": "string" },
+          "occurred_at": { "type": "string", "format": "date-time" },
+          "payment_method": { "type": "string", "enum": ["cash", "card", "mixed"] },
+          "subtotal_srd": { "type": "string" },
+          "discount_srd": { "type": "string" },
+          "btw_srd": { "type": "string" },
+          "total_srd": { "type": "string" },
+          "status": { "type": "string" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/SaleReportItem" } }
+        }
+      },
+      "SalesPage": {
+        "type": "object",
+        "description": "Laravel length-aware paginator.",
+        "properties": {
+          "current_page": { "type": "integer" },
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/SaleReportRow" } },
+          "first_page_url": { "type": "string" },
+          "from": { "type": "integer", "nullable": true },
+          "last_page": { "type": "integer" },
+          "last_page_url": { "type": "string" },
+          "next_page_url": { "type": "string", "nullable": true },
+          "path": { "type": "string" },
+          "per_page": { "type": "integer" },
+          "prev_page_url": { "type": "string", "nullable": true },
+          "to": { "type": "integer", "nullable": true },
+          "total": { "type": "integer" }
+        }
+      },
+      "BtwBreakdownRow": {
+        "type": "object",
+        "properties": {
+          "btw_rate": { "type": "string", "example": "10.00" },
+          "btw_exempt": { "type": "boolean" },
+          "btw_total": { "type": "string", "example": "3.36" },
+          "net_base": { "type": "string", "example": "33.64" }
+        }
+      },
+      "SummaryReport": {
+        "type": "object",
+        "properties": {
+          "store_id": { "type": "string", "format": "uuid" },
+          "date_from": { "type": "string", "format": "date" },
+          "date_to": { "type": "string", "format": "date" },
+          "transaction_count": { "type": "integer" },
+          "total_sales": { "type": "string", "example": "12480.00" },
+          "total_btw": { "type": "string", "example": "1134.55" },
+          "total_discounts": { "type": "string", "example": "210.00" },
+          "avg_basket": { "type": "string", "example": "48.75" },
+          "btw_breakdown": { "type": "array", "items": { "$ref": "#/components/schemas/BtwBreakdownRow" } }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "description": "Machine-readable error code." },
+          "message": { "type": "string", "description": "Human-readable explanation." }
+        }
+      },
+      "ValidationError": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" },
+          "errors": {
+            "type": "object",
+            "additionalProperties": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing, invalid or inactive API key.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" },
+          "example": { "error": "Unauthorized", "message": "Invalid or inactive API key." } } }
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded (1,000 requests per minute per API key).",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" },
+          "example": { "error": "TooManyRequests", "message": "Rate limit exceeded: 1,000 requests per minute." } } }
+      },
+      "ValidationError": {
+        "description": "The request failed validation, or the operation could not be completed.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ValidationError" } } }
+      }
+    }
+  }
+}

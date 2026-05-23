@@ -1,0 +1,16 @@
+/vendor
+/node_modules
+/.env
+/.env.backup
+/.phpunit.cache
+/database/database.sqlite
+.DS_Store
+
+# Keep the storage/ and bootstrap/cache/ directory structure (via .gitkeep)
+# but ignore the runtime files written into them.
+/storage/logs/*.log
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/bootstrap/cache/*.php
+!**/.gitkeep

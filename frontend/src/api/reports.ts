@@ -32,12 +32,18 @@ export interface ReportSummary {
 export interface ZReportRecord {
   id: string
   store_id: string
-  date: string
-  summary: ReportSummary
+  report_date: string
+  total_sales_srd: string
+  transaction_count: number
+  total_btw_srd: string
+  cash_total_srd: string
+  card_total_srd: string
   expected_cash_srd: string
-  actual_cash_srd: string
-  discrepancy_srd: string
+  actual_cash_srd: string | null
+  cash_discrepancy_srd: string | null
   discrepancy_note: string | null
+  top_products: TopProduct[]
+  btw_breakdown: BtwBreakdownLine[]
   sync_status: 'pending' | 'sent' | 'failed'
   synced_at: string | null
   closed_by: string
@@ -97,6 +103,14 @@ export async function getZReportHistory(storeId: string): Promise<ZReportRecord[
   const { data } = await apiClient.get<{ data: ZReportRecord[] }>('/reports/z-report/history', {
     params: { store_id: storeId },
   })
+  return data.data
+}
+
+/** Manual "Submit to Headquarters" — sync option C. */
+export async function submitZReport(zReportId: string): Promise<ZReportRecord> {
+  const { data } = await apiClient.post<{ data: ZReportRecord }>(
+    `/reports/z-report/${zReportId}/submit`
+  )
   return data.data
 }
 

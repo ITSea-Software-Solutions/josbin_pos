@@ -40,7 +40,9 @@ class StoreController extends Controller
     {
         $this->authorize('view', $store);
 
-        return response()->json(['data' => $store->load('organisation:id,name')]);
+        // btw_number is loaded so receipts can fall back to the org's BTW
+        // number when the store has no per-store override configured.
+        return response()->json(['data' => $store->load('organisation:id,name,btw_number')]);
     }
 
     /** PUT /api/stores/{store} — org admin or super admin */

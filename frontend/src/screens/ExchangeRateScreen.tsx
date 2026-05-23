@@ -3,10 +3,12 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { getRates, overrideRate, fetchLiveRate } from '@/api/rates'
 import { useAuthStore } from '@/store/authStore'
+import { useDateFormatter } from '@/utils/date'
 
 export default function ExchangeRateScreen() {
   const { t } = useTranslation()
   const qc = useQueryClient()
+  const fmtDate = useDateFormatter()
   const hasPermission = useAuthStore((s) => s.hasPermission)
   const canFetch = hasPermission('rates.lock')
   const canOverride = hasPermission('rates.override')
@@ -124,7 +126,7 @@ export default function ExchangeRateScreen() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
               <div>
                 <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', marginBottom: 4 }}>
-                  {t('exchangeRate.currentRate')} — {data.today.date}
+                  {t('exchangeRate.currentRate')} — {fmtDate(data.today.date)}
                 </div>
                 <div className="currency-srd" style={{ fontSize: 40, fontWeight: 800, color: 'var(--color-accent)' }}>
                   1 USD = SRD {parseFloat(data.today.usd_to_srd).toFixed(4)}
@@ -257,7 +259,7 @@ export default function ExchangeRateScreen() {
               <tbody>
                 {data.history.slice(0, 14).map((r) => (
                   <tr key={r.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '8px 12px', color: 'var(--text-primary)' }}>{r.date}</td>
+                    <td style={{ padding: '8px 12px', color: 'var(--text-primary)' }}>{fmtDate(r.date)}</td>
                     <td className="currency-srd" style={{ padding: '8px 12px', fontWeight: 600 }}>
                       {parseFloat(r.usd_to_srd).toFixed(4)}
                     </td>

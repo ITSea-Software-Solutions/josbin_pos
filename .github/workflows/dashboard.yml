@@ -1,0 +1,50 @@
+name: Dashboard CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'dashboard/**'
+      - '.github/workflows/dashboard.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'dashboard/**'
+
+jobs:
+  build:
+    name: Type-check, build & tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: dashboard/package-lock.json
+
+      # `npm ci` does a clean install from the lockfile, so the correct
+      # platform-specific optional dependencies (e.g. rollup native binaries)
+      # are always installed for the CI runner.
+      - name: Install dependencies
+        working-directory: dashboard
+        run: npm ci
+
+      - name: Type check
+        working-directory: dashboard
+        run: npm run type-check
+
+      - name: Production build
+        working-directory: dashboard
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Run Vitest
+        working-directory: dashboard
+        run: npm run test:run -- --passWithNoTests

@@ -61,6 +61,14 @@ class ValidateApiKey
 
         $request->attributes->set('api_integration', $integration);
 
-        return $next($request);
+        $response = $next($request);
+
+        // Mark sandbox responses so integrators can confirm they are not
+        // hitting production. See config('josbin_pos.sandbox').
+        if (config('josbin_pos.sandbox') && method_exists($response, 'header')) {
+            $response->header('X-Josbin-Environment', 'sandbox');
+        }
+
+        return $response;
     }
 }

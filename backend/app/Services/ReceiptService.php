@@ -6,6 +6,7 @@ use App\Models\Sale;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 class ReceiptService
 {
@@ -72,7 +73,10 @@ class ReceiptService
                 'name'           => $store->name,
                 'receipt_header' => $store->receipt_header ?? '',
                 'receipt_footer' => $store->receipt_footer ?? '',
-                'btw_number'     => $store->organisation?->btw_number ?? '',
+                // Per-store receipt BTW number overrides the organisation's.
+                'btw_number'     => data_get($store->settings, 'receipt_btw_number')
+                    ?: ($store->organisation?->btw_number ?? ''),
+                'logo'           => $this->receiptLogoDataUri($store->receipt_logo_path),
             ],
             'sale' => [
                 'sale_number'    => $sale->sale_number,
@@ -93,6 +97,28 @@ class ReceiptService
             'btw_items' => $btwItems ?: null,
             't'         => $this->translations($locale),
         ];
+    }
+
+    /**
+     * Build a base64 data URI for the store's receipt logo so it embeds
+     * directly in the PDF (DomPDF runs with remote loading disabled) and in
+     * the HTML email. Returns null when no usable logo is configured.
+     */
+    private function receiptLogoDataUri(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        $disk = Storage::disk('public');
+
+        if (! $disk->exists($path)) {
+            return null;
+        }
+
+        $mime = $disk->mimeType($path) ?: 'image/png';
+
+        return 'data:' . $mime . ';base64,' . base64_encode($disk->get($path));
     }
 
     /**

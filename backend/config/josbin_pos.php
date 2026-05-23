@@ -32,4 +32,18 @@ return [
     // Organisation type for this installation
     // retail | govt | wholesale
     'installation_type' => env('JOSBIN_POS_INSTALLATION_TYPE', 'retail'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sandbox Mode
+    |--------------------------------------------------------------------------
+    |
+    | When true this deployment is an isolated sandbox for third-party
+    | integration testing of the Layer 3 Open Integration API (/v1/*).
+    | A sandbox runs on its own database and is seeded via SandboxSeeder.
+    | The /v1 endpoints add an  X-Josbin-Environment: sandbox  response header
+    | so integrators can confirm they are not hitting production.
+    |
+    */
+    'sandbox' => (bool) env('JOSBIN_POS_SANDBOX', false),
 ];

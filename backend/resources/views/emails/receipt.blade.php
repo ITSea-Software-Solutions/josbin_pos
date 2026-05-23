@@ -35,6 +35,9 @@
 <body>
 <div class="wrapper">
   <div class="header">
+    @if(!empty($store['logo']))
+      <img src="{{ $store['logo'] }}" alt="logo" style="max-width:160px;max-height:64px;margin-bottom:8px;">
+    @endif
     <h1>{{ $store['name'] }}</h1>
     <p>{{ $t['receipt_title'] }} · {{ $sale['sale_number'] }}</p>
   </div>

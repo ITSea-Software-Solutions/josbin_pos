@@ -89,6 +89,8 @@ export default function ReceiptModal({
           name:           store.name,
           receipt_header: store.receipt_header,
           receipt_footer: store.receipt_footer,
+          // Per-store receipt BTW number overrides the organisation's.
+          btw_number:     store.settings?.receipt_btw_number || store.organisation?.btw_number || undefined,
         },
         locale,
       })

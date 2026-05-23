@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getUsers, createUser, updateUser, type User, type CreateUserPayload } from '@/api/users'
 import { getOrganisations, type Organisation } from '@/api/organisations'
+import { getTwoFactorPolicy, updateTwoFactorPolicy } from '@/api/securityPolicy'
+import { useDashboardAuthStore } from '@/store/authStore'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -81,7 +83,7 @@ function Avatar({ name }: { name: string }) {
 }
 
 // ─── OrgSelect helper ─────────────────────────────────────────────────────────
-function OrgSelect({ value, onChange, orgs, isNl, required }: {
+function OrgSelect({ value, onChange, orgs, isNl }: {
   value: string; onChange: (v: string) => void
   orgs: Organisation[]; isNl: boolean; required?: boolean
 }) {
@@ -504,11 +506,160 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
   )
 }
 
+// ─── Per-role 2FA policy panel (Super Admin only) ─────────────────────────────
+function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
+  const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState<string[] | null>(null)
+
+  const { data: policy, isLoading } = useQuery({
+    queryKey: ['two-factor-policy'],
+    queryFn: getTwoFactorPolicy,
+  })
+
+  const selected = draft ?? policy?.two_factor_required_roles ?? []
+  const dirty = draft !== null && policy !== undefined &&
+    JSON.stringify([...draft].sort()) !== JSON.stringify([...policy.two_factor_required_roles].sort())
+
+  const save = useMutation({
+    mutationFn: () => updateTwoFactorPolicy(selected),
+    onSuccess: (updated) => {
+      qc.setQueryData(['two-factor-policy'], updated)
+      setDraft(null)
+    },
+  })
+
+  function toggleRole(role: string) {
+    const base = draft ?? policy?.two_factor_required_roles ?? []
+    setDraft(base.includes(role) ? base.filter((r) => r !== role) : [...base, role])
+  }
+
+  function roleLabel(role: string) {
+    const cfg = ROLE_CFG[role]
+    return cfg ? cfg.label[isNl ? 'nl' : 'en'] : role
+  }
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, marginBottom: 24, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 22px', background: 'none', border: 'none', cursor: 'pointer' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg,#7c3aed20,#4f46e520)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+            🔐
+          </div>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+              {isNl ? 'Tweestapsverificatie per rol' : 'Two-factor authentication per role'}
+            </div>
+            <div style={{ fontSize: 12, color: '#9090a0', marginTop: 1 }}>
+              {isNl
+                ? 'Bepaal welke rollen verplicht 2FA moeten gebruiken.'
+                : 'Choose which roles must use 2FA.'}
+            </div>
+          </div>
+        </div>
+        <svg
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9090a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ padding: '0 22px 22px', borderTop: '1px solid #f0f0f8' }}>
+          {isLoading || !policy ? (
+            <p style={{ fontSize: 13, color: '#9090a0', marginTop: 14 }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+          ) : (
+            <>
+              <p style={{ fontSize: 12.5, color: '#6b7280', margin: '14px 0 16px' }}>
+                {isNl
+                  ? 'Super Admins en alle accounts van overheidsorganisaties zijn altijd verplicht — dit kan niet worden uitgeschakeld.'
+                  : 'Super Admins and all government-organisation accounts are always required — this cannot be disabled.'}
+              </p>
+
+              {/* Always-on roles */}
+              {policy.always_roles.map((role) => (
+                <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f3f3f8' }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>{roleLabel(role)}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 700, background: '#f3f0ff', color: '#6d28d9', border: '1px solid #ddd6fe' }}>
+                    🔒 {isNl ? 'Altijd verplicht' : 'Always required'}
+                  </span>
+                </div>
+              ))}
+
+              {/* Configurable roles */}
+              {policy.configurable_roles.map((role) => {
+                const on = selected.includes(role)
+                return (
+                  <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f3f3f8' }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>{roleLabel(role)}</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={on}
+                      onClick={() => toggleRole(role)}
+                      style={{
+                        width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                        background: on ? '#7c3aed' : '#d1d5db', padding: 2, transition: 'background .15s',
+                        display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',
+                      }}
+                    >
+                      <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }} />
+                    </button>
+                  </div>
+                )
+              })}
+
+              {save.isError && (
+                <p style={{ fontSize: 12.5, color: '#dc2626', background: '#fef2f2', padding: '8px 12px', borderRadius: 8, marginTop: 14 }}>
+                  {isNl ? 'Opslaan mislukt.' : 'Failed to save.'}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 16 }}>
+                <button
+                  onClick={() => save.mutate()}
+                  disabled={!dirty || save.isPending}
+                  style={{
+                    padding: '9px 20px', borderRadius: 10, border: 'none',
+                    background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+                    fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                    opacity: (!dirty || save.isPending) ? 0.5 : 1,
+                  }}
+                >
+                  {save.isPending ? (isNl ? 'Opslaan…' : 'Saving…') : (isNl ? 'Beleid opslaan' : 'Save policy')}
+                </button>
+                {dirty && (
+                  <button
+                    onClick={() => setDraft(null)}
+                    style={{ padding: '9px 16px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    {isNl ? 'Herstellen' : 'Reset'}
+                  </button>
+                )}
+                {save.isSuccess && !dirty && (
+                  <span style={{ fontSize: 12.5, color: '#15803d', fontWeight: 600 }}>
+                    ✓ {isNl ? 'Beleid opgeslagen' : 'Policy saved'}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 export default function UsersScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const qc = useQueryClient()
+  const isSuperAdmin = useDashboardAuthStore((s) => s.user?.role === 'super_admin')
 
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
@@ -560,6 +711,9 @@ export default function UsersScreen() {
           onDismiss={() => setCreatedUser(null)}
         />
       )}
+
+      {/* Per-role 2FA policy — Super Admin only */}
+      {isSuperAdmin && <TwoFactorPolicyPanel isNl={isNl} />}
 
       {/* Stats row */}
       {!isLoading && users && (

@@ -22,6 +22,12 @@ interface CreateApiKeyPayload {
   webhook_events: string[]
 }
 
+interface UpdateApiKeyPayload {
+  pos_system: string
+  webhook_url: string
+  webhook_events: string[]
+}
+
 async function getApiKeys(): Promise<ApiKey[]> {
   const res = await apiClient.get<{ data: ApiKey[] }>('/api-keys')
   return res.data.data
@@ -30,6 +36,19 @@ async function getApiKeys(): Promise<ApiKey[]> {
 async function createApiKey(payload: CreateApiKeyPayload): Promise<{ api_key: string; api_key_prefix: string; id: string }> {
   const res = await apiClient.post('/api-keys', payload)
   return res.data.data
+}
+
+async function updateApiKey(id: string, payload: UpdateApiKeyPayload): Promise<void> {
+  await apiClient.put(`/api-keys/${id}`, {
+    pos_system: payload.pos_system,
+    webhook_url: payload.webhook_url || null,
+    webhook_events: payload.webhook_events,
+  })
+}
+
+async function rotateWebhookSecret(id: string): Promise<{ webhook_secret: string }> {
+  const res = await apiClient.post(`/api-keys/${id}/rotate-webhook-secret`)
+  return res.data
 }
 
 async function revokeApiKey(id: string): Promise<void> {
@@ -81,6 +100,14 @@ export default function ApiKeysScreen() {
     webhook_events: ['sale.created'],
   })
 
+  const [editTarget, setEditTarget] = useState<ApiKey | null>(null)
+  const [editForm, setEditForm] = useState<UpdateApiKeyPayload>({
+    pos_system: '',
+    webhook_url: '',
+    webhook_events: [],
+  })
+  const [rotatedSecret, setRotatedSecret] = useState<string | null>(null)
+
   const { data: keys, isLoading } = useQuery({
     queryKey: ['api-keys'],
     queryFn: getApiKeys,
@@ -101,6 +128,19 @@ export default function ApiKeysScreen() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['api-keys'] }),
   })
 
+  const update = useMutation({
+    mutationFn: () => updateApiKey(editTarget!.id, editForm),
+    onSuccess: () => {
+      setEditTarget(null)
+      qc.invalidateQueries({ queryKey: ['api-keys'] })
+    },
+  })
+
+  const rotate = useMutation({
+    mutationFn: () => rotateWebhookSecret(editTarget!.id),
+    onSuccess: (result) => setRotatedSecret(result.webhook_secret),
+  })
+
   function toggleEvent(event: string) {
     setForm((f) => ({
       ...f,
@@ -108,6 +148,27 @@ export default function ApiKeysScreen() {
         ? f.webhook_events.filter((e) => e !== event)
         : [...f.webhook_events, event],
     }))
+  }
+
+  function toggleEditEvent(event: string) {
+    setEditForm((f) => ({
+      ...f,
+      webhook_events: f.webhook_events.includes(event)
+        ? f.webhook_events.filter((e) => e !== event)
+        : [...f.webhook_events, event],
+    }))
+  }
+
+  function openEdit(key: ApiKey) {
+    setEditTarget(key)
+    setRotatedSecret(null)
+    rotate.reset()
+    update.reset()
+    setEditForm({
+      pos_system: key.pos_system,
+      webhook_url: key.webhook_url ?? '',
+      webhook_events: key.webhook_events ?? [],
+    })
   }
 
   function handleCopy() {
@@ -341,6 +402,151 @@ export default function ApiKeysScreen() {
         </div>
       )}
 
+      {/* Edit webhook modal */}
+      {editTarget && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(15,10,40,0.55)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50 }}
+          onClick={(e) => { if (e.target === e.currentTarget) setEditTarget(null) }}
+        >
+          <div style={{ background: '#fff', borderRadius: 20, padding: 32, width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,0.22)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+              <div>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', marginBottom: 3 }}>
+                  {isNl ? 'Webhook-configuratie' : 'Webhook configuration'}
+                </h3>
+                <p style={{ fontSize: 13, color: '#9090a0' }}>{editTarget.store_name}</p>
+              </div>
+              <button onClick={() => setEditTarget(null)} style={{ background: '#f5f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>
+                ×
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* POS system */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  {isNl ? 'POS-systeem naam' : 'POS system name'}
+                </label>
+                <input
+                  value={editForm.pos_system}
+                  onChange={(e) => setEditForm((f) => ({ ...f, pos_system: e.target.value }))}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none' }}
+                />
+              </div>
+
+              {/* Webhook URL */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  Webhook URL <span style={{ fontWeight: 400, color: '#9090a0' }}>({isNl ? 'optioneel' : 'optional'})</span>
+                </label>
+                <input
+                  value={editForm.webhook_url}
+                  onChange={(e) => setEditForm((f) => ({ ...f, webhook_url: e.target.value }))}
+                  placeholder="https://your-system.com/webhook"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none', fontFamily: 'monospace' }}
+                />
+                <p style={{ fontSize: 11, color: '#9090a0', marginTop: 5 }}>
+                  {isNl
+                    ? 'Laat leeg om uitgaande webhooks uit te schakelen.'
+                    : 'Leave empty to disable outbound webhooks.'}
+                </p>
+              </div>
+
+              {/* Webhook events */}
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 8 }}>
+                  {isNl ? 'Webhook-gebeurtenissen' : 'Webhook events'}
+                </label>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {ALL_EVENTS.map((evt) => {
+                    const on = editForm.webhook_events.includes(evt)
+                    const ec = EVENT_COLORS[evt]
+                    return (
+                      <button
+                        key={evt} type="button" onClick={() => toggleEditEvent(evt)}
+                        style={{
+                          padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
+                          cursor: 'pointer', transition: 'all 0.12s',
+                          background: on ? (ec?.bg ?? '#f5f5fb') : '#f9fafb',
+                          color: on ? (ec?.color ?? '#6b7280') : '#9ca3af',
+                          border: `1px solid ${on ? (ec?.border ?? '#e5e7eb') : '#e5e7eb'}`,
+                        }}
+                      >
+                        {evt}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Rotate webhook secret */}
+              <div style={{ borderTop: '1px solid #f0f0f8', paddingTop: 16 }}>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  {isNl ? 'Webhook-handtekeningsleutel' : 'Webhook signing secret'}
+                </label>
+                {rotatedSecret ? (
+                  <div style={{ background: '#f0fdf4', border: '1px solid #86efac', borderRadius: 10, padding: '12px 14px' }}>
+                    <p style={{ fontSize: 11.5, color: '#166534', marginBottom: 6, fontWeight: 700 }}>
+                      {isNl ? 'Nieuw geheim — kopieer het nu, het wordt niet opnieuw getoond.' : 'New secret — copy it now, it will not be shown again.'}
+                    </p>
+                    <code style={{ display: 'block', background: '#fff', border: '1px solid #bbf7d0', borderRadius: 7, padding: '8px 10px', fontSize: 11.5, fontFamily: 'monospace', color: '#166534', wordBreak: 'break-all' }}>
+                      {rotatedSecret}
+                    </code>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(isNl
+                        ? 'Het oude geheim stopt onmiddellijk met werken. Doorgaan?'
+                        : 'The old secret stops working immediately. Continue?')) {
+                        rotate.mutate()
+                      }
+                    }}
+                    disabled={rotate.isPending}
+                    style={{
+                      padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                      background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa',
+                      cursor: 'pointer', opacity: rotate.isPending ? 0.5 : 1,
+                    }}
+                  >
+                    {rotate.isPending ? '...' : (isNl ? 'Geheim roteren' : 'Rotate secret')}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {update.isError && (
+              <p style={{ fontSize: 12.5, color: '#dc2626', background: '#fef2f2', padding: '8px 12px', borderRadius: 8, marginTop: 16 }}>
+                {isNl ? 'Er is een fout opgetreden. Controleer de webhook-URL.' : 'An error occurred. Check the webhook URL.'}
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+              <button
+                onClick={() => setEditTarget(null)}
+                style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
+              >
+                {isNl ? 'Annuleren' : 'Cancel'}
+              </button>
+              <button
+                onClick={() => update.mutate()}
+                disabled={!editForm.pos_system || update.isPending}
+                style={{
+                  flex: 1, padding: '11px 0',
+                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                  color: '#fff', border: 'none', borderRadius: 10,
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                  opacity: (!editForm.pos_system || update.isPending) ? 0.5 : 1,
+                }}
+              >
+                {update.isPending ? '...' : (isNl ? 'Opslaan' : 'Save')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Table card */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
@@ -439,20 +645,32 @@ export default function ApiKeysScreen() {
                   </td>
                   <td style={{ padding: '14px 20px' }}>
                     {key.is_active && (
-                      <button
-                        onClick={() => {
-                          if (confirm(isNl ? 'Weet je zeker dat je deze sleutel wilt intrekken?' : 'Revoke this API key?')) {
-                            revoke.mutate(key.id)
-                          }
-                        }}
-                        style={{
-                          padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-                          background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {isNl ? 'Intrekken' : 'Revoke'}
-                      </button>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          onClick={() => openEdit(key)}
+                          style={{
+                            padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                            background: '#f5f5fb', color: '#4338ca', border: '1px solid #e0e0ff',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isNl ? 'Webhook bewerken' : 'Edit webhook'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (confirm(isNl ? 'Weet je zeker dat je deze sleutel wilt intrekken?' : 'Revoke this API key?')) {
+                              revoke.mutate(key.id)
+                            }
+                          }}
+                          style={{
+                            padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
+                            background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isNl ? 'Intrekken' : 'Revoke'}
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>

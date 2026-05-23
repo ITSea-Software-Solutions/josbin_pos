@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- Entitlements for the macOS hardened-runtime build of Josbin POS. -->
+
+  <!-- Electron / V8 require JIT and writable+executable memory. -->
+  <key>com.apple.security.cs.allow-jit</key>
+  <true/>
+  <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+  <true/>
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+
+  <!-- Camera access — Quagga2 camera barcode scanner on the POS screen. -->
+  <key>com.apple.security.device.camera</key>
+  <true/>
+
+  <!-- Outbound network — API calls to the local back-office server and cloud. -->
+  <key>com.apple.security.network.client</key>
+  <true/>
+</dict>
+</plist>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\ZReportSubmitted;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\ZReport;
@@ -170,27 +171,58 @@ class ReportController extends Controller
         $discrepancy  = round($cashActual - $cashExpected, 2);
 
         $zReport = ZReport::create([
-            'store_id'               => $storeId,
-            'closed_by'              => $request->user()->id,
-            'report_date'            => $reportDate,
-            'total_sales_srd'        => $summary['total_sales_srd'],
-            'total_transactions'     => $summary['transaction_count'],
-            'total_btw_srd'          => $summary['total_btw_srd'],
-            'total_discounts_srd'    => $summary['total_discount_srd'],
-            'cash_expected_srd'      => $cashExpected,
-            'cash_actual_srd'        => $cashActual,
-            'cash_discrepancy_srd'   => $discrepancy,
-            'cash_discrepancy_note'  => $discrepancy != 0 ? $request->input('discrepancy_note') : null,
-            'top_products'           => $summary['top_products'] ?? [],
-            'btw_breakdown'          => $summary['btw_breakdown'] ?? [],
-            'sync_status'            => 'pending',
-            'closed_at'              => now(),
+            'store_id'             => $storeId,
+            'closed_by'            => $request->user()->id,
+            'report_date'          => $reportDate,
+            'total_sales_srd'      => $summary['total_sales_srd'],
+            'transaction_count'    => $summary['transaction_count'],
+            'total_btw_srd'        => $summary['total_btw_srd'],
+            'cash_total_srd'       => $summary['cash_total_srd'] ?? 0,
+            'card_total_srd'       => $summary['card_total_srd'] ?? 0,
+            'expected_cash_srd'    => $cashExpected,
+            'actual_cash_srd'      => $cashActual,
+            'cash_discrepancy_srd' => $discrepancy,
+            'discrepancy_note'     => $discrepancy != 0 ? $request->input('discrepancy_note') : null,
+            'top_products'         => $summary['top_products'] ?? [],
+            'btw_breakdown'        => $summary['btw_breakdown'] ?? [],
+            'sync_status'          => 'pending',
+            'closed_at'            => now(),
         ]);
 
         return response()->json([
-            'z_report' => $zReport,
-            'summary'  => $summary,
+            'data'    => $zReport,
+            'summary' => $summary,
         ], 201);
+    }
+
+    /**
+     * POST /api/reports/z-report/{zReport}/submit
+     *
+     * Manual "Submit to Headquarters" — sync option C. Pushes a closed
+     * Z-Report to the cloud Super Admin Dashboard, marks it sent, and
+     * broadcasts ZReportSubmitted so the dashboard store card updates live.
+     */
+    public function submitZReport(Request $request, ZReport $zReport): JsonResponse
+    {
+        abort_unless($request->user()?->can('z_report.submit'), 403);
+
+        if ($zReport->sync_status === 'sent') {
+            return response()->json([
+                'message' => 'Dit Z-rapport is al verzonden naar het hoofdkantoor.',
+                'code'    => 'ALREADY_SENT',
+                'data'    => $zReport,
+            ], 409);
+        }
+
+        $zReport->update([
+            'sync_status' => 'sent',
+            'synced_at'   => now(),
+        ]);
+
+        // Broadcast to the org channel so the Super Admin Dashboard updates live.
+        ZReportSubmitted::dispatch($zReport->fresh('store'));
+
+        return response()->json(['data' => $zReport->fresh()]);
     }
 
     /** GET /api/reports/z-report/history */
