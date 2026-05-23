@@ -27,6 +27,10 @@ frontend/.vite/
 
 # Docker
 docker/postgres/data/
+docker/redis/data/
+
+# Backups
+backend/.env.backup*
 
 # IDE
 .idea/
