@@ -1,7 +1,7 @@
 # Josbin POS — Build Status
 
-**Last updated:** 2026-04-28 (session 2)
-**Version:** Phase 2 complete + Phase 3 substantially complete (Dashboard + API)
+**Last updated:** 2026-05-23 (session 3)
+**Version:** Phase 2 complete + Phase 3 complete (Dashboard + API) — wiring gaps closed, License server built
 
 ---
 
@@ -93,7 +93,7 @@
 | Export to CSV | ✅ | |
 | Z-Report / End of Day | ✅ | `EndOfDayScreen.tsx` |
 | Cash reconciliation (expected vs counted) | ✅ | Via `CloseRegisterModal.tsx` |
-| Submit to Headquarters button | ⚠️ | UI exists in EndOfDayScreen, confirm wiring to sync endpoint |
+| Submit to Headquarters button | ✅ | `EndOfDayScreen.tsx` — per-day confirm modal → `POST /reports/z-report/{id}/submit`, broadcasts `ZReportSubmitted` |
 
 ### Register (Till) Management
 | Feature | Status | Notes |
@@ -113,7 +113,7 @@
 | Barcode & Label printing page | ✅ | `BarcodeLabelScreen.tsx` |
 | Settings screen | ✅ | `SettingsScreen.tsx` |
 | On-screen keyboard toggle | ✅ | `OnScreenKeyboard.tsx` |
-| Date format selector (6 options) | ⚠️ | Settings store has it, verify all date displays use it |
+| Date format selector (6 options) | ✅ | `utils/date.ts` formatter applied across POS date displays (EndOfDay, ExchangeRate) |
 
 ---
 
@@ -141,7 +141,7 @@
 |---------|--------|-------|
 | Create / edit / deactivate organisations | ✅ | `OrganisationsScreen.tsx` |
 | Create / edit / deactivate stores | ✅ | Nested in OrganisationsScreen |
-| **Receipt customisation per store (header/footer/logo/BTW nr)** | ⚠️ | Fields exist in store model, editable via store update form — verify all fields exposed in UI |
+| **Receipt customisation per store (header/footer/logo/BTW nr)** | ✅ | `StoreSettingsScreen` exposes all fields; logo + per-store BTW number now render on PDF/email/ESC-POS receipts |
 | Per-store product price overrides | ✅ | `PriceOverridesScreen.tsx` — store selector, override table, add/edit/delete modal |
 | Push catalogue to all stores | ✅ | `PriceOverridesScreen.tsx` — "Push catalogue to POS" button → `POST /products/push` → broadcasts `CatalogueRefresh` |
 
@@ -163,7 +163,7 @@
 | Create / edit / deactivate users | ✅ | `UsersScreen.tsx` |
 | 6 roles (Super Admin, Org Admin, Store Manager, Cashier, Auditor, API Integration) | ✅ | |
 | 2FA enforcement per role | ✅ | `EnsureTwoFactor` middleware |
-| **Enforce 2FA requirement per role (policy setting)** | ⚠️ | Middleware exists, verify super admin can configure which roles require 2FA |
+| **Enforce 2FA requirement per role (policy setting)** | ✅ | `app_settings` policy + `SecurityPolicyController`; Super Admin panel in `UsersScreen`; `User::requires2FA()` reads it |
 
 ### Register Management (Dashboard)
 | Feature | Status | Notes |
@@ -208,7 +208,7 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | API key create / revoke | ✅ | `ApiKeysScreen.tsx` |
-| **Webhook URL configuration in UI** | ⚠️ | `ApiIntegration` model has `webhook_url` field — verify it's editable in `ApiKeysScreen` |
+| **Webhook URL configuration in UI** | ✅ | `ApiKeysScreen` "Edit webhook" modal — edit URL/events, rotate signing secret → `PUT /api-keys/{id}` |
 | Outbound webhook dispatch (queued) | ✅ | `DispatchWebhook` job |
 
 ### License
@@ -216,7 +216,7 @@
 |---------|--------|-------|
 | License display + expiry warnings | ✅ | `LicenseScreen.tsx` + `LicenseBanner.tsx` |
 | License check middleware | ✅ | `EnsureLicenseValid` middleware |
-| **License server (separate app)** | ❌ | Separate Laravel app not yet built |
+| **License server (separate app)** | ✅ | Built at `/license-server` — issue/activate/validate/renew/revoke, hardware-fingerprint binding, feature tests |
 | Hardware fingerprinting | ✅ | `hardware.ts` — MAC + CPU ID + UUID |
 
 ---
@@ -230,8 +230,8 @@
 | GET report endpoints | ✅ | `V1/ReportController` |
 | Outbound webhooks (sale.created, shift.closed, refund.issued) | ✅ | `DispatchWebhook` job |
 | API key auth | ✅ | `ValidateApiKey` middleware |
-| **OpenAPI / Swagger documentation** | ❌ | Not generated yet |
-| Sandbox environment | ❌ | Not set up |
+| **OpenAPI / Swagger documentation** | ✅ | `resources/api-docs/openapi.json` served via Swagger UI at `GET /api/v1/docs` |
+| Sandbox environment | ✅ | `SandboxSeeder` + `JOSBIN_POS_SANDBOX` flag + `X-Josbin-Environment` header + `docker-compose.sandbox.yml` |
 
 ---
 
@@ -287,14 +287,60 @@
 |---|---------|--------|
 | 10 | Store comparison | `StoreComparisonScreen.tsx` |
 
-### Remaining (Phase 4 / external)
-| # | Item | Notes |
+### ✅ Session 3 — wiring gaps closed + Phase 3/4 items delivered
+| # | Item | Where |
 |---|------|-------|
-| 11 | OpenAPI / Swagger documentation | Generate from route annotations |
-| 12 | Webhook config in API Keys screen | Verify `webhook_url` editable in `ApiKeysScreen` |
-| 13 | License server (separate Laravel app) | Separate project, Phase 4 |
-| 14 | Electron code signing + IonCube | Phase 4 delivery step |
-| 15 | Sandbox environment for API testing | Phase 4 |
+| 1 | Submit-to-HQ Z-Report sync endpoint + POS UI | `ReportController::submitZReport`, `EndOfDayScreen.tsx` |
+| 2 | Webhook URL/events editing + secret rotation | `ApiKeysScreen.tsx` "Edit webhook" modal |
+| 3 | Date-format selector applied across POS displays | `frontend/src/utils/date.ts` |
+| 4 | Per-role 2FA policy (configurable by Super Admin) | `AppSetting`, `SecurityPolicyController`, `UsersScreen.tsx` |
+| 5 | Receipt customisation wired to PDF/email/ESC-POS output | `ReceiptService`, receipt blade templates, `ReceiptModal` |
+| 6 | OpenAPI / Swagger documentation | `resources/api-docs/openapi.json`, `GET /api/v1/docs` |
+| 7 | License server (standalone Laravel 13 app) | `/license-server` |
+| 8 | API sandbox environment | `SandboxSeeder`, `docker-compose.sandbox.yml`, `josbin_pos.sandbox` |
+
+### Phase 4 — delivery pipeline (prepared; credential-gated execution)
+| # | Item | Status |
+|---|------|--------|
+| 14 | IonCube encoding | ✅ Pipeline ready — IonCube Loader baked into `docker/php/Dockerfile`; `scripts/encode-ioncube.sh` encodes the backend. Running the encoder needs the paid IonCube licence at delivery time. |
+| 15 | Electron code signing | ✅ Config ready — `mac` signing/notarization block + `build/entitlements.mac.plist`; Windows + macOS signing driven by build-time env vars. Needs a code-signing certificate + Apple notarization account at delivery time. Add `frontend/resources/icon.{ico,icns}`. |
+
+Build & delivery runbook: `scripts/README.md`. Dashboard now has CI (`.github/workflows/dashboard.yml`).
+
+### Type-check status (session 3)
+- POS frontend (`/frontend`) — `tsc --noEmit` passes clean.
+- Dashboard (`/dashboard`) — `tsc --noEmit` passes clean. Pre-existing TypeScript errors in `AuditLogScreen.tsx` (v5 `keepPreviousData` / `as any`), `DashboardOverview.tsx` (unused import), `RegistersScreen.tsx` (non-existent `store_id`) and `store/authStore.ts` (union narrowing) were all fixed.
+
+---
+
+## Session 4 — readiness audit + bug fixes (2026-05-23)
+
+Five parallel static audits (BTW engine, sale flow, migrations/models, boot/config,
+API contracts). Bugs found and **fixed this session**:
+
+| Severity | Bug | Fix location |
+|----------|-----|--------------|
+| Migrate-blocker | `fix_audits_table_for_uuid` altered table `audits`; real table is `audit_logs` — fresh `migrate` failed | `2026_04_13_000001_fix_audits_table_for_uuid.php` |
+| Demo-blocker | Cash/card amounts validated but never persisted (`cash_received_srd`/`change_srd`/`card_amount_srd` always NULL) | `SaleController::store` |
+| Serious | `.env.example` keys (`EXCHANGE_RATE_*`, `SURAPOS_*`) didn't match config (`EXCHANGERATE_*`, `JOSBIN_POS_*`) | `backend/.env.example` |
+| Serious | Fortify/Horizon/Telescope service providers not registered | `bootstrap/providers.php` |
+| Serious | BTW `round2/round4` cast money to PHP float | `BtwCalculationService` (now pure bcmath) |
+| Serious | Government void could be self-approved | `SaleController::void` |
+| Serious | `sale_number` race → duplicate-number failure under concurrent terminals | `Sale::nextNumber` (advisory lock) |
+| Serious | USB sync re-import dropped original ids → duplicates; anomaly job bypassed audit hash chain | `SyncExportController`, `DetectSaleAnomaly` |
+| Minor | Dead `pushStoreSettings` calling a non-existent route | `dashboard/src/api/organisations.ts` |
+
+**Still open (not boot/demo blockers — verify next):**
+- Sales are not linked to their `register_session_id` — per-session register reports may be empty.
+- Refund stock-movement sign needs verifying against `StockMovementService`.
+
+### NEXT STEPS (handoff)
+The codebase has never been executed end-to-end. Immediate path:
+1. `cd backend && cp .env.example .env && php artisan key:generate`
+2. Start PostgreSQL 16 + Redis, then `php artisan migrate` and `php artisan db:seed`.
+3. `php artisan test` — confirm the 50+ BTW scenarios and all suites pass; fix failures.
+4. Boot all three apps; click through a full sale → payment → receipt; close a register (Z-Report).
+5. Then resolve the two open items above, then proceed to Phase 4 (UAT, security, load, device testing).
 
 ---
 
