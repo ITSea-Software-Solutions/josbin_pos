@@ -61,6 +61,15 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->name('auth.')->group(functi
 // ── Authenticated (Sanctum) ───────────────────────────────────────────────
 Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
 
+    // Self-service: personal stats + profile + password change.
+    // Strictly scoped to $request->user() — see MeController for the rule.
+    Route::prefix('me')->name('me.')->group(function () {
+        Route::get('sales-summary', [\App\Http\Controllers\Api\MeController::class, 'salesSummary'])->name('sales-summary');
+        Route::get('shifts',        [\App\Http\Controllers\Api\MeController::class, 'shifts'])->name('shifts');
+        Route::patch('profile',     [\App\Http\Controllers\Api\MeController::class, 'updateProfile'])->name('profile');
+        Route::post('password',     [\App\Http\Controllers\Api\MeController::class, 'changePassword'])->name('password');
+    });
+
     // Auth
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('me', [AuthController::class, 'me'])->name('me');

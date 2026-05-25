@@ -21,11 +21,13 @@ const DiscountRulesScreen   = lazy(() => import('@/screens/DiscountRulesScreen')
 const StoreComparisonScreen = lazy(() => import('@/screens/StoreComparisonScreen'))
 const StoreSettingsScreen          = lazy(() => import('@/screens/StoreSettingsScreen'))
 const CatalogueImportExportScreen  = lazy(() => import('@/screens/CatalogueImportExportScreen'))
+const MyAccountScreen              = lazy(() => import('@/screens/MyAccountScreen'))
 
 type Screen =
   | 'overview' | 'store' | 'reports' | 'organisations' | 'users' | 'api-keys'
   | 'z-reports' | 'audit-log' | 'licenses' | 'catalogue' | 'registers'
   | 'customers' | 'stock' | 'ai-insights' | 'price-overrides' | 'discount-rules' | 'compare' | 'store-settings' | 'import-export'
+  | 'my-account'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const IC = {
@@ -150,26 +152,22 @@ export default function DashboardLayout() {
   const user       = useDashboardAuthStore((s) => s.user)
   const logout     = useDashboardAuthStore((s) => s.logout)
 
-  const [screen, setScreen]               = useState<Screen>('overview')
+  // Cashier (and any role without overview access) lands on My Account first.
+  const defaultScreen: Screen = user?.role === 'cashier' ? 'my-account' : 'overview'
+  const [screen, setScreen]               = useState<Screen>(defaultScreen)
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
   const isNl = i18n.language === 'nl'
 
-  // Cashiers belong in the POS app, not the dashboard. If one logs in here,
-  // show a friendly redirect screen instead of leaking any HQ UI.
-  if (user?.role === 'cashier' || user?.role === 'api_integration') {
+  // Machine accounts (API integrations) have no business in the dashboard UI.
+  if (user?.role === 'api_integration') {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f8', padding: 32 }}>
         <div style={{ background: '#fff', borderRadius: 18, padding: 36, maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,.12)', textAlign: 'center' }}>
-          <p style={{ fontSize: 44, margin: 0 }}>🛒</p>
-          <h2 style={{ margin: '12px 0 8px', fontSize: 22, fontWeight: 800, color: '#1c1c2e' }}>
-            {isNl ? 'Dit is het beheerportaal' : 'This is the admin dashboard'}
-          </h2>
-          <p style={{ margin: 0, fontSize: 14, color: '#6b7280', lineHeight: 1.55 }}>
-            {isNl
-              ? 'Kassamedewerkers gebruiken de Josbin POS-app op het kassascherm. Vraag uw manager als u geen toegang heeft tot de POS.'
-              : 'Cashiers use the Josbin POS app on the register terminal. Ask your manager if you do not have access to the POS.'}
+          <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800 }}>{isNl ? 'API-account' : 'API account'}</h2>
+          <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
+            {isNl ? 'Dit account heeft geen toegang tot de dashboard-UI.' : 'This account has no access to the dashboard UI.'}
           </p>
-          <button onClick={logout} style={{ marginTop: 24, padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={logout} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
             {isNl ? 'Uitloggen' : 'Log out'}
           </button>
         </div>
@@ -183,8 +181,10 @@ export default function DashboardLayout() {
   // Every nav item declares the roles allowed to see it. Filter below denies
   // by default for any role not listed. Cashier is never granted any dashboard
   // nav — they're redirected to the POS app at the layout root.
-  const SA = 'super_admin', OA = 'organisation_admin', SM = 'store_manager', AU = 'auditor'
+  const SA = 'super_admin', OA = 'organisation_admin', SM = 'store_manager', AU = 'auditor', CA = 'cashier'
   const nav: { id: Screen; nl: string; en: string; icon: React.ReactNode; roles: string[] }[] = [
+    // Mijn Profiel — everyone gets self-service: own stats, shifts, password.
+    { id: 'my-account',     nl: 'Mijn Profiel',           en: 'My Account',      icon: IC.users,          roles: [SA, OA, SM, AU, CA] },
     { id: 'overview',       nl: 'Dashboard',              en: 'Dashboard',       icon: IC.overview,       roles: [SA, OA, SM, AU] },
     { id: 'z-reports',      nl: 'Z-Rapporten',            en: 'Z-Reports',       icon: IC.zreports,       roles: [SA, OA, SM, AU] },
     { id: 'reports',        nl: 'Rapporten',              en: 'Reports',         icon: IC.reports,        roles: [SA, OA, SM, AU] },
@@ -417,6 +417,7 @@ export default function DashboardLayout() {
             {screen === 'compare'       && <StoreComparisonScreen />}
             {screen === 'store-settings'  && <StoreSettingsScreen />}
             {screen === 'import-export'   && <CatalogueImportExportScreen />}
+            {screen === 'my-account'      && <MyAccountScreen />}
           </Suspense>
         </div>
       </div>
