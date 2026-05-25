@@ -137,6 +137,8 @@ Hit **Wijzigingen opslaan / Save changes**. The header/footer is live on the nex
 
 A register (Dutch: **kassa**) is one till position. Most small shops need just one. A busy supermarket lane might have 4-8.
 
+> **Who-does-what reminder.** As manager (or org admin) you create the **register** here — once. After that, every cashier **opens a session** on it at the start of their shift via the POS app (Open Register screen → pick → enter opening float). You don't open the register for them; they do it themselves. See [POS User Manual — Ch.3 Your Register](../user_manual/03-register.md) for the cashier-side flow.
+
 **Path:** Dashboard → **Kassabeheer / Registers** (left sidebar) → **Kassas beheren / Manage Registers** tab → pick the store (Super Admin only — org admins are scoped to their own org).
 
 In the *Manage Registers* tab:

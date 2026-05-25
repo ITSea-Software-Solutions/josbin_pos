@@ -9,6 +9,24 @@ Before you can sell, you must **open a register session**. A register session li
 
 ---
 
+## Register vs. session — what the words mean
+
+People mix these up. They are **two different things**:
+
+| | **Register (a.k.a. Kassa)** | **Register session (a "shift")** |
+|---|---|---|
+| What it is | The physical till — one terminal, one cash drawer, one printer | One cashier's open shift on one register |
+| How long it lives | Forever (until someone deactivates it) | One shift (typically a few hours, ending when you close) |
+| Who creates it | **Manager / Org Admin** — once, in the Dashboard | **You, the cashier** — every shift, on the POS |
+| Where | Dashboard → Registers → Manage tab → **+ Add register** | POS → Open Register screen → **Open** |
+| How many at once | A store has 1–12 (Kassa 1, Kassa 2, …) | One open session per register at a time |
+
+Put differently: the **register** is the lane at the front of the shop. The **session** is your shift behind that lane today. Two cashiers can share Kassa 1 across two shifts (you open + close it; the next cashier opens + closes it again later). Two cashiers cannot share Kassa 1 *at the same time* — for that, the manager creates a second register (Kassa 2).
+
+**You never create a register yourself.** If the **Open Register** screen shows you no registers to pick from, your manager hasn't created them yet — ask them to add one in Dashboard → Registers → Manage.
+
+---
+
 ## 3.1 Opening your register (start of shift)
 
 After you log in and pick your store, you land on the **Open Register** screen.
