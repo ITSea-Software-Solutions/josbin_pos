@@ -453,6 +453,40 @@ Renew by calling `POST /api/admin/licenses/{license}/renew` on the license serve
 
 ---
 
+---
+
+## Bonus — Running a demo stack alongside live
+
+For client demos, training, or experimenting, run the **demo stack** in parallel with your live stack. Same code, isolated database, different ports — both can be up at the same time.
+
+```bash
+# Bring up the demo stack on its own ports (8082 / 55433 / 6380)
+docker compose -p josbin_demo \
+  -f docker-compose.yml -f docker-compose.demo.yml up -d --build
+
+# Migrate + seed (one-off, after first start)
+docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml \
+  exec app php artisan migrate --force
+
+docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml \
+  exec app php artisan db:seed --force
+
+# Fill every screen with realistic data
+docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml \
+  exec app php artisan db:seed --class=DemoSeeder --force
+
+# Point a frontend at the demo backend
+cd frontend && VITE_API_URL=http://localhost:8082/api npm run dev
+# (similarly for dashboard, on a different terminal/port)
+```
+
+A yellow "DEMO MODE — not real data" banner shows on every screen of POS and Dashboard whenever they're talking to the demo backend (driven by `JOSBIN_POS_DEMO_MODE=true` exposed via `GET /api/environment`).
+
+Tear down without losing data: `docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml down`.
+Wipe demo data too: add `--volumes` and `rm -rf docker/postgres-demo/`.
+
+---
+
 ## Where to go next
 
 | Audience | Doc |

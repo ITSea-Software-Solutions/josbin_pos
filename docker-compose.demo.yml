@@ -1,0 +1,83 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Josbin POS — Demo overlay
+#
+# Runs a fully ISOLATED demo stack for showing the system to clients or for
+# the delivery team to play in without touching live/dev data. Same code,
+# separate database, separate container names, separate ports — so the live
+# stack can keep running on 8080 at the same time.
+#
+# This is a Compose OVERRIDE file. Always pass it alongside docker-compose.yml
+# with a distinct project name.
+#
+#   # Start the demo stack (live stack can keep running)
+#   docker compose -p josbin_demo \
+#     -f docker-compose.yml -f docker-compose.demo.yml up -d --build
+#
+#   # Migrate + seed (run once after first start)
+#   docker compose -p josbin_demo \
+#     -f docker-compose.yml -f docker-compose.demo.yml \
+#     exec app php artisan migrate --force
+#
+#   docker compose -p josbin_demo \
+#     -f docker-compose.yml -f docker-compose.demo.yml \
+#     exec app php artisan db:seed --force
+#
+#   docker compose -p josbin_demo \
+#     -f docker-compose.yml -f docker-compose.demo.yml \
+#     exec app php artisan db:seed --class=DemoSeeder --force
+#
+#   # Tear down the demo (data is preserved unless you also pass --volumes)
+#   docker compose -p josbin_demo \
+#     -f docker-compose.yml -f docker-compose.demo.yml down
+#
+# Demo backend is then at  http://localhost:8082
+# Point the frontends at it with  VITE_API_URL=http://localhost:8082/api
+#
+# A yellow "DEMO MODE" banner appears across the POS and Dashboard topbars
+# whenever JOSBIN_POS_DEMO_MODE=true (set below).
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  app:
+    container_name: josbin_demo_app
+    environment:
+      APP_ENV: demo
+      JOSBIN_POS_DEMO_MODE: "true"
+      DB_DATABASE: josbin_pos_demo
+
+  nginx:
+    container_name: josbin_demo_nginx
+    ports: !override
+      - "8082:80"
+
+  postgres:
+    container_name: josbin_demo_postgres
+    environment:
+      POSTGRES_DB: josbin_pos_demo
+    volumes: !override
+      - ./docker/postgres-demo/data:/var/lib/postgresql/data
+    ports: !override
+      - "55433:5432"
+
+  pgbouncer:
+    container_name: josbin_demo_pgbouncer
+    environment:
+      DB_NAME: josbin_pos_demo
+    ports: !override
+      - "5434:5432"
+
+  redis:
+    container_name: josbin_demo_redis
+    volumes: !override []
+    ports: !override
+      - "6380:6379"
+
+  reverb:
+    container_name: josbin_demo_reverb
+    ports: !override
+      - "6002:8080"
+
+  horizon:
+    container_name: josbin_demo_horizon
+
+  scheduler:
+    container_name: josbin_demo_scheduler

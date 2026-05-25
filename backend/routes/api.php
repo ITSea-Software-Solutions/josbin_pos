@@ -35,6 +35,14 @@ use Illuminate\Support\Facades\Route;
 // ── Health check (unauthenticated — for Docker, monitoring, Electron) ─────
 Route::get('health', HealthController::class)->name('health');
 
+// ── Environment flags (unauthenticated — so login screen can render the DEMO banner)
+Route::get('environment', function () {
+    return response()->json([
+        'demo_mode' => (bool) config('josbin_pos.demo_mode'),
+        'sandbox'   => (bool) config('josbin_pos.sandbox'),
+    ]);
+})->name('environment');
+
 // ── Public ────────────────────────────────────────────────────────────────
 Route::prefix('auth')->name('auth.')->group(function () {
     Route::post('login', [AuthController::class, 'login'])->name('login')

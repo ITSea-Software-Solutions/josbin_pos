@@ -295,7 +295,13 @@ class AuthController extends Controller
     {
         $user = $request->user()->load('roles');
 
-        return response()->json(['user' => $this->userPayload($user)]);
+        return response()->json([
+            'user' => $this->userPayload($user),
+            'environment' => [
+                'demo_mode' => (bool) config('josbin_pos.demo_mode'),
+                'sandbox'   => (bool) config('josbin_pos.sandbox'),
+            ],
+        ]);
     }
 
     /**

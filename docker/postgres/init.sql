@@ -1,17 +1,21 @@
 -- Josbin POS PostgreSQL initialisation
--- Runs once when the container is first created
+-- Runs once when the container is first created (empty data directory).
+--
+-- Extensions are installed into template1 so any DB created later on this
+-- cluster (e.g. josbin_pos_demo, josbin_pos_sandbox) inherits them
+-- automatically — no need to run CREATE EXTENSION per-DB.
 
--- Enable pgvector extension (required for product embeddings / semantic search)
+\connect template1
 CREATE EXTENSION IF NOT EXISTS vector;
-
--- Enable pgcrypto (field-level encryption helper)
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
--- Enable pg_trgm (trigram similarity for smart product search)
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- Set timezone for all connections
-ALTER DATABASE josbin_pos SET timezone TO 'America/Paramaribo';
+-- And in the default POSTGRES_DB (which was created before this script ran)
+\connect :"POSTGRES_DB"
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+ALTER DATABASE :"POSTGRES_DB" SET timezone TO 'America/Paramaribo';
 
 -- Confirm extensions loaded
 DO $$

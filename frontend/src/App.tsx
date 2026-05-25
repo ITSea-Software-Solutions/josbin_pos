@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useRegisterStore } from '@/store/registerStore'
 import { LicenseBanner } from '@/components/shared/LicenseBanner'
+import { DemoBanner } from '@/components/shared/DemoBanner'
 
 const LoginScreen       = lazy(() => import('@/screens/LoginScreen'))
 const StoreSelectScreen = lazy(() => import('@/screens/StoreSelectScreen'))
@@ -30,6 +31,7 @@ export default function App() {
 
   return (
     <>
+      <DemoBanner />
       <LicenseBanner />
       <Suspense fallback={<Loading />}>
         {!authed                            && <LoginScreen />}

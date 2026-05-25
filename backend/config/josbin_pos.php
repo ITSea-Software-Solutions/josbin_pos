@@ -46,4 +46,17 @@ return [
     |
     */
     'sandbox' => (bool) env('JOSBIN_POS_SANDBOX', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Demo Mode
+    |--------------------------------------------------------------------------
+    |
+    | When true this deployment is a demo / showcase environment. The POS and
+    | Dashboard render a prominent yellow "DEMO MODE — not production data"
+    | banner so nobody confuses it with the client's live install. Set true
+    | only on the demo stack (docker-compose.demo.yml).
+    |
+    */
+    'demo_mode' => (bool) env('JOSBIN_POS_DEMO_MODE', false),
 ];
