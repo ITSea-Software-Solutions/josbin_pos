@@ -44,7 +44,7 @@ class SyncExportController extends Controller
     public function export(Request $request): Response
     {
         $request->validate([
-            'store_id'  => ['required', 'uuid', 'exists:stores,id'],
+            'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'from_date' => ['nullable', 'date_format:Y-m-d'],
             'to_date'   => ['nullable', 'date_format:Y-m-d'],
         ]);
@@ -138,7 +138,7 @@ class SyncExportController extends Controller
         // We need the store_id to derive the decryption key — it's in the outer envelope
         // For the dashboard import we attempt with available store keys
         // The store_id should be provided as a form field for key derivation
-        $request->validate(['store_id' => ['required', 'uuid', 'exists:stores,id']]);
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
         $storeId = $request->input('store_id');
 
         // Decrypt

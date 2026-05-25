@@ -53,7 +53,7 @@ class ApiIntegrationController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'store_id'       => ['required', 'uuid', 'exists:stores,id'],
+            'store_id'       => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'pos_system'     => ['required', 'string', 'max:100'],
             'webhook_url'    => ['nullable', 'url', 'max:500'],
             'webhook_events' => ['nullable', 'array'],

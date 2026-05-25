@@ -39,7 +39,7 @@ class SaleController extends Controller
         $this->authorize('create', Sale::class);
 
         $data = $request->validate([
-            'store_id'            => ['required', 'uuid', 'exists:stores,id'],
+            'store_id'            => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'customer_id'         => ['nullable', 'uuid', 'exists:customers,id'],
             'payment_method'      => ['required', Rule::in(['cash', 'card', 'mixed'])],
             'cash_tendered'       => ['nullable', 'numeric', 'min:0'],
@@ -281,7 +281,7 @@ class SaleController extends Controller
         $this->authorize('hold', Sale::class);
 
         $data = $request->validate([
-            'store_id'   => ['required', 'uuid', 'exists:stores,id'],
+            'store_id'   => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'label'      => ['nullable', 'string', 'max:100'],
             'customer_id'=> ['nullable', 'uuid', 'exists:customers,id'],
             'cart_data'  => ['required', 'array'],
@@ -308,7 +308,7 @@ class SaleController extends Controller
     {
         $this->authorize('hold', Sale::class);
 
-        $request->validate(['store_id' => ['required', 'uuid', 'exists:stores,id']]);
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
 
         $held = \App\Models\HeldBill::where('store_id', $request->input('store_id'))
             ->where('cashier_id', $request->user()->id)
@@ -463,7 +463,7 @@ class SaleController extends Controller
         $this->authorize('viewAny', Sale::class);
 
         $request->validate([
-            'store_id'  => ['required', 'uuid'],
+            'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from' => ['nullable', 'date'],
             'date_to'   => ['nullable', 'date'],
             'status'    => ['nullable', Rule::in(['completed', 'voided', 'held'])],

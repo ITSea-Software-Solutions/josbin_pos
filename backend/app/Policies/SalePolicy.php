@@ -17,9 +17,15 @@ class SalePolicy
         return $user->can('sales.view');
     }
 
+    /**
+     * Org-scope every per-sale read. Before this guard a cashier from one
+     * organisation could GET /api/sales/{uuid} for another organisation's
+     * sale and read it. Now: must have sales.view AND the sale's store
+     * must belong to the caller's organisation.
+     */
     public function view(User $user, Sale $sale): bool
     {
-        return $user->can('sales.view');
+        return $user->can('sales.view') && $this->ownsSale($user, $sale);
     }
 
     public function create(User $user): bool
@@ -29,12 +35,21 @@ class SalePolicy
 
     public function void(User $user, Sale $sale): bool
     {
-        return $user->can('sales.void');
+        return $user->can('sales.void') && $this->ownsSale($user, $sale);
     }
 
     public function refund(User $user, Sale $sale): bool
     {
-        return $user->can('sales.refund');
+        return $user->can('sales.refund') && $this->ownsSale($user, $sale);
+    }
+
+    /**
+     * The sale belongs to a store inside the user's organisation.
+     * Super Admin bypasses via the before() check above.
+     */
+    private function ownsSale(User $user, Sale $sale): bool
+    {
+        return $sale->store?->organisation_id === $user->organisation_id;
     }
 
     public function hold(User $user): bool

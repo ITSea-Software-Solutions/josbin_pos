@@ -34,7 +34,7 @@ class DiscountRuleController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'store_id'         => ['nullable', 'uuid', 'exists:stores,id'],
+            'store_id'         => ['nullable', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'name'             => ['required', 'string', 'max:200'],
             'applies_to'       => ['required', Rule::in(['product', 'category', 'cart'])],
             'applies_to_id'    => ['nullable', 'uuid'],

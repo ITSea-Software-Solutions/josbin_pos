@@ -488,7 +488,7 @@ class ProductController extends Controller
             'notes'      => ['nullable', 'string', 'max:500'],
             // Required now — stock is per-store. Manager must pick which store
             // they're adjusting (write-off, receive stock, correction, etc.).
-            'store_id'   => ['required', 'uuid', 'exists:stores,id'],
+            'store_id'   => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
         ]);
 
         app(\App\Services\StockMovementService::class)->record(

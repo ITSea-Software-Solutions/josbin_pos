@@ -24,7 +24,7 @@ class ReportController extends Controller
         abort_unless($request->user()?->can('reports.daily'), 403);
 
         $request->validate([
-            'store_id' => ['required', 'uuid'],
+            'store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date'     => ['nullable', 'date_format:Y-m-d'],
         ]);
 
@@ -40,7 +40,7 @@ class ReportController extends Controller
         abort_unless($request->user()?->can('reports.monthly'), 403);
 
         $request->validate([
-            'store_id' => ['required', 'uuid'],
+            'store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'year'     => ['required', 'integer', 'min:2020'],
             'month'    => ['required', 'integer', 'min:1', 'max:12'],
         ]);
@@ -64,7 +64,7 @@ class ReportController extends Controller
         abort_unless($request->user()?->can('reports.custom'), 403);
 
         $request->validate([
-            'store_id'  => ['required', 'uuid'],
+            'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
         ]);
@@ -82,7 +82,7 @@ class ReportController extends Controller
         abort_unless($request->user()?->can('reports.top_products'), 403);
 
         $request->validate([
-            'store_id'  => ['required', 'uuid'],
+            'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to'   => ['nullable', 'date_format:Y-m-d'],
             'limit'     => ['nullable', 'integer', 'min:5', 'max:50'],
@@ -125,7 +125,7 @@ class ReportController extends Controller
     {
         abort_unless($request->user()?->can('reports.x_report'), 403);
 
-        $request->validate(['store_id' => ['required', 'uuid']]);
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
 
         $storeId = $request->input('store_id');
         $today   = today()->toDateString();
@@ -145,7 +145,7 @@ class ReportController extends Controller
         abort_unless($request->user()?->can('z_report.close'), 403);
 
         $request->validate([
-            'store_id'              => ['required', 'uuid'],
+            'store_id'              => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'actual_cash_srd'       => ['required', 'numeric', 'min:0'],
             'discrepancy_note'      => ['nullable', 'string', 'max:500'],
         ]);
@@ -230,7 +230,7 @@ class ReportController extends Controller
     {
         abort_unless($request->user()?->can('z_report.view_history'), 403);
 
-        $request->validate(['store_id' => ['required', 'uuid']]);
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
 
         $history = ZReport::where('store_id', $request->input('store_id'))
             ->orderByDesc('report_date')
@@ -248,7 +248,7 @@ class ReportController extends Controller
         abort_unless($request->user()?->can('reports.btw'), 403);
 
         $request->validate([
-            'store_id'  => ['required', 'uuid'],
+            'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d'],
         ]);
@@ -296,7 +296,7 @@ class ReportController extends Controller
 
         $request->validate([
             'type'      => ['required', Rule::in(['daily', 'monthly', 'custom', 'btw'])],
-            'store_id'  => ['required', 'uuid'],
+            'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from' => ['nullable', 'date_format:Y-m-d'],
             'date_to'   => ['nullable', 'date_format:Y-m-d'],
             'date'      => ['nullable', 'date_format:Y-m-d'],

@@ -378,9 +378,19 @@ Two cashiers, two registers, 10 parallel sales of the same product:
 | 10 | Documentation site stubs for the 12 unwritten dev chapters (no more 404s) | `docs/02-13.md` |
 
 ### ⏳ Still open (this session's residue)
-- **#22** — broader cross-store / cross-org / cashier visibility audit (data leakage probes across controllers)
 - **#20** — Dashboard manual chapter on roles + permissions (the user-facing doc, plain English for HQ admins)
 - **#5** — dev docs chapters 2–13 still stubs; needs real content
+
+### ✅ Cross-store / cross-org data leakage audit (just-now) — 2 leaks found + fixed
+
+| Bug | Evidence | Fix |
+|---|---|---|
+| `SaleController::index` took any `store_id` without checking it belongs to the caller's org — a De Hoop cashier got HTTP 200 querying Diago's sales | `curl /api/sales?store_id=<diago-store>` as kassa@dehoop.sr | New `App\Rules\StoreBelongsToOrg` validation rule on every `store_id` request input across 9 controllers (Sale, Report, Register, Product, Ai, ApiIntegration, DiscountRule, Rekenkamer, SyncExport). Cross-org probes now 422 with clear message. |
+| `SalePolicy::view` returned true for any user with `sales.view` — a cashier could GET `/api/sales/{uuid}` for another organisation's sale and read it | curl /api/sales/{diago-sale-uuid} as kassa@dehoop.sr would 200 | Added `ownsSale()` check that requires `$sale->store->organisation_id === $user->organisation_id`. Same guard added to `void` and `refund` policies. Super Admin still bypasses via the existing `before()`. |
+
+Same-store cashier-to-cashier visibility (kassa@ → kassa2's sale) was deliberately left at 200 — that's normal retail (managers need it, end-of-day Z-Report relies on it). The fix targets the leak across organisations, not within stores.
+
+Customers were already org-isolated (verified: 41 returned to De Hoop, 0 to Diago).
 
 ---
 

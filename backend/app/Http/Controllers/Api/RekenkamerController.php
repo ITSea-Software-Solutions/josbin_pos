@@ -41,7 +41,7 @@ class RekenkamerController extends Controller
 
         $request->validate([
             'organisation_id' => ['nullable', 'uuid', 'exists:organisations,id'],
-            'store_id'        => ['nullable', 'uuid', 'exists:stores,id'],
+            'store_id'        => ['nullable', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from'       => ['required', 'date_format:Y-m-d'],
             'date_to'         => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'locale'          => ['nullable', Rule::in(['nl', 'en'])],

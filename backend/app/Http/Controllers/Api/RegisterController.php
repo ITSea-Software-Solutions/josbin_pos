@@ -35,7 +35,7 @@ class RegisterController extends Controller
         abort_unless($request->user()->isAtLeastManager(), 403);
 
         $data = $request->validate([
-            'store_id' => ['required', 'uuid', 'exists:stores,id'],
+            'store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'name'     => ['required', 'string', 'max:100'],
         ]);
 
@@ -101,7 +101,7 @@ class RegisterController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        $request->validate(['store_id' => ['required', 'uuid', 'exists:stores,id']]);
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
 
         $registers = Register::where('store_id', $request->store_id)
             ->where('is_active', true)
@@ -318,7 +318,7 @@ class RegisterController extends Controller
      */
     public function mySession(Request $request): JsonResponse
     {
-        $request->validate(['store_id' => ['required', 'uuid']]);
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
 
         $session = RegisterSession::where('cashier_id', $request->user()->id)
             ->where('store_id', $request->store_id)
@@ -390,7 +390,7 @@ class RegisterController extends Controller
         abort_unless($request->user()->isAtLeastManager(), 403);
 
         $request->validate([
-            'store_id' => ['required', 'uuid'],
+            'store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date'     => ['nullable', 'date_format:Y-m-d'],
         ]);
 

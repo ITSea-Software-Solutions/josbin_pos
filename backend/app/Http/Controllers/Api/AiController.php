@@ -35,7 +35,7 @@ class AiController extends Controller
     {
         $request->validate([
             'q'        => ['required', 'string', 'min:1', 'max:200'],
-            'store_id' => ['nullable', 'uuid'],
+            'store_id' => ['nullable', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'limit'    => ['nullable', 'integer', 'min:1', 'max:50'],
         ]);
 
