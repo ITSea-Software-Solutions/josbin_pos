@@ -173,21 +173,60 @@ export default function CloseRegisterModal({ onClose }: Props) {
                 </div>
               ) : report && (
                 <>
-                  <div style={{ background: '#f9f7ff', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
+                  {/* ── Sales summary (gross → discounts → refunds → net) ── */}
+                  <div style={{ background: '#f9f7ff', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
-                      {isNl ? 'Sessie samenvatting' : 'Session summary'}
+                      {isNl ? 'Verkoopsamenvatting' : 'Sales summary'}
                     </p>
-                    <SRDRow label={isNl ? 'Openingsbedrag' : 'Opening float'} value={report.opening_float} />
-                    <SRDRow label={isNl ? 'Transacties' : 'Transactions'} value={report.transaction_count.toString()} />
-                    <SRDRow label={isNl ? 'Contante omzet' : 'Cash sales'} value={report.payment_breakdown.cash} />
-                    <SRDRow label={isNl ? 'PIN/Kaart' : 'Card/PIN'} value={report.payment_breakdown.card} />
-                    <SRDRow label={isNl ? 'Totale omzet' : 'Total revenue'} value={report.total_sales} highlight />
+                    <SRDRow label={isNl ? 'Bruto verkoop' : 'Gross sales'} value={report.gross_sales} />
+                    {parseFloat(report.discounts_total) > 0 && (
+                      <SRDRow label={isNl ? 'Kortingen' : 'Discounts'} value={`-${report.discounts_total}`} />
+                    )}
+                    {report.refund_count > 0 && (
+                      <SRDRow
+                        label={isNl ? `Refunds (${report.refund_count})` : `Refunds (${report.refund_count})`}
+                        value={`-${report.refunds_total}`}
+                      />
+                    )}
+                    <SRDRow label={isNl ? 'Netto omzet' : 'Net sales'} value={report.net_sales} highlight />
+                    <SRDRow label={isNl ? 'BTW geïnd' : 'BTW collected'} value={report.total_btw} />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontSize: 12, color: '#6b7280' }}>
+                      <span>{isNl ? 'Transacties / artikelen' : 'Transactions / items'}</span>
+                      <span style={{ fontWeight: 600 }}>{report.transaction_count} / {parseFloat(report.items_sold).toFixed(0)}</span>
+                    </div>
                     {report.void_count > 0 && (
-                      <div style={{ marginTop: 8, padding: '6px 10px', background: '#fef9c3', borderRadius: 8, fontSize: 12, color: '#92400e' }}>
-                        ⚠ {report.void_count} {isNl ? 'geannuleerde transacties' : 'voided transactions'}
+                      <div style={{ marginTop: 8, padding: '6px 10px', background: '#fef9c3', borderRadius: 8, fontSize: 12, color: '#92400e', display: 'flex', justifyContent: 'space-between' }}>
+                        <span>⚠ {report.void_count} {isNl ? 'geannuleerd' : 'voided'}</span>
+                        <span>SRD {report.void_total}</span>
                       </div>
                     )}
                   </div>
+
+                  {/* ── Payment methods ── */}
+                  <div style={{ background: '#f9f7ff', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
+                      {isNl ? 'Betaalwijzen' : 'Payment methods'}
+                    </p>
+                    <SRDRow label={isNl ? 'Contant' : 'Cash'} value={report.payment_breakdown.cash} />
+                    <SRDRow label={isNl ? 'PIN / Kaart' : 'Card / PIN'} value={report.payment_breakdown.card} />
+                    {parseFloat(report.payment_breakdown.mixed) > 0 && (
+                      <SRDRow label={isNl ? 'Gemengd' : 'Mixed'} value={report.payment_breakdown.mixed} />
+                    )}
+                  </div>
+
+                  {/* ── Cash drawer math ── */}
+                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 14, padding: '16px 18px', marginBottom: 20 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
+                      {isNl ? 'Kassalade' : 'Cash drawer'}
+                    </p>
+                    <SRDRow label={isNl ? 'Openingsbedrag' : 'Opening float'} value={report.cash_drawer.opening_float} />
+                    <SRDRow label={isNl ? '+ Contant ontvangen' : '+ Cash in'} value={report.cash_drawer.cash_in} />
+                    {parseFloat(report.cash_drawer.cash_out) > 0 && (
+                      <SRDRow label={isNl ? '− Contant terugbetaald' : '− Cash refunds'} value={`-${report.cash_drawer.cash_out}`} />
+                    )}
+                    <SRDRow label={isNl ? 'Verwacht in lade' : 'Expected in drawer'} value={report.cash_drawer.expected} highlight />
+                  </div>
+
                   <button onClick={() => setStep('count')} style={{ width: '100%', padding: '13px 0', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}>
                     {isNl ? 'Ga verder met kassasluiting' : 'Proceed to close register'} →
                   </button>

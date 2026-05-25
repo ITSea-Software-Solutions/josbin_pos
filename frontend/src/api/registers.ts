@@ -33,10 +33,24 @@ export interface RegisterSession {
 export interface SessionReport {
   session: RegisterSession
   transaction_count: number
+  refund_count: number
   void_count: number
+  void_total: string
+  items_sold: string
+  gross_sales: string
+  discounts_total: string
+  refunds_total: string
+  net_sales: string
+  /** @deprecated use net_sales */
   total_sales: string
   total_btw: string
   payment_breakdown: { cash: string; card: string; mixed: string }
+  cash_drawer: {
+    opening_float: string
+    cash_in: string
+    cash_out: string
+    expected: string
+  }
   opening_float: string
   expected_cash: string | null
   closing_cash_counted: string | null

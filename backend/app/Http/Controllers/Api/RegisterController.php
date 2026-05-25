@@ -191,23 +191,7 @@ class RegisterController extends Controller
             'closing_note'         => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Calculate expected cash: opening float + all cash sales in this session
-        $cashSales = Sale::where('register_session_id', $session->id)
-            ->where('status', 'completed')
-            ->whereIn('payment_method', ['cash', 'mixed'])
-            ->sum('cash_received_srd');
-
-        // For mixed payments, only the cash portion counts toward drawer
-        $cashChange = Sale::where('register_session_id', $session->id)
-            ->where('status', 'completed')
-            ->whereIn('payment_method', ['cash', 'mixed'])
-            ->sum('change_srd');
-
-        $expectedCash = bcadd(
-            (string) $session->opening_float,
-            bcsub((string) $cashSales, (string) $cashChange, 2),
-            2
-        );
+        $expectedCash = $this->computeExpectedCash($session);
 
         $discrepancy = bcsub(
             (string) $request->closing_cash_counted,
@@ -334,6 +318,12 @@ class RegisterController extends Controller
 
     /**
      * GET /api/registers/sessions/{session}/report
+     *
+     * Industry-standard Z-Report shape: separates gross / discounts / refunds /
+     * net, surfaces BTW for Belastingdienst filings, and exposes the cash-drawer
+     * math so a discrepancy can be traced. Refunds are stored as negative-total
+     * sale rows (see SaleController::refund), so we split positive vs negative
+     * with a CASE expression rather than two queries.
      */
     public function sessionReport(RegisterSession $session): JsonResponse
     {
@@ -344,40 +334,108 @@ class RegisterController extends Controller
             403
         );
 
-        $sales = Sale::where('register_session_id', $session->id)
+        $agg = Sale::where('register_session_id', $session->id)
             ->where('status', 'completed')
-            ->selectRaw('
-                COUNT(*) as transaction_count,
-                SUM(total_srd) as total_sales,
-                SUM(btw_srd) as total_btw,
-                SUM(CASE WHEN payment_method = \'cash\'  THEN total_srd ELSE 0 END) as cash_total,
-                SUM(CASE WHEN payment_method = \'card\'  THEN total_srd ELSE 0 END) as card_total,
-                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total
-            ')
+            ->selectRaw("
+                COUNT(CASE WHEN total_srd >= 0 THEN 1 END)                                   as sale_count,
+                COUNT(CASE WHEN total_srd <  0 THEN 1 END)                                   as refund_count,
+                COALESCE(SUM(CASE WHEN total_srd >= 0 THEN total_srd     END), 0)            as gross_sales,
+                COALESCE(SUM(CASE WHEN total_srd <  0 THEN total_srd     END), 0)            as refunds_total,
+                COALESCE(SUM(CASE WHEN total_srd >= 0 THEN discount_srd  END), 0)            as discounts_total,
+                COALESCE(SUM(btw_srd), 0)                                                    as btw_total,
+                COALESCE(SUM(total_srd), 0)                                                  as net_sales,
+                COALESCE(SUM(CASE WHEN payment_method = 'cash'  THEN total_srd END), 0)      as cash_net,
+                COALESCE(SUM(CASE WHEN payment_method = 'card'  THEN total_srd END), 0)      as card_net,
+                COALESCE(SUM(CASE WHEN payment_method = 'mixed' THEN total_srd END), 0)      as mixed_net,
+                COALESCE(SUM(
+                  CASE WHEN total_srd >= 0 AND payment_method IN ('cash','mixed')
+                       THEN COALESCE(cash_received_srd, 0) - COALESCE(change_srd, 0)
+                  END
+                ), 0)                                                                        as cash_in,
+                COALESCE(SUM(
+                  CASE WHEN total_srd <  0 AND payment_method IN ('cash','mixed')
+                       THEN ABS(total_srd)
+                  END
+                ), 0)                                                                        as cash_out
+            ")
             ->first();
 
-        $voidCount = Sale::where('register_session_id', $session->id)
+        $voids = Sale::where('register_session_id', $session->id)
             ->where('status', 'voided')
-            ->count();
+            ->selectRaw('COUNT(*) as void_count, COALESCE(SUM(ABS(total_srd)), 0) as void_total')
+            ->first();
+
+        $itemsAgg = \App\Models\SaleItem::whereIn('sale_id',
+                Sale::where('register_session_id', $session->id)->where('status', 'completed')->pluck('id'))
+            ->selectRaw('COALESCE(SUM(ABS(quantity)), 0) as units')
+            ->first();
+
+        $fmt = fn ($v) => number_format((float) $v, 2, '.', '');
+
+        $openingFloat = (string) $session->opening_float;
+        $cashIn       = (string) ($agg->cash_in  ?? 0);
+        $cashOut      = (string) ($agg->cash_out ?? 0);
+        $expectedLive = bcadd($openingFloat, bcsub($cashIn, $cashOut, 2), 2);
+        // Use the persisted expected_cash after close (snapshot at close-time);
+        // before close, compute live so the cashier sees the running expected.
+        $expectedCash = $session->expected_cash !== null
+            ? number_format((float) $session->expected_cash, 2, '.', '')
+            : $fmt($expectedLive);
 
         return response()->json([
             'data' => [
-                'session'           => $this->formatSession($session->load('cashier:id,name', 'register:id,name,number')),
-                'transaction_count' => (int) ($sales->transaction_count ?? 0),
-                'void_count'        => $voidCount,
-                'total_sales'       => number_format((float) ($sales->total_sales ?? 0), 2, '.', ''),
-                'total_btw'         => number_format((float) ($sales->total_btw ?? 0), 2, '.', ''),
-                'payment_breakdown' => [
-                    'cash'  => number_format((float) ($sales->cash_total ?? 0), 2, '.', ''),
-                    'card'  => number_format((float) ($sales->card_total ?? 0), 2, '.', ''),
-                    'mixed' => number_format((float) ($sales->mixed_total ?? 0), 2, '.', ''),
+                'session'              => $this->formatSession($session->load('cashier:id,name', 'register:id,name,number')),
+                'transaction_count'    => (int) ($agg->sale_count ?? 0),
+                'refund_count'         => (int) ($agg->refund_count ?? 0),
+                'void_count'           => (int) ($voids->void_count ?? 0),
+                'void_total'           => $fmt($voids->void_total ?? 0),
+                'items_sold'           => $fmt($itemsAgg->units ?? 0),
+                'gross_sales'          => $fmt($agg->gross_sales ?? 0),
+                'discounts_total'      => $fmt($agg->discounts_total ?? 0),
+                'refunds_total'        => $fmt(abs((float) ($agg->refunds_total ?? 0))),
+                'net_sales'            => $fmt($agg->net_sales ?? 0),
+                'total_sales'          => $fmt($agg->net_sales ?? 0),  // back-compat alias
+                'total_btw'            => $fmt($agg->btw_total ?? 0),
+                'payment_breakdown'    => [
+                    'cash'  => $fmt($agg->cash_net  ?? 0),
+                    'card'  => $fmt($agg->card_net  ?? 0),
+                    'mixed' => $fmt($agg->mixed_net ?? 0),
                 ],
-                'opening_float'        => number_format((float) $session->opening_float, 2, '.', ''),
-                'expected_cash'        => $session->expected_cash ? number_format((float) $session->expected_cash, 2, '.', '') : null,
-                'closing_cash_counted' => $session->closing_cash_counted ? number_format((float) $session->closing_cash_counted, 2, '.', '') : null,
-                'discrepancy'          => $session->discrepancy ? number_format((float) $session->discrepancy, 2, '.', '') : null,
+                'cash_drawer'          => [
+                    'opening_float' => $fmt($openingFloat),
+                    'cash_in'       => $fmt($cashIn),
+                    'cash_out'      => $fmt($cashOut),
+                    'expected'      => $fmt($expectedLive),
+                ],
+                'opening_float'        => $fmt($openingFloat),
+                'expected_cash'        => $expectedCash,
+                'closing_cash_counted' => $session->closing_cash_counted ? $fmt($session->closing_cash_counted) : null,
+                'discrepancy'          => $session->discrepancy ? $fmt($session->discrepancy) : null,
             ],
         ]);
+    }
+
+    /**
+     * Cash drawer = opening + cash IN (positive cash/mixed sales) − cash OUT
+     * (negative-total refund rows with cash/mixed method). cash_received_srd
+     * and change_srd are null on refund rows so they don't fall into cash IN.
+     */
+    private function computeExpectedCash(RegisterSession $session): string
+    {
+        $row = Sale::where('register_session_id', $session->id)
+            ->where('status', 'completed')
+            ->whereIn('payment_method', ['cash', 'mixed'])
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN total_srd >= 0 THEN COALESCE(cash_received_srd,0) - COALESCE(change_srd,0) END), 0) as cash_in,
+                COALESCE(SUM(CASE WHEN total_srd <  0 THEN ABS(total_srd) END), 0)                                          as cash_out
+            ')
+            ->first();
+
+        return bcadd(
+            (string) $session->opening_float,
+            bcsub((string) ($row->cash_in ?? 0), (string) ($row->cash_out ?? 0), 2),
+            2,
+        );
     }
 
     // ─── Manager: list all sessions for a store today ─────────────────────
