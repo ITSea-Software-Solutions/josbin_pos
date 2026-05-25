@@ -24,6 +24,14 @@ export default defineConfig({
   // back to false (or removed) for strict link checking.
   ignoreDeadLinks: true,
 
+  // /docs and /user_manual carry GitHub-style README.md as their index.
+  // Map those to /docs/ and /user_manual/ so the nav links and folder URLs
+  // resolve to the README contents without renaming files.
+  rewrites: {
+    'docs/README.md':        'docs/index.md',
+    'user_manual/README.md': 'user_manual/index.md',
+  },
+
   title: 'Josbin POS',
   description: 'Developer documentation and user manual for Josbin POS — Suriname enterprise POS platform.',
 
