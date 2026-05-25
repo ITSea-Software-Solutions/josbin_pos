@@ -4,7 +4,7 @@ Attaching a customer to a sale is optional but recommended. It enables email rec
 
 ---
 
-## 6.1 Attaching a customer to a sale
+## 7.1 Attaching a customer to a sale
 
 You can add a customer before or after adding products, but always **before** completing payment.
 
@@ -13,7 +13,7 @@ You can add a customer before or after adding products, but always **before** co
 
 ---
 
-## 6.2 Searching for an existing customer
+## 7.2 Searching for an existing customer
 
 1. Click the customer search field.
 2. Type the customer's **name** or **phone number**. Results appear as you type.
@@ -22,7 +22,7 @@ You can add a customer before or after adding products, but always **before** co
 
 ---
 
-## 6.3 Adding a new customer on the fly
+## 7.3 Adding a new customer on the fly
 
 You do not need to leave the POS screen to add a new customer.
 
@@ -38,7 +38,7 @@ You do not need to leave the POS screen to add a new customer.
 
 ---
 
-## 6.4 Removing a customer from the current sale
+## 7.4 Removing a customer from the current sale
 
 1. In the cart panel, click the customer name.
 2. Click the **× (remove)** button next to their name.
@@ -46,7 +46,7 @@ You do not need to leave the POS screen to add a new customer.
 
 ---
 
-## 6.5 Default walk-in customer
+## 7.5 Default walk-in customer
 
 Every sale without a named customer is recorded as a **walk-in** (anonymous customer). This is the default and is perfectly fine for most transactions.
 
@@ -54,13 +54,13 @@ Walk-in sales are included in all reports and totals. They are simply not linked
 
 ---
 
-## 6.6 Customer purchase history
+## 7.6 Customer purchase history
 
 The customer's total spending and visit count are updated automatically after every sale they are attached to. Managers can view this in the admin dashboard.
 
 ---
 
-## 6.7 GDPR / WBP-S note for staff
+## 7.7 GDPR / WBP-S note for staff
 
 - Customer data (name, phone number, email) may only be collected with the customer's knowledge and consent.
 - Do not enter personal data of customers who have not agreed to it.

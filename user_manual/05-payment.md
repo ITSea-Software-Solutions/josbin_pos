@@ -4,7 +4,7 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ---
 
-## 4.1 Opening the payment screen
+## 5.1 Opening the payment screen
 
 1. Review the cart to make sure all items and the total are correct.
 2. Click the **Checkout** button (Dutch: *"Afrekenen"*) at the bottom of the cart panel.
@@ -15,7 +15,7 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ---
 
-## 4.2 Cash payment
+## 5.2 Cash payment
 
 1. On the payment screen, click **Cash** (Dutch: *"Contant"*).
 2. The cash numpad appears.
@@ -42,7 +42,7 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ---
 
-## 4.3 Card / PIN payment
+## 5.3 Card / PIN payment
 
 1. On the payment screen, click **Card** (Dutch: *"Pin"*).
 2. The system immediately records the sale as a card payment (no amount to enter — the full total is charged to the card).
@@ -53,7 +53,7 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ---
 
-## 4.4 Mixed payment (part cash, part card)
+## 5.4 Mixed payment (part cash, part card)
 
 Use this when a customer pays part of the bill by card and the rest in cash.
 
@@ -73,7 +73,7 @@ Use this when a customer pays part of the bill by card and the rest in cash.
 
 ---
 
-## 4.5 Cash drawer
+## 5.5 Cash drawer
 
 The cash drawer opens **automatically** after every cash or mixed payment, provided:
 - A printer is configured in Settings (see [Chapter 13](13-settings.md))
@@ -88,7 +88,7 @@ The drawer **does not open for card-only payments** — there is no cash to put 
 
 ---
 
-## 4.6 Cancelling a payment in progress
+## 5.6 Cancelling a payment in progress
 
 - To go back to the cart from the payment screen, click the **back arrow** (← back) at the top of the payment panel.
 - The cart remains unchanged. No sale is recorded.
@@ -96,7 +96,7 @@ The drawer **does not open for card-only payments** — there is no cash to put 
 
 ---
 
-## 4.7 What if payment fails?
+## 5.7 What if payment fails?
 
 If the **"Server error"** message appears after clicking Complete:
 
@@ -113,7 +113,7 @@ If the **"Server error"** message appears after clicking Complete:
 
 ---
 
-## 4.8 After the sale is complete
+## 5.8 After the sale is complete
 
 Once payment is accepted:
 1. The cart is cleared automatically.

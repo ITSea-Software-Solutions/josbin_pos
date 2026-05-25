@@ -13,14 +13,14 @@ The Z-Report formally closes the register for the day. It:
 
 ---
 
-## 9.1 Opening the End of Day screen
+## 10.1 Opening the End of Day screen
 
 1. In the top bar, click **End of Day** (Dutch: *"Dagafsluiting"*).
 2. The End of Day screen opens with two sections: **Today's Summary** and **Cash Reconciliation**.
 
 ---
 
-## 9.2 Reviewing today's summary
+## 10.2 Reviewing today's summary
 
 Before closing, review the summary to make sure the numbers look correct:
 
@@ -36,7 +36,7 @@ If any number looks wrong, do not close the day yet. Review recent sales or cont
 
 ---
 
-## 9.3 Cash reconciliation — counting the cash
+## 10.3 Cash reconciliation — counting the cash
 
 Cash reconciliation is the process of comparing the cash in the drawer against what the system expects.
 
@@ -76,7 +76,7 @@ If the discrepancy is more than SRD 0.01 (i.e. not a rounding difference), a **N
 
 ---
 
-## 9.4 Closing the Z-Report
+## 10.4 Closing the Z-Report
 
 1. Once the actual cash amount is entered and any required note is written:
 2. Click **Close day / Print Z-Report** (Dutch: *"Dag afsluiten / Z-rapport afdrukken"*).
@@ -90,7 +90,7 @@ If the discrepancy is more than SRD 0.01 (i.e. not a rounding difference), a **N
 
 ---
 
-## 9.5 The 7-day history table
+## 10.5 The 7-day history table
 
 Below the cash reconciliation section, a history table shows the last 7 closed days:
 
@@ -112,7 +112,7 @@ Below the cash reconciliation section, a history table shows the last 7 closed d
 
 ---
 
-## 9.6 What to do if sync fails (status = Failed or Pending)
+## 10.6 What to do if sync fails (status = Failed or Pending)
 
 The system has automatic retry. It will try again at 1 min → 5 min → 15 min → 30 min intervals.
 
@@ -133,7 +133,7 @@ The system retries automatically. When internet returns, it will sync.
 
 ---
 
-## 9.7 X-Report — mid-day snapshot
+## 10.7 X-Report — mid-day snapshot
 
 The X-Report gives you a snapshot of sales so far **without closing the day**.
 

@@ -7,14 +7,14 @@ Reports give you insight into your store's sales performance. All amounts are in
 
 ---
 
-## 10.1 Opening the Reports screen
+## 11.1 Opening the Reports screen
 
 1. In the top bar, click **Reports** (Dutch: *"Rapporten"*).
 2. The Reports screen opens with four tabs at the top.
 
 ---
 
-## 10.2 Report tabs overview
+## 11.2 Report tabs overview
 
 | Tab | What it shows |
 |-----|--------------|
@@ -25,7 +25,7 @@ Reports give you insight into your store's sales performance. All amounts are in
 
 ---
 
-## 10.3 Daily report
+## 11.3 Daily report
 
 1. Click the **Daily** tab.
 2. A date picker appears. The current date is selected by default.
@@ -62,7 +62,7 @@ Below the BTW table, the top-selling products for that day are listed with:
 
 ---
 
-## 10.4 Monthly report
+## 11.4 Monthly report
 
 1. Click the **Monthly** tab.
 2. A month picker appears (e.g. "April 2026").
@@ -73,7 +73,7 @@ The format is identical to the daily report — same summary cards, BTW breakdow
 
 ---
 
-## 10.5 Custom range report
+## 11.5 Custom range report
 
 Use this when you need data for a specific period that does not fit daily or monthly.
 
@@ -90,7 +90,7 @@ Use this when you need data for a specific period that does not fit daily or mon
 
 ---
 
-## 10.6 X-Report (live snapshot)
+## 11.6 X-Report (live snapshot)
 
 1. Click the **X-Report** tab.
 2. The report loads immediately showing today's sales **up to this moment**.
@@ -103,7 +103,7 @@ The X-Report **does not** close the day. You can run it as many times as you lik
 
 ---
 
-## 10.7 Exporting a report to PDF
+## 11.7 Exporting a report to PDF
 
 All report tabs (except X-Report) can be exported to PDF.
 
@@ -123,7 +123,7 @@ The PDF includes:
 
 ---
 
-## 10.8 Reading the BTW breakdown
+## 11.8 Reading the BTW breakdown
 
 The BTW breakdown table is important for tax compliance:
 

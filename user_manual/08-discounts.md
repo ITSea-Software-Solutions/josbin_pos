@@ -4,7 +4,7 @@ Josbin POS supports discounts at two levels: on individual items and on the enti
 
 ---
 
-## 7.1 Types of discount
+## 8.1 Types of discount
 
 | Type | Where it applies | Example |
 |------|-----------------|---------|
@@ -16,7 +16,7 @@ Josbin POS supports discounts at two levels: on individual items and on the enti
 
 ---
 
-## 7.2 Applying a discount to a single item
+## 8.2 Applying a discount to a single item
 
 1. In the cart panel, find the item you want to discount.
 2. Click the item line to open the **Line Item Edit** panel.
@@ -36,7 +36,7 @@ Josbin POS supports discounts at two levels: on individual items and on the enti
 
 ---
 
-## 7.3 Applying a discount to the entire sale
+## 8.3 Applying a discount to the entire sale
 
 1. In the cart panel, find the **"Sale discount"** button (Dutch: *"Korting op bon"*) — usually a percentage or SRD icon near the total section.
 2. Click it to open the Discount panel.
@@ -49,7 +49,7 @@ Josbin POS supports discounts at two levels: on individual items and on the enti
 
 ---
 
-## 7.4 Removing a discount
+## 8.4 Removing a discount
 
 **Item discount:**
 1. Click the item line.
@@ -62,7 +62,7 @@ Josbin POS supports discounts at two levels: on individual items and on the enti
 
 ---
 
-## 7.5 Automatic discount rules
+## 8.5 Automatic discount rules
 
 Managers can set up discount rules in advance (e.g. "10% off all dairy every Tuesday", "Buy 2 Coca-Cola get 1 free"). These apply **automatically** when the conditions are met — the cashier does not need to do anything.
 
@@ -71,11 +71,11 @@ When an automatic rule applies:
 - The label shows the rule name (e.g. "Promotie: 2+1 gratis").
 - The automatic discount and any manual discount you add are combined.
 
-If a rule should not apply to a specific customer, you can override it by editing the item discount to zero (step 7.2).
+If a rule should not apply to a specific customer, you can override it by editing the item discount to zero (step 8.2).
 
 ---
 
-## 7.6 Discount shown on receipt
+## 8.6 Discount shown on receipt
 
 All discounts are shown separately on the receipt:
 - Item discounts appear on the item line
@@ -87,7 +87,7 @@ All discounts are shown separately on the receipt:
 ## Common questions about discounts
 
 **Q: Can I give a percentage AND a fixed discount on the same item?**
-A: Use the Line Item Edit panel (step 7.2). Enter the combined discount as a single SRD amount.
+A: Use the Line Item Edit panel (step 8.2). Enter the combined discount as a single SRD amount.
 
 **Q: Can I reduce the price below zero?**
 A: No. The system will not allow a line total or cart total to go negative through discounts.

@@ -4,7 +4,7 @@ This chapter covers everything that happens before payment — adding products, 
 
 ---
 
-## 3.1 Adding products to the cart
+## 4.1 Adding products to the cart
 
 There are four ways to add a product:
 
@@ -48,7 +48,7 @@ There are four ways to add a product:
 
 ---
 
-## 3.2 Changing the quantity
+## 4.2 Changing the quantity
 
 **Adding more of the same item:**
 - Simply click the product card again. Each click adds one unit.
@@ -65,7 +65,7 @@ There are four ways to add a product:
 
 ---
 
-## 3.3 Removing an item from the cart
+## 4.3 Removing an item from the cart
 
 1. Find the item in the cart panel.
 2. Click the **× (delete)** button or trash icon on that line.
@@ -75,7 +75,7 @@ To remove all items at once, click the **Clear cart** button at the bottom of th
 
 ---
 
-## 3.4 Understanding the cart panel
+## 4.4 Understanding the cart panel
 
 The cart panel on the right shows:
 
@@ -101,7 +101,7 @@ TOTAL                                           SRD 31.55
 
 ---
 
-## 3.5 Viewing today's totals
+## 4.5 Viewing today's totals
 
 The **top bar** always shows today's running totals without leaving the POS screen:
 
@@ -112,7 +112,7 @@ These numbers update instantly after each completed sale.
 
 ---
 
-## 3.6 What happens if a product is not found?
+## 4.6 What happens if a product is not found?
 
 If a barcode or search returns no result:
 - The search bar turns red or shows "No products found".

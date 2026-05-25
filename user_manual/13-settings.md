@@ -7,14 +7,14 @@ The Settings screen lets you configure the printer, cash drawer, language, and o
 
 ---
 
-## 12.1 Opening Settings
+## 13.1 Opening Settings
 
 1. In the top bar, click **Settings** (Dutch: *"Instellingen"*).
 2. The Settings screen opens, divided into sections.
 
 ---
 
-## 12.2 Printer & cash drawer setup
+## 13.2 Printer & cash drawer setup
 
 This is the most important section. Without a correctly configured printer, thermal receipts and the cash drawer will not work.
 
@@ -74,7 +74,7 @@ If it shows Error:
 
 ---
 
-## 12.3 Language and date format
+## 13.3 Language and date format
 
 ### Language
 
@@ -102,7 +102,7 @@ Select the format that matches your preference or local convention.
 
 ---
 
-## 12.4 On-screen keyboard
+## 13.4 On-screen keyboard
 
 The on-screen keyboard is a full keyboard displayed at the bottom of the POS screen — useful for touchscreen-only terminals without a physical keyboard.
 
@@ -117,7 +117,7 @@ The on-screen keyboard can be used for:
 
 ---
 
-## 12.5 Store information
+## 13.5 Store information
 
 This section shows (read-only) the current store information:
 - Store name
@@ -129,7 +129,7 @@ These can only be changed by the Super Admin. Contact your administrator if anyt
 
 ---
 
-## 12.6 BTW (tax) defaults
+## 13.6 BTW (tax) defaults
 
 Managers can configure default BTW settings:
 
@@ -142,7 +142,7 @@ Managers can configure default BTW settings:
 
 ---
 
-## 12.7 Settings reference table
+## 13.7 Settings reference table
 
 | Setting | Default | Notes |
 |---------|---------|-------|

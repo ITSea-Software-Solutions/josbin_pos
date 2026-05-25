@@ -4,7 +4,7 @@ After every completed sale, the receipt screen appears automatically. This chapt
 
 ---
 
-## 5.1 The receipt screen
+## 6.1 The receipt screen
 
 After payment is accepted, a receipt pop-up appears with these options:
 
@@ -19,7 +19,7 @@ After payment is accepted, a receipt pop-up appears with these options:
 
 ---
 
-## 5.2 Printing a thermal receipt
+## 6.2 Printing a thermal receipt
 
 Thermal printing sends the receipt directly to your receipt printer (e.g. EPSON TM-T20).
 
@@ -48,7 +48,7 @@ Thermal printing sends the receipt directly to your receipt printer (e.g. EPSON 
 
 ---
 
-## 5.3 Downloading a PDF receipt
+## 6.3 Downloading a PDF receipt
 
 The PDF receipt has the same content as the thermal receipt but formatted for A4 paper.
 
@@ -58,7 +58,7 @@ The PDF receipt has the same content as the thermal receipt but formatted for A4
 
 ---
 
-## 5.4 Emailing a receipt
+## 6.4 Emailing a receipt
 
 1. Click **Email** on the receipt screen.
 2. An email address field appears.
@@ -72,7 +72,7 @@ The PDF receipt has the same content as the thermal receipt but formatted for A4
 
 ---
 
-## 5.5 Starting a new sale
+## 6.5 Starting a new sale
 
 1. After handling the receipt, click **New sale** (Dutch: *"Nieuwe verkoop"*).
 2. The receipt pop-up closes.
@@ -82,7 +82,7 @@ The PDF receipt has the same content as the thermal receipt but formatted for A4
 
 ---
 
-## 5.6 Receipt format explained
+## 6.6 Receipt format explained
 
 ```
 ════════════════════════════════

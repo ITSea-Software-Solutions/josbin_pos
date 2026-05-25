@@ -7,7 +7,7 @@ Use this screen to print product price labels with barcodes for shelf labelling,
 
 ---
 
-## 11.1 Opening the Labels screen
+## 12.1 Opening the Labels screen
 
 1. In the top bar, click **Labels** (Dutch: *"Etiketten"*).
 2. The Labels screen opens with two panels:
@@ -16,7 +16,7 @@ Use this screen to print product price labels with barcodes for shelf labelling,
 
 ---
 
-## 11.2 Finding and selecting products
+## 12.2 Finding and selecting products
 
 **Search for products:**
 1. Click the search bar at the top of the product list.
@@ -39,7 +39,7 @@ Use this screen to print product price labels with barcodes for shelf labelling,
 
 ---
 
-## 11.3 Setting the quantity of labels per product
+## 12.3 Setting the quantity of labels per product
 
 Each selected product has a **quantity field** on the right side of its row.
 
@@ -51,7 +51,7 @@ The **label summary** in the right panel updates to show the total number of lab
 
 ---
 
-## 11.4 Choosing the barcode type
+## 12.4 Choosing the barcode type
 
 In the right settings panel, under **Barcode type** (Dutch: *"Type streepjescode"*):
 
@@ -70,7 +70,7 @@ In the right settings panel, under **Barcode type** (Dutch: *"Type streepjescode
 
 ---
 
-## 11.5 Choosing the label size
+## 12.5 Choosing the label size
 
 Under **Label size** (Dutch: *"Etiketgrootte"*), three sizes are available:
 
@@ -84,7 +84,7 @@ Select the size that matches the label paper loaded in your label printer.
 
 ---
 
-## 11.6 Showing/hiding name and price on the label
+## 12.6 Showing/hiding name and price on the label
 
 Two checkboxes control what appears on each label:
 
@@ -107,7 +107,7 @@ Both are checked by default. Uncheck either one if you do not want it on the lab
 
 ---
 
-## 11.7 Printing the labels
+## 12.7 Printing the labels
 
 1. Make sure at least one product is selected (the print button shows the total count, e.g. "Print (24)").
 2. Click the **Print** button (Dutch: *"Afdrukken"*).
@@ -126,7 +126,7 @@ Both are checked by default. Uncheck either one if you do not want it on the lab
 
 ---
 
-## 11.8 Label printer setup tips
+## 12.8 Label printer setup tips
 
 Josbin POS sends labels to any printer installed in Windows — it is not limited to thermal printers. Common label printers:
 

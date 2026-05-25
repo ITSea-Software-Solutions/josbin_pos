@@ -8,7 +8,7 @@ The Hold Bill feature lets you save the current cart and start a new sale, then 
 
 ---
 
-## 8.1 Holding the current bill
+## 9.1 Holding the current bill
 
 1. Make sure there is at least one item in the cart.
 2. Click the **Hold** button (Dutch: *"Bewaar bon"*) in the cart panel.
@@ -19,7 +19,7 @@ The Hold Bill feature lets you save the current cart and start a new sale, then 
 
 ---
 
-## 8.2 Opening the held bills list
+## 9.2 Opening the held bills list
 
 1. In the cart panel, look for the **Held bills** button (Dutch: *"Bewaarde bonnen"*) — it shows a count badge when bills are on hold (e.g. "2").
 2. Click it to open the Held Bills panel, which slides in from the right.
@@ -31,9 +31,9 @@ The Hold Bill feature lets you save the current cart and start a new sale, then 
 
 ---
 
-## 8.3 Restoring a held bill
+## 9.3 Restoring a held bill
 
-1. Open the Held Bills panel (step 8.2).
+1. Open the Held Bills panel (step 9.2).
 2. Find the bill you want to resume.
 3. Click **Restore** (Dutch: *"Hervatten"*) on that bill.
 4. The bill is loaded back into the cart. The hold is removed from the queue.
@@ -43,7 +43,7 @@ The Hold Bill feature lets you save the current cart and start a new sale, then 
 
 ---
 
-## 8.4 Deleting a held bill without completing it
+## 9.4 Deleting a held bill without completing it
 
 If a customer decides not to buy:
 
@@ -54,13 +54,13 @@ If a customer decides not to buy:
 
 ---
 
-## 8.5 How many bills can be on hold at once?
+## 9.5 How many bills can be on hold at once?
 
 There is no strict limit. However, for practical reasons, try not to hold more than 5–10 bills at once. All staff at the same terminal can see and restore each other's held bills.
 
 ---
 
-## 8.6 Do held bills expire?
+## 9.6 Do held bills expire?
 
 Held bills are stored on the local server and remain there until they are either restored and completed, or manually deleted. They do not expire automatically.
 
