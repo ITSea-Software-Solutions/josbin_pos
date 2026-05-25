@@ -24,12 +24,13 @@ export default defineConfig({
   // back to false (or removed) for strict link checking.
   ignoreDeadLinks: true,
 
-  // /docs and /user_manual carry GitHub-style README.md as their index.
-  // Map those to /docs/ and /user_manual/ so the nav links and folder URLs
-  // resolve to the README contents without renaming files.
+  // /docs, /user_manual, and /dashboard_manual carry GitHub-style README.md
+  // as their index. Map those so folder URLs resolve to the README contents
+  // without renaming files.
   rewrites: {
-    'docs/README.md':        'docs/index.md',
-    'user_manual/README.md': 'user_manual/index.md',
+    'docs/README.md':              'docs/index.md',
+    'user_manual/README.md':       'user_manual/index.md',
+    'dashboard_manual/README.md':  'dashboard_manual/index.md',
   },
 
   title: 'Josbin POS',
@@ -62,6 +63,7 @@ export default defineConfig({
       { text: 'Home',            link: '/docs-site/' },
       { text: 'Developer Docs',  link: '/docs/' },
       { text: 'User Manual',     link: '/user_manual/' },
+      { text: 'Dashboard Manual',link: '/dashboard_manual/' },
     ],
 
     sidebar: {
@@ -116,6 +118,19 @@ export default defineConfig({
             { text: '11. Reports',                    link: '/user_manual/11-reports' },
             { text: '12. Barcode & label printing',   link: '/user_manual/12-barcode-labels' },
             { text: '13. Settings',                   link: '/user_manual/13-settings' },
+          ],
+        },
+      ],
+
+      // ── Dashboard Manual (HQ — org admin, store manager, super admin) ──────
+      '/dashboard_manual/': [
+        {
+          text: 'Dashboard Manual',
+          collapsed: false,
+          items: [
+            { text: 'Overview',                      link: '/dashboard_manual/' },
+            { text: '1. Roles & permissions',        link: '/dashboard_manual/01-roles-and-permissions' },
+            // 2-18 added as chapters land
           ],
         },
       ],

@@ -184,7 +184,7 @@ Opens at **http://localhost:5174**. API calls proxy to `http://localhost:8080/ap
 |---|---|---|
 | `http://localhost:5173` | **POS** (Electron + Vite) | `cd frontend && npm run dev` |
 | `http://localhost:5174` | **Super Admin Dashboard** | `cd dashboard && npm run dev` |
-| `http://localhost:5180` | **Documentation site** (VitePress — dev docs + user manual) | `cd docs-site && npm run dev` |
+| `http://localhost:5180` | **Documentation site** (VitePress — dev docs + POS user manual + HQ dashboard manual) | `cd docs-site && npm run dev` |
 
 ### Demo stack — runs alongside live, isolated data, port-shifted
 

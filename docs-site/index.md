@@ -26,6 +26,12 @@ features:
     linkText: Open user manual
     link: /user_manual/
 
+  - icon: 🏢
+    title: For HQ admins
+    details: Dashboard manual — roles & permissions, organisation/store setup, catalogue, reports, audit log. The HQ-facing book.
+    linkText: Open dashboard manual
+    link: /dashboard_manual/
+
   - icon: 🚀
     title: Brand-new install
     details: Single end-to-end runbook covering server install, organisation onboarding, hardware setup, first live sale.
