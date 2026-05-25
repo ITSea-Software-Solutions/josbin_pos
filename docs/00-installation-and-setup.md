@@ -486,6 +486,8 @@ cd frontend && VITE_API_URL=http://localhost:8082/api npm run dev
 
 A yellow "DEMO MODE — not real data" banner shows on every screen of POS and Dashboard whenever they're talking to the demo backend (driven by `JOSBIN_POS_DEMO_MODE=true` exposed via `GET /api/environment`).
 
+> **⚠️ Re-run migrations on demo after every backend change.** Demo and live each have their own database. When a new migration ships, `docker compose exec app php artisan migrate` only updates the stack you point it at. After pulling new code, run the migrate command above against demo (and sandbox) too, or the demo POS will throw SQL errors against missing tables. Symptom: empty product grid, "Could not load X" messages.
+
 Tear down without losing data: `docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml down`.
 Wipe demo data too: add `--volumes` and `rm -rf docker/postgres-demo/`.
 
