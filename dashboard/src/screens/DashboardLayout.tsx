@@ -191,9 +191,10 @@ export default function DashboardLayout() {
     { id: 'z-reports',      nl: 'Z-Rapporten',            en: 'Z-Reports',       icon: IC.zreports,       roles: [SA, OA, SM, AU] },
     { id: 'reports',        nl: 'Rapporten',              en: 'Reports',         icon: IC.reports,        roles: [SA, OA, SM, AU] },
     { id: 'catalogue',      nl: 'Catalogus',              en: 'Catalogue',       icon: IC.catalogue,      roles: [SA, OA, SM] },
-    // Bulk import/export is HQ-level — Store Manager edits individual products,
-    // not the whole catalogue (matches the backend `products.import` permission).
-    { id: 'import-export',  nl: 'Import / Export',        en: 'Import / Export', icon: IC.importExport,   roles: [SA, OA] },
+    // Matches the backend `products.import` permission. Store Manager has it
+    // too — single-store / single-manager Suriname shops are common, so the
+    // manager often is the catalogue owner in practice.
+    { id: 'import-export',  nl: 'Import / Export',        en: 'Import / Export', icon: IC.importExport,   roles: [SA, OA, SM] },
     { id: 'registers',      nl: 'Kassabeheer',            en: 'Registers',       icon: IC.registers,      roles: [SA, OA, SM] },
     { id: 'customers',      nl: 'Klanten',                en: 'Customers',       icon: IC.customers,      roles: [SA, OA, SM] },
     { id: 'stock',          nl: 'Voorraad',               en: 'Stock',           icon: IC.stock,          roles: [SA, OA, SM] },

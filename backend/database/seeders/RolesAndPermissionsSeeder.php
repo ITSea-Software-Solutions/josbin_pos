@@ -127,7 +127,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $storeManager = Role::firstOrCreate(['name' => User::ROLE_STORE_MANAGER, 'guard_name' => 'web']);
         $storeManager->syncPermissions([
             'sales.create', 'sales.view', 'sales.void', 'sales.refund', 'sales.hold', 'sales.restore',
-            'products.view', 'products.create', 'products.edit',
+            'products.view', 'products.create', 'products.edit', 'products.import',
             'categories.manage',
             'customers.view', 'customers.create', 'customers.edit',
             'reports.daily', 'reports.monthly', 'reports.custom', 'reports.top_products',

@@ -158,9 +158,9 @@ export default function CatalogueImportExportScreen() {
     try { await exportProducts() } finally { setExporting(false) }
   }
 
-  async function handleTemplate() {
+  async function handleTemplate(format: 'csv' | 'xlsx') {
     setDownloading(true)
-    try { await downloadImportTemplate() } finally { setDownloading(false) }
+    try { await downloadImportTemplate(format) } finally { setDownloading(false) }
   }
 
   return (
@@ -195,7 +195,7 @@ export default function CatalogueImportExportScreen() {
         </button>
 
         <button
-          onClick={handleTemplate}
+          onClick={() => handleTemplate('csv')}
           disabled={downloading}
           style={{
             height: 42, padding: '0 20px', borderRadius: 10, border: '1.5px solid #e5e7eb',
@@ -204,7 +204,20 @@ export default function CatalogueImportExportScreen() {
           }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-          {isNl ? 'Importsjabloon downloaden' : 'Download import template'}
+          {isNl ? 'CSV-sjabloon' : 'CSV template'}
+        </button>
+
+        <button
+          onClick={() => handleTemplate('xlsx')}
+          disabled={downloading}
+          style={{
+            height: 42, padding: '0 20px', borderRadius: 10, border: '1.5px solid #e5e7eb',
+            background: '#fff', color: '#374151', fontSize: 13, fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 8, cursor: downloading ? 'not-allowed' : 'pointer',
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          {isNl ? 'Excel-sjabloon (.xlsx)' : 'Excel template (.xlsx)'}
         </button>
       </div>
 

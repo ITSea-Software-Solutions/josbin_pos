@@ -108,12 +108,18 @@ export async function exportProducts(): Promise<void> {
   URL.revokeObjectURL(url)
 }
 
-export async function downloadImportTemplate(): Promise<void> {
-  const res = await apiClient.get('/products/import/template', { responseType: 'blob' })
-  const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }))
+export async function downloadImportTemplate(format: 'csv' | 'xlsx' = 'csv'): Promise<void> {
+  const res = await apiClient.get('/products/import/template', {
+    responseType: 'blob',
+    params: format === 'xlsx' ? { format: 'xlsx' } : undefined,
+  })
+  const mime = format === 'xlsx'
+    ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    : 'text/csv'
+  const url = URL.createObjectURL(new Blob([res.data], { type: mime }))
   const a = document.createElement('a')
   a.href = url
-  a.download = 'josbin-products-template.csv'
+  a.download = `josbin-products-template.${format}`
   a.click()
   URL.revokeObjectURL(url)
 }
