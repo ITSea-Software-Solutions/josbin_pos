@@ -22,12 +22,13 @@ const StoreComparisonScreen = lazy(() => import('@/screens/StoreComparisonScreen
 const StoreSettingsScreen          = lazy(() => import('@/screens/StoreSettingsScreen'))
 const CatalogueImportExportScreen  = lazy(() => import('@/screens/CatalogueImportExportScreen'))
 const MyAccountScreen              = lazy(() => import('@/screens/MyAccountScreen'))
+const PosLauncherScreen            = lazy(() => import('@/screens/PosLauncherScreen'))
 
 type Screen =
   | 'overview' | 'store' | 'reports' | 'organisations' | 'users' | 'api-keys'
   | 'z-reports' | 'audit-log' | 'licenses' | 'catalogue' | 'registers'
   | 'customers' | 'stock' | 'ai-insights' | 'price-overrides' | 'discount-rules' | 'compare' | 'store-settings' | 'import-export'
-  | 'my-account'
+  | 'my-account' | 'pos-launcher'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const IC = {
@@ -185,6 +186,7 @@ export default function DashboardLayout() {
   const nav: { id: Screen; nl: string; en: string; icon: React.ReactNode; roles: string[] }[] = [
     // Mijn Profiel — everyone gets self-service: own stats, shifts, password.
     { id: 'my-account',     nl: 'Mijn Profiel',           en: 'My Account',      icon: IC.users,          roles: [SA, OA, SM, AU, CA] },
+    { id: 'pos-launcher',   nl: 'POS-app openen',         en: 'Open POS app',    icon: IC.registers,      roles: [SA, OA, SM] },
     { id: 'overview',       nl: 'Dashboard',              en: 'Dashboard',       icon: IC.overview,       roles: [SA, OA, SM, AU] },
     { id: 'z-reports',      nl: 'Z-Rapporten',            en: 'Z-Reports',       icon: IC.zreports,       roles: [SA, OA, SM, AU] },
     { id: 'reports',        nl: 'Rapporten',              en: 'Reports',         icon: IC.reports,        roles: [SA, OA, SM, AU] },
@@ -418,6 +420,7 @@ export default function DashboardLayout() {
             {screen === 'store-settings'  && <StoreSettingsScreen />}
             {screen === 'import-export'   && <CatalogueImportExportScreen />}
             {screen === 'my-account'      && <MyAccountScreen />}
+            {screen === 'pos-launcher'    && <PosLauncherScreen />}
           </Suspense>
         </div>
       </div>

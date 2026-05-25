@@ -29,6 +29,8 @@ Put differently: the **register** is the lane at the front of the shop. The **se
 
 ## 3.1 Opening your register (start of shift)
 
+> **Where this happens:** in the **POS app** on the till — not the dashboard. If you're on a back-office computer, look for the **Josbin POS** icon on the desktop and double-click. If you don't have a till nearby, a manager can open the POS in their browser via Dashboard → **POS-app openen / Open POS app**.
+
 After you log in and pick your store, you land on the **Open Register** screen.
 
 **Steps:**
