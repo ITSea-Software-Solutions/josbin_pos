@@ -37,6 +37,7 @@ class RegisterController extends Controller
         $data = $request->validate([
             'store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'name'     => ['required', 'string', 'max:100'],
+            'note'     => ['nullable', 'string', 'max:500'],
         ]);
 
         $nextNumber = Register::where('store_id', $data['store_id'])->max('number') + 1;
@@ -48,7 +49,10 @@ class RegisterController extends Controller
             'is_active' => true,
         ]);
 
-        $this->logRegisterActivity($request->user(), $register, 'register.created');
+        $this->logRegisterActivity($request->user(), $register, 'register.created', array_filter([
+            'name' => $register->name,
+            'note' => $data['note'] ?? null,
+        ]));
 
         return response()->json(['data' => $this->formatRegister($register)], 201);
     }
@@ -81,14 +85,21 @@ class RegisterController extends Controller
      * DELETE /api/registers/{register}
      * Deactivates a register (soft delete — sets is_active = false).
      */
-    public function destroyRegister(Register $register): JsonResponse
+    public function destroyRegister(Request $request, Register $register): JsonResponse
     {
-        abort_unless(request()->user()->isAtLeastManager(), 403);
+        abort_unless($request->user()->isAtLeastManager(), 403);
         abort_if($register->openSession()->exists(), 409, 'Cannot deactivate a register with an open session.');
+
+        $data = $request->validate([
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
 
         $register->update(['is_active' => false]);
 
-        $this->logRegisterActivity(request()->user(), $register, 'register.deactivated');
+        $this->logRegisterActivity($request->user(), $register, 'register.deactivated', array_filter([
+            'name' => $register->name,
+            'note' => $data['note'] ?? null,
+        ]));
 
         return response()->json(null, 204);
     }
@@ -151,6 +162,7 @@ class RegisterController extends Controller
             $closedToday = RegisterSession::where('register_id', $register->id)
                 ->where('status', 'closed')
                 ->whereDate('closed_at', today())
+                ->whereNull('cleared_at')
                 ->latest('closed_at')
                 ->with('cashier:id,name')
                 ->first();
@@ -244,6 +256,66 @@ class RegisterController extends Controller
             ]);
 
         return response()->json(['data' => $this->formatSession($session->fresh()->load('cashier:id,name'))]);
+    }
+
+    // ─── Manager: reopen register for next shift ──────────────────────────
+
+    /**
+     * POST /api/registers/{register}/clear-closed-today
+     *
+     * Manager action: a register that was closed for the day (formal Z-Report
+     * lock — see open() above) gets cleared so the next shift can open a new
+     * session on the same till. The previous closed sessions stay closed —
+     * we don't mutate their status — we just mark them `cleared_at` so the
+     * `open()` block ignores them. This keeps the audit trail honest:
+     * close-events are immutable, manager-initiated clears are a separate
+     * recorded action.
+     *
+     * Required reason. Optional "for cashier" hint (handover context).
+     */
+    public function clearClosedToday(Request $request, Register $register): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user->isAtLeastManager(), 403);
+
+        $data = $request->validate([
+            'reason'      => ['required', 'string', 'min:3', 'max:500'],
+            'for_cashier' => ['nullable', 'string', 'max:200'],
+        ]);
+
+        $sessions = RegisterSession::where('register_id', $register->id)
+            ->where('status', 'closed')
+            ->whereDate('closed_at', today())
+            ->whereNull('cleared_at')
+            ->get();
+
+        if ($sessions->isEmpty()) {
+            return response()->json([
+                'message' => 'Geen gesloten sessie van vandaag om te heropenen. (No closed-today session to reopen.)',
+                'code'    => 'NOTHING_TO_CLEAR',
+            ], 409);
+        }
+
+        foreach ($sessions as $session) {
+            $session->update([
+                'cleared_at'        => now(),
+                'cleared_by'        => $user->id,
+                'clear_note'        => $data['reason'],
+                'clear_for_cashier' => $data['for_cashier'] ?? null,
+            ]);
+            $this->logRegisterActivity($user, $session, 'register.cleared_for_next_shift', array_filter([
+                'register'    => $register->name,
+                'reason'      => $data['reason'],
+                'for_cashier' => $data['for_cashier'] ?? null,
+            ]));
+        }
+
+        return response()->json([
+            'data' => $this->formatRegister(
+                $register->fresh()->load(['openSession.cashier:id,name,email', 'closedTodaySessions'])
+            ),
+            'cleared_count' => $sessions->count(),
+        ]);
     }
 
     // ─── Request re-open ──────────────────────────────────────────────────

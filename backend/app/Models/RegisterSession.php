@@ -17,6 +17,7 @@ class RegisterSession extends Model
         'status', 'opened_at', 'closed_at', 'closing_note',
         'reopen_requested_at', 'reopen_reason', 'reopen_requested_by',
         'reopen_approved_by', 'reopen_approved_at', 'reopen_denial_reason',
+        'cleared_at', 'cleared_by', 'clear_note', 'clear_for_cashier',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class RegisterSession extends Model
         'closed_at'              => 'datetime',
         'reopen_requested_at'    => 'datetime',
         'reopen_approved_at'     => 'datetime',
+        'cleared_at'             => 'datetime',
     ];
 
     // ─── Status helpers ───────────────────────────────────────────────────

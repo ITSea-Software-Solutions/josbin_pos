@@ -33,15 +33,17 @@ class Register extends Model
     }
 
     /**
-     * Sessions on this register that were closed today, newest first.
-     * (Avoid HasOne::latestOfMany — Eloquent tie-breaks with MAX(id),
-     * and our ids are UUIDs which Postgres can't aggregate.)
+     * Sessions on this register that were closed today and have NOT been
+     * cleared by a manager. Newest first. (Avoid HasOne::latestOfMany —
+     * Eloquent tie-breaks with MAX(id), and our ids are UUIDs which
+     * Postgres can't aggregate.)
      */
     public function closedTodaySessions(): HasMany
     {
         return $this->hasMany(RegisterSession::class)
             ->where('status', 'closed')
             ->whereDate('closed_at', today())
+            ->whereNull('cleared_at')
             ->orderByDesc('closed_at');
     }
 }

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
-  getStoreSessions, approveReopen, getRegisters, createRegister, updateRegister, deleteRegister,
+  getStoreSessions, approveReopen, getRegisters, createRegister, updateRegister, deleteRegister, clearClosedToday,
   type RegisterSession, type Register,
 } from '@/api/registers'
 import type { Organisation } from '@/api/organisations'
@@ -11,8 +11,10 @@ import { getStores, type Store } from '@/api/stores'
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 const STATUS_CFG: Record<string, { bg: string; color: string; border: string; dot: string; label_nl: string; label_en: string }> = {
-  open:             { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', dot: '#22c55e', label_nl: 'Open',              label_en: 'Open' },
-  closed:           { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb', dot: '#d1d5db', label_nl: 'Gesloten',          label_en: 'Closed' },
+  open:             { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', dot: '#22c55e', label_nl: 'In gebruik',         label_en: 'In use' },
+  closed:           { bg: '#f9fafb', color: '#6b7280', border: '#e5e7eb', dot: '#d1d5db', label_nl: 'Gesloten',           label_en: 'Closed' },
+  closed_today:     { bg: '#fffbeb', color: '#92400e', border: '#fde68a', dot: '#f59e0b', label_nl: 'Vandaag gesloten',   label_en: 'Closed today' },
+  available:        { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', dot: '#3b82f6', label_nl: 'Beschikbaar',        label_en: 'Available' },
   reopen_requested: { bg: '#fffbeb', color: '#92400e', border: '#fde68a', dot: '#f59e0b', label_nl: 'Heropening gevraagd', label_en: 'Reopen requested' },
   reopen_approved:  { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', dot: '#3b82f6', label_nl: 'Heropening goedgekeurd', label_en: 'Reopen approved' },
 }
@@ -136,6 +138,140 @@ function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSessi
   )
 }
 
+// ─── Reopen-for-next-shift modal ──────────────────────────────────────────────
+function ReopenRegisterModal({
+  register, storeId, isNl, onClose,
+}: { register: Register; storeId: string; isNl: boolean; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [reason, setReason] = useState('')
+  const [forCashier, setForCashier] = useState('')
+  const [error, setError] = useState('')
+
+  const closedAt = register.closed_today?.closed_at
+    ? new Date(register.closed_today.closed_at).toLocaleTimeString(isNl ? 'nl-NL' : 'en-US', { hour: '2-digit', minute: '2-digit' })
+    : '—'
+  const closedBy = register.closed_today?.cashier_name ?? '—'
+
+  const mutation = useMutation({
+    mutationFn: () => clearClosedToday(register.id, reason.trim(), forCashier.trim() || undefined),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['registers', storeId] })
+      onClose()
+    },
+    onError: (e: unknown) => {
+      setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? (isNl ? 'Fout opgetreden' : 'An error occurred'))
+    },
+  })
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16, backdropFilter: 'blur(4px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,.35)' }}>
+        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #f0f0f8' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e' }}>
+            {isNl ? 'Kassa heropenen voor volgende ploeg' : 'Reopen register for next shift'}
+          </h3>
+          <p style={{ fontSize: 12, color: '#9090a0', marginTop: 4 }}>{register.name}</p>
+        </div>
+        <div style={{ padding: '18px 24px 20px' }}>
+          <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 12.5, color: '#92400e', lineHeight: 1.55 }}>
+            <strong>{isNl ? 'Eerder vandaag gesloten' : 'Closed earlier today'}</strong>
+            <br />
+            {isNl ? 'Om' : 'At'} {closedAt} {isNl ? 'door' : 'by'} <strong>{closedBy}</strong>.
+            <br />
+            {isNl
+              ? 'Door te heropenen wordt de Z-Rapport-vergrendeling van deze kassa voor vandaag opgeheven, zodat een nieuwe sessie geopend kan worden. De oude sessie blijft afgesloten in het auditlogboek.'
+              : 'Reopening clears the Z-Report lock on this register for today so a new session can be opened. The previous session stays closed in the audit log.'}
+          </div>
+
+          {error && (
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#dc2626' }}>{error}</div>
+          )}
+
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+            {isNl ? 'Reden voor heropening *' : 'Reason for reopening *'}
+          </label>
+          <textarea
+            value={reason}
+            onChange={e => setReason(e.target.value)}
+            rows={3}
+            placeholder={isNl
+              ? 'Bijv.: avondploeg start, eerdere sluiting was per ongeluk, korte handover…'
+              : 'E.g.: evening shift starting, earlier close was a mistake, brief handover…'}
+            style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', padding: '10px 12px', fontSize: 13, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+          />
+
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginTop: 14, marginBottom: 6 }}>
+            {isNl ? 'Voor welke kassamedewerker? (optioneel)' : 'For which cashier? (optional)'}
+          </label>
+          <input
+            value={forCashier}
+            onChange={e => setForCashier(e.target.value)}
+            placeholder={isNl ? 'Bijv.: Sandra (avondploeg)' : 'E.g.: Sandra (evening shift)'}
+            style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13, boxSizing: 'border-box' }}
+          />
+          <p style={{ fontSize: 11, color: '#9090a0', marginTop: 6 }}>
+            {isNl
+              ? 'Wordt vastgelegd in het auditlogboek samen met uw naam en het tijdstip.'
+              : 'Recorded in the audit log together with your name and the timestamp.'}
+          </p>
+
+          <div style={{ display: 'flex', gap: 10, marginTop: 18 }}>
+            <button onClick={onClose}
+              style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid #e5e7eb', background: '#f9fafb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              {isNl ? 'Annuleren' : 'Cancel'}
+            </button>
+            <button onClick={() => mutation.mutate()}
+              disabled={reason.trim().length < 3 || mutation.isPending}
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (reason.trim().length < 3 || mutation.isPending) ? 0.5 : 1 }}>
+              {mutation.isPending ? '…' : (isNl ? 'Heropenen' : 'Reopen')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Add / deactivate note prompts ────────────────────────────────────────────
+function NotePrompt({
+  title, body, placeholder, confirmLabel, confirmColor, isNl, onCancel, onConfirm, required = false, busy,
+}: {
+  title: string; body?: string; placeholder: string; confirmLabel: string; confirmColor: string; isNl: boolean
+  onCancel: () => void; onConfirm: (note: string) => void; required?: boolean; busy?: boolean
+}) {
+  const [note, setNote] = useState('')
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16, backdropFilter: 'blur(4px)' }}
+      onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
+      <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 440, boxShadow: '0 24px 64px rgba(0,0,0,.35)', padding: '22px 24px' }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: body ? 6 : 14 }}>{title}</h3>
+        {body && <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 14, lineHeight: 1.5 }}>{body}</p>}
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+          {required ? (isNl ? 'Reden *' : 'Reason *') : (isNl ? 'Reden (optioneel)' : 'Reason (optional)')}
+        </label>
+        <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder={placeholder}
+          style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', padding: '10px 12px', fontSize: 13, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
+        <p style={{ fontSize: 11, color: '#9090a0', marginTop: 6 }}>
+          {isNl ? 'Wordt vastgelegd in het auditlogboek.' : 'Recorded in the audit log.'}
+        </p>
+        <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+          <button onClick={onCancel}
+            style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid #e5e7eb', background: '#f9fafb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            {isNl ? 'Annuleren' : 'Cancel'}
+          </button>
+          <button onClick={() => onConfirm(note.trim())}
+            disabled={busy || (required && note.trim().length < 3)}
+            style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: confirmColor, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (busy || (required && note.trim().length < 3)) ? 0.5 : 1 }}>
+            {busy ? '…' : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Manage Registers panel ───────────────────────────────────────────────────
 function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolean }) {
   const qc = useQueryClient()
@@ -143,6 +279,9 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
   const [editId, setEditId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [error, setError] = useState('')
+  const [reopenTarget, setReopenTarget] = useState<Register | null>(null)
+  const [createNoteOpen, setCreateNoteOpen] = useState(false)
+  const [deactivateTarget, setDeactivateTarget] = useState<Register | null>(null)
 
   const { data: registers = [], isLoading } = useQuery({
     queryKey: ['registers', storeId],
@@ -151,8 +290,11 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
   })
 
   const createMut = useMutation({
-    mutationFn: () => createRegister(storeId, newName.trim()),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['registers', storeId] }); setNewName(''); setError('') },
+    mutationFn: (note: string | undefined) => createRegister(storeId, newName.trim(), note),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['registers', storeId] })
+      setNewName(''); setError(''); setCreateNoteOpen(false)
+    },
     onError: (e: unknown) => setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
   })
 
@@ -162,8 +304,11 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
   })
 
   const deactivateMut = useMutation({
-    mutationFn: (id: string) => deleteRegister(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['registers', storeId] }),
+    mutationFn: ({ id, note }: { id: string; note?: string }) => deleteRegister(id, note),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['registers', storeId] })
+      setDeactivateTarget(null)
+    },
     onError: (e: unknown) => setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
   })
 
@@ -182,13 +327,18 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
             style={{ flex: 1, height: 38, padding: '0 12px', borderRadius: 8, border: '1.5px solid #e5e7eb', fontSize: 13 }}
           />
           <button
-            onClick={() => createMut.mutate()}
+            onClick={() => setCreateNoteOpen(true)}
             disabled={newName.trim().length < 2 || createMut.isPending}
             style={{ height: 38, padding: '0 18px', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 13, fontWeight: 700, cursor: newName.trim().length < 2 ? 'not-allowed' : 'pointer', opacity: newName.trim().length < 2 ? 0.5 : 1 }}
           >
             {createMut.isPending ? '…' : (isNl ? 'Toevoegen' : 'Add')}
           </button>
         </div>
+        <p style={{ margin: '8px 0 0', fontSize: 11, color: '#9090a0' }}>
+          {isNl
+            ? 'De volgende stap vraagt een korte reden (optioneel) voor het auditlogboek.'
+            : 'Next step asks for a short reason (optional) for the audit log.'}
+        </p>
         {error && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{error}</p>}
       </div>
 
@@ -203,60 +353,116 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {(registers as Register[]).map(r => (
-            <div key={r.id} style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f0f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#7c3aed', flexShrink: 0 }}>
-                {r.number}
+          {(registers as Register[]).map(r => {
+            const closedSub = r.status === 'closed_today' && r.closed_today
+              ? (isNl
+                  ? `Gesloten ${new Date(r.closed_today.closed_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })} door ${r.closed_today.cashier_name ?? '—'}`
+                  : `Closed ${new Date(r.closed_today.closed_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} by ${r.closed_today.cashier_name ?? '—'}`)
+              : r.status === 'open' && r.session
+              ? (isNl ? `In gebruik door ${r.session.cashier_name ?? '—'}` : `In use by ${r.session.cashier_name ?? '—'}`)
+              : null
+            return (
+              <div key={r.id} style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f0f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#7c3aed', flexShrink: 0 }}>
+                  {r.number}
+                </div>
+                {editId === r.id ? (
+                  <input
+                    value={editName}
+                    onChange={e => setEditName(e.target.value)}
+                    autoFocus
+                    style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 7, border: '1.5px solid #7c3aed', fontSize: 13 }}
+                  />
+                ) : (
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{r.name}</div>
+                    {closedSub && <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 2 }}>{closedSub}</div>}
+                  </div>
+                )}
+                <StatusBadge status={r.status} isNl={isNl} />
+                {editId === r.id ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => updateMut.mutate({ id: r.id, name: editName })}
+                      disabled={editName.trim().length < 1}
+                      style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      {isNl ? 'Opslaan' : 'Save'}
+                    </button>
+                    <button
+                      onClick={() => setEditId(null)}
+                      style={{ height: 30, padding: '0 10px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    {r.status === 'closed_today' && (
+                      <button
+                        onClick={() => setReopenTarget(r)}
+                        title={isNl ? 'Heropenen voor volgende ploeg' : 'Reopen for next shift'}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                      >
+                        ↻ {isNl ? 'Heropenen' : 'Reopen'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => { setEditId(r.id); setEditName(r.name) }}
+                      title={isNl ? 'Hernoemen' : 'Rename'}
+                      style={{ height: 30, width: 30, borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', cursor: 'pointer', fontSize: 14 }}
+                    >
+                      ✎
+                    </button>
+                    <button
+                      onClick={() => setDeactivateTarget(r)}
+                      title={isNl ? 'Deactiveren' : 'Deactivate'}
+                      disabled={r.status === 'open'}
+                      style={{ height: 30, width: 30, borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: r.status === 'open' ? 'not-allowed' : 'pointer', fontSize: 14, opacity: r.status === 'open' ? 0.4 : 1 }}
+                    >
+                      🗑
+                    </button>
+                  </div>
+                )}
               </div>
-              {editId === r.id ? (
-                <input
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  autoFocus
-                  style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 7, border: '1.5px solid #7c3aed', fontSize: 13 }}
-                />
-              ) : (
-                <span style={{ flex: 1, fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{r.name}</span>
-              )}
-              <StatusBadge status={r.status} isNl={isNl} />
-              {editId === r.id ? (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    onClick={() => updateMut.mutate({ id: r.id, name: editName })}
-                    disabled={editName.trim().length < 1}
-                    style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
-                  >
-                    {isNl ? 'Opslaan' : 'Save'}
-                  </button>
-                  <button
-                    onClick={() => setEditId(null)}
-                    style={{ height: 30, padding: '0 10px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12, cursor: 'pointer' }}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', gap: 6 }}>
-                  <button
-                    onClick={() => { setEditId(r.id); setEditName(r.name) }}
-                    title={isNl ? 'Hernoemen' : 'Rename'}
-                    style={{ height: 30, width: 30, borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', cursor: 'pointer', fontSize: 14 }}
-                  >
-                    ✎
-                  </button>
-                  <button
-                    onClick={() => { if (confirm(isNl ? 'Kassa deactiveren?' : 'Deactivate register?')) deactivateMut.mutate(r.id) }}
-                    title={isNl ? 'Deactiveren' : 'Deactivate'}
-                    disabled={r.status === 'open'}
-                    style={{ height: 30, width: 30, borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: r.status === 'open' ? 'not-allowed' : 'pointer', fontSize: 14, opacity: r.status === 'open' ? 0.4 : 1 }}
-                  >
-                    🗑
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+            )
+          })}
         </div>
+      )}
+
+      {/* Modals */}
+      {reopenTarget && (
+        <ReopenRegisterModal register={reopenTarget} storeId={storeId} isNl={isNl} onClose={() => setReopenTarget(null)} />
+      )}
+      {createNoteOpen && (
+        <NotePrompt
+          title={isNl ? `Kassa "${newName.trim()}" toevoegen` : `Add register "${newName.trim()}"`}
+          body={isNl
+            ? 'Korte aantekening — bijv. waarom u deze kassa toevoegt of waar hij staat.'
+            : 'Short note — e.g. why you\'re adding this register or where it sits.'}
+          placeholder={isNl ? 'Bijv.: extra kassa voor zaterdagdrukte' : 'E.g.: extra register for Saturday rush'}
+          confirmLabel={isNl ? 'Kassa toevoegen' : 'Add register'}
+          confirmColor="#7c3aed"
+          isNl={isNl}
+          onCancel={() => setCreateNoteOpen(false)}
+          onConfirm={(note) => createMut.mutate(note || undefined)}
+          busy={createMut.isPending}
+        />
+      )}
+      {deactivateTarget && (
+        <NotePrompt
+          title={isNl ? `Kassa "${deactivateTarget.name}" deactiveren?` : `Deactivate register "${deactivateTarget.name}"?`}
+          body={isNl
+            ? 'Een gedeactiveerde kassa verdwijnt uit de kassakeuze maar blijft in alle rapporten en het auditlogboek staan.'
+            : 'A deactivated register disappears from the register picker but remains in all reports and the audit log.'}
+          placeholder={isNl ? 'Bijv.: kapot, vervangen door nieuwe kassa…' : 'E.g.: broken, replaced by new register…'}
+          confirmLabel={isNl ? 'Deactiveren' : 'Deactivate'}
+          confirmColor="#dc2626"
+          isNl={isNl}
+          onCancel={() => setDeactivateTarget(null)}
+          onConfirm={(note) => deactivateMut.mutate({ id: deactivateTarget.id, note: note || undefined })}
+          busy={deactivateMut.isPending}
+        />
       )}
     </div>
   )

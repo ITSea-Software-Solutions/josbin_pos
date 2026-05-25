@@ -4,8 +4,16 @@ export interface Register {
   id: string
   name: string
   number: number
-  status: 'open' | 'closed' | 'reopen_requested'
+  /** 'open' = active session; 'closed_today' = sealed for the day per
+   *  Z-Report semantics (manager must clear); 'available' = ready. */
+  status: 'open' | 'closed_today' | 'available' | 'reopen_requested'
   session: RegisterSession | null
+  closed_today: {
+    session_id: string
+    cashier_id: string
+    cashier_name: string | null
+    closed_at: string
+  } | null
 }
 
 export interface RegisterSession {
@@ -36,8 +44,8 @@ export async function getRegisters(storeId: string): Promise<Register[]> {
   return res.data.data
 }
 
-export async function createRegister(storeId: string, name: string): Promise<Register> {
-  const res = await apiClient.post<{ data: Register }>('/registers', { store_id: storeId, name })
+export async function createRegister(storeId: string, name: string, note?: string): Promise<Register> {
+  const res = await apiClient.post<{ data: Register }>('/registers', { store_id: storeId, name, note })
   return res.data.data
 }
 
@@ -46,8 +54,25 @@ export async function updateRegister(registerId: string, payload: { name?: strin
   return res.data.data
 }
 
-export async function deleteRegister(registerId: string): Promise<void> {
-  await apiClient.delete(`/registers/${registerId}`)
+export async function deleteRegister(registerId: string, note?: string): Promise<void> {
+  await apiClient.delete(`/registers/${registerId}`, { data: { note } })
+}
+
+/**
+ * Manager action: clear the "closed-today" lock on a register so the next
+ * shift can open a new session. Reason is required; for_cashier is an
+ * optional hint about who's expected to take over (free text).
+ */
+export async function clearClosedToday(
+  registerId: string,
+  reason: string,
+  forCashier?: string,
+): Promise<Register> {
+  const res = await apiClient.post<{ data: Register }>(`/registers/${registerId}/clear-closed-today`, {
+    reason,
+    for_cashier: forCashier,
+  })
+  return res.data.data
 }
 
 export async function getStoreSessions(storeId: string, date?: string): Promise<RegisterSession[]> {

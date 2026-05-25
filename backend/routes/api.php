@@ -207,6 +207,7 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::put('{register}',                               [RegisterController::class, 'updateRegister'])->name('update');
         Route::delete('{register}',                            [RegisterController::class, 'destroyRegister'])->name('destroy');
         Route::post('{register}/open',                        [RegisterController::class, 'open'])->name('open');
+        Route::post('{register}/clear-closed-today',          [RegisterController::class, 'clearClosedToday'])->name('clear-closed-today');
     });
 
     // Customers (SPOS-206)
