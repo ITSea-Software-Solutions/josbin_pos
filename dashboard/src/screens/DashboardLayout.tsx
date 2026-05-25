@@ -186,7 +186,7 @@ export default function DashboardLayout() {
   const nav: { id: Screen; nl: string; en: string; icon: React.ReactNode; roles: string[] }[] = [
     // Mijn Profiel — everyone gets self-service: own stats, shifts, password.
     { id: 'my-account',     nl: 'Mijn Profiel',           en: 'My Account',      icon: IC.users,          roles: [SA, OA, SM, AU, CA] },
-    { id: 'pos-launcher',   nl: 'POS-app openen',         en: 'Open POS app',    icon: IC.registers,      roles: [SA, OA, SM] },
+    { id: 'pos-launcher',   nl: 'POS-app openen',         en: 'Open POS app',    icon: IC.registers,      roles: [SA, OA, SM, CA] },
     { id: 'overview',       nl: 'Dashboard',              en: 'Dashboard',       icon: IC.overview,       roles: [SA, OA, SM, AU] },
     { id: 'z-reports',      nl: 'Z-Rapporten',            en: 'Z-Reports',       icon: IC.zreports,       roles: [SA, OA, SM, AU] },
     { id: 'reports',        nl: 'Rapporten',              en: 'Reports',         icon: IC.reports,        roles: [SA, OA, SM, AU] },
