@@ -20,6 +20,7 @@ use App\Services\BtwCalculationService;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
@@ -54,6 +55,7 @@ class DemoSeeder extends Seeder
             return;
         }
 
+        $this->ensureOrgAdmin($stores->first()->organisation_id);
         $this->ensureTodaysExchangeRate();
 
         foreach ($stores as $store) {
@@ -67,6 +69,28 @@ class DemoSeeder extends Seeder
         }
 
         $this->command->info('DemoSeeder complete.');
+    }
+
+    /**
+     * Org Admin is the HQ catalogue owner (CSV/Excel import, push-to-POS,
+     * org-wide reports). Demo creds: orgadmin@dehoop.sr / OrgAdmin@2026.
+     */
+    private function ensureOrgAdmin(string $organisationId): void
+    {
+        $oa = User::firstOrCreate(
+            ['email' => 'orgadmin@dehoop.sr'],
+            [
+                'name'            => 'Sandra Codrington',
+                'password'        => Hash::make('OrgAdmin@2026'),
+                'organisation_id' => $organisationId,
+                'role'            => User::ROLE_ORGANISATION_ADMIN,
+                'locale'          => 'nl',
+                'is_active'       => true,
+            ],
+        );
+        if (! $oa->hasRole(User::ROLE_ORGANISATION_ADMIN)) {
+            $oa->assignRole(User::ROLE_ORGANISATION_ADMIN);
+        }
     }
 
     /**

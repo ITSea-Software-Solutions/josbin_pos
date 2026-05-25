@@ -16,6 +16,17 @@ class OrganisationController extends Controller
     {
         $user = $request->user();
 
+        // Cashier and api_integration roles never need organisation data;
+        // gate them out so the endpoint isn't a reconnaissance surface.
+        if (! in_array($user->role, [
+            \App\Models\User::ROLE_SUPER_ADMIN,
+            \App\Models\User::ROLE_ORGANISATION_ADMIN,
+            \App\Models\User::ROLE_STORE_MANAGER,
+            \App\Models\User::ROLE_AUDITOR,
+        ], true)) {
+            return response()->json(['message' => 'Forbidden.'], 403);
+        }
+
         if ($user->isSuperAdmin()) {
             $orgs = Organisation::query()
                 ->withCount(['stores', 'users'])
