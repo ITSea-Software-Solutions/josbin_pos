@@ -6,6 +6,8 @@ This chapter covers everything that happens before payment — adding products, 
 
 ## 4.1 Adding products to the cart
 
+![POS screen — product grid on the left, empty cart on the right](screenshots/04-pos-screen-empty-cart.png)
+
 There are four ways to add a product:
 
 ### Method A — Tap/click from the product grid

@@ -20,11 +20,15 @@ This chapter explains how to open Josbin POS, log in, and find your way around t
 
 The login screen asks for your **email address** and **password**.
 
+![Login screen — empty](screenshots/01-login-screen.png)
+
 **Steps:**
 
 1. Click the **Email** field and type your email address (e.g. `kassa@dehoop.sr`).
 2. Click the **Password** field and type your password.
 3. Click the **Login** button or press **Enter** on your keyboard.
+
+![Login screen — filled in](screenshots/01-login-filled.png)
 
 **What happens next:**
 - If your credentials are correct, you are taken to the store selection screen.
@@ -38,6 +42,8 @@ The login screen asks for your **email address** and **password**.
 ## 1.3 Selecting your store
 
 After login, you see the **Store Selection** screen listing every store your account has access to.
+
+![Store selection screen](screenshots/01-store-select.png)
 
 1. Tap or click the name of your store.
 2. The main POS screen opens immediately.

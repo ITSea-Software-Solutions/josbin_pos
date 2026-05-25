@@ -1,0 +1,15 @@
+{
+  "name": "josbin-pos-screenshots",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Playwright-driven screenshot capture for the Josbin POS user manual, dashboard manual, and trainer cheat sheets",
+  "scripts": {
+    "install:browsers": "playwright install chromium",
+    "capture": "playwright test --reporter=list"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "typescript": "^5.7.0"
+  }
+}

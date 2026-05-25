@@ -10,6 +10,8 @@ This chapter explains:
 - How to pick the right role when adding a new user
 - Special rules for government departments and single-shop businesses
 
+![Dashboard overview — what an Org Admin sees after login](screenshots/01-overview-landing.png)
+
 ---
 
 ## 1.1 The six roles at a glance

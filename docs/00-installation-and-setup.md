@@ -162,7 +162,9 @@ curl -s http://localhost:8080/api/health
 # → 200 OK
 ```
 
-Backend is now live.
+Backend is now live. Visit `http://localhost:8080/api/v1/docs` in a browser to see the Open Integration API spec — useful confirmation that PHP-FPM + nginx + the routing layer are all wired correctly:
+
+![Swagger UI at /api/v1/docs](screenshots/00-swagger-ui.png)
 
 ---
 
