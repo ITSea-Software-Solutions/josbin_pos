@@ -1,4 +1,6 @@
 import { defineConfig } from 'vitepress'
+import { readFileSync, existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 
 /**
  * VitePress config for the Josbin POS documentation site.
@@ -36,6 +38,30 @@ export default defineConfig({
 
   title: 'Josbin POS',
   description: 'Developer documentation and user manual for Josbin POS — Suriname enterprise POS platform.',
+
+  // VitePress dev server intercepts every *.html request with the SPA shell
+  // (the `public/` static-fallthrough only fires during a production build).
+  // Register a tiny middleware so /architecture.html serves the real file in
+  // dev. Doesn't run in `vitepress build` — there the file is just copied
+  // verbatim out of `public/` into `dist/` as a static asset.
+  vite: {
+    plugins: [{
+      name: 'josbin-serve-static-html',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (!req.url) return next()
+          // Strip query string before extension test.
+          const path = req.url.split('?')[0]
+          if (!path.endsWith('.html') || path === '/index.html') return next()
+          // Resolve relative to docs-site/public.
+          const file = resolve(__dirname, '..', 'public', path.replace(/^\//, ''))
+          if (!existsSync(file)) return next()
+          res.setHeader('Content-Type', 'text/html; charset=utf-8')
+          res.end(readFileSync(file))
+        })
+      },
+    }],
+  },
 
   // Only render markdown from /docs/ and /user_manual/. Everything else is ignored.
   srcExclude: [
