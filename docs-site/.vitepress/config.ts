@@ -62,6 +62,7 @@ export default defineConfig({
 
     nav: [
       { text: 'Home',            link: '/docs-site/' },
+      { text: 'Architecture',    link: '/architecture.html', target: '_blank' },
       { text: 'Developer Docs',  link: '/docs/' },
       { text: 'User Manual',     link: '/user_manual/' },
       { text: 'Dashboard Manual',link: '/dashboard_manual/' },

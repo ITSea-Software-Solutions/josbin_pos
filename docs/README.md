@@ -5,6 +5,8 @@
 
 If you just want to *run* the project, see the top-level [README.md](../README.md). This folder is the *why* and *how* — the architecture, the flows, and the map of where each thing lives in code.
 
+> **Visual overview** → [`architecture.html`](architecture.html) — single-file interactive page with system overview, tech stack, ER diagram, use cases, sale flow, offline sync, BTW pipeline, AI, and security layers. Open in any browser, or visit `/architecture.html` on the docs site.
+
 ---
 
 ## Reading order

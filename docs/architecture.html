@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Josbin POS — Architecture</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --panel: #1a1a2a;
+    --panel-soft: #232336;
+    --text: #f1f5f9;
+    --text-dim: #94a3b8;
+    --text-mute: #64748b;
+    --accent: #7c3aed;
+    --accent-2: #4f46e5;
+    --border: #2a2a40;
+    --success: #4ade80;
+    --warn: #fbbf24;
+    --danger: #f87171;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif; line-height: 1.55; }
+  body { min-height: 100vh; }
+  header { padding: 32px 40px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(124,58,237,.08), transparent); }
+  header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  header h1 small { color: var(--text-dim); font-weight: 500; font-size: 14px; margin-left: 10px; letter-spacing: 0; }
+  header p { color: var(--text-dim); font-size: 13.5px; margin-top: 4px; }
+
+  nav.tabs { display: flex; gap: 2px; padding: 0 32px; border-bottom: 1px solid var(--border); background: var(--panel); position: sticky; top: 0; z-index: 10; overflow-x: auto; }
+  nav.tabs button {
+    background: transparent; color: var(--text-dim); border: none;
+    padding: 12px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+    border-bottom: 2px solid transparent; font-family: inherit;
+    transition: color .12s, border-color .12s;
+    white-space: nowrap;
+  }
+  nav.tabs button:hover { color: var(--text); }
+  nav.tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  main { padding: 32px 40px 80px; max-width: 1280px; margin: 0 auto; }
+  section.tab { display: none; }
+  section.tab.active { display: block; animation: fadeUp .25s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  h2 { font-size: 19px; font-weight: 800; margin-bottom: 14px; letter-spacing: -0.3px; }
+  h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 20px 0 8px; text-transform: uppercase; letter-spacing: 1px; }
+  p, li { font-size: 13.5px; color: var(--text); }
+  p { margin-bottom: 12px; }
+  ul, ol { padding-left: 22px; margin-bottom: 12px; }
+  li { margin-bottom: 4px; }
+  code { background: var(--panel-soft); color: #c4b5fd; padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; }
+  strong { color: var(--text); font-weight: 700; }
+
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 22px 26px; margin-bottom: 18px; }
+  .grid { display: grid; gap: 14px; }
+  .grid.two { grid-template-columns: 1fr 1fr; }
+  .grid.three { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 780px) { .grid.two, .grid.three { grid-template-columns: 1fr; } }
+
+  .pill { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; background: rgba(124,58,237,.15); color: #c4b5fd; border: 1px solid rgba(124,58,237,.3); margin-right: 6px; }
+  .pill.green { background: rgba(34,197,94,.12); color: var(--success); border-color: rgba(34,197,94,.3); }
+  .pill.amber { background: rgba(251,191,36,.12); color: var(--warn); border-color: rgba(251,191,36,.3); }
+  .pill.red   { background: rgba(239,68,68,.12); color: var(--danger); border-color: rgba(239,68,68,.3); }
+
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 13px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--text-dim); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  tr:last-child td { border-bottom: none; }
+
+  .mermaid { background: var(--panel-soft); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin: 14px 0 18px; overflow-x: auto; }
+  .mermaid svg { max-width: 100% !important; height: auto !important; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+
+  footer { text-align: center; padding: 28px; color: var(--text-mute); font-size: 12px; border-top: 1px solid var(--border); }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Josbin POS — Architecture <small>v3.1 · Built for Suriname</small></h1>
+  <p>Three-layer enterprise POS platform: in-store Electron app, cloud Super Admin dashboard, open integration API. SRD-native, BTW-compliant, Dutch/English bilingual, AST timezone.</p>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="overview" class="active">1. Overview</button>
+  <button data-tab="stack">2. Tech Stack</button>
+  <button data-tab="data">3. Data Model</button>
+  <button data-tab="actors">4. Use Cases</button>
+  <button data-tab="sale">5. Sale Flow</button>
+  <button data-tab="sync">6. Offline Sync</button>
+  <button data-tab="btw">7. BTW Pipeline</button>
+  <button data-tab="ai">8. AI Integration</button>
+  <button data-tab="security">9. Security</button>
+</nav>
+
+<main>
+
+<!-- ─────────── 1. OVERVIEW ─────────── -->
+<section class="tab active" id="overview">
+  <h2>Three layers, one platform</h2>
+  <p>Each layer is independently deployable and addresses a different audience. Layers 1 and 2 work together as one product (in-store + cloud). Layer 3 lets other POS vendors plug into the same data pipeline.</p>
+
+  <div class="mermaid">
+graph TB
+  subgraph L1["Layer 1 — Store POS (Electron desktop, Windows)"]
+    POS["Cashier UI<br/>React 19 + Electron 33"]
+    LOCAL["Local Laravel + Postgres<br/>(back-office PC)"]
+    POS -->|"HTTP localhost"| LOCAL
+  end
+
+  subgraph L2["Layer 2 — Super Admin Dashboard (browser, cloud)"]
+    DASH["Dashboard SPA<br/>React + Reverb WS"]
+    CLOUD["Cloud Laravel + Postgres<br/>(per-customer)"]
+    DASH -->|"HTTPS"| CLOUD
+  end
+
+  subgraph L3["Layer 3 — Open Integration API (REST + webhooks)"]
+    EXT["3rd-party POS<br/>(X-API-Key)"]
+    EXT -->|"JSON:API"| CLOUD
+  end
+
+  LOCAL -->|"Z-Report sync<br/>5-layer fallback"| CLOUD
+  CLOUD -->|"Webhooks<br/>(queue-backed)"| EXT
+
+  style L1 fill:#1a1a2a,stroke:#7c3aed,color:#f1f5f9
+  style L2 fill:#1a1a2a,stroke:#4f46e5,color:#f1f5f9
+  style L3 fill:#1a1a2a,stroke:#16a34a,color:#f1f5f9
+  </div>
+
+  <div class="grid three">
+    <div class="card">
+      <span class="pill">Layer 1</span>
+      <h3 style="margin-top: 8px;">Store POS</h3>
+      <p>Electron .exe on each terminal. Runs against a local Laravel/Postgres on one back-office PC. <strong>Sells without internet.</strong></p>
+      <ul>
+        <li>EPSON TM-T20 ESC/POS printing</li>
+        <li>USB HID + camera barcode</li>
+        <li>Hold bills, mixed payments</li>
+        <li>BTW correct discount-then-tax</li>
+        <li>Offline-first; cloud sync at Z-Report</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="pill">Layer 2</span>
+      <h3 style="margin-top: 8px;">Super Admin Dashboard</h3>
+      <p>Browser-based, cloud-hosted. One Super Admin account per Josbin tenant; org-admin and store-manager scoped beneath.</p>
+      <ul>
+        <li>Live multi-store revenue (Reverb WS)</li>
+        <li>Consolidated reports + BTW filings</li>
+        <li>Centralised catalogue → push to stores</li>
+        <li>Rekenkamer-ready signed audit export</li>
+        <li>User + license management</li>
+      </ul>
+    </div>
+    <div class="card">
+      <span class="pill">Layer 3</span>
+      <h3 style="margin-top: 8px;">Open Integration API</h3>
+      <p>REST endpoints + outbound webhooks. Third-party POS (or self-service kiosks, e-commerce) push sales in / pull reports out.</p>
+      <ul>
+        <li><code>POST /v1/sales</code> + <code>/sales/batch</code></li>
+        <li>Idempotent via <code>external_sale_ref</code></li>
+        <li>Outbound: <code>sale.created</code>, <code>shift.closed</code>, <code>refund.issued</code></li>
+        <li>Auto-generated OpenAPI/Swagger</li>
+        <li>Sandbox for integration testing</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Why this shape</h3>
+  <ul>
+    <li><strong>Selling never depends on the internet.</strong> Paramaribo is reliable; Nickerie/Marowijne/interior are not. Each store has its own Postgres.</li>
+    <li><strong>One client = one Super Admin.</strong> Each Josbin customer (the company you sell this to) gets their own dashboard, can onboard multiple organisations (their own customers).</li>
+    <li><strong>Layer 3 is the moat.</strong> Government departments and franchises that already have a POS can keep it, route their data through Josbin, and still get the consolidated reporting / Belastingdienst exports.</li>
+  </ul>
+</section>
+
+<!-- ─────────── 2. TECH STACK ─────────── -->
+<section class="tab" id="stack">
+  <h2>Stack — what runs where</h2>
+
+  <div class="mermaid">
+graph TB
+  subgraph Front["FRONTEND (Electron + Browser)"]
+    direction LR
+    R["React 19.2 + TypeScript<br/>React Compiler · Activity API · Actions"]
+    V["Vite 6 · TanStack Query v5 · Zustand"]
+    I["i18next (NL/EN) · Quagga2 (barcode) · Recharts"]
+    E["Electron 33 (.exe, code-signed)"]
+  end
+
+  subgraph Back["BACKEND (Laravel 13 / PHP 8.3)"]
+    direction LR
+    L["Sanctum · Fortify+Passkeys · Reverb · Horizon"]
+    A["Laravel AI SDK · spatie/permission · owen-it/auditing"]
+    S["stancl/tenancy · Excel · DomPDF · IonCube"]
+  end
+
+  subgraph Data["DATA"]
+    direction LR
+    P["PostgreSQL 16<br/>pgvector · WAL · RLS · AES-256 at rest"]
+    Q["Redis 7<br/>cache + queue + Reverb"]
+  end
+
+  subgraph Infra["INFRA"]
+    direction LR
+    D["Docker Compose · Nginx · Let's Encrypt"]
+    C["GitHub Actions CI · Nightwatch monitoring"]
+  end
+
+  Front --> Back
+  Back --> Data
+  Back --> Infra
+
+  style Front fill:#1a1a2a,stroke:#7c3aed
+  style Back  fill:#1a1a2a,stroke:#4f46e5
+  style Data  fill:#1a1a2a,stroke:#16a34a
+  style Infra fill:#1a1a2a,stroke:#64748b
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Why Laravel 13</h3>
+      <ul>
+        <li><strong>Eloquent</strong> = SQL injection structurally impossible</li>
+        <li><strong>Reverb</strong> = native WebSocket server, no Pusher fees</li>
+        <li><strong>Horizon</strong> = queue dashboard for free</li>
+        <li><strong>AI SDK</strong> = OpenAI/Anthropic with same interface</li>
+        <li><strong>Passkeys</strong> = phishing-proof Super Admin login</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Why React 19.2 + Electron</h3>
+      <ul>
+        <li><strong>Activity API</strong> = held bills pre-rendered, instant restore</li>
+        <li><strong>React Compiler</strong> = auto-memoization, no <code>useMemo</code> noise</li>
+        <li><strong>Electron</strong> = one .exe per terminal, DevTools off in prod</li>
+        <li><strong>USB HID</strong> barcode scanners "just work" (keyboard wedge)</li>
+        <li>Same code runs in browser (manager screens) and desktop (POS)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 3. DATA MODEL ─────────── -->
+<section class="tab" id="data">
+  <h2>Core entities</h2>
+  <p>21 Eloquent models. Money is <code>decimal(12,2)</code> SRD. Time is <code>timestamptz</code> AST. IDs are UUID v4. Customer PII is field-encrypted (WBP-S).</p>
+
+  <div class="mermaid">
+erDiagram
+  ORGANISATION ||--o{ STORE : "has"
+  ORGANISATION ||--o{ USER : "has"
+  ORGANISATION ||--o{ PRODUCT : "owns catalogue"
+  ORGANISATION ||--o{ CUSTOMER : "owns"
+
+  STORE ||--o{ REGISTER : "has"
+  STORE ||--o{ SALE : "originates"
+  STORE ||--o{ ZREPORT : "closes daily"
+  STORE ||--o{ STORE_PRODUCT_OVERRIDE : "price override"
+  STORE ||--o{ PRODUCT_STOCK : "per-store stock"
+
+  REGISTER ||--o{ REGISTER_SESSION : "shifts"
+  REGISTER_SESSION ||--o{ SALE : "rings up"
+
+  USER ||--o{ REGISTER_SESSION : "cashier of"
+  USER ||--o{ SALE : "rings up"
+
+  SALE ||--|{ SALE_ITEM : "lines"
+  SALE }o--|| CUSTOMER : "for"
+  SALE_ITEM }o--|| PRODUCT : "of"
+
+  PRODUCT ||--o{ STOCK_MOVEMENT : "logs"
+  PRODUCT ||--o{ PRODUCT_STOCK : "per-store"
+  PRODUCT }o--|| CATEGORY : "in"
+
+  DAILY_RATE ||--o{ SALE : "rate snapshot"
+
+  ZREPORT }o--|| USER : "closed by"
+
+  USER ||--o{ AUDIT_LOG : "actor"
+  ORGANISATION ||--o{ AUDIT_LOG : "scope"
+  </div>
+
+  <h3>Scoping invariants</h3>
+  <ul>
+    <li><strong>Every query carries <code>organisation_id</code></strong>, enforced at controller + custom validation rule (<code>StoreBelongsToOrg</code>) + policy.</li>
+    <li><strong>Sales always have <code>store_id</code></strong>; <code>register_session_id</code> is nullable (Layer 3 / API sales don't ring up on a till).</li>
+    <li><strong>Stock is per-store</strong> (<code>product_stocks</code> table), not on the product. Row-locked during sale to avoid race conditions when two cashiers sell the last unit simultaneously.</li>
+    <li><strong>Audit log is hash-chained</strong> and append-only — DB-level + Eloquent-level write protection. Even Super Admin can't delete a row.</li>
+  </ul>
+</section>
+
+<!-- ─────────── 4. USE CASES ─────────── -->
+<section class="tab" id="actors">
+  <h2>Six actors</h2>
+  <p>Role-based access control via <code>spatie/laravel-permission</code>. Permissions are checked at the policy/middleware layer — UI just hides what the API would reject anyway.</p>
+
+  <div class="mermaid">
+graph LR
+  SA(("Super Admin"))
+  OA(("Org Admin"))
+  SM(("Store Manager"))
+  CA(("Cashier"))
+  AU(("Auditor"))
+  API(("API Integration"))
+
+  SA --> UC1["Manage organisations"]
+  SA --> UC2["Manage users + roles + 2FA policy"]
+  SA --> UC3["View audit log (all orgs)"]
+  SA --> UC4["License management"]
+
+  OA --> UC5["Push catalogue to stores"]
+  OA --> UC6["Import CSV/XLSX products"]
+  OA --> UC7["Consolidated BTW + Z-Reports"]
+  OA --> UC8["API keys + webhooks"]
+  OA --> UC9["AI insights"]
+
+  SM --> UC10["Create + open registers"]
+  SM --> UC11["Approve register re-open"]
+  SM --> UC12["Approve refunds &gt; threshold"]
+  SM --> UC13["Daily / monthly / X / Z reports"]
+  SM --> UC14["Per-store discount rules"]
+
+  CA --> UC15["Ring up sale (cash/card/mixed)"]
+  CA --> UC16["Hold + restore bill"]
+  CA --> UC17["Refund (within window)"]
+  CA --> UC18["Close register (Z-Report)"]
+
+  AU --> UC19["Read-only: every report"]
+  AU --> UC20["Rekenkamer signed export"]
+
+  API --> UC21["POST /v1/sales (idempotent)"]
+  API --> UC22["GET /v1/reports/* (own data)"]
+
+  classDef act fill:#7c3aed,color:#fff,stroke:#fff,stroke-width:2px
+  class SA,OA,SM,CA,AU,API act
+  </div>
+
+  <h3>Permission inheritance</h3>
+  <table>
+    <thead><tr><th>Role</th><th>Scope</th><th>Can grant</th><th>Notable gates</th></tr></thead>
+    <tbody>
+      <tr><td>Super Admin</td><td>Platform</td><td>All roles</td><td>Mandatory 2FA. Cross-org access.</td></tr>
+      <tr><td>Organisation Admin</td><td>One organisation</td><td>SM / CA / AU / API within org</td><td><code>products.import</code>, <code>api_integrations.manage</code>, <code>ai.insights</code></td></tr>
+      <tr><td>Store Manager</td><td>Assigned store(s)</td><td>CA within store</td><td><code>z_report.close</code>, <code>sales.void.approve</code>, <code>products.import</code></td></tr>
+      <tr><td>Cashier</td><td>POS terminal only</td><td>—</td><td><code>sales.create</code>, <code>sales.hold</code>, register-session-close (not store Z-Report)</td></tr>
+      <tr><td>Auditor</td><td>Read-only, one org</td><td>—</td><td>Mandatory 2FA. Bypass for Rekenkamer / Belastingdienst officers.</td></tr>
+      <tr><td>API Integration</td><td>One store via API key</td><td>—</td><td>Header <code>X-API-Key</code>; rate-limited 1000/min.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ─────────── 5. SALE FLOW ─────────── -->
+<section class="tab" id="sale">
+  <h2>One sale, end to end</h2>
+  <p>From product tap to receipt printed to Z-Report sealed to cloud-visible — what actually happens.</p>
+
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor C as Cashier
+  participant UI as POS React UI
+  participant API as Local Laravel
+  participant DB as Postgres (local)
+  participant PR as Thermal Printer (ESC/POS)
+  participant Q as Redis Queue
+  participant CL as Cloud Dashboard
+
+  C->>UI: Scan barcode / tap product
+  UI->>UI: Add to cart (Zustand), recompute BTW
+  C->>UI: Pay → Complete (cash/card/mixed)
+  UI->>UI: Generate external_sale_ref (idempotency)
+  UI->>API: POST /api/sales {items, payment, sale_ref}
+  API->>DB: BEGIN
+  API->>DB: nextSaleNumber (advisory lock)
+  API->>DB: Insert sale + sale_items
+  API->>DB: Lock product_stocks row, decrement
+  API->>DB: Snapshot DailyRate USD→SRD
+  API->>DB: COMMIT
+  API-->>UI: 201 {sale}
+  UI->>PR: ESC/POS bytes (or DomPDF fallback)
+  UI->>C: Receipt modal + change due
+
+  Note over Q,CL: After Z-Report close
+  C->>API: POST /api/reports/z-report (manager only)
+  API->>DB: Seal day, insert ZReport, sync_status=pending
+  API->>Q: Dispatch ZReportSubmitted
+  Q->>CL: HTTPS sync (with retry/backoff)
+  CL-->>API: 200, mark sync_status=sent
+  </div>
+
+  <h3>What the cashier doesn't see</h3>
+  <ul>
+    <li><strong>BTW pipeline</strong> — discount-then-tax order is enforced in <code>BtwCalculationService</code> (see BTW tab).</li>
+    <li><strong>Idempotency</strong> — if the network blips and the UI retries, the second POST returns the same sale, not a duplicate.</li>
+    <li><strong>Stock lock</strong> — concurrent sales of the last unit can't both succeed.</li>
+    <li><strong>FX snapshot</strong> — the rate used is frozen on the sale row for audit; later rate changes don't rewrite history.</li>
+    <li><strong>Async jobs</strong> — receipt email, anomaly detection, AI categorisation all happen on Redis queue after the sale row is committed.</li>
+  </ul>
+</section>
+
+<!-- ─────────── 6. OFFLINE SYNC ─────────── -->
+<section class="tab" id="sync">
+  <h2>Five-layer offline fallback</h2>
+  <p>The local POS never blocks on the cloud. Sync happens opportunistically. If everything fails, there's a USB-export escape hatch so a shop in the interior can still get yesterday's data to head office.</p>
+
+  <div class="mermaid">
+graph TB
+  Sale[("Sale committed locally")] --> L1{"Internet up?"}
+  L1 -- Yes --> S1["Layer 1: Real-time sync<br/>via outbox queue → cloud"]
+  L1 -- No  --> L2["Layer 2: Auto retry<br/>1min → 5min → 15min → 30min"]
+
+  L2 --> L1b{"Restored?"}
+  L1b -- Yes --> S1
+  L1b -- No  --> L3["Layer 3: Z-Report forced retry<br/>(manager closes the day)"]
+
+  L3 --> L1c{"Got through?"}
+  L1c -- Yes --> S1
+  L1c -- No  --> L4["Layer 4: USB encrypted export<br/>AES-256 .josbin_pos file"]
+
+  L4 --> Manager["Manager carries USB to HQ<br/>or sends via WhatsApp"]
+  Manager --> Upload["HQ uploads to dashboard<br/>imports as if synced"]
+
+  L4 -.-> L5["Layer 5: Catch-up sync<br/>local pings every 60s,<br/>flushes queue chronologically"]
+  L5 -.-> Internet["Internet restored"]
+  Internet --> S1
+
+  S1 --> Cloud[("Cloud Postgres<br/>sync_status=sent")]
+
+  style Sale fill:#16a34a,color:#fff
+  style Cloud fill:#7c3aed,color:#fff
+  style L4 fill:#fbbf24,color:#0f0f1a
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Mobile data fallback</h3>
+      <p>A 4G USB dongle (Digicel / Telesur) on the local server is the secondary path. It's only used for the sync payload (50–200 KB/day) — never for POS operations. Keeps mobile-data spend negligible for stores in the interior.</p>
+    </div>
+    <div class="card">
+      <h3>Audit trail</h3>
+      <p>Days synced late are marked <code>synced_late</code> in the audit log, with both the original close timestamp and the sync timestamp. Rekenkamer auditors see the full picture, including the delay reason if noted.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 7. BTW PIPELINE ─────────── -->
+<section class="tab" id="btw">
+  <h2>BTW (Surinaamse VAT) — discount first, then tax</h2>
+  <p>10% standard rate; basic foods + medicine flagged BTW-exempt. The order of operations is fixed by Belastingdienst Suriname compliance and verified by 50+ unit tests in <code>BtwCalculationService</code>.</p>
+
+  <div class="mermaid">
+graph LR
+  A["Line item:<br/>unit_price × quantity"]
+  A --> B["Apply line discount<br/>(% or fixed SRD)"]
+  B --> C["= taxable_base per line"]
+  C --> D["Sum across cart"]
+  D --> E["Apply sale-level discount<br/>(% or fixed SRD)"]
+  E --> F["Allocate proportionally<br/>back to lines"]
+  F --> G{"btw_exempt?"}
+  G -- "Yes" --> H["BTW = 0"]
+  G -- "No"  --> I["BTW = base × rate / (100 + rate)<br/>(tax-inclusive pricing)"]
+  H --> J["Total SRD"]
+  I --> J
+
+  J --> K["Receipt: BTW line per rate"]
+  J --> L["Z-Report: BTW breakdown<br/>per rate, per day"]
+  J --> M["Belastingdienst export"]
+
+  style B fill:#7c3aed,color:#fff
+  style E fill:#7c3aed,color:#fff
+  style I fill:#16a34a,color:#fff
+  </div>
+
+  <h3>Why discount-first matters</h3>
+  <p>If you tax first and then discount, the BTW you remit to the Belastingdienst exceeds what the customer actually paid — over-collection. Discount-first calculates BTW on the actual money flow. Wrong order = audit finding.</p>
+
+  <h3>Worked example</h3>
+  <table>
+    <thead><tr><th>Step</th><th>Value (SRD)</th><th>Notes</th></tr></thead>
+    <tbody>
+      <tr><td>Line: 2× pizza @ 18.50</td><td>37.00</td><td>btw_rate = 10%</td></tr>
+      <tr><td>Line discount 10%</td><td>−3.70</td><td>taxable_base = 33.30</td></tr>
+      <tr><td>BTW (inclusive)</td><td>3.03</td><td>33.30 × 10 / 110</td></tr>
+      <tr><td>Line total (paid)</td><td>33.30</td><td>customer pays this</td></tr>
+      <tr><td>Net (excl. BTW)</td><td>30.27</td><td>booked as revenue</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ─────────── 8. AI ─────────── -->
+<section class="tab" id="ai">
+  <h2>AI features — v1 and beyond</h2>
+  <p>Built on Laravel 13's AI SDK. OpenAI GPT-4o is primary, Claude (Anthropic) is the fallback / specialist. Embeddings live in Postgres via <code>pgvector</code> — no separate vector DB.</p>
+
+  <div class="mermaid">
+graph TB
+  subgraph Triggers["Triggers"]
+    Sale1["sale.created event"]
+    Sched1["Mon 06:00 AST schedule"]
+    UI1["Manager types question"]
+    Add1["Product added"]
+  end
+
+  subgraph Pipelines["AI pipelines"]
+    direction LR
+    P1["DetectSaleAnomaly job<br/>(Redis queue)"]
+    P2["WeeklySummary job<br/>(scheduler)"]
+    P3["NL query → SQL<br/>(GPT-4o + safe templates)"]
+    P4["Auto-category + BTW rate<br/>(few-shot)"]
+    P5["Product semantic search<br/>(pgvector cosine)"]
+  end
+
+  subgraph Outputs["Outputs"]
+    direction LR
+    O1["Manager alert in NL/EN<br/>(Reverb broadcast)"]
+    O2["Monday morning email<br/>+ dashboard card"]
+    O3["Chart + table<br/>(natural language reports)"]
+    O4["Suggested category + BTW<br/>(catalogue form)"]
+    O5["Typo-tolerant search<br/>(POS search bar)"]
+  end
+
+  Sale1 --> P1 --> O1
+  Sched1 --> P2 --> O2
+  UI1 --> P3 --> O3
+  Add1 --> P4 --> O4
+  Add1 --> P5 -.-> O5
+
+  style P1 fill:#7c3aed,color:#fff
+  style P2 fill:#7c3aed,color:#fff
+  style P5 fill:#16a34a,color:#fff
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h3>Ship at v1</h3>
+      <ul>
+        <li>Smart product search (pgvector cosine across NL+EN)</li>
+        <li>Fraud / anomaly detection per sale</li>
+        <li>Weekly AI summary in manager's language</li>
+        <li>Auto-categorisation + BTW suggestion</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Phase 2 (3–6 months)</h3>
+      <ul>
+        <li>Natural-language reports ("Toon top 10…")</li>
+        <li>Stock reorder prediction (sales velocity)</li>
+        <li>Invoice OCR → stock entries</li>
+        <li>Smart promo suggestions for slow movers</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ─────────── 9. SECURITY ─────────── -->
+<section class="tab" id="security">
+  <h2>Six security layers</h2>
+  <p>Built for both commercial clients and government departments (Belastingdienst, Rekenkamer, Ministerie). Mandatory non-bypassable 2FA on government accounts.</p>
+
+  <div class="mermaid">
+graph TB
+  L1["L1 — Identity &amp; Access<br/>bcrypt-12 · TOTP / Passkeys · RBAC · session timeout"]
+  L2["L2 — Data Encryption<br/>AES-256 at rest · TLS 1.3 · field-level PII · WAL PITR"]
+  L3["L3 — Application<br/>Eloquent (SQLi-proof) · CSP · CSRF · rate limit · audit log"]
+  L4["L4 — Infrastructure<br/>port 443 only · SSH key-only · DB on private network"]
+  L5["L5 — Suriname Compliance<br/>WBP-S · Belastingdienst · Rekenkamer · OWASP report"]
+  L6["L6 — Government-Specific<br/>SoD · digital signatures · isolated tenant DB · 2FA mandatory"]
+
+  L1 --> L2 --> L3 --> L4 --> L5 --> L6
+  L6 --> Done["Production ready"]
+
+  style L1 fill:#7c3aed,color:#fff
+  style L2 fill:#6d28d9,color:#fff
+  style L3 fill:#5b21b6,color:#fff
+  style L4 fill:#4c1d95,color:#fff
+  style L5 fill:#16a34a,color:#fff
+  style L6 fill:#dc2626,color:#fff
+  </div>
+
+  <table>
+    <thead><tr><th>Concern</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>SQL injection</td><td>Eloquent parameterised queries only — no <code>DB::raw</code> with user input.</td></tr>
+      <tr><td>XSS</td><td>React auto-escapes; explicit CSP <code>script-src 'self'</code>.</td></tr>
+      <tr><td>CSRF</td><td>Laravel default on all state-changing requests.</td></tr>
+      <tr><td>Brute force login</td><td>bcrypt cost 12 (≈250ms per try) + nginx <code>limit_req</code> zone <code>login=5r/m</code> + 5-fail account lockout.</td></tr>
+      <tr><td>Cross-org leakage</td><td>Custom validation <code>StoreBelongsToOrg</code> + <code>SalePolicy::ownsSale</code> + DB query <code>where('organisation_id', $user-&gt;organisation_id)</code>.</td></tr>
+      <tr><td>Tampering with audit log</td><td>DB-level write protection + Eloquent <code>updating</code>/<code>deleting</code> hooks return <code>false</code>. Hash-chained rows.</td></tr>
+      <tr><td>Stolen code</td><td>IonCube encoding on PHP before delivery; Electron binary code-signed; license hardware-fingerprinted.</td></tr>
+      <tr><td>Lost device (govt)</td><td>2FA mandatory; single-device enforcement option; geo-alert on login outside Suriname.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Code &amp; license protection</h3>
+  <ul>
+    <li><strong>IonCube</strong> encodes all PHP before delivery — unreadable to humans, full speed inside Docker.</li>
+    <li><strong>License key</strong> bound to hardware (MAC + CPU ID + UUID). Checks home every 24h with a 72h offline grace.</li>
+    <li><strong>Renewal timeline:</strong> 30-day banner → 14-day banner → grace 14 days → soft lock (no new sales, all data + exports remain) → hard lock 30 days later → data export tools remain 90 days. Client data is <em>never</em> held hostage.</li>
+  </ul>
+</section>
+
+</main>
+
+<footer>
+  Generated from the same brief as the <code>/docs</code> markdown set ·
+  open <code>docs/architecture.html</code> in any browser, or via VitePress at <code>/architecture.html</code>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      darkMode: true,
+      background: '#1a1a2a',
+      primaryColor: '#312e81',
+      primaryTextColor: '#f1f5f9',
+      primaryBorderColor: '#7c3aed',
+      lineColor: '#7c3aed',
+      secondaryColor: '#1e1b4b',
+      tertiaryColor: '#0f0f1a',
+      textColor: '#f1f5f9',
+      mainBkg: '#312e81',
+      secondaryBkg: '#1e1b4b',
+      tertiaryBkg: '#0f0f1a',
+    },
+    sequence: { actorMargin: 80, messageMargin: 40 },
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 14 },
+    er: { fontSize: 13 },
+  });
+
+  // Tabs
+  const tabs    = document.querySelectorAll('nav.tabs button');
+  const panels  = document.querySelectorAll('section.tab');
+  tabs.forEach(btn => btn.addEventListener('click', () => {
+    const id = btn.dataset.tab;
+    tabs.forEach(b => b.classList.toggle('active', b === btn));
+    panels.forEach(p => p.classList.toggle('active', p.id === id));
+    history.replaceState(null, '', '#' + id);
+    // Mermaid lazily renders only visible — force a render of the newly visible diagrams
+    requestAnimationFrame(() => mermaid.run({ querySelector: '#' + id + ' .mermaid' }).catch(() => {}));
+  }));
+  // Deep-link via hash
+  if (location.hash) {
+    const target = document.querySelector('nav.tabs button[data-tab="' + location.hash.slice(1) + '"]');
+    if (target) target.click();
+  }
+</script>
+
+</body>
+</html>
