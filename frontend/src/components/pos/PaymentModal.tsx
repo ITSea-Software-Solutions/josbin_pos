@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
@@ -34,6 +34,19 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const [step, setStep] = useState<Step>('method')
   const [cashInput, setCashInput] = useState('')
   const [cardAmount, setCardAmount] = useState('')
+  const [retrying, setRetrying] = useState(false)
+
+  // Stable idempotency key for this checkout attempt. Resets whenever the
+  // modal is reopened or after a successful sale so the *next* sale gets a
+  // fresh key. Reusing the key on rate-limit retries makes the backend
+  // return the existing sale instead of creating a duplicate.
+  const saleRefRef = useRef<string>('')
+  useEffect(() => {
+    if (isOpen && !saleRefRef.current) {
+      saleRefRef.current = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`)
+    }
+    if (!isOpen) saleRefRef.current = ''
+  }, [isOpen])
 
   const total = parseFloat(totals.total)
 
@@ -43,6 +56,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const change = Math.max(0, cashTendered - total)
 
   function getErrorMessage(err: unknown): string {
+    const status = (err as any)?.response?.status
+    if (status === 429) return t('errors.tooBusyGiveUp')
     const res = (err as any)?.response
     if (res?.data?.message) return res.data.message
     if (res?.data?.errors) {
@@ -53,7 +68,24 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   }
 
   const saleMutation = useMutation({
-    mutationFn: (payload: CreateSalePayload) => createSale(payload),
+    // Auto-retry on nginx rate-limit (429): the bucket refills at ~2/s so a
+    // 1.5s backoff is enough. We use external_sale_ref as the idempotency
+    // key so the second attempt resolves to the same sale, not a duplicate.
+    mutationFn: async (payload: CreateSalePayload) => {
+      try {
+        return await createSale(payload)
+      } catch (err) {
+        const status = (err as any)?.response?.status
+        if (status !== 429) throw err
+        setRetrying(true)
+        await new Promise((r) => setTimeout(r, 1500))
+        try {
+          return await createSale(payload)
+        } finally {
+          setRetrying(false)
+        }
+      }
+    },
     onSuccess: (sale) => {
       qc.invalidateQueries({ queryKey: ['today-summary', storeId] })
       const tendered = step === 'cash' ? cashTendered : mixedCashAmt
@@ -66,6 +98,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
         })
       }
 
+      // Burn the idempotency key so the *next* sale gets a fresh one
+      saleRefRef.current = ''
       clearCart()
       onSuccess(sale.id, tendered, chg)
     },
@@ -76,6 +110,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       store_id: storeId,
       customer_id: customer?.id ?? null,
       payment_method: method,
+      external_sale_ref: saleRefRef.current || undefined,
       cash_tendered: method === 'cash' ? cashTendered : method === 'mixed' ? mixedCashAmt : undefined,
       card_amount: method === 'card' ? total : method === 'mixed' ? cardAmt : undefined,
       sale_discount_srd: saleDiscount.type === 'fixed' && saleDiscount.value > 0 ? saleDiscount.value : undefined,
@@ -293,7 +328,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               opacity: (isProcessing || (step === 'cash' && cashTendered < total) || (step === 'mixed' && cardAmt <= 0)) ? 0.5 : 1,
             }}
           >
-            {isProcessing ? t('pos.payment.processing') : t('pos.payment.complete')}
+            {retrying ? t('errors.tooBusy') : isProcessing ? t('pos.payment.processing') : t('pos.payment.complete')}
           </button>
         </div>
       )}

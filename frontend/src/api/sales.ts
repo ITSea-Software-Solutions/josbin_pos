@@ -9,6 +9,9 @@ export interface CreateSalePayload {
   card_amount?: number
   sale_discount_srd?: number
   sale_discount_pct?: number
+  // Client-side idempotency key: send the same value on retries so the backend
+  // returns the existing sale instead of creating a duplicate.
+  external_sale_ref?: string
   items: Array<{
     product_id?: string | null
     product_name: string

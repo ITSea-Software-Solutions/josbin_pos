@@ -4,13 +4,16 @@
 <meta charset="UTF-8">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* DomPDF doesn't reliably honor box-sizing on <body>, so we let the body
+     fill the page (set in ReceiptService::setPaper to 80mm) and put the
+     readable margin on an inner wrapper. Without this, an explicit
+     width: 80mm + padding pushes content past the page edge → clipping. */
   body {
     font-family: 'Courier New', monospace;
     font-size: 11px;
-    width: 80mm;
-    padding: 4mm;
     color: #000;
   }
+  .receipt { padding: 4mm; }
   .center  { text-align: center; }
   .right   { text-align: right; }
   .bold    { font-weight: bold; }
@@ -29,6 +32,7 @@
 </style>
 </head>
 <body>
+<div class="receipt">
 
 {{-- Store header --}}
 @if(!empty($store['logo']))
@@ -174,5 +178,6 @@
 <div class="footer center">{{ $t['thank_you'] }}</div>
 <div class="footer center label" style="font-size:9px">{{ $t['powered_by'] }}</div>
 
+</div>
 </body>
 </html>

@@ -271,6 +271,8 @@
   "errors": {
     "networkError": "Netwerkfout. Controleer de verbinding.",
     "serverError": "Serverfout. Probeer het opnieuw.",
+    "tooBusy": "Server is bezig — opnieuw proberen…",
+    "tooBusyGiveUp": "Server is bezig. Wacht enkele seconden en probeer opnieuw.",
     "notFound": "Niet gevonden",
     "unauthorized": "Geen toegang",
     "validationError": "Controleer de ingevulde gegevens"

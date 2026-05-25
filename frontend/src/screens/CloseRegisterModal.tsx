@@ -138,10 +138,20 @@ export default function CloseRegisterModal({ onClose }: Props) {
               {session.register_name ?? `Register ${session.register_number}`} · {session.cashier_name}
             </p>
           </div>
-          {(step === 'closed' || step === 'reopen_sent') && (
+          {(step === 'closed' || step === 'reopen_sent') ? (
             <button onClick={() => { if (step === 'closed') clearSession(); onClose() }}
               style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
               {isNl ? 'Sluiten' : 'Close'}
+            </button>
+          ) : (
+            // Dismiss-without-closing the register — for the case where the
+            // cashier opened this modal by mistake. Disabled while a network
+            // call is in flight so we don't half-commit a close.
+            <button onClick={onClose} disabled={busy}
+              aria-label={isNl ? 'Annuleren' : 'Cancel'}
+              title={isNl ? 'Annuleren — kassa blijft open' : 'Cancel — register stays open'}
+              style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 18, lineHeight: 1, cursor: busy ? 'not-allowed' : 'pointer', color: '#6b7280', opacity: busy ? 0.4 : 1 }}>
+              ✕
             </button>
           )}
         </div>
