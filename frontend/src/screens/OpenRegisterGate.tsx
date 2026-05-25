@@ -50,6 +50,7 @@ export default function OpenRegisterGate() {
   const isNl = i18n.language === 'nl'
   const user    = useAuthStore(s => s.user)
   const storeId = useSettingsStore(s => s.storeId)
+  const setStoreId = useSettingsStore(s => s.setStoreId)
   const setSession = useRegisterStore(s => s.setSession)
 
   const [registers, setRegisters]       = useState<Register[]>([])
@@ -77,9 +78,21 @@ export default function OpenRegisterGate() {
           setStep('float')
         }
       }
-    }).catch(() => setError(isNl ? 'Kon kassa\'s niet laden' : 'Could not load registers'))
+    }).catch((e: unknown) => {
+      // 422 from the StoreBelongsToOrg rule means the persisted storeId is
+      // not a store in the current user's org — usually because the user
+      // switched backends (live ↔ demo) or was re-org'd. Reset the store
+      // so App.tsx routes them back to StoreSelectScreen instead of being
+      // stuck on "Could not load registers".
+      const status = (e as { response?: { status?: number } })?.response?.status
+      if (status === 422 || status === 403 || status === 404) {
+        setStoreId(null)
+        return
+      }
+      setError(isNl ? 'Kon kassa\'s niet laden' : 'Could not load registers')
+    })
       .finally(() => setLoading(false))
-  }, [storeId])
+  }, [storeId, setStoreId, isNl])
 
   async function handleOpen() {
     if (!selected) return
