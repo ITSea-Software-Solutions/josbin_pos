@@ -46,15 +46,30 @@ class StockMovementService
         ?string $notes = null,
     ): StockMovement {
         return DB::transaction(function () use ($product, $qtyChange, $reason, $storeId, $sale, $userId, $notes) {
-            // Lock the row to prevent concurrent over-sells
-            $locked = Product::lockForUpdate()->find($product->id);
+            // Per-store stock is the source of truth. Lock the matching row
+            // for this (product, store) pair to prevent two concurrent sales
+            // at the same store from overselling. Sales at *different* stores
+            // for the same product don't block each other.
+            $stock = \App\Models\ProductStock::where('product_id', $product->id)
+                ->where('store_id', $storeId)
+                ->lockForUpdate()
+                ->first();
 
-            $qtyAfter = (float) $locked->stock_qty + $qtyChange;
+            // No row yet (new store added after the migration backfill) —
+            // initialise from the product's default stock_qty and threshold.
+            if (! $stock) {
+                $stock = \App\Models\ProductStock::create([
+                    'product_id'          => $product->id,
+                    'store_id'            => $storeId,
+                    'stock_qty'           => $product->stock_qty,
+                    'low_stock_threshold' => $product->low_stock_threshold ?? 0,
+                ]);
+                // Re-fetch with a row lock so the same transaction applies the change atomically.
+                $stock = \App\Models\ProductStock::where('id', $stock->id)->lockForUpdate()->first();
+            }
 
-            // Clamp to 0 — stock should not go negative in normal operation
-            $qtyAfter = max(0.0, $qtyAfter);
-
-            $locked->update(['stock_qty' => $qtyAfter]);
+            $qtyAfter = max(0.0, (float) $stock->stock_qty + $qtyChange);
+            $stock->update(['stock_qty' => $qtyAfter]);
 
             return StockMovement::create([
                 'product_id'      => $product->id,

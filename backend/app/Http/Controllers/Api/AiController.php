@@ -173,7 +173,7 @@ class AiController extends Controller
             'price'      => (string) $p->priceForStore($storeId),
             'btw_rate'   => (string) $p->btw_rate,
             'btw_exempt' => $p->btw_exempt,
-            'stock_qty'  => (string) $p->stock_qty,
+            'stock_qty'  => $p->stockForStore($storeId),
             'category'   => $p->category,
         ];
     }

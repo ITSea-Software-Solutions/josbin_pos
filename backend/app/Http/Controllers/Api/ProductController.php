@@ -34,7 +34,20 @@ class ProductController extends Controller
                 );
             })
             ->when($request->boolean('active_only', true), fn ($q) => $q->where('is_active', true))
-            ->when($request->boolean('low_stock'), fn ($q) => $q->whereRaw('stock_qty <= low_stock_threshold AND low_stock_threshold > 0'))
+            ->when($request->boolean('low_stock'), function ($q) use ($request) {
+                // Per-store low-stock if a store_id is given, otherwise org-wide aggregate.
+                if ($request->filled('store_id')) {
+                    $q->whereExists(function ($sub) use ($request) {
+                        $sub->selectRaw('1')->from('product_stocks')
+                            ->whereColumn('product_stocks.product_id', 'products.id')
+                            ->where('product_stocks.store_id', $request->input('store_id'))
+                            ->whereRaw('product_stocks.stock_qty <= product_stocks.low_stock_threshold')
+                            ->whereRaw('product_stocks.low_stock_threshold > 0');
+                    });
+                } else {
+                    $q->whereRaw('stock_qty <= low_stock_threshold AND low_stock_threshold > 0');
+                }
+            })
             ->orderBy('name_nl')
             ->paginate($request->integer('per_page', 50));
 
@@ -51,7 +64,7 @@ class ProductController extends Controller
         $products = Product::query()
             ->where('organisation_id', $request->user()->organisation_id)
             ->where('is_active', true)
-            ->with(['category:id,name_nl,name_en,icon,color'])
+            ->with(['category:id,name_nl,name_en,icon,color', 'storeStocks'])
             ->orderBy('name_nl')
             ->get()
             ->map(function (Product $p) use ($storeId) {
@@ -63,7 +76,7 @@ class ProductController extends Controller
                     'price'        => (string) $p->priceForStore($storeId),
                     'btw_rate'     => (string) $p->btw_rate,
                     'btw_exempt'   => $p->btw_exempt,
-                    'stock_qty'    => (string) $p->stock_qty,
+                    'stock_qty'    => $p->stockForStore($storeId),
                     'image_path'   => $p->image_path,
                     'category_id'  => $p->category_id,
                     'category'     => $p->category,
@@ -100,7 +113,7 @@ class ProductController extends Controller
                 'price'      => (string) $product->priceForStore($storeId),
                 'btw_rate'   => (string) $product->btw_rate,
                 'btw_exempt' => $product->btw_exempt,
-                'stock_qty'  => (string) $product->stock_qty,
+                'stock_qty'  => $product->stockForStore($storeId),
                 'category'   => $product->category,
             ],
         ]);
@@ -473,30 +486,27 @@ class ProductController extends Controller
             'qty_change' => ['required', 'numeric'],
             'reason'     => ['required', 'in:adjustment,import,initial'],
             'notes'      => ['nullable', 'string', 'max:500'],
-            'store_id'   => ['nullable', 'uuid', 'exists:stores,id'],
+            // Required now — stock is per-store. Manager must pick which store
+            // they're adjusting (write-off, receive stock, correction, etc.).
+            'store_id'   => ['required', 'uuid', 'exists:stores,id'],
         ]);
 
-        DB::transaction(function () use ($product, $data, $request) {
-            $newQty = bcadd((string) $product->stock_qty, (string) $data['qty_change'], 3);
-            if ((float) $newQty < 0) {
-                abort(422, 'Stock cannot go below zero.');
-            }
+        app(\App\Services\StockMovementService::class)->record(
+            product:   $product,
+            qtyChange: (float) $data['qty_change'],
+            reason:    $data['reason'],
+            storeId:   $data['store_id'],
+            userId:    $request->user()->id,
+            notes:     $data['notes'] ?? null,
+        );
 
-            $product->update(['stock_qty' => $newQty]);
-
-            StockMovement::create([
-                'product_id'      => $product->id,
-                'organisation_id' => $product->organisation_id,
-                'store_id'        => $data['store_id'] ?? null,
-                'qty_change'      => $data['qty_change'],
-                'qty_after'       => $newQty,
-                'reason'          => $data['reason'],
-                'user_id'         => $request->user()->id,
-                'notes'           => $data['notes'] ?? null,
-            ]);
-        });
-
-        return response()->json(['data' => $product->fresh()]);
+        return response()->json([
+            'data' => [
+                'id'        => $product->id,
+                'name_nl'   => $product->name_nl,
+                'stock_qty' => $product->stockForStore($data['store_id']),
+            ],
+        ]);
     }
 
     /**

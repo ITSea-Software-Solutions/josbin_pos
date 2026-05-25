@@ -59,6 +59,41 @@ class Product extends Model implements Auditable
         return $this->hasMany(StoreProductOverride::class);
     }
 
+    public function storeStocks(): HasMany
+    {
+        return $this->hasMany(ProductStock::class);
+    }
+
+    /**
+     * Per-store running stock for this product.
+     * If $storeId is null, returns the org-wide aggregate (sum across stores)
+     * — useful for org-level catalogue views where no specific branch is selected.
+     */
+    public function stockForStore(?string $storeId): string
+    {
+        if (! $storeId) {
+            return (string) $this->storeStocks()->sum('stock_qty');
+        }
+
+        $row = $this->storeStocks()->where('store_id', $storeId)->first();
+
+        // No row yet means the store hasn't seen movement — fall back to the
+        // catalogue default. StockMovementService will create the row on first sale.
+        return (string) ($row?->stock_qty ?? $this->stock_qty);
+    }
+
+    /** Same shape as stockForStore(), but for the low-stock threshold. */
+    public function lowStockThresholdForStore(?string $storeId): string
+    {
+        if (! $storeId) {
+            return (string) $this->low_stock_threshold;
+        }
+
+        $row = $this->storeStocks()->where('store_id', $storeId)->first();
+
+        return (string) ($row?->low_stock_threshold ?? $this->low_stock_threshold ?? 0);
+    }
+
     /** Return the localised name based on current app locale. */
     public function getNameAttribute(): string
     {
