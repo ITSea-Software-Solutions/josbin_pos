@@ -74,7 +74,7 @@ Edit `backend/.env` and set:
 
 | Key | Value |
 |---|---|
-| `APP_URL` | `http://<server-LAN-IP>:8080` (e.g. `http://192.168.1.10:8080`) |
+| `APP_URL` | `http://&lt;server-LAN-IP&gt;:8080` (e.g. `http://192.168.1.10:8080`) |
 | `EXCHANGERATE_API_KEY` | Your ExchangeRate-API key |
 | `JOSBIN_POS_LICENSE_SERVER_URL` | Your license server URL |
 | `JOSBIN_POS_INSTALLATION_KEY` | Leave blank — set after activation in A6 |
@@ -168,7 +168,7 @@ Backend is now live.
 
 ## Part B — Organisation onboarding (Super Admin)
 
-The dashboard is at **http://`<server-LAN-IP>`:5174** in dev, or your production HTTPS URL. Log in as the Super Admin account your team uses.
+The dashboard is at **http://&lt;server-LAN-IP&gt;:5174** in dev, or your production HTTPS URL. Log in as the Super Admin account your team uses.
 
 ### B1. Create the organisation
 
@@ -415,7 +415,7 @@ Second copy: weekly sync of `/var/backups/` to external drive (NAS or rotating U
 
 ### I2. Queue monitoring
 
-Visit **http://`<server-LAN-IP>`:8080/horizon** as a Super Admin. Shows:
+Visit **http://&lt;server-LAN-IP&gt;:8080/horizon** as a Super Admin. Shows:
 - Pending jobs (should normally be 0)
 - Failed jobs (investigate any)
 - Throughput
