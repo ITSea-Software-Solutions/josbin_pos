@@ -69,6 +69,21 @@ class DevelopmentDataSeeder extends Seeder
         );
         $cashier->assignRole(User::ROLE_CASHIER);
 
+        // Org Admin — HQ catalogue owner (CSV/Excel imports, push to POS, etc.).
+        // Demo creds: orgadmin@dehoop.sr / OrgAdmin@2026
+        $orgAdmin = User::firstOrCreate(
+            ['email' => 'orgadmin@dehoop.sr'],
+            [
+                'name'            => 'Sandra Codrington',
+                'password'        => Hash::make('OrgAdmin@2026'),
+                'organisation_id' => $org->id,
+                'role'            => User::ROLE_ORGANISATION_ADMIN,
+                'locale'          => 'nl',
+                'is_active'       => true,
+            ]
+        );
+        $orgAdmin->assignRole(User::ROLE_ORGANISATION_ADMIN);
+
         // ── Categories ────────────────────────────────────────────────────────
         $categories = [
             ['name_nl' => 'Droog',       'name_en' => 'Dry Goods',    'icon' => '🛒', 'sort_order' => 1],

@@ -11,6 +11,10 @@ use Illuminate\Support\Str;
 
 class ApiIntegrationController extends Controller
 {
+    // Permission gate (`api_integrations.manage`) is enforced on every route
+    // in routes/api.php → Super Admin + Org Admin only. See
+    // RolesAndPermissionsSeeder for the assignment.
+
     /** GET /api/api-keys */
     public function index(Request $request): JsonResponse
     {

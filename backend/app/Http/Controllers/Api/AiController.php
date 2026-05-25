@@ -18,6 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 class AiController extends Controller
 {
+    // productSearch is open to all authed users (POS type-ahead at the till).
+    // weeklySummary + anomalies are gated by `can:ai.insights` in
+    // routes/api.php → Store Manager and above only.
+
     /**
      * GET /api/ai/product-search
      *

@@ -81,10 +81,12 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
     });
 
     // AI Features v1 (SPOS-AI)
+    // product-search is open to all authed users (POS uses it). weekly-summary
+    // and anomalies expose sensitive business insights — manager+ only.
     Route::prefix('ai')->name('ai.')->group(function () {
         Route::get('product-search', [AiController::class, 'productSearch'])->name('product-search');
-        Route::get('weekly-summary', [AiController::class, 'weeklySummary'])->name('weekly-summary');
-        Route::get('anomalies',      [AiController::class, 'anomalies'])->name('anomalies');
+        Route::get('weekly-summary', [AiController::class, 'weeklySummary'])->name('weekly-summary')->middleware('can:ai.insights');
+        Route::get('anomalies',      [AiController::class, 'anomalies'])->name('anomalies')->middleware('can:ai.insights');
     });
 
     // Sync Export / USB fallback (SPOS — Layer 4 offline fallback)
@@ -215,7 +217,8 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
     });
 
     // API Integrations / API Keys (SPOS-307)
-    Route::prefix('api-keys')->name('api-keys.')->group(function () {
+    // All endpoints gated — Super Admin + Org Admin only.
+    Route::prefix('api-keys')->name('api-keys.')->middleware('can:api_integrations.manage')->group(function () {
         Route::get('/',                                              [ApiIntegrationController::class, 'index'])->name('index');
         Route::post('/',                                             [ApiIntegrationController::class, 'store'])->name('store');
         Route::put('{apiIntegration}',                               [ApiIntegrationController::class, 'update'])->name('update');
@@ -224,11 +227,12 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
     });
 
     // Discount Rules (SPOS-discount)
+    // index() open so POS can read active rules. Mutations gated to manager+.
     Route::prefix('discount-rules')->name('discount-rules.')->group(function () {
-        Route::get('/',              [DiscountRuleController::class, 'index'])->name('index');
-        Route::post('/',             [DiscountRuleController::class, 'store'])->name('store');
-        Route::put('{discountRule}', [DiscountRuleController::class, 'update'])->name('update');
-        Route::delete('{discountRule}', [DiscountRuleController::class, 'destroy'])->name('destroy');
+        Route::get('/',                  [DiscountRuleController::class, 'index'])->name('index');
+        Route::post('/',                 [DiscountRuleController::class, 'store'])->name('store')->middleware('can:discount_rules.manage');
+        Route::put('{discountRule}',     [DiscountRuleController::class, 'update'])->name('update')->middleware('can:discount_rules.manage');
+        Route::delete('{discountRule}',  [DiscountRuleController::class, 'destroy'])->name('destroy')->middleware('can:discount_rules.manage');
     });
 
     // License Management (SPOS-license)

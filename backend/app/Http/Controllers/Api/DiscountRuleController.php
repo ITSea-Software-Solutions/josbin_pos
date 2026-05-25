@@ -10,6 +10,10 @@ use Illuminate\Validation\Rule;
 
 class DiscountRuleController extends Controller
 {
+    // index() is open to all authed users (POS reads rules to apply at sale).
+    // Mutations (store/update/destroy) are gated by `can:discount_rules.manage`
+    // in routes/api.php → Super Admin + Org Admin + Store Manager.
+
     /** GET /api/discount-rules */
     public function index(Request $request): JsonResponse
     {

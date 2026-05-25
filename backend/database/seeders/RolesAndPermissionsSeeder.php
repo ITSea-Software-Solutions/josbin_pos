@@ -76,6 +76,12 @@ class RolesAndPermissionsSeeder extends Seeder
             // API integrations
             'api_integrations.manage',
 
+            // Discount rules
+            'discount_rules.manage',
+
+            // AI insights (manager+ — exposes business-sensitive summaries)
+            'ai.insights',
+
             // Settings
             'settings.manage',
 
@@ -109,6 +115,9 @@ class RolesAndPermissionsSeeder extends Seeder
             'z_report.close', 'z_report.submit', 'z_report.view_history',
             'users.view', 'users.create', 'users.edit',
             'stores.manage',
+            'api_integrations.manage',
+            'discount_rules.manage',
+            'ai.insights',
             'settings.manage',
             'labels.print',
             'audit.view',
@@ -126,6 +135,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'rates.view', 'rates.lock', 'rates.override',
             'z_report.close', 'z_report.submit', 'z_report.view_history',
             'users.view', 'users.create',
+            'discount_rules.manage',
+            'ai.insights',
             'settings.manage',
             'labels.print',
         ]);
