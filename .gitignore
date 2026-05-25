@@ -27,6 +27,8 @@ frontend/.vite/
 
 # Docker
 docker/postgres/data/
+docker/postgres-demo/data/
+docker/postgres-sandbox/data/
 docker/redis/data/
 
 # Backups
