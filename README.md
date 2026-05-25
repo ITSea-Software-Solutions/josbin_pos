@@ -162,16 +162,61 @@ Opens at **http://localhost:5174**. API calls proxy to `http://localhost:8080/ap
 
 ## URLs
 
-| URL | What it is |
+### Live stack (`docker compose up -d`)
+
+| URL | What |
 |---|---|
-| `http://localhost:8080/api` | Laravel REST API |
+| `http://localhost:8080` | Laravel app (Nginx → PHP-FPM) |
+| `http://localhost:8080/api` | REST API root (Sanctum-guarded) |
+| `http://localhost:8080/api/health` | Liveness check (no auth) |
+| `http://localhost:8080/api/v1/docs` | **Swagger UI** — Open Integration API (Layer 3) |
+| `http://localhost:8080/api/v1/openapi.json` | Raw OpenAPI 3.0 spec |
 | `http://localhost:8080/horizon` | Horizon — queue monitoring |
+| `http://localhost:8080/telescope` | Telescope — debug (dev only) |
 | `ws://localhost:6001` | Reverb WebSocket server |
-| `http://localhost:5173` | POS Electron renderer (dev) |
-| `http://localhost:5174` | Super Admin Dashboard (dev) |
 | `localhost:5432` | PostgreSQL direct |
 | `localhost:5433` | PostgreSQL via PgBouncer (pooled) |
 | `localhost:6379` | Redis |
+
+### Frontends (started outside Docker)
+
+| URL | What | Start |
+|---|---|---|
+| `http://localhost:5173` | **POS** (Electron + Vite) | `cd frontend && npm run dev` |
+| `http://localhost:5174` | **Super Admin Dashboard** | `cd dashboard && npm run dev` |
+| `http://localhost:5180` | **Documentation site** (VitePress — dev docs + user manual) | `cd docs-site && npm run dev` |
+
+### Demo stack — runs alongside live, isolated data, port-shifted
+
+```bash
+docker compose -p josbin_demo \
+  -f docker-compose.yml -f docker-compose.demo.yml up -d --build
+```
+
+| URL | What |
+|---|---|
+| `http://localhost:8082` | Demo Laravel app (own DB, yellow "DEMO MODE" banner) |
+| `localhost:55433` | Demo PostgreSQL |
+| `localhost:6380` | Demo Redis |
+| `ws://localhost:6002` | Demo Reverb |
+
+Full guide: see [docs/00-installation-and-setup.md](docs/00-installation-and-setup.md).
+
+### License server (separate app, `cd license-server && docker compose up -d`)
+
+| URL | What |
+|---|---|
+| `http://localhost:8090` | License server root |
+| `http://localhost:8090/api/activate` | Hardware-fingerprint binding |
+| `http://localhost:8090/api/validate` | Daily validation called by EnsureLicenseValid |
+| `http://localhost:8090/api/admin/licenses` | Issue / renew / revoke (admin key) |
+
+### Sandbox API (third-party integration testing, `docker compose -f docker-compose.sandbox.yml up -d`)
+
+| URL | What |
+|---|---|
+| `http://localhost:8091` | Isolated Laravel app, sends `X-Josbin-Environment: sandbox` header |
+| `localhost:55432` | Sandbox PostgreSQL |
 
 ---
 
@@ -191,11 +236,14 @@ Returns `{ token, expires_at, user }`. Pass the token as `Authorization: Bearer 
 
 **Default seeded accounts:**
 
-| Role | Email | Password |
-|---|---|---|
-| Super Admin | `admin@josbin-pos.sr` | `JosbinPOS@2026!` |
-| Store Manager | `manager@dehoop.sr` | `Manager@2026` |
-| Cashier | `kassa@dehoop.sr` | `Cashier@2026` |
+| Role | Email | Password | 2FA? |
+|---|---|---|---|
+| Super Admin | `admin@josbin-pos.sr` | `JosbinPOS@2026!` | Yes (enforced) |
+| Organisation Admin (HQ) | `orgadmin@dehoop.sr` | `OrgAdmin@2026` | No |
+| Store Manager | `manager@dehoop.sr` | `Manager@2026` | No |
+| Cashier | `kassa@dehoop.sr` | `Cashier@2026` | No |
+
+`orgadmin@dehoop.sr` is the **HQ catalogue owner** — only role (besides Super Admin) that can bulk-import products, manage API keys, and push catalogue updates to all POS terminals.
 
 ---
 

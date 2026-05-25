@@ -1,7 +1,7 @@
 # Josbin POS — Build Status
 
-**Last updated:** 2026-05-23 (session 3)
-**Version:** Phase 2 complete + Phase 3 complete (Dashboard + API) — wiring gaps closed, License server built
+**Last updated:** 2026-05-25 (session 5)
+**Version:** Phase 3 complete + Phase 4 prep — multi-cashier concurrency verified end-to-end, per-store stock landed, production-blocker security gaps fixed, docs site live
 
 ---
 
@@ -330,17 +330,57 @@ API contracts). Bugs found and **fixed this session**:
 | Serious | USB sync re-import dropped original ids → duplicates; anomaly job bypassed audit hash chain | `SyncExportController`, `DetectSaleAnomaly` |
 | Minor | Dead `pushStoreSettings` calling a non-existent route | `dashboard/src/api/organisations.ts` |
 
-**Still open (not boot/demo blockers — verify next):**
-- Sales are not linked to their `register_session_id` — per-session register reports may be empty.
-- Refund stock-movement sign needs verifying against `StockMovementService`.
+All of the above are fixed and verified. The two "still open" items from
+session 4 (register_session_id linking, refund stock sign) are both
+✅ resolved — see session 5 below.
 
-### NEXT STEPS (handoff)
-The codebase has never been executed end-to-end. Immediate path:
-1. `cd backend && cp .env.example .env && php artisan key:generate`
-2. Start PostgreSQL 16 + Redis, then `php artisan migrate` and `php artisan db:seed`.
-3. `php artisan test` — confirm the 50+ BTW scenarios and all suites pass; fix failures.
-4. Boot all three apps; click through a full sale → payment → receipt; close a register (Z-Report).
-5. Then resolve the two open items above, then proceed to Phase 4 (UAT, security, load, device testing).
+---
+
+## Session 5 — multi-cashier verification, per-store stock, role hardening (2026-05-25)
+
+Codebase was executed end-to-end for the first time. Two more production
+blockers surfaced and were fixed. Several feature gaps closed.
+
+### ✅ Production blockers found + fixed
+| Severity | Bug | Fix |
+|---|---|---|
+| Ship-stopper | `RegisterController` called undefined `activity()` helper at 7 sites — every register open/close 500'd after the DB commit | Replaced with `logRegisterActivity()` writing to canonical `audit_logs` |
+| Ship-stopper | `stock_movements.sale_id` was `bigInteger` but `sales.id` is `uuid` — every real sale's queued stock job failed silently | New migration changing column to uuid + FK; 21 retried jobs succeeded; `products.stock_qty` 36→26 correctly after a real sale |
+| Security | `ApiIntegrationController`, `DiscountRuleController`, `AiController` had **zero** auth checks — cashiers could create API keys, build 100% discount rules, read business AI summaries | Route-level `can:` middleware on each; new `discount_rules.manage` and `ai.insights` permissions in seeder |
+| Security | Dashboard sidebar had 6 nav items with no role filter — cashier saw Users / API Keys / Z-Reports etc. | Every nav item now declares explicit `roles`; cashier is routed straight to "My Account" |
+
+### ✅ Multi-cashier concurrency verified
+Two cashiers, two registers, 10 parallel sales of the same product:
+- 10 unique sale_numbers (advisory lock holds)
+- Cashier attribution + register_session_id correct on every row
+- Per-store stock decremented atomically; no overselling between branches
+
+### ✅ Per-store stock — architecture upgrade
+- New `product_stocks(product_id, store_id, stock_qty, low_stock_threshold)` table
+- Backfilled from `products.stock_qty` per (product × store) within the same org
+- `StockMovementService::record` now locks the per-(product, store) row, not the global product row
+- `Product::stockForStore($storeId)`, `lowStockThresholdForStore($storeId)`
+- POS, byBarcode, low-stock query, manual stock-adjust all use per-store stock
+- `products.stock_qty` kept as "default initial stock for a new store"
+
+### ✅ Feature additions
+| # | Feature | Where |
+|---|---|---|
+| 1 | **My Account** for every role — Profile + My Performance + My Shifts | `MyAccountScreen.tsx`, `/api/me/*` (4 endpoints) |
+| 2 | **Excel import** (.xlsx, .xls) for product catalogue + XLSX template download | `ProductController::import` + `CatalogueImportExportScreen` |
+| 3 | **Demo stack** isolated from live (own DB, own ports, yellow banner) | `docker-compose.demo.yml`, `JOSBIN_POS_DEMO_MODE` flag, `/api/environment` |
+| 4 | **Close + Restart buttons** in POS Settings (Manager+) with cart/sync safety checks | `SystemActions.tsx`, `app:quit` / `app:restart` IPC |
+| 5 | **VitePress docs site** for /docs and /user_manual at `http://localhost:5180` | `docs-site/` |
+| 6 | **42 categories** seeded by default for any new organisation | `CategoriesSeeder` |
+| 7 | **Org Admin** seeded (`orgadmin@dehoop.sr`) so HQ workflow is testable out of the box | `DevelopmentDataSeeder` |
+| 8 | User manual **Chapter 3 — Your Register** (open / close / reopen flow); 3→13 renumbered | `user_manual/03-register.md` |
+| 9 | POS UX: auto-select single register, require note when cash count mismatches | `OpenRegisterGate`, `CloseRegisterModal` |
+| 10 | Documentation site stubs for the 12 unwritten dev chapters (no more 404s) | `docs/02-13.md` |
+
+### ⏳ Still open (this session's residue)
+- **#22** — broader cross-store / cross-org / cashier visibility audit (data leakage probes across controllers)
+- **#20** — Dashboard manual chapter on roles + permissions (the user-facing doc, plain English for HQ admins)
+- **#5** — dev docs chapters 2–13 still stubs; needs real content
 
 ---
 
