@@ -134,8 +134,14 @@ export interface HeldBill {
   store_id: string
   cashier_id: string
   customer: Customer | null
+  /** Items may be persisted without the client-side `computed` field
+   *  (e.g. legacy / seeded rows), so don't rely on it here — recompute
+   *  on restore via cartStore.computeItem. */
   items: CartItem[]
   sale_discount: CartDiscount
+  /** Backend pre-computed total — use this for previews instead of
+   *  summing `items[].computed.lineTotal`. */
+  total_srd: string
   created_at: string
   label?: string
 }

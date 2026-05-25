@@ -49,8 +49,12 @@ export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPa
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {bills.map((bill: HeldBill) => {
-            const itemCount = bill.items.reduce((s, i) => s + i.quantity, 0)
-            const total = bill.items.reduce((s, i) => s + parseFloat(i.computed.lineTotal), 0)
+            // Items in cart_data may or may not carry the client-side `computed`
+            // block (DemoSeeder rows don't), so we compute counts here and use
+            // the backend-stored total instead of summing line totals.
+            const items = bill.items ?? []
+            const itemCount = items.reduce((s, i) => s + (Number(i.quantity) || 0), 0)
+            const total = parseFloat(bill.total_srd ?? '0')
             return (
               <button
                 key={bill.id}

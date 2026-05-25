@@ -44,13 +44,18 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
     localStorage.setItem('josbin_pos_locale', next)
   }
 
+  // End-of-Day Z-Report is a store-level day-close — a manager task in every
+  // commercial POS. The cashier's end-of-shift task is the Close Register
+  // modal on the right (which uses register-session-close, not z_report.close).
+  const isManagerPlus = ['store_manager', 'organisation_admin', 'super_admin'].includes(user?.role ?? '')
+
   const navItems = [
     { key: 'pos',           label: t('nav.pos') },
     { key: 'history',       label: i18n.language === 'nl' ? 'Transacties' : 'Transactions' },
     { key: 'reports',       label: t('nav.reports') },
     { key: 'labels',        label: t('nav.labels') },
     { key: 'exchange-rate', label: t('nav.exchangeRate') },
-    { key: 'end-of-day',    label: t('nav.endOfDay') },
+    ...(isManagerPlus ? [{ key: 'end-of-day', label: t('nav.endOfDay') }] : []),
     { key: 'settings',      label: t('nav.settings') },
   ]
 

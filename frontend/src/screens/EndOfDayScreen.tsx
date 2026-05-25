@@ -12,7 +12,7 @@ interface EndOfDayScreenProps {
 }
 
 export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const qc = useQueryClient()
   const fmtDate = useDateFormatter()
 
@@ -221,11 +221,21 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
                 {closeMutation.isPending ? t('app.loading') : t('endOfDay.printZReport')}
               </button>
             )}
-            {closeMutation.isError && (
-              <div style={{ color: 'var(--color-error)', fontSize: 'var(--font-size-sm)', textAlign: 'center' }}>
-                {t('errors.serverError')}
-              </div>
-            )}
+            {closeMutation.isError && (() => {
+              const err = closeMutation.error as { response?: { status?: number; data?: { message?: string } } }
+              const status = err?.response?.status
+              const apiMsg = err?.response?.data?.message
+              const msg = status === 403
+                ? (i18n.language === 'nl'
+                    ? 'Alleen een beheerder kan de Z-Rapport voor de dag sluiten. U kunt wel uw eigen kassa sluiten via "Kassa sluiten" rechtsboven.'
+                    : 'Only a manager can close the daily Z-Report. You can close your own register via "Close register" in the top-right.')
+                : (apiMsg || t('errors.serverError'))
+              return (
+                <div style={{ color: 'var(--color-error)', fontSize: 'var(--font-size-sm)', textAlign: 'center', lineHeight: 1.5 }}>
+                  {msg}
+                </div>
+              )
+            })()}
           </div>
         </div>
 

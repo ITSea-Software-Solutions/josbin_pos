@@ -297,7 +297,7 @@ class SaleController extends Controller
             'total_srd'   => $data['total_srd'],
         ]);
 
-        return response()->json(['data' => $held], 201);
+        return response()->json(['data' => $this->formatHeldBill($held->load('customer'))], 201);
     }
 
     /**
@@ -312,10 +312,48 @@ class SaleController extends Controller
 
         $held = \App\Models\HeldBill::where('store_id', $request->input('store_id'))
             ->where('cashier_id', $request->user()->id)
+            ->with('customer')
             ->orderByDesc('created_at')
-            ->get();
+            ->get()
+            ->map(fn ($h) => $this->formatHeldBill($h));
 
         return response()->json(['data' => $held]);
+    }
+
+    /**
+     * Flattens cart_data into the shape the POS frontend expects
+     * (items / customer / sale_discount as top-level fields).
+     *
+     * cart_data is stored as JSON and historical rows are inconsistent: some
+     * are a bare array of items, others are an object with {items, ...}.
+     * Normalising here keeps the frontend single-shaped.
+     */
+    private function formatHeldBill(\App\Models\HeldBill $h): array
+    {
+        $cart = $h->cart_data ?? [];
+        $items = is_array($cart) && array_is_list($cart)
+            ? $cart                                 // legacy: bare array
+            : ($cart['items'] ?? []);               // new: { items, sale_discount }
+        $saleDiscount = is_array($cart) && ! array_is_list($cart)
+            ? ($cart['sale_discount'] ?? ['type' => 'fixed', 'value' => 0])
+            : ['type' => 'fixed', 'value' => 0];
+
+        return [
+            'id'            => $h->id,
+            'store_id'      => $h->store_id,
+            'cashier_id'    => $h->cashier_id,
+            'customer'      => $h->customer ? [
+                'id'    => $h->customer->id,
+                'name'  => $h->customer->name,
+                'phone' => $h->customer->phone,
+                'email' => $h->customer->email,
+            ] : null,
+            'label'         => $h->label,
+            'items'         => $items,
+            'sale_discount' => $saleDiscount,
+            'total_srd'     => (string) $h->total_srd,
+            'created_at'    => $h->created_at?->toIso8601String(),
+        ];
     }
 
     /**
@@ -330,10 +368,11 @@ class SaleController extends Controller
             abort(403, 'Access denied.');
         }
 
-        $data = $heldBill->toArray();
+        $heldBill->load('customer');
+        $payload = $this->formatHeldBill($heldBill);
         $heldBill->delete();
 
-        return response()->json(['data' => $data]);
+        return response()->json(['data' => $payload]);
     }
 
     // ─── Refund ───────────────────────────────────────────────────────────
