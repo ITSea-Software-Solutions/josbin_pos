@@ -149,34 +149,64 @@ export default function DashboardLayout() {
   const { i18n } = useTranslation()
   const user       = useDashboardAuthStore((s) => s.user)
   const logout     = useDashboardAuthStore((s) => s.logout)
-  const isSuperAdmin = useDashboardAuthStore((s) => s.isSuperAdmin)
 
   const [screen, setScreen]               = useState<Screen>('overview')
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
   const isNl = i18n.language === 'nl'
 
+  // Cashiers belong in the POS app, not the dashboard. If one logs in here,
+  // show a friendly redirect screen instead of leaking any HQ UI.
+  if (user?.role === 'cashier' || user?.role === 'api_integration') {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f8', padding: 32 }}>
+        <div style={{ background: '#fff', borderRadius: 18, padding: 36, maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,.12)', textAlign: 'center' }}>
+          <p style={{ fontSize: 44, margin: 0 }}>🛒</p>
+          <h2 style={{ margin: '12px 0 8px', fontSize: 22, fontWeight: 800, color: '#1c1c2e' }}>
+            {isNl ? 'Dit is het beheerportaal' : 'This is the admin dashboard'}
+          </h2>
+          <p style={{ margin: 0, fontSize: 14, color: '#6b7280', lineHeight: 1.55 }}>
+            {isNl
+              ? 'Kassamedewerkers gebruiken de Josbin POS-app op het kassascherm. Vraag uw manager als u geen toegang heeft tot de POS.'
+              : 'Cashiers use the Josbin POS app on the register terminal. Ask your manager if you do not have access to the POS.'}
+          </p>
+          <button onClick={logout} style={{ marginTop: 24, padding: '12px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            {isNl ? 'Uitloggen' : 'Log out'}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   function go(s: Screen) { setScreen(s) }
   function openStore(id: string) { setSelectedStoreId(id); setScreen('store') }
 
-  const nav: { id: Screen; nl: string; en: string; icon: React.ReactNode; adminOnly?: boolean; roles?: string[] }[] = [
-    { id: 'overview',      nl: 'Dashboard',    en: 'Dashboard',      icon: IC.overview },
-    { id: 'z-reports',     nl: 'Z-Rapporten',  en: 'Z-Reports',      icon: IC.zreports },
-    { id: 'reports',       nl: 'Rapporten',    en: 'Reports',        icon: IC.reports },
-    { id: 'catalogue',     nl: 'Catalogus',       en: 'Catalogue',      icon: IC.catalogue,  roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'import-export', nl: 'Import / Export', en: 'Import / Export', icon: IC.importExport, roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'registers',     nl: 'Kassabeheer',  en: 'Registers',      icon: IC.registers, roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'customers',      nl: 'Klanten',                en: 'Customers',       icon: IC.customers, roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'stock',          nl: 'Voorraad',               en: 'Stock',           icon: IC.stock,     roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'price-overrides',nl: 'Prijsoverschrijvingen',  en: 'Price Overrides', icon: IC.prices,    roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'discount-rules', nl: 'Kortingsregels',         en: 'Discount Rules',  icon: IC.discounts, roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'compare',        nl: 'Vergelijking',           en: 'Comparison',      icon: IC.compare,   roles: ['super_admin', 'organisation_admin'] },
-    { id: 'ai-insights',    nl: 'AI-inzichten',           en: 'AI Insights',     icon: IC.ai,          roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'store-settings', nl: 'Vestigingsinstellingen', en: 'Store Settings',  icon: IC.storeSettings, roles: ['super_admin', 'organisation_admin', 'store_manager'] },
-    { id: 'organisations', nl: 'Organisaties', en: 'Organisations',  icon: IC.organisations, adminOnly: true },
-    { id: 'users',         nl: 'Gebruikers',   en: 'Users',          icon: IC.users },
-    { id: 'api-keys',      nl: 'API-sleutels', en: 'API Keys',       icon: IC.apikeys },
-    { id: 'audit-log',    nl: 'Auditlogboek', en: 'Audit Log',      icon: IC.audit, adminOnly: true },
-    { id: 'licenses',     nl: 'Licenties',    en: 'Licenses',       icon: IC.license, adminOnly: true },
+  // Every nav item declares the roles allowed to see it. Filter below denies
+  // by default for any role not listed. Cashier is never granted any dashboard
+  // nav — they're redirected to the POS app at the layout root.
+  const SA = 'super_admin', OA = 'organisation_admin', SM = 'store_manager', AU = 'auditor'
+  const nav: { id: Screen; nl: string; en: string; icon: React.ReactNode; roles: string[] }[] = [
+    { id: 'overview',       nl: 'Dashboard',              en: 'Dashboard',       icon: IC.overview,       roles: [SA, OA, SM, AU] },
+    { id: 'z-reports',      nl: 'Z-Rapporten',            en: 'Z-Reports',       icon: IC.zreports,       roles: [SA, OA, SM, AU] },
+    { id: 'reports',        nl: 'Rapporten',              en: 'Reports',         icon: IC.reports,        roles: [SA, OA, SM, AU] },
+    { id: 'catalogue',      nl: 'Catalogus',              en: 'Catalogue',       icon: IC.catalogue,      roles: [SA, OA, SM] },
+    // Bulk import/export is HQ-level — Store Manager edits individual products,
+    // not the whole catalogue (matches the backend `products.import` permission).
+    { id: 'import-export',  nl: 'Import / Export',        en: 'Import / Export', icon: IC.importExport,   roles: [SA, OA] },
+    { id: 'registers',      nl: 'Kassabeheer',            en: 'Registers',       icon: IC.registers,      roles: [SA, OA, SM] },
+    { id: 'customers',      nl: 'Klanten',                en: 'Customers',       icon: IC.customers,      roles: [SA, OA, SM] },
+    { id: 'stock',          nl: 'Voorraad',               en: 'Stock',           icon: IC.stock,          roles: [SA, OA, SM] },
+    // Per-store pricing is HQ-managed.
+    { id: 'price-overrides',nl: 'Prijsoverschrijvingen',  en: 'Price Overrides', icon: IC.prices,         roles: [SA, OA] },
+    { id: 'discount-rules', nl: 'Kortingsregels',         en: 'Discount Rules',  icon: IC.discounts,      roles: [SA, OA, SM] },
+    { id: 'compare',        nl: 'Vergelijking',           en: 'Comparison',      icon: IC.compare,        roles: [SA, OA] },
+    { id: 'ai-insights',    nl: 'AI-inzichten',           en: 'AI Insights',     icon: IC.ai,             roles: [SA, OA, SM] },
+    { id: 'store-settings', nl: 'Vestigingsinstellingen', en: 'Store Settings',  icon: IC.storeSettings,  roles: [SA, OA, SM] },
+    { id: 'organisations',  nl: 'Organisaties',           en: 'Organisations',   icon: IC.organisations,  roles: [SA] },
+    { id: 'users',          nl: 'Gebruikers',             en: 'Users',           icon: IC.users,          roles: [SA, OA, SM] },
+    // API integration keys are sensitive — HQ only (matches backend gate).
+    { id: 'api-keys',       nl: 'API-sleutels',           en: 'API Keys',        icon: IC.apikeys,        roles: [SA, OA] },
+    { id: 'audit-log',      nl: 'Auditlogboek',           en: 'Audit Log',       icon: IC.audit,          roles: [SA, OA, AU] },
+    { id: 'licenses',       nl: 'Licenties',              en: 'Licenses',        icon: IC.license,        roles: [SA] },
   ]
 
   const initials = (user?.name ?? 'SA').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
@@ -227,11 +257,7 @@ export default function DashboardLayout() {
             {isNl ? 'NAVIGATIE' : 'MAIN MENU'}
           </p>
 
-          {nav.filter(item => {
-            if (item.adminOnly && !isSuperAdmin()) return false
-            if (item.roles && !item.roles.includes(user?.role ?? '')) return false
-            return true
-          }).map(item => {
+          {nav.filter(item => item.roles.includes(user?.role ?? '')).map(item => {
             const active = screen === item.id
             return (
               <button
