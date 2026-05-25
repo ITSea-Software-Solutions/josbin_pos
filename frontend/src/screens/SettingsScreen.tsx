@@ -4,6 +4,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { listPrinters, openCashDrawer, detectPlatform } from '@/lib/hardware'
 import type { ProductDisplay } from '@/store/settingsStore'
 import type { PrinterConfig } from '@/lib/hardware'
+import { SystemActions } from '@/components/settings/SystemActions'
 
 const DATE_FORMATS = ['DD-MM-YYYY', 'MM-DD-YYYY', 'YYYY-MM-DD', 'D MMMM YYYY', 'D MMM YYYY', 'DD/MM/YY']
 
@@ -340,6 +341,9 @@ export default function SettingsScreen() {
               : t('settings.printer.helpAndroid')}
           </div>
         </div>
+
+        {/* System actions (Manager+ on Electron only — hidden otherwise) */}
+        <SystemActions />
 
       </div>
     </div>

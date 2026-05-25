@@ -35,4 +35,8 @@ contextBridge.exposeInMainWorld('josbin_pos', {
   getVersion: () => ipcRenderer.invoke('app:version'),
   platform: process.platform,
   isPackaged: !process.env.ELECTRON_IS_DEV,
+
+  // ── App lifecycle (renderer guards with role + safety checks) ────────────────
+  quit:    () => ipcRenderer.invoke('app:quit'),
+  restart: () => ipcRenderer.invoke('app:restart'),
 })

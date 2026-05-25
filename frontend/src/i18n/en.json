@@ -228,6 +228,19 @@
       "drawerError": "Error — check connection",
       "helpElectron": "Network (TCP): connect the printer to the LAN and enter its IP. Recommended for EPSON TM-T20 with Ethernet.\nUSB: choose the printer as shown in Windows Devices.",
       "helpAndroid": "Network (TCP): enter the printer IP address. Recommended.\nUSB: requires the @anuradev/capacitor-printer plugin (see README)."
+    },
+    "system": {
+      "title": "System",
+      "subtitle": "Josbin POS · v{{version}}",
+      "restart": "Restart app",
+      "quit": "Close app",
+      "confirmRestartTitle": "Restart Josbin POS?",
+      "confirmRestartBody": "The app will close and reopen. Your login session is preserved.",
+      "confirmQuitTitle": "Close Josbin POS?",
+      "confirmQuitBody": "The app will exit completely. To reopen, launch it from your desktop or Start menu.",
+      "blockCart": "Cart has {{count}} item(s). Complete or hold the sale before closing.",
+      "blockSync": "{{count}} day(s) of Z-Reports still pending sync to headquarters. Submit them first to avoid data loss.",
+      "warnRegisterOpen": "Register session is still open. Closing now is OK but you should close the register at end of shift."
     }
   },
   "auth": {

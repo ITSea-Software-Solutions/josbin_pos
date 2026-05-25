@@ -21,5 +21,8 @@ interface Window {
     getVersion: () => Promise<string>
     platform: string
     isPackaged: boolean
+    // App lifecycle — renderer guards with role + safety checks before calling
+    quit:    () => Promise<void>
+    restart: () => Promise<void>
   }
 }

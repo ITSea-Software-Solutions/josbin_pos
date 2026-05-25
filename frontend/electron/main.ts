@@ -245,3 +245,17 @@ ipcMain.handle('dialog:saveFile', async (_event, options: Electron.SaveDialogOpt
 // ─── IPC: App version ──────────────────────────────────────────────────────────
 
 ipcMain.handle('app:version', () => app.getVersion())
+
+// ─── IPC: App quit + restart ───────────────────────────────────────────────────
+// Triggered from Settings → System on the POS UI. Renderer guards with role +
+// safety checks (cart empty, no pending sync) before calling these. The main
+// process just executes the action.
+
+ipcMain.handle('app:quit', () => {
+  app.quit()
+})
+
+ipcMain.handle('app:restart', () => {
+  app.relaunch()
+  app.exit(0) // exit immediately so relaunch can start a fresh instance
+})
