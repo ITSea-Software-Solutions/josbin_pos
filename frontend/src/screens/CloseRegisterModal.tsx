@@ -220,23 +220,35 @@ export default function CloseRegisterModal({ onClose }: Props) {
                 </div>
               )}
 
-              <div style={{ marginTop: 14 }}>
-                <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 6 }}>
-                  {isNl ? 'Opmerking (optioneel)' : 'Note (optional)'}
-                </label>
-                <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
-                  placeholder={isNl ? 'Reden voor verschil…' : 'Reason for discrepancy…'}
-                  style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', padding: '8px 12px', fontSize: 13, resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }} />
-              </div>
+              {(() => {
+                const hasDiscrepancy = !!discrepancy && parseFloat(discrepancy) !== 0
+                const noteMissing    = hasDiscrepancy && !note.trim()
+                return (
+                  <>
+                    <div style={{ marginTop: 14 }}>
+                      <label style={{ fontSize: 12, fontWeight: 700, color: noteMissing ? '#dc2626' : '#374151', display: 'block', marginBottom: 6 }}>
+                        {isNl
+                          ? (hasDiscrepancy ? 'Opmerking (verplicht bij verschil)' : 'Opmerking (optioneel)')
+                          : (hasDiscrepancy ? 'Note (required when there is a discrepancy)' : 'Note (optional)')}
+                      </label>
+                      <textarea value={note} onChange={e => setNote(e.target.value)} rows={2}
+                        placeholder={isNl ? 'Reden voor verschil…' : 'Reason for discrepancy…'}
+                        style={{ width: '100%', borderRadius: 10, border: `1.5px solid ${noteMissing ? '#fca5a5' : '#e5e7eb'}`, padding: '8px 12px', fontSize: 13, resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }} />
+                    </div>
 
-              <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                <button onClick={() => setStep('report')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #e0e0ed', background: '#f5f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
-                  {isNl ? 'Terug' : 'Back'}
-                </button>
-                <button onClick={() => setStep('confirm')} style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 14px rgba(124,58,237,.35)' }}>
-                  {isNl ? 'Controleer en sluit' : 'Review and close'} →
-                </button>
-              </div>
+                    <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+                      <button onClick={() => setStep('report')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #e0e0ed', background: '#f5f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                        {isNl ? 'Terug' : 'Back'}
+                      </button>
+                      <button onClick={() => setStep('confirm')} disabled={noteMissing}
+                        title={noteMissing ? (isNl ? 'Vul een reden in voor het verschil' : 'Please enter a reason for the discrepancy') : undefined}
+                        style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: noteMissing ? '#cbd5e1' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: noteMissing ? 'not-allowed' : 'pointer', boxShadow: noteMissing ? 'none' : '0 4px 14px rgba(124,58,237,.35)' }}>
+                        {isNl ? 'Controleer en sluit' : 'Review and close'} →
+                      </button>
+                    </div>
+                  </>
+                )
+              })()}
             </>
           )}
 

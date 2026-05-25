@@ -16,6 +16,7 @@ After you log in and pick your store, you land on the **Open Register** screen.
 **Steps:**
 
 1. **Pick the register** you'll be using (e.g. *Kassa 1*, *Kassa 2*). The list shows all registers configured for your store — tap the one you want.
+   - If your store has only **one** register, this step is skipped and you go straight to the opening float.
    - If a register already has an open session (another cashier didn't close), opening will fail with an error. Ask them to close first, or have a manager close it on their behalf.
 2. **Enter the opening float** — the cash already in the drawer when you start (e.g. `200.00`).
    - This is the "starting bank" the manager left in the drawer overnight or that you brought from petty cash.
@@ -73,10 +74,10 @@ Open the drawer and count every note and coin physically.
 
 1. Enter the **actual cash counted** in the input field.
 2. If the number differs from the expected cash, the system shows the **discrepancy** in red below (e.g. *"SRD 5.00 tekort"* = short, *"SRD 5.00 overschot"* = surplus).
-3. If there is a discrepancy, type a short reason in the notes field — for example *"telfout"* (counting error) or *"klant kreeg te veel wisselgeld"* (customer was given too much change). **The note is optional in the system** but your manager will almost always want one when reconciling, so always add a quick explanation if the number doesn't match.
-4. Tap **Close register** to continue.
+3. **If there is a discrepancy, you must type a reason in the notes field** — for example *"telfout"* (counting error) or *"klant kreeg te veel wisselgeld"* (customer was given too much change). The **Review and close** button stays disabled until you fill it in. (If the count matches exactly, the note is optional.)
+4. Tap **Review and close** to continue.
 
-> **The system never blocks you for a discrepancy.** It records the difference (and your note) for the manager and the audit log. Small differences happen and are normal.
+> **The system never blocks you for the size of the discrepancy.** It records the difference (and your note) for the manager and the audit log. Small differences happen and are normal — just say why.
 
 ### Step 3 — Confirm close
 

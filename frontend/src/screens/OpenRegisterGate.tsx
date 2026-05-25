@@ -71,6 +71,11 @@ export default function OpenRegisterGate() {
         setSession(existing)
       } else {
         setRegisters(regs)
+        // If only one register is configured, skip the pick step.
+        if (regs.length === 1) {
+          setSelected(regs[0])
+          setStep('float')
+        }
       }
     }).catch(() => setError(isNl ? 'Kon kassa\'s niet laden' : 'Could not load registers'))
       .finally(() => setLoading(false))
