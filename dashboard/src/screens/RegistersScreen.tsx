@@ -272,6 +272,14 @@ export default function RegistersScreen() {
   const [activeTab,        setActiveTab]        = useState<'sessions' | 'manage'>('sessions')
   const [selectedOrgId,   setSelectedOrgId]   = useState(isSuperAdmin ? '' : (currentUser?.organisation_id ?? ''))
   const [selectedStoreId, setSelectedStoreId] = useState('')
+
+  // If the user object arrives after first render (Zustand hydration race),
+  // sync selectedOrgId once. Super Admin keeps the empty string until they pick.
+  useEffect(() => {
+    if (!isSuperAdmin && currentUser?.organisation_id && !selectedOrgId) {
+      setSelectedOrgId(currentUser.organisation_id)
+    }
+  }, [isSuperAdmin, currentUser, selectedOrgId])
   const [selectedDate,    setSelectedDate]    = useState(new Date().toISOString().split('T')[0])
   const [approveSession,  setApproveSession]  = useState<RegisterSession | null>(null)
 
