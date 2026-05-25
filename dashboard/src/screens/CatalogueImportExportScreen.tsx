@@ -106,6 +106,15 @@ export default function CatalogueImportExportScreen() {
     setFile(f)
     setResult(null)
     setImportError('')
+
+    // XLSX / XLS are binary — can't preview client-side without an extra parser.
+    // Server validates and returns full result on upload, so just clear preview.
+    const ext = f.name.toLowerCase().split('.').pop() ?? ''
+    if (ext === 'xlsx' || ext === 'xls') {
+      setPreview(null)
+      return
+    }
+
     const reader = new FileReader()
     reader.onload = e => {
       const text = e.target?.result as string
@@ -163,8 +172,8 @@ export default function CatalogueImportExportScreen() {
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
           {isNl
-            ? 'Importeer producten vanuit een CSV-bestand of exporteer uw huidige catalogus.'
-            : 'Import products from a CSV file or export your current catalogue.'}
+            ? 'Importeer producten vanuit een CSV- of Excel-bestand (.csv, .xlsx, .xls) of exporteer uw huidige catalogus.'
+            : 'Import products from a CSV or Excel file (.csv, .xlsx, .xls) or export your current catalogue.'}
         </p>
       </div>
 
@@ -281,7 +290,7 @@ export default function CatalogueImportExportScreen() {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,.xlsx,.xls,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
           style={{ display: 'none' }}
           onChange={e => { const f = e.target.files?.[0]; if (f) loadFile(f); e.target.value = '' }}
         />
@@ -297,10 +306,10 @@ export default function CatalogueImportExportScreen() {
           <div>
             <p style={{ fontSize: 40, marginBottom: 10 }}>📂</p>
             <p style={{ fontWeight: 700, fontSize: 15, color: '#374151', marginBottom: 4 }}>
-              {isNl ? 'Sleep een CSV-bestand hiernaartoe' : 'Drag a CSV file here'}
+              {isNl ? 'Sleep een CSV of Excel-bestand hiernaartoe' : 'Drag a CSV or Excel file here'}
             </p>
             <p style={{ fontSize: 13, color: '#9090a0' }}>
-              {isNl ? 'of klik om een bestand te kiezen' : 'or click to choose a file'}
+              {isNl ? 'of klik om een bestand te kiezen — .csv, .xlsx of .xls' : 'or click to choose a file — .csv, .xlsx or .xls'}
             </p>
           </div>
         )}

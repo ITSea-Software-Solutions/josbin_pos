@@ -215,16 +215,18 @@ One register per physical cash drawer. Naming convention: `Kassa 1`, `Kassa 2`, 
 
 ## Part C — Product catalogue
 
-### C1. CSV import (recommended for >20 products)
+### C1. CSV / Excel import (recommended for >20 products)
 
-Dashboard → **Catalogue** → **Import CSV**.
+Dashboard → **Catalogue** → **Import / Export**. Accepts **.csv, .xlsx, and .xls** files.
 
 Required columns:
 ```csv
-name_nl,name_en,barcode,price_srd,btw_rate,btw_exempt,category,stock_qty,low_stock_threshold
-Brood wit,White bread,8710398501234,3.50,10.00,true,Bakkerij,40,5
-Cola 1.5L,Coca-Cola 1.5L,5449000000996,15.00,10.00,false,Frisdrank,120,20
+name_nl,name_en,barcode,price,btw_rate,btw_exempt,category_name_nl,stock_qty
+Brood wit,White bread,8710398501234,3.50,10.00,1,Bakkerij,40
+Cola 1.5L,Coca-Cola 1.5L,5449000000996,15.00,10.00,0,Dranken,120
 ```
+
+`btw_exempt` is `1` (exempt) or `0`. Categories are looked up by `category_name_nl` and created if missing. Existing products are matched by `barcode` and updated; rows with a new barcode (or no barcode) are inserted. Download a starter template from the same screen: **Download CSV template** or **Download Excel template**.
 
 BTW-exempt items (basic foodstuffs, medicine) get `btw_exempt=true` — they skip BTW entirely on the receipt.
 

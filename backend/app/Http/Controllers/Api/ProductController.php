@@ -211,19 +211,33 @@ class ProductController extends Controller
      * GET /api/products/import/template
      * Download a blank CSV template with headers + 3 example rows.
      */
-    public function importTemplate(): \Symfony\Component\HttpFoundation\StreamedResponse
+    public function importTemplate(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        return response()->streamDownload(function () {
-            $out = fopen('php://output', 'w');
-            fwrite($out, "\xEF\xBB\xBF");
-            fputcsv($out, [
-                'name_nl', 'name_en', 'barcode', 'price', 'btw_rate',
-                'btw_exempt', 'category_name_nl', 'stock_qty',
+        $headers = ['name_nl', 'name_en', 'barcode', 'price', 'btw_rate', 'btw_exempt', 'category_name_nl', 'stock_qty'];
+        $rows = [
+            ['Volle Melk 1L', 'Full Milk 1L',  '8712345678901', '4.99', '0',  '1', 'Zuivel',     '50'],
+            ['Brood Wit',     'White Bread',   '8712345678902', '3.50', '10', '0', 'Bakkerij',   '30'],
+            ['Coca-Cola 2L',  'Coca-Cola 2L',  '5449000054227', '6.75', '10', '0', 'Dranken',    '100'],
+        ];
+
+        // ?format=xlsx returns a real Excel file; default is CSV
+        if (strtolower($request->query('format', 'csv')) === 'xlsx') {
+            return response()->streamDownload(function () use ($headers, $rows) {
+                $s = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+                $s->getActiveSheet()->fromArray(array_merge([$headers], $rows));
+                $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($s);
+                $writer->save('php://output');
+            }, 'josbin-products-template.xlsx', [
+                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="josbin-products-template.xlsx"',
             ]);
-            // Example rows so new customers know the expected format
-            fputcsv($out, ['Volle Melk 1L', 'Full Milk 1L',  '8712345678901', '4.99', '0',  '1', 'Zuivel',     '50']);
-            fputcsv($out, ['Brood Wit',     'White Bread',   '8712345678902', '3.50', '10', '0', 'Bakkerij',   '30']);
-            fputcsv($out, ['Coca-Cola 2L',  'Coca-Cola 2L',  '5449000054227', '6.75', '10', '0', 'Dranken',    '100']);
+        }
+
+        return response()->streamDownload(function () use ($headers, $rows) {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM so Excel opens UTF-8 correctly
+            fputcsv($out, $headers);
+            foreach ($rows as $r) fputcsv($out, $r);
         }, 'josbin-products-template.csv', [
             'Content-Type'        => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="josbin-products-template.csv"',
@@ -239,13 +253,19 @@ class ProductController extends Controller
         $this->authorize('import', Product::class);
 
         $request->validate([
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:10240'],
+            'file' => ['required', 'file', 'mimes:csv,txt,xlsx,xls', 'max:10240'],
         ]);
 
         $orgId = $request->user()->organisation_id;
-        $path  = $request->file('file')->getRealPath();
-        $rows  = array_map('str_getcsv', file($path));
-        $headers = array_map('trim', array_shift($rows));
+        $file  = $request->file('file');
+        $path  = $file->getRealPath();
+        $ext   = strtolower($file->getClientOriginalExtension() ?: $file->extension());
+
+        try {
+            [$headers, $rows] = $this->readImportFile($path, $ext);
+        } catch (\Throwable $e) {
+            return response()->json(['message' => 'Could not read file: ' . $e->getMessage()], 422);
+        }
 
         $created = 0;
         $updated = 0;
@@ -326,6 +346,33 @@ class ProductController extends Controller
             'skipped' => $skipped,
             'errors'  => $errors,
         ]);
+    }
+
+    /**
+     * Read an import file (CSV / XLSX / XLS) into [headers, rows].
+     * Headers are trimmed; rows are plain numeric-indexed arrays so the
+     * same downstream loop works for any format.
+     */
+    private function readImportFile(string $path, string $ext): array
+    {
+        if (in_array($ext, ['xlsx', 'xls'], true)) {
+            // PhpSpreadsheet is already in vendor (via maatwebsite/excel).
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($path);
+            $reader->setReadDataOnly(true);
+            $sheet  = $reader->load($path)->getActiveSheet();
+            // toArray(null, true, true, false) → numeric-indexed rows, formatted values, dates calculated
+            $rows   = $sheet->toArray(null, true, true, false);
+            if (empty($rows)) {
+                return [[], []];
+            }
+            $headers = array_map(fn ($v) => trim((string) $v), array_shift($rows));
+            return [$headers, $rows];
+        }
+
+        // CSV / TXT
+        $rows    = array_map('str_getcsv', file($path));
+        $headers = array_map('trim', array_shift($rows));
+        return [$headers, $rows];
     }
 
     /**
