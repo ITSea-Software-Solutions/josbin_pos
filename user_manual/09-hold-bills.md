@@ -1,4 +1,4 @@
-# Chapter 8 — Hold Bills
+# Chapter 9 — Hold Bills
 
 The Hold Bill feature lets you save the current cart and start a new sale, then come back to the saved cart later. This is useful when:
 

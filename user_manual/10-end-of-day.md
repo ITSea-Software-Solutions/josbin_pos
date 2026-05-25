@@ -1,4 +1,4 @@
-# Chapter 9 — End of Day: Z-Report & Cash Reconciliation
+# Chapter 10 — End of Day: Z-Report & Cash Reconciliation
 
 **Who does this:** Store manager (or authorised supervisor)
 **When:** At the end of every trading day, after the last sale
@@ -137,7 +137,7 @@ The system retries automatically. When internet returns, it will sync.
 
 The X-Report gives you a snapshot of sales so far **without closing the day**.
 
-1. In the top bar, go to **Reports** (see [Chapter 10](10-reports.md)).
+1. In the top bar, go to **Reports** (see [Chapter 11](11-reports.md)).
 2. Click the **X-Report** tab.
 3. Current totals appear with a yellow banner confirming this is not a close.
 

@@ -1,4 +1,4 @@
-# Chapter 6 — Customers
+# Chapter 7 — Customers
 
 Attaching a customer to a sale is optional but recommended. It enables email receipts, tracks customer spending, and is required for loyalty programs.
 

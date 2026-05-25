@@ -1,4 +1,4 @@
-# Chapter 10 — Reports
+# Chapter 11 — Reports
 
 **Who uses this:** Store manager, auditor
 **Where:** Top bar → Reports (Dutch: *"Rapporten"*)

@@ -1,4 +1,4 @@
-# Chapter 7 — Discounts
+# Chapter 8 — Discounts
 
 Josbin POS supports discounts at two levels: on individual items and on the entire sale. Both types can be a fixed SRD amount or a percentage.
 

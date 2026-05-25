@@ -1,4 +1,4 @@
-# Chapter 11 — Barcode & Label Printing
+# Chapter 12 — Barcode & Label Printing
 
 **Who uses this:** Manager, stock/warehouse staff
 **Where:** Top bar → Labels (Dutch: *"Etiketten"*)

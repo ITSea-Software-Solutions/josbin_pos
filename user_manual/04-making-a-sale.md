@@ -1,4 +1,4 @@
-# Chapter 3 — Making a Sale
+# Chapter 4 — Making a Sale
 
 This chapter covers everything that happens before payment — adding products, changing quantities, searching, and using a barcode scanner.
 
@@ -93,7 +93,7 @@ TOTAL                                           SRD 31.55
 ```
 
 - **Subtotal** — the sum of all line totals before any discount
-- **Discount** — any discount applied (see [Chapter 7 — Discounts](07-discounts.md))
+- **Discount** — any discount applied (see [Chapter 8 — Discounts](08-discounts.md))
 - **BTW** — the tax amount (already included in the total — shown for transparency)
 - **Total** — the amount the customer pays
 
@@ -120,7 +120,7 @@ If a barcode or search returns no result:
 
 You can still sell an unlisted product by:
 1. Adding any product to the cart.
-2. Editing the name and price on the line item (see [Chapter 7 — Discounts](07-discounts.md) for line item editing).
+2. Editing the name and price on the line item (see [Chapter 8 — Discounts](08-discounts.md) for line item editing).
 
 ---
 

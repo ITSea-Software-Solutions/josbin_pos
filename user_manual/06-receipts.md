@@ -1,4 +1,4 @@
-# Chapter 5 — Receipts: Print, PDF, and Email
+# Chapter 6 — Receipts: Print, PDF, and Email
 
 After every completed sale, the receipt screen appears automatically. This chapter explains all three receipt options.
 
@@ -24,7 +24,7 @@ After payment is accepted, a receipt pop-up appears with these options:
 Thermal printing sends the receipt directly to your receipt printer (e.g. EPSON TM-T20).
 
 **Requirements:**
-- A receipt printer must be connected and configured in Settings (see [Chapter 12](12-settings.md)).
+- A receipt printer must be connected and configured in Settings (see [Chapter 13](13-settings.md)).
 - For network printers: the printer must be on the same local network.
 - For USB printers (Windows): the printer must be installed in Windows and selected in Settings.
 

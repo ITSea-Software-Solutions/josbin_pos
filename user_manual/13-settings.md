@@ -1,4 +1,4 @@
-# Chapter 12 — Settings
+# Chapter 13 — Settings
 
 **Who uses this:** Store manager
 **Where:** Top bar → Settings (Dutch: *"Instellingen"*)

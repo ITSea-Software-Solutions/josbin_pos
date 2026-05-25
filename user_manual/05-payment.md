@@ -1,4 +1,4 @@
-# Chapter 4 — Taking Payment
+# Chapter 5 — Taking Payment
 
 Once all products are in the cart, this chapter shows you how to complete the sale.
 
@@ -36,7 +36,7 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 3. Once the cash amount entered is **equal to or greater than the total**, the **Complete** button (Dutch: *"Voltooien"*) becomes active.
 4. Click **Complete**.
 5. The sale is recorded. The cash drawer opens automatically (if a printer is configured).
-6. The receipt screen appears — see [Chapter 5 — Receipts](05-receipts.md).
+6. The receipt screen appears — see [Chapter 6 — Receipts](06-receipts.md).
 
 > **Tip:** If the customer pays the exact amount, click the first quick-amount button which shows the exact total. This saves typing.
 
@@ -76,7 +76,7 @@ Use this when a customer pays part of the bill by card and the rest in cash.
 ## 4.5 Cash drawer
 
 The cash drawer opens **automatically** after every cash or mixed payment, provided:
-- A printer is configured in Settings (see [Chapter 12](12-settings.md))
+- A printer is configured in Settings (see [Chapter 13](13-settings.md))
 - The cash drawer is connected to the receipt printer via the RJ11 port
 
 If the drawer does not open:
@@ -118,5 +118,5 @@ If the **"Server error"** message appears after clicking Complete:
 Once payment is accepted:
 1. The cart is cleared automatically.
 2. The cash drawer opens (for cash/mixed payments).
-3. The **Receipt screen** opens — see [Chapter 5 — Receipts](05-receipts.md).
+3. The **Receipt screen** opens — see [Chapter 6 — Receipts](06-receipts.md).
 4. Today's totals in the top bar update immediately.

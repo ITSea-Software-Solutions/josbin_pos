@@ -31,7 +31,7 @@ The login screen asks for your **email address** and **password**.
 - If the login fails, a red error message appears. Check that Caps Lock is not on and try again.
 - After **5 failed attempts**, your account is locked for 15 minutes. Contact your manager if this happens.
 
-> **Tip — Touchscreen terminals:** Tap the field you want to type in. The on-screen keyboard can be enabled from the toolbar if you do not have a physical keyboard. See [Chapter 12 — Settings](12-settings.md) for how to configure this.
+> **Tip — Touchscreen terminals:** Tap the field you want to type in. The on-screen keyboard can be enabled from the toolbar if you do not have a physical keyboard. See [Chapter 13 — Settings](13-settings.md) for how to configure this.
 
 ---
 

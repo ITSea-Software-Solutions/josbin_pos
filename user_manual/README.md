@@ -16,42 +16,45 @@ Each chapter covers one part of the system. Read them in order if you are new, o
 |---|---------|-------------|
 | 1 | [Getting Started — Login & First Steps](01-getting-started.md) | Everyone |
 | 2 | [Daily Setup — Exchange Rate](02-daily-setup.md) | Manager |
-| 3 | [Making a Sale](03-making-a-sale.md) | Cashier, Manager |
-| 4 | [Taking Payment](04-payment.md) | Cashier, Manager |
-| 5 | [Receipts — Print, PDF, Email](05-receipts.md) | Cashier, Manager |
-| 6 | [Customers](06-customers.md) | Cashier, Manager |
-| 7 | [Discounts](07-discounts.md) | Cashier, Manager |
-| 8 | [Hold Bills](08-hold-bills.md) | Cashier, Manager |
-| 9 | [End of Day — Z-Report & Cash Reconciliation](09-end-of-day.md) | Manager |
-| 10 | [Reports](10-reports.md) | Manager |
-| 11 | [Barcode & Label Printing](11-barcode-labels.md) | Manager, Stock staff |
-| 12 | [Settings](12-settings.md) | Manager |
+| 3 | [Your Register — Open, Close, Reopen](03-register.md) | Cashier, Manager |
+| 4 | [Making a Sale](04-making-a-sale.md) | Cashier, Manager |
+| 5 | [Taking Payment](05-payment.md) | Cashier, Manager |
+| 6 | [Receipts — Print, PDF, Email](06-receipts.md) | Cashier, Manager |
+| 7 | [Customers](07-customers.md) | Cashier, Manager |
+| 8 | [Discounts](08-discounts.md) | Cashier, Manager |
+| 9 | [Hold Bills](09-hold-bills.md) | Cashier, Manager |
+| 10 | [End of Day — Z-Report & Cash Reconciliation](10-end-of-day.md) | Manager |
+| 11 | [Reports](11-reports.md) | Manager |
+| 12 | [Barcode & Label Printing](12-barcode-labels.md) | Manager, Stock staff |
+| 13 | [Settings](13-settings.md) | Manager |
 
 ---
 
 ## Quick reference — daily workflow
 
 ```
-START OF DAY
+START OF SHIFT (cashier)
   1. Open Josbin POS application
   2. Log in with your username and password
   3. Select your store
-  4. Manager: set today's exchange rate (Exchange Rate screen)
+  4. Pick your register and enter the opening float
 
-DURING THE DAY
-  5. Scan or tap products to add to cart
-  6. Add customer if needed
-  7. Apply discounts if needed
-  8. Accept payment (cash / card / mixed)
-  9. Print or email receipt
-  10. Cash drawer opens automatically
+START OF DAY (manager)
+  5. Set today's exchange rate (Exchange Rate screen)
 
-END OF DAY
-  11. Manager: go to End of Day screen
-  12. Count the cash in the drawer
-  13. Enter the counted amount
-  14. Close the Z-Report
-  15. System syncs sales to headquarters
+DURING THE SHIFT
+  6. Scan or tap products to add to cart
+  7. Add customer if needed
+  8. Apply discounts if needed
+  9. Accept payment (cash / card / mixed)
+  10. Print or email receipt — cash drawer opens automatically
+
+END OF SHIFT (cashier)
+  11. Top bar → End Shift → count the cash → close register
+
+END OF DAY (manager)
+  12. Once all cashiers have closed: End of Day screen → Z-Report
+  13. Submit to Headquarters
 ```
 
 ---
