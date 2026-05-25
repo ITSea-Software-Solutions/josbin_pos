@@ -77,7 +77,7 @@
 | Void a completed sale (POS UI) | ✅ | `SalesHistoryScreen.tsx` — search, paginate, void modal with reason |
 | Transaction history screen in POS | ✅ | `SalesHistoryScreen.tsx` — date filter, search, pagination |
 | Refund flow (POS UI) | ⚠️ | Void exists; partial-amount refund screen deferred Phase 4 |
-| Void backend endpoint | ✅ | `POST /sales/{sale}/void` — dual approval for govt |
+| Void backend endpoint | ⚠️ | `POST /sales/{sale}/void` — schema (`void_approved_by`) and `sales.void.approve` permission both exist; SRD-threshold trigger for govt dual-approval is still being built — see TODOs in `SaleController::void` |
 | Refund backend endpoint | ✅ | `POST /sales/{sale}/refund` |
 | Stock restored on void | ✅ | `RecordStockMovements::dispatch` on void |
 
@@ -259,7 +259,7 @@
 | Field-level encryption (customer PII) | ✅ | |
 | AES-256 at rest | ✅ | Docker + DB config |
 | Rate limiting + brute force protection | ✅ | `EnsureLicenseValid`, login throttle |
-| Session timeout middleware | ✅ | `SessionTimeout` middleware |
+| Session timeout middleware | ⚠️ | `SessionTimeout` middleware enforces the 12h Sanctum token expiry, but the 15-min POS / 60-min Dashboard **idle** policy (auto-logout while the user is inactive) is not yet implemented — needs a client-side idle timer + `last_activity_at` column |
 
 ---
 

@@ -186,7 +186,7 @@ Dashboard → **Organisations** → **Create**
 
 If the client is a **government department**, the organisation flag `is_government=true` triggers:
 - Mandatory 2FA for all users
-- Dual approval for refunds above threshold
+- Dual approval for refunds above threshold *(schema + permission landed; SRD-threshold enforcement still in progress)*
 - Isolated database (separate from commercial clients)
 - Geo-alert on logins from outside Suriname
 

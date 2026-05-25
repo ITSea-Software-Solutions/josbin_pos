@@ -24,13 +24,14 @@ export default defineConfig({
   // back to false (or removed) for strict link checking.
   ignoreDeadLinks: true,
 
-  // /docs, /user_manual, and /dashboard_manual carry GitHub-style README.md
-  // as their index. Map those so folder URLs resolve to the README contents
-  // without renaming files.
+  // /docs, /user_manual, /dashboard_manual, /trainer_cheatsheets carry
+  // GitHub-style README.md as their index. Map those so folder URLs resolve
+  // to the README contents without renaming files.
   rewrites: {
-    'docs/README.md':              'docs/index.md',
-    'user_manual/README.md':       'user_manual/index.md',
-    'dashboard_manual/README.md':  'dashboard_manual/index.md',
+    'docs/README.md':                 'docs/index.md',
+    'user_manual/README.md':          'user_manual/index.md',
+    'dashboard_manual/README.md':     'dashboard_manual/index.md',
+    'trainer_cheatsheets/README.md':  'trainer_cheatsheets/index.md',
   },
 
   title: 'Josbin POS',
@@ -64,6 +65,7 @@ export default defineConfig({
       { text: 'Developer Docs',  link: '/docs/' },
       { text: 'User Manual',     link: '/user_manual/' },
       { text: 'Dashboard Manual',link: '/dashboard_manual/' },
+      { text: 'Trainer Sheets',  link: '/trainer_cheatsheets/' },
     ],
 
     sidebar: {
@@ -130,7 +132,24 @@ export default defineConfig({
           items: [
             { text: 'Overview',                      link: '/dashboard_manual/' },
             { text: '1. Roles & permissions',        link: '/dashboard_manual/01-roles-and-permissions' },
-            // 2-18 added as chapters land
+            { text: '2. Organisation & store setup', link: '/dashboard_manual/02-organisation-and-store-setup' },
+            { text: '3. Users — create/edit/deactivate', link: '/dashboard_manual/03-users' },
+            { text: '4. Catalogue & categories',     link: '/dashboard_manual/04-catalogue-and-categories' },
+            // 5-18 added as chapters land
+          ],
+        },
+      ],
+
+      // ── Trainer Cheat Sheets (one-page printable references) ──────────────
+      '/trainer_cheatsheets/': [
+        {
+          text: 'Trainer Cheat Sheets',
+          collapsed: false,
+          items: [
+            { text: 'Overview',                      link: '/trainer_cheatsheets/' },
+            { text: '1. Cashier — daily workflow',   link: '/trainer_cheatsheets/01-cashier-daily' },
+            { text: '2. Manager — Z-Report',         link: '/trainer_cheatsheets/02-manager-z-report' },
+            { text: '3. Dashboard overview',         link: '/trainer_cheatsheets/03-dashboard-overview' },
           ],
         },
       ],

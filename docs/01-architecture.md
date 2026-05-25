@@ -83,7 +83,7 @@ The canonical happy path. Other flows are variations.
 4.  Sanctum middleware                          401 if invalid
 5.  EnsureLicenseValid                          403 if expired (72h grace)
 6.  EnsureTwoFactor                             skipped for cashier role
-7.  SessionTimeout                              bump last-activity
+7.  SessionTimeout                              401 if token past 12h expiry (no idle timer yet — see Ch.3)
 8.  SaleController::store                       SaleController.php:36
       ├── validate
       ├── DiscountRuleService::apply

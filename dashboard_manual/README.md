@@ -22,9 +22,9 @@ Each chapter covers one area of the dashboard. Read 1 → 18 if you're new to Jo
 | # | Chapter | Who it's for |
 |---|---------|--------------|
 | 1 | [Roles & permissions — who can do what](01-roles-and-permissions.md) | Everyone setting up users |
-| 2 | Organisation & store setup *(coming soon)* | Super Admin, Org Admin |
-| 3 | Users — create, edit, deactivate *(coming soon)* | Org Admin, Store Manager |
-| 4 | Product catalogue & categories *(coming soon)* | Org Admin, Store Manager |
+| 2 | [Organisation & store setup](02-organisation-and-store-setup.md) | Super Admin, Org Admin |
+| 3 | [Users — create, edit, deactivate](03-users.md) | Org Admin, Store Manager |
+| 4 | [Product catalogue & categories](04-catalogue-and-categories.md) | Org Admin, Store Manager |
 | 5 | Bulk import (CSV / Excel) *(coming soon)* | Org Admin |
 | 6 | Pricing & per-store overrides *(coming soon)* | Org Admin |
 | 7 | Discount rules *(coming soon)* | Org Admin, Store Manager |

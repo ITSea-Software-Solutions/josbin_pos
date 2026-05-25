@@ -34,7 +34,7 @@ These docs are written so you can read 1 → 13 to build a complete mental model
 
 - **Money** is always SRD, always `DECIMAL(12,2)`, always `bcmath` strings in PHP. Never floats. See [05-btw-pipeline.md](05-btw-pipeline.md).
 - **Time** is always AST (`America/Paramaribo`, UTC-3). PostgreSQL `timestamptz`. Frontend renders via the user's date-format preference.
-- **IDs** are UUIDs (v7 for sortable ones). Sanctum tokens are the one exception (integer + suffix).
+- **IDs** are UUIDs (v4 — random, not time-sortable; sort by `created_at` when you need ordering). Sanctum personal access tokens and `audit_logs.id` are the exceptions (bigint).
 - **File paths** in code are written `backend/app/Http/Controllers/Api/SaleController.php:128` so you can click to the exact line in your editor.
 - **External docs** that may rot are linked but the load-bearing facts are repeated inline.
 
