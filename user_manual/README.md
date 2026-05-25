@@ -50,7 +50,7 @@ DURING THE SHIFT
   10. Print or email receipt — cash drawer opens automatically
 
 END OF SHIFT (cashier)
-  11. Top bar → End Shift → count the cash → close register
+  11. Top bar → Close register → count the cash → confirm
 
 END OF DAY (manager)
   12. Once all cashiers have closed: End of Day screen → Z-Report

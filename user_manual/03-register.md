@@ -15,9 +15,8 @@ After you log in and pick your store, you land on the **Open Register** screen.
 
 **Steps:**
 
-1. **Pick the register** you'll be using (e.g. *Kassa 1*, *Kassa 2*). The list shows all registers configured for your store.
-   - If only one register exists, it is selected automatically.
-   - If a register already has an open session (another cashier didn't close), you cannot pick it. Ask them to close first.
+1. **Pick the register** you'll be using (e.g. *Kassa 1*, *Kassa 2*). The list shows all registers configured for your store — tap the one you want.
+   - If a register already has an open session (another cashier didn't close), opening will fail with an error. Ask them to close first, or have a manager close it on their behalf.
 2. **Enter the opening float** — the cash already in the drawer when you start (e.g. `200.00`).
    - This is the "starting bank" the manager left in the drawer overnight or that you brought from petty cash.
    - Use the decimal point — `200.00`, not `200,00`.
@@ -50,7 +49,7 @@ When you've finished selling for the day (or your shift), close the register so 
 
 **Steps:**
 
-1. In the top bar, tap **End Shift** (Dutch: *"Dienst beëindigen"*).
+1. In the top bar, tap the red **Close register** button (Dutch: *"Kassa sluiten"*).
 2. The **Close Register** modal opens. It has 4 steps shown one after the other.
 
 ### Step 1 — Session report
@@ -73,11 +72,11 @@ Tap **Next** to count the cash.
 Open the drawer and count every note and coin physically.
 
 1. Enter the **actual cash counted** in the input field.
-2. If the number differs from the expected cash, the system shows the **discrepancy** in red (e.g. *"SRD -5.00"* means SRD 5 short).
-3. **If there is a discrepancy**, enter a reason in the notes field (e.g. *"telfout"* — counting error, *"klant kreeg te veel wisselgeld"* — customer was given too much change).
-4. Tap **Next** to confirm.
+2. If the number differs from the expected cash, the system shows the **discrepancy** in red below (e.g. *"SRD 5.00 tekort"* = short, *"SRD 5.00 overschot"* = surplus).
+3. If there is a discrepancy, type a short reason in the notes field — for example *"telfout"* (counting error) or *"klant kreeg te veel wisselgeld"* (customer was given too much change). **The note is optional in the system** but your manager will almost always want one when reconciling, so always add a quick explanation if the number doesn't match.
+4. Tap **Close register** to continue.
 
-> **The system never blocks you for a discrepancy.** It records it for the manager and audit log. Small differences happen and are normal.
+> **The system never blocks you for a discrepancy.** It records the difference (and your note) for the manager and the audit log. Small differences happen and are normal.
 
 ### Step 3 — Confirm close
 
@@ -134,7 +133,7 @@ SHIFT                                                  POS screen — sell all d
                                                                     │
                                                                     ▼
 END OF SHIFT
-  Top bar → End Shift → Session report → Count cash → Confirm → Closed ✓
+  Top bar → Close register → Session report → Count cash → Confirm → Closed ✓
                                                                     │
                                                        (Optional)   │
                                                                     ▼
