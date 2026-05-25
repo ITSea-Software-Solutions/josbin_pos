@@ -29,6 +29,16 @@ const ALL_ROLES = [
   { value: 'super_admin',        nl: 'Super Admin',     en: 'Super Admin'     },
 ]
 
+/**
+ * Mirrors backend MANAGEABLE_ROLES in UserController. Each role's list is what
+ * that role can CREATE/EDIT. Keep in sync if backend changes.
+ */
+const MANAGEABLE_ROLES: Record<string, string[]> = {
+  super_admin:        ['organisation_admin', 'store_manager', 'cashier', 'auditor', 'api_integration', 'super_admin'],
+  organisation_admin: ['store_manager', 'cashier', 'auditor', 'api_integration'],
+  store_manager:      ['cashier'],
+}
+
 function generatePassword(): string {
   const upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ'
   const lower = 'abcdefghijkmnpqrstuvwxyz'
@@ -151,8 +161,19 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
   onCreated: (user: User, password: string) => void
 }) {
   const qc = useQueryClient()
+  const currentUser = useDashboardAuthStore((s) => s.user)
+  const isSuperAdmin = currentUser?.role === 'super_admin'
+
+  // Roles the CURRENT user is allowed to create. Backend enforces the same
+  // list (UserController::MANAGEABLE_ROLES) so this is just UI hygiene —
+  // hide what a 422 would reject anyway. Store Manager → only cashier;
+  // Org Admin → store_manager, cashier, auditor, api_integration.
+  const allowedRoles = MANAGEABLE_ROLES[currentUser?.role ?? ''] ?? []
+  const roleOptions = ALL_ROLES.filter(r => allowedRoles.includes(r.value))
+  const defaultRole = roleOptions[0]?.value ?? 'cashier'
+
   const [form, setForm] = useState<CreateUserPayload>({
-    name: '', email: '', password: '', role: 'organisation_admin',
+    name: '', email: '', password: '', role: defaultRole,
     organisation_id: null, locale: 'nl', send_welcome_email: true,
   })
   const [showPassword, setShowPassword] = useState(false)
@@ -160,7 +181,20 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
   const needsOrg = ROLES_NEED_ORG.includes(form.role)
 
   const mutation = useMutation({
-    mutationFn: () => createUser(form),
+    mutationFn: () => {
+      // Non-super-admin actors must NOT send organisation_id — the backend
+      // rejects it as `prohibited` and auto-fills from the actor's own org.
+      // Super Admin must send it (they could be creating users in any org).
+      const payload: CreateUserPayload = isSuperAdmin
+        ? form
+        : { ...form, organisation_id: null as unknown as string | null }
+      // Strip the key entirely if not super admin so the backend sees no value.
+      if (!isSuperAdmin) {
+        const { organisation_id: _drop, ...rest } = payload
+        return createUser(rest as CreateUserPayload)
+      }
+      return createUser(payload)
+    },
     onSuccess: (user) => {
       qc.invalidateQueries({ queryKey: ['users'] })
       onCreated(user, form.password)
@@ -172,7 +206,9 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
   }
 
   const canSubmit = !!form.name && !!form.email && !!form.password &&
-    (!needsOrg || !!form.organisation_id)
+    // Org is required ONLY for Super Admin creating a new user — for other
+    // actors the backend fills it from their own org.
+    (!needsOrg || !isSuperAdmin || !!form.organisation_id)
 
   const chevron = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090a0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
 
@@ -229,7 +265,7 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
               style={{ ...inputSt, appearance: 'none', backgroundImage: chevron, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 36, cursor: 'pointer' }}
               onFocus={focusIn} onBlur={focusOut}
             >
-              {ALL_ROLES.map((r) => <option key={r.value} value={r.value}>{isNl ? r.nl : r.en}</option>)}
+              {roleOptions.map((r) => <option key={r.value} value={r.value}>{isNl ? r.nl : r.en}</option>)}
             </select>
             {/* Role description hint */}
             <p style={{ fontSize: 11.5, color: '#9090a0', marginTop: 5 }}>
@@ -242,8 +278,10 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
             </p>
           </div>
 
-          {/* Organisation (conditional) */}
-          {needsOrg && (
+          {/* Organisation — Super Admin only. For Org Admin / Store Manager
+              the backend auto-attaches the actor's own organisation and rejects
+              the field as `prohibited` if it's sent. */}
+          {needsOrg && isSuperAdmin && (
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Organisatie' : 'Organisation'} *</label>
               <OrgSelect
@@ -252,6 +290,13 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
                 orgs={orgs} isNl={isNl} required
               />
             </div>
+          )}
+          {needsOrg && !isSuperAdmin && (
+            <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>
+              {isNl
+                ? `Deze gebruiker wordt automatisch toegevoegd aan uw organisatie (${currentUser?.organisation_id?.slice(0,8) ?? ''}…).`
+                : `This user will be added to your organisation (${currentUser?.organisation_id?.slice(0,8) ?? ''}…).`}
+            </p>
           )}
 
           {/* Locale */}
@@ -351,6 +396,14 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
   user: User; orgs: Organisation[]; isNl: boolean; onClose: () => void
 }) {
   const qc = useQueryClient()
+  const currentUser = useDashboardAuthStore((s) => s.user)
+
+  // Same role-filtering rule as Create: limit role dropdown to what the
+  // current actor can manage. Keep the user's CURRENT role in the list so
+  // an Org Admin editing their own Org Admin self can still see their role.
+  const allowedRoles = MANAGEABLE_ROLES[currentUser?.role ?? ''] ?? []
+  const roleOptions = ALL_ROLES.filter(r => allowedRoles.includes(r.value) || r.value === user.role)
+
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
@@ -428,7 +481,7 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
               style={{ ...inputSt, appearance: 'none', backgroundImage: chevron, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 36, cursor: 'pointer' }}
               onFocus={focusIn} onBlur={focusOut}
             >
-              {ALL_ROLES.map((r) => <option key={r.value} value={r.value}>{isNl ? r.nl : r.en}</option>)}
+              {roleOptions.map((r) => <option key={r.value} value={r.value}>{isNl ? r.nl : r.en}</option>)}
             </select>
           </div>
 
