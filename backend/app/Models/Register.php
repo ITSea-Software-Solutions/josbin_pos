@@ -31,4 +31,17 @@ class Register extends Model
         return $this->hasOne(RegisterSession::class)
             ->whereIn('status', ['open', 'reopen_requested', 'reopen_approved']);
     }
+
+    /**
+     * Sessions on this register that were closed today, newest first.
+     * (Avoid HasOne::latestOfMany — Eloquent tie-breaks with MAX(id),
+     * and our ids are UUIDs which Postgres can't aggregate.)
+     */
+    public function closedTodaySessions(): HasMany
+    {
+        return $this->hasMany(RegisterSession::class)
+            ->where('status', 'closed')
+            ->whereDate('closed_at', today())
+            ->orderByDesc('closed_at');
+    }
 }

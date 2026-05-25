@@ -72,9 +72,11 @@ export default function OpenRegisterGate() {
         setSession(existing)
       } else {
         setRegisters(regs)
-        // If only one register is configured, skip the pick step.
-        if (regs.length === 1) {
-          setSelected(regs[0])
+        // Auto-pick only when exactly one register is *openable* — don't
+        // auto-pick a closed-today register, the cashier would be stuck.
+        const openable = regs.filter(r => r.status === 'available')
+        if (openable.length === 1) {
+          setSelected(openable[0])
           setStep('float')
         }
       }
@@ -171,43 +173,66 @@ export default function OpenRegisterGate() {
               </p>
             )}
             {registers.map(r => {
-              const busy = r.status !== 'closed' && r.session?.cashier_id !== user?.id
+              const isOpen        = r.status === 'open' || r.status === 'reopen_requested'
+              const isClosedToday = r.status === 'closed_today'
+              const isAvailable   = r.status === 'available'
+              const disabled      = !isAvailable
+              const subLine = isOpen
+                ? (isNl ? `In gebruik door ${r.session?.cashier_name ?? '—'}` : `In use by ${r.session?.cashier_name ?? '—'}`)
+                : isClosedToday
+                  ? (isNl
+                      ? `Gesloten ${r.closed_today?.closed_at?.slice(11,16) ?? ''} door ${r.closed_today?.cashier_name ?? '—'} · vraag beheerder`
+                      : `Closed ${r.closed_today?.closed_at?.slice(11,16) ?? ''} by ${r.closed_today?.cashier_name ?? '—'} · ask manager`)
+                  : null
+              const badge = isOpen
+                ? { text: isNl ? 'Bezet' : 'Occupied', fg: '#f87171', bg: 'rgba(239,68,68,.1)', bd: 'rgba(239,68,68,.25)' }
+                : isClosedToday
+                  ? { text: isNl ? 'Gesloten' : 'Closed',   fg: '#fbbf24', bg: 'rgba(251,191,36,.1)', bd: 'rgba(251,191,36,.3)' }
+                  : { text: isNl ? 'Beschikbaar' : 'Available', fg: '#4ade80', bg: 'rgba(34,197,94,.1)', bd: 'rgba(34,197,94,.25)' }
+              const borderCol = disabled ? 'rgba(255,255,255,.06)' : 'rgba(124,58,237,.4)'
+              const bgCol     = disabled ? 'rgba(255,255,255,.03)' : 'rgba(124,58,237,.1)'
               return (
-                <button key={r.id} onClick={() => { if (!busy) { setSelected(r); setStep('float') } }}
-                  disabled={busy}
+                <button key={r.id} onClick={() => { if (!disabled) { setSelected(r); setStep('float') } }}
+                  disabled={disabled}
+                  title={subLine ?? undefined}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '14px 18px', borderRadius: 14,
-                    border: `1.5px solid ${busy ? 'rgba(255,255,255,.06)' : 'rgba(124,58,237,.4)'}`,
-                    background: busy ? 'rgba(255,255,255,.03)' : 'rgba(124,58,237,.1)',
-                    cursor: busy ? 'not-allowed' : 'pointer',
-                    opacity: busy ? 0.5 : 1, transition: 'all .15s',
+                    border: `1.5px solid ${borderCol}`,
+                    background: bgCol,
+                    cursor: disabled ? 'not-allowed' : 'pointer',
+                    opacity: disabled ? 0.55 : 1, transition: 'all .15s',
                   }}
-                  onMouseEnter={e => { if (!busy) e.currentTarget.style.background = 'rgba(124,58,237,.18)' }}
-                  onMouseLeave={e => { if (!busy) e.currentTarget.style.background = 'rgba(124,58,237,.1)' }}
+                  onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'rgba(124,58,237,.18)' }}
+                  onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = 'rgba(124,58,237,.1)' }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <span style={{ color: '#a78bfa', fontSize: 15, fontWeight: 800 }}>{r.number}</span>
                     </div>
-                    <div style={{ textAlign: 'left' }}>
+                    <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
                       <div style={{ color: '#f1f5f9', fontSize: 14, fontWeight: 700 }}>{r.name}</div>
-                      {busy && <div style={{ color: 'rgba(148,163,184,.5)', fontSize: 11, marginTop: 1 }}>
-                        {isNl ? `In gebruik door ${r.session?.cashier_name ?? '—'}` : `In use by ${r.session?.cashier_name ?? '—'}`}
+                      {subLine && <div style={{ color: 'rgba(148,163,184,.5)', fontSize: 11, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {subLine}
                       </div>}
                     </div>
                   </div>
                   <div style={{
                     padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700,
-                    background: r.status === 'closed' ? 'rgba(34,197,94,.1)' : 'rgba(239,68,68,.1)',
-                    color: r.status === 'closed' ? '#4ade80' : '#f87171',
-                    border: `1px solid ${r.status === 'closed' ? 'rgba(34,197,94,.25)' : 'rgba(239,68,68,.25)'}`,
+                    background: badge.bg, color: badge.fg, border: `1px solid ${badge.bd}`, flexShrink: 0,
                   }}>
-                    {r.status === 'closed' ? (isNl ? 'Beschikbaar' : 'Available') : (isNl ? 'Bezet' : 'Occupied')}
+                    {badge.text}
                   </div>
                 </button>
               )
             })}
+            {registers.length > 0 && registers.every(r => r.status === 'closed_today') && (
+              <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', color: '#fde68a', fontSize: 12, lineHeight: 1.5 }}>
+                {isNl
+                  ? 'Alle kassa\'s zijn vandaag al gesloten. Vraag uw beheerder om een nieuwe sessie te openen voor de volgende ploeg.'
+                  : 'All registers have already been closed for today. Ask your manager to open a new session for the next shift.'}
+              </div>
+            )}
           </div>
         )}
 

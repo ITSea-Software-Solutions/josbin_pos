@@ -4,8 +4,16 @@ export interface Register {
   id: string
   name: string
   number: number
-  status: 'open' | 'closed' | 'reopen_requested'
+  /** 'open' = session active; 'closed_today' = sealed for the day per
+   *  Z-Report semantics; 'available' = ready to open. */
+  status: 'open' | 'closed_today' | 'available' | 'reopen_requested'
   session: RegisterSession | null
+  closed_today: {
+    session_id: string
+    cashier_id: string
+    cashier_name: string | null
+    closed_at: string
+  } | null
 }
 
 export interface RegisterSession {

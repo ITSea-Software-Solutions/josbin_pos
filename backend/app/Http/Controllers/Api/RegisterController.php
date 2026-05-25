@@ -105,7 +105,10 @@ class RegisterController extends Controller
 
         $registers = Register::where('store_id', $request->store_id)
             ->where('is_active', true)
-            ->with(['openSession.cashier:id,name,email'])
+            ->with([
+                'openSession.cashier:id,name,email',
+                'closedTodaySessions' => fn ($q) => $q->with('cashier:id,name')->limit(1),
+            ])
             ->orderBy('number')
             ->get()
             ->map(fn ($r) => $this->formatRegister($r));
@@ -138,6 +141,32 @@ class RegisterController extends Controller
                 'code'    => 'REGISTER_ALREADY_OPEN',
                 'session' => $this->formatSession($existing->load('cashier:id,name')),
             ], 409);
+        }
+
+        // Z-Report semantics: a register that was already closed today cannot
+        // be re-opened without manager involvement. The books are sealed.
+        // Managers (and above) can force a new session — typically for a
+        // shift handover where the previous cashier already left.
+        if (! $user->isAtLeastManager()) {
+            $closedToday = RegisterSession::where('register_id', $register->id)
+                ->where('status', 'closed')
+                ->whereDate('closed_at', today())
+                ->latest('closed_at')
+                ->with('cashier:id,name')
+                ->first();
+
+            if ($closedToday) {
+                return response()->json([
+                    'message' => 'Deze kassa is vandaag al gesloten. Vraag uw beheerder om heropening. (This register was already closed today. Ask your manager to re-open it.)',
+                    'code'    => 'REGISTER_CLOSED_FOR_DAY',
+                    'closed_today' => [
+                        'session_id'   => $closedToday->id,
+                        'cashier_id'   => $closedToday->cashier_id,
+                        'cashier_name' => $closedToday->cashier?->name,
+                        'closed_at'    => $closedToday->closed_at?->setTimezone('America/Paramaribo')->toIso8601String(),
+                    ],
+                ], 409);
+            }
         }
 
         // Check this cashier doesn't have another open session at this store today
@@ -492,12 +521,20 @@ class RegisterController extends Controller
     private function formatRegister(Register $r): array
     {
         $session = $r->openSession;
+        $closedToday = $r->closedTodaySessions->first();
+
         return [
             'id'      => $r->id,
             'name'    => $r->name,
             'number'  => $r->number,
-            'status'  => $session ? $session->status : 'closed',
+            'status'  => $session ? $session->status : ($closedToday ? 'closed_today' : 'available'),
             'session' => $session ? $this->formatSession($session) : null,
+            'closed_today' => $closedToday ? [
+                'session_id'    => $closedToday->id,
+                'cashier_id'    => $closedToday->cashier_id,
+                'cashier_name'  => $closedToday->cashier?->name,
+                'closed_at'     => $closedToday->closed_at?->setTimezone('America/Paramaribo')->toIso8601String(),
+            ] : null,
         ];
     }
 
