@@ -54,6 +54,8 @@ class DemoSeeder extends Seeder
             return;
         }
 
+        $this->ensureTodaysExchangeRate();
+
         foreach ($stores as $store) {
             $this->command->info("Seeding demo data for store: {$store->name}");
             $this->seedRegisters($store);
@@ -65,6 +67,25 @@ class DemoSeeder extends Seeder
         }
 
         $this->command->info('DemoSeeder complete.');
+    }
+
+    /**
+     * SaleController refuses any sale if there is no DailyRate locked for today
+     * (frontend shows generic "Server error"). Make sure demo always has one
+     * so a freshly-seeded demo is immediately usable for selling.
+     */
+    private function ensureTodaysExchangeRate(): void
+    {
+        \App\Models\DailyRate::firstOrCreate(
+            ['date' => Carbon::now('America/Paramaribo')->toDateString()],
+            [
+                'usd_to_srd' => '37.50',
+                'raw_rate'   => '37.50',
+                'markup_pct' => 0,
+                'source'     => 'manual',
+                'locked_at'  => Carbon::now('America/Paramaribo'),
+            ],
+        );
     }
 
     // ── Registers + today's open session ─────────────────────────────────────
