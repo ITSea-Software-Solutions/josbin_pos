@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
@@ -270,13 +270,18 @@ export default function RegistersScreen() {
   const currentUser  = useDashboardAuthStore(s => s.user)
 
   const [activeTab,        setActiveTab]        = useState<'sessions' | 'manage'>('sessions')
-  const [selectedOrgId,   setSelectedOrgId]   = useState('')
+  const [selectedOrgId,   setSelectedOrgId]   = useState(isSuperAdmin ? '' : (currentUser?.organisation_id ?? ''))
   const [selectedStoreId, setSelectedStoreId] = useState('')
   const [selectedDate,    setSelectedDate]    = useState(new Date().toISOString().split('T')[0])
   const [approveSession,  setApproveSession]  = useState<RegisterSession | null>(null)
 
-  const effectiveStoreId = isSuperAdmin ? selectedStoreId : (currentUser?.organisation_id ?? '')
+  // The actual store_id we pass to every API call. Only ever a real store UUID
+  // (never an organisation_id — that was the previous bug that broke the
+  // Manage tab and made the Sessions tab return empty data).
+  const effectiveStoreId = selectedStoreId
 
+  // Super Admin needs to pick the organisation first; everyone else is locked
+  // to their own org and gets the store dropdown immediately.
   const { data: orgs = [] } = useQuery({
     queryKey: ['organisations'],
     queryFn: () => import('@/api/organisations').then(m => m.getOrganisations()),
@@ -286,8 +291,16 @@ export default function RegistersScreen() {
   const { data: stores = [] } = useQuery({
     queryKey: ['stores', selectedOrgId],
     queryFn: () => getStores(selectedOrgId || undefined),
-    enabled: isSuperAdmin && !!selectedOrgId,
+    enabled: !!selectedOrgId,
   })
+
+  // Auto-pick the only store if there's exactly one — saves a click in the
+  // common single-shop case for org-admin and store-manager.
+  useEffect(() => {
+    if (!selectedStoreId && stores.length === 1) {
+      setSelectedStoreId((stores as Store[])[0].id)
+    }
+  }, [stores, selectedStoreId])
 
   const { data: sessions = [], isLoading } = useQuery({
     queryKey: ['register-sessions', effectiveStoreId, selectedDate],
@@ -301,7 +314,7 @@ export default function RegistersScreen() {
   const closedCount  = sessions.filter(s => s.status === 'closed').length
   const pendingCount = sessions.filter(s => s.status === 'reopen_requested').length
 
-  const noStore = isSuperAdmin && !selectedStoreId
+  const noStore = !selectedStoreId
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
@@ -336,33 +349,39 @@ export default function RegistersScreen() {
         ))}
       </div>
 
+      {/* Shared org + store selector (visible on both tabs, for every role) */}
+      <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+        {isSuperAdmin && (
+          <select value={selectedOrgId} onChange={e => { setSelectedOrgId(e.target.value); setSelectedStoreId('') }}
+            style={{ padding: '8px 32px 8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none', minWidth: 200 }}>
+            <option value="">{isNl ? '— Kies organisatie —' : '— Choose organisation —'}</option>
+            {(orgs as Organisation[]).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
+          </select>
+        )}
+        <select value={selectedStoreId} onChange={e => setSelectedStoreId(e.target.value)}
+          disabled={!selectedOrgId}
+          style={{ padding: '8px 32px 8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none', minWidth: 200, opacity: !selectedOrgId ? 0.5 : 1 }}>
+          <option value="">{isNl ? '— Kies vestiging —' : '— Choose store —'}</option>
+          {(stores as Store[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+        </select>
+        {!selectedStoreId && (
+          <span style={{ fontSize: 12, color: '#9090a0' }}>
+            {isNl ? 'Kies een vestiging om kassas te beheren of sessies te bekijken.' : 'Pick a store to manage registers or view sessions.'}
+          </span>
+        )}
+      </div>
+
       {/* Manage tab */}
       {activeTab === 'manage' && (
-        <ManageRegistersPanel
-          storeId={isSuperAdmin ? selectedStoreId : (currentUser?.organisation_id ?? '')}
-          isNl={isNl}
-        />
+        selectedStoreId
+          ? <ManageRegistersPanel storeId={selectedStoreId} isNl={isNl} />
+          : <p style={{ color: '#6b7280', fontSize: 14 }}>{isNl ? 'Kies eerst een vestiging hierboven.' : 'Pick a store above first.'}</p>
       )}
 
       {activeTab === 'sessions' && (<>
 
-      {/* Filters */}
+      {/* Date + pending banner (org/store selector is now above the tabs) */}
       <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '14px 18px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-        {isSuperAdmin && (
-          <>
-            <select value={selectedOrgId} onChange={e => { setSelectedOrgId(e.target.value); setSelectedStoreId('') }}
-              style={{ padding: '8px 32px 8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none', minWidth: 200 }}>
-              <option value="">{isNl ? '— Kies organisatie —' : '— Choose organisation —'}</option>
-              {(orgs as Organisation[]).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
-            </select>
-            <select value={selectedStoreId} onChange={e => setSelectedStoreId(e.target.value)}
-              disabled={!selectedOrgId}
-              style={{ padding: '8px 32px 8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none', minWidth: 180, opacity: !selectedOrgId ? 0.5 : 1 }}>
-              <option value="">{isNl ? '— Kies vestiging —' : '— Choose store —'}</option>
-              {(stores as Store[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-          </>
-        )}
         <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
         {pendingCount > 0 && (
