@@ -335,9 +335,6 @@ class DemoSeeder extends Seeder
                     'line_total_srd'        => $calc['line_total'],
                 ]);
 
-                // Stock movement, sale reason. NOTE: sale_id intentionally null —
-                // stock_movements.sale_id column is bigint but sales.id is uuid
-                // (pre-existing schema mismatch; tracked separately for fix).
                 StockMovement::create([
                     'product_id'      => $item['_product_id'],
                     'store_id'        => $store->id,
@@ -345,7 +342,7 @@ class DemoSeeder extends Seeder
                     'qty_change'      => -(float) $item['quantity'],
                     'qty_after'       => max(0, (float) Product::find($item['_product_id'])->stock_qty - (float) $item['quantity']),
                     'reason'          => 'sale',
-                    'sale_id'         => null,
+                    'sale_id'         => $sale->id,
                     'user_id'         => $cashier->id,
                     'created_at'      => $occurredAt,
                 ]);

@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Register;
 use App\Models\RegisterSession;
 use App\Models\Sale;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,10 +48,7 @@ class RegisterController extends Controller
             'is_active' => true,
         ]);
 
-        activity()
-            ->causedBy($request->user())
-            ->performedOn($register)
-            ->log('register.created');
+        $this->logRegisterActivity($request->user(), $register, 'register.created');
 
         return response()->json(['data' => $this->formatRegister($register)], 201);
     }
@@ -70,11 +70,7 @@ class RegisterController extends Controller
 
         $register->update($data);
 
-        activity()
-            ->causedBy($request->user())
-            ->performedOn($register)
-            ->withProperties($data)
-            ->log('register.updated');
+        $this->logRegisterActivity($request->user(), $register, 'register.updated', $data);
 
         return response()->json(['data' => $this->formatRegister($register->fresh()->load('openSession.cashier:id,name'))]);
     }
@@ -92,10 +88,7 @@ class RegisterController extends Controller
 
         $register->update(['is_active' => false]);
 
-        activity()
-            ->causedBy(request()->user())
-            ->performedOn($register)
-            ->log('register.deactivated');
+        $this->logRegisterActivity(request()->user(), $register, 'register.deactivated');
 
         return response()->json(null, 204);
     }
@@ -170,11 +163,7 @@ class RegisterController extends Controller
             'opened_at'      => now(),
         ]);
 
-        activity()
-            ->causedBy($user)
-            ->performedOn($session)
-            ->withProperties(['register' => $register->name, 'opening_float' => $request->opening_float])
-            ->log('register.opened');
+        $this->logRegisterActivity($user, $session, 'register.opened', ['register' => $register->name, 'opening_float' => $request->opening_float]);
 
         return response()->json(['data' => $this->formatSession($session->load('cashier:id,name'))], 201);
     }
@@ -235,15 +224,11 @@ class RegisterController extends Controller
             'closing_note'         => $request->closing_note,
         ]);
 
-        activity()
-            ->causedBy($user)
-            ->performedOn($session)
-            ->withProperties([
+        $this->logRegisterActivity($user, $session, 'register.closed', [
                 'expected_cash'  => $expectedCash,
                 'counted_cash'   => $request->closing_cash_counted,
                 'discrepancy'    => $discrepancy,
-            ])
-            ->log('register.closed');
+            ]);
 
         return response()->json(['data' => $this->formatSession($session->fresh()->load('cashier:id,name'))]);
     }
@@ -272,11 +257,7 @@ class RegisterController extends Controller
             'reopen_requested_by'  => $user->id,
         ]);
 
-        activity()
-            ->causedBy($user)
-            ->performedOn($session)
-            ->withProperties(['reason' => $request->reopen_reason])
-            ->log('register.reopen_requested');
+        $this->logRegisterActivity($user, $session, 'register.reopen_requested', ['reason' => $request->reopen_reason]);
 
         return response()->json(['data' => $this->formatSession($session->fresh())]);
     }
@@ -321,14 +302,10 @@ class RegisterController extends Controller
             $event = 'register.reopen_denied';
         }
 
-        activity()
-            ->causedBy($user)
-            ->performedOn($session)
-            ->withProperties([
+        $this->logRegisterActivity($user, $session, $event, [
                 'approved'      => $request->approved,
                 'denial_reason' => $request->denial_reason,
-            ])
-            ->log($event);
+            ]);
 
         return response()->json(['data' => $this->formatSession($session->fresh()->load('cashier:id,name'))]);
     }
@@ -430,6 +407,29 @@ class RegisterController extends Controller
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────
+
+    /**
+     * Write one row to audit_logs for a register-related event.
+     *
+     * Replaces the spatie/activitylog `activity()` builder, which isn't
+     * installed in this project — that package would create a parallel
+     * activity_log table next to our canonical audit_logs and split
+     * the trail across two stores. This keeps everything in audit_logs.
+     */
+    private function logRegisterActivity(User $causer, Model $subject, string $event, array $properties = []): void
+    {
+        AuditLog::create([
+            'user_id'         => $causer->id,
+            'organisation_id' => $causer->organisation_id,
+            'event'           => $event,
+            'auditable_type'  => class_basename($subject),
+            'auditable_id'    => $subject->id,
+            'old_values'      => null,
+            'new_values'      => $properties ? json_encode($properties) : null,
+            'ip_address'      => request()->ip(),
+            'created_at'      => now(),
+        ]);
+    }
 
     private function formatRegister(Register $r): array
     {

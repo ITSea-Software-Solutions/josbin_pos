@@ -37,7 +37,8 @@ return new class extends Migration
 
             $table->string('reason', 30);           // enum above
 
-            $table->bigInteger('sale_id')->unsigned()->nullable(); // FK to sales.id (bigint)
+            // FK to sales.id — sales uses uuid v7, see _change_stock_movements_sale_id_to_uuid migration
+            $table->bigInteger('sale_id')->unsigned()->nullable();
             $table->uuid('user_id')->nullable();    // who triggered it (null = system/queue)
 
             $table->text('notes')->nullable();      // required for 'adjustment' reason
