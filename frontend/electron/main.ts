@@ -259,3 +259,40 @@ ipcMain.handle('app:restart', () => {
   app.relaunch()
   app.exit(0) // exit immediately so relaunch can start a fresh instance
 })
+
+// ─── IPC: Auto-launch on system boot ───────────────────────────────────────────
+// Toggleable from Settings → System. Default ON for packaged builds (a POS
+// terminal should boot straight into the till), default OFF in dev so testing
+// doesn't accidentally register the dev Electron in your OS startup items.
+
+ipcMain.handle('app:get-auto-launch', () => {
+  return app.getLoginItemSettings().openAtLogin
+})
+
+ipcMain.handle('app:set-auto-launch', (_event, enabled: boolean) => {
+  // On macOS the path is taken from app.getPath('exe') automatically; on
+  // Windows electron-builder's NSIS installer puts the right .exe path in
+  // the registry hive Electron reads from. No extra config needed here.
+  app.setLoginItemSettings({
+    openAtLogin: !!enabled,
+    openAsHidden: false,
+  })
+  return app.getLoginItemSettings().openAtLogin
+})
+
+// Apply the production default on first packaged launch: if the user has never
+// set a preference, turn auto-launch ON. We persist a "has been set" marker so
+// later flips by the manager stick.
+if (app.isPackaged) {
+  app.whenReady().then(() => {
+    const initFlag = join(app.getPath('userData'), 'auto-launch.initialized')
+    try {
+      if (!fs.existsSync(initFlag)) {
+        app.setLoginItemSettings({ openAtLogin: true, openAsHidden: false })
+        fs.writeFileSync(initFlag, new Date().toISOString())
+      }
+    } catch {
+      // Non-fatal — manager can flip the toggle manually if this ever fails.
+    }
+  })
+}

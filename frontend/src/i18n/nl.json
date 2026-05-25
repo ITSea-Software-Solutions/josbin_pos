@@ -240,7 +240,9 @@
       "confirmQuitBody": "De app sluit volledig af. Open opnieuw via uw bureaublad of startmenu.",
       "blockCart": "Winkelmandje bevat {{count}} artikel(en). Voltooi of bewaar de verkoop eerst.",
       "blockSync": "Er zijn nog {{count}} dag(en) Z-Rapporten die niet naar het hoofdkantoor zijn gesynchroniseerd. Verstuur eerst om gegevensverlies te voorkomen.",
-      "warnRegisterOpen": "Kassasessie is nog open. U mag nu afsluiten, maar sluit de kassa aan het einde van de dienst."
+      "warnRegisterOpen": "Kassasessie is nog open. U mag nu afsluiten, maar sluit de kassa aan het einde van de dienst.",
+      "autoLaunch": "Josbin POS automatisch starten als deze kassa wordt aangezet",
+      "autoLaunchHelp": "Aanbevolen voor POS-kassa's — de medewerker hoeft de app niet handmatig te openen nadat de computer wordt ingeschakeld."
     }
   },
   "auth": {

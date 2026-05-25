@@ -36,11 +36,18 @@ export function SystemActions() {
   const [pending, setPending] = useState<Action | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [autoLaunch, setAutoLaunchState] = useState<boolean | null>(null)
 
-  // Pull app version once
+  // Pull app version + current auto-launch state once
   useEffect(() => {
     window.josbin_pos?.getVersion().then(setVersion).catch(() => setVersion('—'))
+    window.josbin_pos?.getAutoLaunch?.().then(setAutoLaunchState).catch(() => setAutoLaunchState(null))
   }, [])
+
+  async function toggleAutoLaunch(next: boolean) {
+    const applied = await window.josbin_pos.setAutoLaunch(next)
+    setAutoLaunchState(applied)
+  }
 
   // Z-Reports awaiting sync — block close/restart if any
   const { data: zReports } = useQuery({
@@ -124,6 +131,36 @@ export function SystemActions() {
             🚪  {t('settings.system.quit')}
           </button>
         </div>
+
+        {/* Auto-launch toggle — only meaningful in Electron builds */}
+        {autoLaunch !== null && (
+          <label
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12,
+              padding: '12px 14px',
+              background: 'var(--bg-base)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius)',
+              cursor: 'pointer',
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={autoLaunch}
+              onChange={(e) => toggleAutoLaunch(e.target.checked)}
+              data-testid="chk-auto-launch"
+              style={{ width: 18, height: 18, cursor: 'pointer' }}
+            />
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>
+                {t('settings.system.autoLaunch')}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)' }}>
+                {t('settings.system.autoLaunchHelp')}
+              </p>
+            </div>
+          </label>
+        )}
       </div>
 
       {pending && (

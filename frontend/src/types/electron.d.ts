@@ -24,5 +24,8 @@ interface Window {
     // App lifecycle — renderer guards with role + safety checks before calling
     quit:    () => Promise<void>
     restart: () => Promise<void>
+    // Auto-launch on system boot — toggleable from Settings → System
+    getAutoLaunch: () => Promise<boolean>
+    setAutoLaunch: (enabled: boolean) => Promise<boolean>
   }
 }

@@ -240,7 +240,9 @@
       "confirmQuitBody": "The app will exit completely. To reopen, launch it from your desktop or Start menu.",
       "blockCart": "Cart has {{count}} item(s). Complete or hold the sale before closing.",
       "blockSync": "{{count}} day(s) of Z-Reports still pending sync to headquarters. Submit them first to avoid data loss.",
-      "warnRegisterOpen": "Register session is still open. Closing now is OK but you should close the register at end of shift."
+      "warnRegisterOpen": "Register session is still open. Closing now is OK but you should close the register at end of shift.",
+      "autoLaunch": "Start Josbin POS when this terminal boots",
+      "autoLaunchHelp": "Recommended for POS terminals — cashier doesn't need to open the app manually after switching on the computer."
     }
   },
   "auth": {

@@ -39,4 +39,8 @@ contextBridge.exposeInMainWorld('josbin_pos', {
   // ── App lifecycle (renderer guards with role + safety checks) ────────────────
   quit:    () => ipcRenderer.invoke('app:quit'),
   restart: () => ipcRenderer.invoke('app:restart'),
+
+  // ── Auto-launch on system boot — toggleable from Settings → System ──────────
+  getAutoLaunch: () => ipcRenderer.invoke('app:get-auto-launch'),
+  setAutoLaunch: (enabled: boolean) => ipcRenderer.invoke('app:set-auto-launch', enabled),
 })
