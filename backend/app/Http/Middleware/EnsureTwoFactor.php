@@ -20,8 +20,12 @@ class EnsureTwoFactor
             return $next($request);
         }
 
-        // Check if the current token carries the 2fa_verified ability
-        if (! $user->tokenCan('2fa_verified')) {
+        // Task #74 — full session tokens carry the '*' wildcard ability, so
+        // $user->tokenCan('2fa_verified') would always return true for ANY
+        // logged-in user (wildcard satisfies). We instead check the LITERAL
+        // string in the abilities array, which only the post-2FA tokens get.
+        $abilities = $user->currentAccessToken()?->abilities ?? [];
+        if (! is_array($abilities) || ! in_array('2fa_verified', $abilities, true)) {
             return response()->json([
                 'message' => 'Two-factor authentication required.',
                 'code'    => 'TWO_FACTOR_REQUIRED',

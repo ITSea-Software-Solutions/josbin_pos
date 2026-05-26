@@ -111,7 +111,12 @@ class AuthController extends Controller
         // ── Normal login (no 2FA required) ───────────────────────────────────
         $this->handlePostLoginChecks($user, $request);
 
-        $abilities = $user->getAllPermissions()->pluck('name')->toArray();
+        // Task #74 — session tokens get the '*' wildcard ability. Permission
+        // checks ($this->authorize / $user->can) go through policies + spatie
+        // gates at request time, so they always reflect the CURRENT user's
+        // permissions — no more stale-on-reseed bugs (G-001 / G-002 / G-017).
+        // Pre-auth 2FA tokens (setup / challenge) keep their narrow abilities.
+        $abilities = ['*'];
 
         $token = $user->createToken(
             name: 'pos-' . ($request->input('device_name', 'web')),
@@ -171,8 +176,10 @@ class AuthController extends Controller
 
         $this->handlePostLoginChecks($user, $request);
 
-        $abilities   = $user->getAllPermissions()->pluck('name')->toArray();
-        $abilities[] = '2fa_verified';
+        // Task #74 — wildcard for general permissions + LITERAL '2fa_verified'
+        // for the EnsureTwoFactor middleware (which does an in_array check
+        // against the literal, NOT tokenCan, so the wildcard can't bypass).
+        $abilities = ['*', '2fa_verified'];
 
         $token = $user->createToken(
             name: 'pos-web',
@@ -196,7 +203,14 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if (! $user->tokenCan('two_factor_setup') && ! $user->tokenCan('*')) {
+        // Task #74 — accept the narrow setup token OR a full session token
+        // (the wildcard). Setup tokens carry exactly ['two_factor_setup'];
+        // full tokens carry ['*'] or ['*', '2fa_verified']. Either authorises
+        // viewing the QR — the latter for users re-doing 2FA setup voluntarily.
+        $abilities = $user->currentAccessToken()?->abilities ?? [];
+        $hasSetup    = is_array($abilities) && in_array('two_factor_setup', $abilities, true);
+        $hasWildcard = is_array($abilities) && in_array('*', $abilities, true);
+        if (! $hasSetup && ! $hasWildcard) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
@@ -266,11 +280,11 @@ class AuthController extends Controller
             'two_factor_recovery_codes' => encrypt(json_encode($recoveryCodes)),
         ])->save();
 
-        // Revoke the setup token; issue a full authenticated token
+        // Revoke the setup token; issue a full authenticated token.
+        // Task #74 — see login() for the rationale on '*' + literal '2fa_verified'.
         $user->currentAccessToken()->delete();
 
-        $abilities   = $user->getAllPermissions()->pluck('name')->toArray();
-        $abilities[] = '2fa_verified';
+        $abilities = ['*', '2fa_verified'];
 
         $token = $user->createToken(
             name: 'pos-web',
@@ -319,6 +333,11 @@ class AuthController extends Controller
             'environment' => [
                 'demo_mode' => (bool) config('josbin_pos.demo_mode'),
                 'sandbox'   => (bool) config('josbin_pos.sandbox'),
+                // Vendor contact for any UI surface that tells a client to
+                // "contact support" — banners, modals, certificate PDF, etc.
+                // Resellers can override per-deployment via JOSBIN_POS_VENDOR_*
+                // env vars; see config/josbin_pos.php.
+                'vendor'    => config('josbin_pos.vendor'),
             ],
         ]);
     }
@@ -333,10 +352,11 @@ class AuthController extends Controller
         $oldToken = $user->currentAccessToken();
         $deviceName = str($oldToken->name)->after('pos-')->toString() ?: 'web';
 
-        $abilities = $user->getAllPermissions()->pluck('name')->toArray();
-
-        // Preserve 2fa_verified if the current token had it
-        if ($oldToken->can('2fa_verified')) {
+        // Task #74 — wildcard. Preserve the literal '2fa_verified' if the
+        // old token had it (check via in_array on the literal, NOT
+        // ->can() which would return true under the wildcard).
+        $abilities = ['*'];
+        if (is_array($oldToken->abilities) && in_array('2fa_verified', $oldToken->abilities, true)) {
             $abilities[] = '2fa_verified';
         }
 
@@ -490,10 +510,13 @@ class AuthController extends Controller
             'requires_2fa'          => $user->requires2FA(),
             'two_factor_confirmed'  => $user->two_factor_confirmed_at !== null,
             'organisation_id'       => $user->organisation_id,
-            // Surface store assignment so the dashboard / POS can show the
-            // cashier / manager which stores they're scoped to. Org-scoped
-            // roles always send an empty array (they ignore the pivot).
-            'store_ids'             => $user->isOrgScopedRole() ? [] : $user->stores()->pluck('stores.id')->all(),
+            // Surface the single store assignment so the dashboard / POS can
+            // show the cashier / store_manager which store they're scoped to.
+            // Org-scoped roles (super_admin, organisation_admin, auditor,
+            // api_integration) always send null — they have no single store
+            // and operate across the whole org.
+            'store_id'              => $user->isOrgScopedRole() ? null : $user->store_id,
+            'store_name'            => $user->isOrgScopedRole() ? null : $user->store?->name,
             'permissions'           => $user->getAllPermissions()->pluck('name'),
             'last_login_at'         => $user->last_login_at?->toIso8601String(),
         ];
