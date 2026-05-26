@@ -6,8 +6,7 @@
 
 **Why this prevents pain:** one upload replaces hours of clicking through the single-product modal in [Chapter 4](04-catalogue-and-categories.md). The same file is the **source of truth** for new products *and* price updates — the importer is idempotent, so re-uploading the same file tomorrow is safe.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/05-import-screen.png`_
-
+![05 import screen](screenshots/05-import-screen.png)
 ---
 
 ## 5.1 What the importer actually does
@@ -102,8 +101,7 @@ Anything else in your file is ignored. You can keep notes columns, supplier code
 8. Save the file. Keep it as `.csv` (UTF-8) or `.xlsx`.
 9. Back in the dashboard, drag the file onto the dotted **drop zone** in the middle of the screen — or click the zone and pick the file.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/05-drop-zone-with-file.png`_
-
+![05 drop zone with file](screenshots/05-drop-zone-with-file.png)
 10. For CSV files the dashboard shows a **client-side preview** — the first N rows, each one flagged green (valid) or red (has errors). XLSX files don't preview client-side; you'll see *"file loaded"* and the validation happens on the server.
 11. Check the preview header for two badges:
     - `✓ N geldig / valid` — these will be imported.

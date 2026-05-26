@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
+import { useDashboardAuthStore } from '@/store/authStore'
 import {
   getOrganisations, getOrganisation, createOrganisation, updateOrganisation,
   getOrgStores, createStore,
@@ -794,6 +795,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
 export default function OrganisationsScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
+  const isSuperAdmin = useDashboardAuthStore((s) => s.isSuperAdmin())
 
   const [showCreate, setShowCreate] = useState(false)
   const [viewTarget, setViewTarget] = useState<Organisation | null>(null)
@@ -801,6 +803,12 @@ export default function OrganisationsScreen() {
   const [search, setSearch] = useState('')
 
   const { data: orgs, isLoading } = useQuery({ queryKey: ['organisations'], queryFn: getOrganisations })
+
+  // For non-Super-Admin, the API only returns the user's own org. If that
+  // single org has zero stores, the next step is "+ Add store" on the
+  // Stores tab — auto-open the org and land on the Stores tab so it's
+  // obvious. (Skipped for SA who manages many orgs from a list view.)
+  const singleOrg = !isSuperAdmin && orgs?.length === 1 ? orgs[0] : null
   const filtered = orgs?.filter((o) =>
     o.name.toLowerCase().includes(search.toLowerCase()) ||
     (o.btw_number ?? '').includes(search),
@@ -817,22 +825,28 @@ export default function OrganisationsScreen() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-.5px', marginBottom: 4 }}>
-            {isNl ? 'Organisaties' : 'Organisations'}
+            {isSuperAdmin
+              ? (isNl ? 'Organisaties' : 'Organisations')
+              : (isNl ? 'Mijn organisatie' : 'My organisation')}
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280' }}>
-            {isNl ? 'Beheer klantorganisaties, vestigingen en toegangsbeheer.' : 'Manage client organisations, stores and access control.'}
+            {isSuperAdmin
+              ? (isNl ? 'Beheer klantorganisaties, vestigingen en toegangsbeheer.' : 'Manage client organisations, stores and access control.')
+              : (isNl ? 'Beheer uw vestigingen en organisatiegegevens. Tik op uw organisatie hieronder om vestigingen toe te voegen.' : 'Manage your stores and organisation details. Tap your organisation below to add stores.')}
           </p>
         </div>
-        <button onClick={() => setShowCreate(true)} style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          padding: '10px 20px', border: 'none', borderRadius: 12,
-          background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
-          fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          boxShadow: '0 4px 16px rgba(124,58,237,.35)',
-        }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          {isNl ? 'Nieuwe organisatie' : 'New organisation'}
-        </button>
+        {isSuperAdmin && (
+          <button onClick={() => setShowCreate(true)} style={{
+            display: 'inline-flex', alignItems: 'center', gap: 8,
+            padding: '10px 20px', border: 'none', borderRadius: 12,
+            background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+            fontSize: 14, fontWeight: 700, cursor: 'pointer',
+            boxShadow: '0 4px 16px rgba(124,58,237,.35)',
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            {isNl ? 'Nieuwe organisatie' : 'New organisation'}
+          </button>
+        )}
       </div>
 
       {/* Stats row */}
@@ -861,6 +875,27 @@ export default function OrganisationsScreen() {
           style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#1c1c2e', background: 'transparent', fontFamily: 'inherit' }} />
         {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9090a0', fontSize: 16, lineHeight: 1 }}>×</button>}
       </div>
+
+      {/* Empty-store hint for OA: their single org has zero stores yet. */}
+      {singleOrg && singleOrg.store_count === 0 && (
+        <div style={{ marginBottom: 20, padding: '16px 20px', borderRadius: 14, background: '#fff7ed', border: '1px solid #fed7aa', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 10, background: '#ffedd5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>🏬</div>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: 13.5, fontWeight: 800, color: '#9a3412', marginBottom: 2 }}>
+              {isNl ? 'Geen vestiging aangemaakt' : 'No store created yet'}
+            </p>
+            <p style={{ fontSize: 12.5, color: '#9a3412' }}>
+              {isNl
+                ? 'Tik op uw organisatie hieronder → tabblad Vestigingen → + Vestiging toevoegen.'
+                : 'Tap your organisation below → Stores tab → + Add store.'}
+            </p>
+          </div>
+          <button onClick={() => setViewTarget(singleOrg)}
+            style={{ padding: '8px 16px', border: 'none', borderRadius: 8, background: '#ea580c', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            {isNl ? 'Open' : 'Open'} →
+          </button>
+        </div>
+      )}
 
       {/* Table card */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>

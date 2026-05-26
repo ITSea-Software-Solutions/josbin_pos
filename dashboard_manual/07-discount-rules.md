@@ -6,8 +6,7 @@
 
 **Why this prevents pain:** without discount rules, every cashier would apply manual line-item or basket discounts based on a printed memo — and you'd lose all traceability ("why did Kassa 3 give 15 % to that customer?"). With rules, the discount is **automatic**, **bounded**, **time-windowed**, and **logged**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/07-discount-rules-list.png`_
-
+![07 discount rules list](screenshots/07-discount-rules-list.png)
 ---
 
 ## 7.1 What a discount rule does
@@ -84,8 +83,7 @@ AND (valid_to   IS NULL OR valid_to   >= now())
 
 **Path:** Dashboard → sidebar → **Kortingsregels / Discount Rules**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/07-new-rule-modal.png`_
-
+![07 new rule modal](screenshots/07-new-rule-modal.png)
 1. Top-right of the screen → **+ Nieuwe regel / + New rule**.
 2. The modal opens. Fill in:
 

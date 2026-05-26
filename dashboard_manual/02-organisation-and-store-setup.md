@@ -82,9 +82,15 @@ The **Push catalogus / Push catalogue** button on the row triggers an immediate 
 
 ## 2.3 Adding stores under an Organisation
 
-Once the organisation exists, add its physical locations.
+Once the organisation exists, add its physical locations. **Both Super Admin and Org Admin can do this** — the API allows Org Admin to manage stores within their own org.
 
-**Path:** Organisations list → click the org → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**.
+**Path (Super Admin):** Dashboard → **Organisaties / Organisations** (left sidebar) → click the org row → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**.
+
+**Path (Org Admin):** Dashboard → **Mijn organisatie / My organisation** (left sidebar — they see only their own org in the list) → click their org row → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**.
+
+> **First-time setup hint for Org Admin:** when you log in and your org has zero stores, an orange callout above the table says *"Geen vestiging aangemaakt — Tik op uw organisatie hieronder → Vestigingen → + Vestiging toevoegen"*. Click the **Open →** button on the callout to jump straight to the Stores tab. The callout disappears once you've created at least one store.
+
+> **License limit applies.** If your licence allows 1 store and you try to create a second, the dashboard returns *"License limit reached: 1 store(s). Ask your vendor to extend the licence."* (HTTP 409 `LICENSE_STORE_LIMIT_REACHED`). The vendor can bump the limit on the License Management screen — see [Chapter 15 §15.8](15-license-management.md#158-issuing-a-new-license-super-admin-in-dashboard-path).
 
 The Add Store modal asks for:
 
@@ -186,16 +192,28 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
    - Government: unchecked
    - Create.
 
-2. **Create Sandra's Org Admin account** (covered in Chapter 3). She gets an email with login credentials.
+2. **Issue Sandra's licence.**
+   Dashboard → **License Management** → **+ Issue license** → pick `Supermarkt De Hoop NV`, tier `Professional`, max_stores `2`, max_terminals `4`, valid_from today, valid_until +1 year. Issue. *(Path B — in-dashboard. Path A via the separate License Server is for on-prem IonCube deliveries; see [Chapter 16](16-license-operations.md) §16.4.)*
 
-3. Hand-off — done. Everything below is Sandra's job.
+3. **Create Sandra's Org Admin account** (covered in [Chapter 3](03-users.md)). She gets an email with login credentials.
+
+4. Hand-off — done. Everything below is Sandra's job.
 
 ### Client side (Sandra Codrington, Org Admin)
 
-4. **Log in** at the dashboard URL. She lands on the Overview screen, which shows `0 stores, 0 sales today`.
+> **Sandra's "first day" mental model** — from logging in to selling:
+> ```
+> Log in → My organisation (sidebar) → Stores tab → + Add store → Open Stores tab again to add the 2nd store
+>       → Catalogue (sidebar) → either + Add product manually, or Import / Export → Excel template
+>       → Registers (sidebar) → + Add register for each till at each store
+>       → Users (sidebar) → + Add cashier accounts
+> Cashiers log into the POS app, open their register, sell.
+> ```
 
-5. **Add the first store.**
-   Dashboard → Organisations → click `Supermarkt De Hoop NV` → Stores tab → + Add store:
+5. **Log in** at the dashboard URL. She lands on the Overview screen, which shows `0 stores, 0 sales today`. The sidebar shows **Mijn organisatie / My organisation** (her view of the Organisations screen — scoped to her org).
+
+6. **Add the first store.**
+   Dashboard → **Mijn organisatie / My organisation** → click `Supermarkt De Hoop NV` → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**:
    - Name: `De Hoop — Paramaribo Centrum`
    - City: `Paramaribo`
    - Address: `Domineestraat 12`

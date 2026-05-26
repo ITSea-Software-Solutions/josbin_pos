@@ -6,8 +6,7 @@
 
 **Why this prevents pain:** without overrides you'd have to maintain a separate catalogue per store — and that's exactly what every cashier-led data drift starts with. With overrides, you keep **one master catalogue** and add a small list of "this product, in this store, costs SRD X instead" exceptions on top.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/06-price-overrides-screen.png`_
-
+![06 price overrides screen](screenshots/06-price-overrides-screen.png)
 ---
 
 ## 6.1 The pricing model in one diagram
@@ -68,8 +67,7 @@ When you delete an override the cashier instantly sees the master price again. W
 
 **Path:** Dashboard → sidebar → **Prijsoverschrijvingen / Price Overrides**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/06-store-selector.png`_
-
+![06 store selector](screenshots/06-store-selector.png)
 1. Pick the **vestiging / store** from the dropdown at the top.
    - Super Admin only: pick the **organisation** dropdown to the left of the store selector first.
    - Org Admins are scoped to their own organisation — no org selector appears.

@@ -6,8 +6,7 @@
 
 **What it prevents:** the manager missing a slow drift in revenue, a cashier quietly voiding sales every Wednesday afternoon, or staff hunting through the catalogue for "that thing with the picture of the cow on it" when they could have just typed `cow` and let the search find *Vleeswaren Halal Rund 500g*.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/14-ai-insights-overview.png`._
-
+![14 ai insights overview](screenshots/14-ai-insights-overview.png)
 ---
 
 ## 14.1 What's actually live vs what's on the roadmap
@@ -82,8 +81,7 @@ Two sections stack down the page:
 
 If you're a Cashier or Auditor, this menu item is hidden — the underlying endpoints are gated by `can:ai.insights`, which only Store Manager and above have. Loading the URL directly returns 403.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/14-ai-insights-weekly.png`._
-
+![14 ai insights weekly](screenshots/14-ai-insights-weekly.png)
 ---
 
 ## 14.4 The weekly summary in detail

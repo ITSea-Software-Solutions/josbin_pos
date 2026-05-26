@@ -7,7 +7,7 @@
 **What it prevents:** the slow drift of letting password-only logins into roles that have meaningful access. Once a Cashier or Auditor account is compromised, the blast radius is real — Cashier can take payments, Auditor can read every BTW figure. 2FA is the cheapest mitigation that exists.
 
 > _Screenshot placeholder: `dashboard_manual/screenshots/17-2fa-policy-panel.png`._
-
+> _Needs Super Admin capture — the 2FA policy panel only renders for Super Admins; the demo SA account has 2FA enforced so this is captured manually._
 ---
 
 ## 17.1 The hierarchy: always-required, government-required, configurable
@@ -80,7 +80,7 @@ When expanded you see:
 6. Status confirmation when saved: *"✓ Beleid opgeslagen / Policy saved"*.
 
 > _Screenshot placeholder: `dashboard_manual/screenshots/17-2fa-policy-panel.png`._
-
+> _Needs Super Admin capture — the 2FA policy panel only renders for Super Admins; the demo SA account has 2FA enforced so this is captured manually._
 If you're not Super Admin, the entire panel is hidden (the API call returns 403 before the panel renders).
 
 ---

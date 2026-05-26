@@ -11,8 +11,7 @@
 
 **What it prevents:** the manager having to re-key sales from a second system, end-of-day reconciliations that don't add up because two systems counted the same shop's sales separately, and missed BTW lines because something happened "outside" Josbin POS.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/12-api-keys-list.png`._
-
+![12 api keys list](screenshots/12-api-keys-list.png)
 ---
 
 ## 12.1 What an "integration" actually is
@@ -84,8 +83,7 @@ The main API Integrations screen is a table with one row per integration. Column
 
 A three-card stats strip across the top totals: total keys, active, and revoked.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/12-api-keys-list.png`._
-
+![12 api keys list](screenshots/12-api-keys-list.png)
 ---
 
 ## 12.4 Editing webhook configuration & rotating the secret

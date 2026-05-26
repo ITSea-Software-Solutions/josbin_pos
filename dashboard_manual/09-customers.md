@@ -6,8 +6,7 @@
 
 The Customers screen is where you read, edit, and import customers. Cashiers create new customers on-the-fly from the POS app — they don't need the dashboard for that. The dashboard is for the back-office views: search, edit, bulk import, top-spender reports.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/09-customers-list.png`_
-
+![09 customers list](screenshots/09-customers-list.png)
 ---
 
 ## 9.1 The model — why customer data is special
@@ -68,8 +67,7 @@ Three creation paths feed the same `customers` table:
 
 **Path:** Dashboard sidebar → **Klanten / Customers**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/09-customers-screen.png`_
-
+![09 customers screen](screenshots/09-customers-screen.png)
 The page shows a single searchable, paginated table. The header counter (`123 klanten gevonden / 123 customers found`) reflects the **total in your organisation**, not just the current page.
 
 ### The columns
@@ -118,8 +116,7 @@ Type a search term and hit Enter / wait — the table filters as you type, page 
 
 **Path:** Customers screen → find the row → tap **Bewerken / Edit**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/09-edit-modal.png`_
-
+![09 edit modal](screenshots/09-edit-modal.png)
 The modal exposes three fields:
 
 | Field | Required | Notes |

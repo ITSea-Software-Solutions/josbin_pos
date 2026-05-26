@@ -6,8 +6,7 @@
 
 **What it prevents:** the manager getting paged at 19:00 because someone forgot their password (they can self-serve), and the awkward all-team email asking "what was my closing cash on the 14th?" (they can look it up themselves).
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/18-my-account-tabs.png`._
-
+![18 my account tabs](screenshots/18-my-account-tabs.png)
 ---
 
 ## 18.1 The strict-scoping rule
@@ -67,8 +66,7 @@ Below the cards: **🏆 Topproduct deze maand / Top product this month** — a s
 
 For roles that never ring up sales (Org Admin, Auditor, Super Admin), the cards show zeros and the top-product card is absent. That's normal — the data simply isn't there for those roles.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/18-my-performance.png`._
-
+![18 my performance](screenshots/18-my-performance.png)
 ---
 
 ## 18.4 Tab 2 — My shifts
@@ -141,8 +139,7 @@ If the current password is wrong, the server returns:
 
 …in red below the password card. No tokens are revoked, nothing is changed.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/18-password-change.png`._
-
+![18 password change](screenshots/18-password-change.png)
 ---
 
 ## 18.6 What about 2FA enrollment?

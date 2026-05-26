@@ -9,7 +9,7 @@
 > **This chapter is the *UI overview* — what the License screen shows and how to drive it.** The deep operational playbook (issuing keys from the License Server, hardware fingerprints, end-to-end install, troubleshooting, off-boarding, sales talking points) lives in **[Chapter 16 — License operations](16-license-operations.md)**. Cross-link them; don't duplicate. If you're looking for "what do I do when the customer's hardware died and the fingerprint changed?" — that's Chapter 16 §16.9.
 
 > _Screenshot placeholder: `dashboard_manual/screenshots/15-license-list.png`._
-
+> _Needs Super Admin capture — Org Admin sidebar does not expose the License Management screen; the demo Super Admin account has 2FA enforced._
 ---
 
 ## 15.1 The model on this screen
@@ -76,7 +76,7 @@ The page is in four parts:
 A footer line shows the total license count.
 
 > _Screenshot placeholder: `dashboard_manual/screenshots/15-license-row-detail.png`._
-
+> _Needs Super Admin capture — see note at the top of this chapter._
 ---
 
 ## 15.4 Requesting a renewal

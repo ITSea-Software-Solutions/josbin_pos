@@ -6,8 +6,7 @@
 
 The Stock screen is the only place in the dashboard where you can **manually move the number on the shelf**. Everything else (a sale, a void, a refund) moves stock automatically as a side effect — you don't have to do anything for those.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/08-stock-screen.png`_
-
+![08 stock screen](screenshots/08-stock-screen.png)
 ---
 
 ## 8.1 The model — how Josbin POS tracks stock
@@ -71,8 +70,7 @@ A **yellow banner** sits across the top of the All-products tab whenever the low
 
 ## 8.3 Reading a row
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/08-stock-row-badges.png`_
-
+![08 stock row badges](screenshots/08-stock-row-badges.png)
 Each row in the table tells you four things at a glance:
 
 | Element | Meaning |
@@ -101,8 +99,7 @@ Use this when stock physically moved and the system doesn't already know — rec
 
 **Path:** Stock screen → find the product (search by name or barcode) → tap **+ Aanpassen / + Adjust**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/08-adjust-modal.png`_
-
+![08 adjust modal](screenshots/08-adjust-modal.png)
 The Adjust modal opens. Fill in:
 
 | Field | Required | Notes |
@@ -159,8 +156,7 @@ When you tap **Opslaan / Save**, three things happen atomically:
 
 Every product carries a full ledger of every stock change since the row was first created. To read it: Stock screen → row → **Historie / History** button.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/08-history-modal.png`_
-
+![08 history modal](screenshots/08-history-modal.png)
 The modal lists the most recent 50 movements newest-first:
 
 | Column | Shows |
@@ -209,8 +205,7 @@ In the current release, the practical rule is:
 
 ## 8.7 The dashboard overview tile — your morning glance
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/08-overview-tile.png`_
-
+![08 overview tile](screenshots/08-overview-tile.png)
 On the dashboard home, just below the four KPI cards, sits the **Stock alerts** tile. It has two states:
 
 | State | When | Colour | Behaviour |

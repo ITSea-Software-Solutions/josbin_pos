@@ -10,8 +10,7 @@
 
 **What this prevents:** reports built in the dashboard come straight from the canonical sale rows, with the BTW math already pinned by the [BTW pipeline](../docs/05-btw-pipeline.md). That means no spreadsheets, no manual re-keying, no rounding drift between what the cashier rang up and what you file with Belastingdienst. The Rekenkamer export carries a SHA-256 document hash for tamper detection — if a copy in the wild differs by one byte, the hash on the cover page proves it.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/10-reports-overview.png`._
-
+![10 reports overview](screenshots/10-reports-overview.png)
 ---
 
 ## 10.1 The seven report types at a glance
@@ -69,8 +68,7 @@ Scope rules (decided by the backend, you don't choose):
 
 The default tab. Answers the question *"how is the whole organisation doing in this date range?"*.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/10-consolidated.png`._
-
+![10 consolidated](screenshots/10-consolidated.png)
 ### Who reads this
 
 - **Organisation Admin** — every morning, looking at "yesterday" or "this month so far". Spots a branch that's off-pace before lunch.
@@ -140,8 +138,7 @@ CSV/XLSX export are not yet exposed in this release — the data is in the PDF t
 
 The single most important report in the dashboard, legally speaking. You will run this **once a month** on the second tab.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/10-btw-report.png`._
-
+![10 btw report](screenshots/10-btw-report.png)
 ### The Suriname BTW context
 
 | Fact | Value |
@@ -314,8 +311,7 @@ CSV / XLSX export are not in the per-store endpoints. The JSON shape is the simp
 
 ## 10.6 Rekenkamer export — the Court of Audit PDF
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/10-rekenkamer.png`._
-
+![10 rekenkamer](screenshots/10-rekenkamer.png)
 This is the **signed PDF + full transaction list** used by the *Rekenkamer van Suriname* (the Court of Audit) when reviewing a government department's accounts. It's also useful for any client that wants a "give me everything for this period" archival document.
 
 ### Who needs this

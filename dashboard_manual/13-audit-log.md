@@ -6,8 +6,7 @@
 
 The audit log is **the single source of truth** for the question *"what happened in this system, by whose hand, when?"*. Other screens in the dashboard show the **current state**; the audit log shows the **history of every change** that got it there.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/13-audit-log-screen.png`_
-
+![13 audit log screen](screenshots/13-audit-log-screen.png)
 ---
 
 ## 13.1 The model — why this screen is special
@@ -104,8 +103,7 @@ Visibility is scoped by role. The same audit log is filtered at the database que
 
 **Path:** Dashboard sidebar → **Audit / Auditlog**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/13-audit-log-overview.png`_
-
+![13 audit log overview](screenshots/13-audit-log-overview.png)
 Three regions stacked top to bottom:
 
 1. **Rekenkamer export panel** — date-range + language picker + "Download Rekenkamer PDF" button. See §13.7.
@@ -167,8 +165,7 @@ A bar of filters sits between the summary cards and the table. All filters compo
 
 Clicking a row reveals the full **Before** and **After** values as side-by-side pretty-printed JSON, plus the **Model ID** (UUID) of the changed record. PII fields (customer name, phone, etc.) appear as their *encrypted ciphertext* — see §13.6.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/13-audit-row-expanded.png`_
-
+![13 audit row expanded](screenshots/13-audit-row-expanded.png)
 ---
 
 ## 13.5 Reading a diff
@@ -217,8 +214,7 @@ phone   eyJpdiI6Ikta…   →   eyJpdiI6Ikta…   (no change)
 
 ## 13.7 Rekenkamer signed-PDF export
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/13-rekenkamer-export.png`_
-
+![13 rekenkamer export](screenshots/13-rekenkamer-export.png)
 The top of the screen carries a date-range + language picker + download button: **Rekenkamer van Suriname — Auditexport / Audit Export**.
 
 This is the official, signed audit document that the **Rekenkamer van Suriname** (Court of Audit) accepts in a government financial review. It is *not* a casual CSV — it's a digitally-signed PDF that includes:

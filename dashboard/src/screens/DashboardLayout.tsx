@@ -218,7 +218,10 @@ export default function DashboardLayout() {
     { id: 'compare',        nl: 'Vergelijking',           en: 'Comparison',      icon: IC.compare,        roles: [SA, OA] },
     { id: 'ai-insights',    nl: 'AI-inzichten',           en: 'AI Insights',     icon: IC.ai,             roles: [SA, OA, SM] },
     { id: 'store-settings', nl: 'Vestigingsinstellingen', en: 'Store Settings',  icon: IC.storeSettings,  roles: [SA, OA, SM] },
-    { id: 'organisations',  nl: 'Organisaties',           en: 'Organisations',   icon: IC.organisations,  roles: [SA] },
+    // Open to Org Admin too — the OrganisationsScreen scopes to the user's
+    // own org for non-SA via the API. This is the OA's only path today to
+    // the "+ Add store" button (Organisations → drill in → Stores tab).
+    { id: 'organisations',  nl: 'Organisatie',            en: 'Organisation',    icon: IC.organisations,  roles: [SA, OA] },
     { id: 'users',          nl: 'Gebruikers',             en: 'Users',           icon: IC.users,          roles: [SA, OA, SM] },
     // API integration keys are sensitive — HQ only (matches backend gate).
     { id: 'api-keys',       nl: 'API-sleutels',           en: 'API Keys',        icon: IC.apikeys,        roles: [SA, OA] },

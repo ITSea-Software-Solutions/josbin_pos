@@ -12,8 +12,7 @@
 - **BTW-filing surprises.** The monthly BTW report (Ch 10) is only complete if every day in the month has synced. One missing day in May means a thousand-SRD discrepancy on the June filing.
 - **"It's lost" panic.** It almost never is. The five-layer fallback (§11.7) ensures every closed day reaches HQ eventually — usually within seconds, occasionally only when someone walks the file there on a USB stick.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/11-z-reports-overview.png`._
-
+![11 z reports overview](screenshots/11-z-reports-overview.png)
 ---
 
 ## 11.1 The most important distinction in this chapter
@@ -43,8 +42,7 @@ The dashboard's **Z-Rapporten & Synchronisatie / Z-Reports & Sync** screen shows
 
 **Path:** Dashboard → left sidebar → **Z-Rapporten / Z-Reports**.
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/11-z-reports-screen.png`._
-
+![11 z reports screen](screenshots/11-z-reports-screen.png)
 Three things on this screen:
 
 1. **Stats row** (top) — four KPI cards: total Z-Reports in scope, synced, pending, failed.
@@ -176,8 +174,7 @@ For the **manager-side details** (which button, what message, what to do if the 
 
 ## 11.5 USB encrypted export — Layer 4, the offline lifeline
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/11-usb-import-panel.png`._
-
+![11 usb import panel](screenshots/11-usb-import-panel.png)
 If a store's internet has been down all day and the submit-to-HQ call cannot reach the cloud, the manager has a fallback: **export the day's data to an encrypted file, carry it to HQ on a USB stick (or send it via WhatsApp or email), and let an Org Admin upload it through this dashboard screen**.
 
 The data lands in HQ's database **exactly as if it had synced normally** — same sale IDs, same line items, same totals. The pipeline is idempotent: re-importing the same file twice imports zero duplicate rows.
@@ -208,8 +205,7 @@ The export endpoint is `GET /api/sync/export?store_id=<uuid>&from_date=YYYY-MM-D
 
 ### HQ-side import (at the Org Admin's desk)
 
-> _Screenshot placeholder: `dashboard_manual/screenshots/11-usb-import-result.png`._
-
+![11 usb import result](screenshots/11-usb-import-result.png)
 1. Dashboard → **Z-Rapporten / Z-Reports** screen.
 2. Find the **💾 USB back-up importeren / Import USB backup** panel near the top — click to expand. It's labelled *"Noodgeval • Laag 4 / Emergency • Layer 4"* in amber.
 3. Paste the offline store's **Vestiging ID (UUID)** into the field. (Get this from the offline store or from your Stores screen.)
