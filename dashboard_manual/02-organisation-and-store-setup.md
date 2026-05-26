@@ -82,6 +82,9 @@ The **Push catalogus / Push catalogue** button on the row triggers an immediate 
 
 ## 2.3 Adding stores under an Organisation
 
+![Stores screen — read-only org header, list of stores, + New store button](screenshots/02-stores-screen-oa.png)
+
+
 **The Stores screen is the OA's home for store CRUD.** Sidebar → **Vestigingen / Stores**. Visible to Super Admin, Org Admin, and Store Manager.
 
 | Who sees what |
@@ -91,6 +94,8 @@ The **Push catalogus / Push catalogue** button on the row triggers an immediate 
 | **Store Manager** — sees the same list (org-scoped). Can rename / deactivate; create depends on `stores.manage` permission (granted today). |
 
 **To add a store:**
+
+![Add store modal — name, city, address, BTW, POS type](screenshots/02-stores-add-modal.png)
 
 1. Sidebar → **Vestigingen / Stores**.
 2. Top-right → **+ Nieuwe vestiging / + New store**.

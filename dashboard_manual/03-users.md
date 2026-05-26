@@ -64,6 +64,8 @@ Tap **Gebruiker aanmaken / Create user**.
 
 ### 3.2.1 Store assignment (cashier + store_manager only)
 
+![User form with the store assignment multi-select for a cashier role](screenshots/03-user-form-store-picker.png)
+
 When you pick **Cashier** or **Store Manager** as the role, an extra **Toegewezen vestiging(en) / Assigned store(s)** panel appears below the role selector. It lists every store in the organisation as a checkbox.
 
 **Rules:**

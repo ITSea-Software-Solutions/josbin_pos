@@ -199,6 +199,9 @@ The Products table flags exempt products with a green pill in the BTW column for
 
 ## 4.8 Push catalogue — instant refresh of every POS terminal
 
+![Catalogue header — "📡 Push to all tills" beside "+ Add product"](screenshots/04-catalogue-push-button.png)
+
+
 After a bulk price change, a flurry of edits, or a CSV import — when you need every till to see the new catalogue *now* instead of waiting for the next natural refetch:
 
 **Path:** Catalogue → header → **📡 Push naar alle kassa's / Push to all tills**.
