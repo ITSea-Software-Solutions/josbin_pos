@@ -197,7 +197,31 @@ The Products table flags exempt products with a green pill in the BTW column for
 
 ---
 
-## 4.8 Bulk import — cross-reference
+## 4.8 Push catalogue — instant refresh of every POS terminal
+
+After a bulk price change, a flurry of edits, or a CSV import — when you need every till to see the new catalogue *now* instead of waiting for the next natural refetch:
+
+**Path:** Catalogue → header → **📡 Push naar alle kassa's / Push to all tills**.
+
+What happens:
+
+1. Backend broadcasts a `catalogue.refresh` event on the org's Reverb WebSocket channel.
+2. Every POS terminal in the org receives the event, invalidates its cached `pos-products` query, and refetches `/api/products/pos`.
+3. Updated prices / new products / removed items appear on screen within seconds.
+
+Button states:
+- **📡 Push to all tills** (idle)
+- **… Pushing** (in flight)
+- **✓ Sent** (green flash for 3 seconds)
+- **✗ Failed** (red flash; check Horizon for the Reverb job error)
+
+Permission: granted to `store_manager`, `organisation_admin`, and `super_admin` via the `products.create` capability. Cashiers don't see the button.
+
+> When *not* to push: small tweaks (one price change, one new product) — terminals already refetch every few minutes via TanStack Query's stale-time. The push is for the cases where waiting that long isn't acceptable.
+
+---
+
+## 4.9 Bulk import — cross-reference
 
 For loading hundreds or thousands of products at once (a typical store opening or annual price refresh):
 
@@ -209,7 +233,7 @@ This is covered in **Chapter 5 — Bulk Import (CSV / Excel)** *(coming soon)*. 
 
 ---
 
-## 4.9 AI auto-categorisation
+## 4.10 AI auto-categorisation
 
 Planned feature: when adding a new product, an AI helper would propose a likely category based on the product name (and barcode lookup against a database of common Suriname SKUs).
 
@@ -221,7 +245,7 @@ If you want a starting category for a fresh import, the cleanest current approac
 
 ---
 
-## 4.10 Quick reference
+## 4.11 Quick reference
 
 ```
 ADD PRODUCT          Catalogue → Products → + Add product → fill form → Save

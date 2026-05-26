@@ -10,6 +10,46 @@ import {
 } from '@/api/catalogue'
 import { type Organisation } from '@/api/organisations'
 import { useDashboardAuthStore } from '@/store/authStore'
+import apiClient from '@/api/client'
+
+/**
+ * Push-catalogue button: broadcasts a `catalogue.refresh` event over
+ * Reverb to every POS terminal in this organisation. Terminals invalidate
+ * their product cache and re-fetch /api/products/pos within seconds —
+ * useful after bulk imports or a flurry of price changes. Backend route:
+ * POST /api/products/push with X-Organisation-Push header.
+ */
+function PushCatalogueButton({ orgId, isNl }: { orgId: string; isNl: boolean }) {
+  const [state, setState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
+  async function push() {
+    if (!orgId || state === 'sending') return
+    setState('sending')
+    try {
+      await apiClient.post('/products/push', {}, { headers: { 'X-Organisation-Push': orgId } })
+      setState('done'); setTimeout(() => setState('idle'), 3000)
+    } catch {
+      setState('error'); setTimeout(() => setState('idle'), 3000)
+    }
+  }
+  const label = {
+    idle:    isNl ? '📡 Push naar alle kassa\'s' : '📡 Push to all tills',
+    sending: isNl ? '… Versturen'                 : '… Pushing',
+    done:    isNl ? '✓ Verstuurd'                 : '✓ Sent',
+    error:   isNl ? '✗ Mislukt'                   : '✗ Failed',
+  }[state]
+  const bg = state === 'done' ? '#f0fdf4' : state === 'error' ? '#fef2f2' : '#fff'
+  const bd = state === 'done' ? '#86efac' : state === 'error' ? '#fecaca' : '#e5e7eb'
+  const fg = state === 'done' ? '#15803d' : state === 'error' ? '#dc2626' : '#374151'
+  return (
+    <button onClick={push} disabled={!orgId || state === 'sending'}
+      title={isNl
+        ? 'Alle kassaschermen in deze organisatie verversen onmiddellijk hun productlijst.'
+        : 'Every POS terminal in this organisation refreshes its product list immediately.'}
+      style={{ padding: '10px 16px', borderRadius: 10, border: `1.5px solid ${bd}`, background: bg, color: fg, fontSize: 13, fontWeight: 700, cursor: orgId ? 'pointer' : 'not-allowed', opacity: orgId ? 1 : 0.5, whiteSpace: 'nowrap' }}>
+      {label}
+    </button>
+  )
+}
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
 
@@ -484,15 +524,18 @@ export default function CatalogueScreen() {
           </p>
         </div>
         {!noOrgSelected && (
-          <button
-            onClick={() => tab === 'products' ? (setEditProduct(undefined), setShowProductForm(true)) : (setEditCategory(undefined), setShowCategoryForm(true))}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
-            {tab === 'products'
-              ? (isNl ? 'Product toevoegen' : 'Add product')
-              : (isNl ? 'Categorie toevoegen' : 'Add category')}
-          </button>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <PushCatalogueButton orgId={effectiveOrgId ?? ''} isNl={isNl} />
+            <button
+              onClick={() => tab === 'products' ? (setEditProduct(undefined), setShowProductForm(true)) : (setEditCategory(undefined), setShowCategoryForm(true))}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              {tab === 'products'
+                ? (isNl ? 'Product toevoegen' : 'Add product')
+                : (isNl ? 'Categorie toevoegen' : 'Add category')}
+            </button>
+          </div>
         )}
       </div>
 

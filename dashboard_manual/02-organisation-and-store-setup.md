@@ -82,15 +82,26 @@ The **Push catalogus / Push catalogue** button on the row triggers an immediate 
 
 ## 2.3 Adding stores under an Organisation
 
-Once the organisation exists, add its physical locations. **Both Super Admin and Org Admin can do this** — the API allows Org Admin to manage stores within their own org.
+**The Stores screen is the OA's home for store CRUD.** Sidebar → **Vestigingen / Stores**. Visible to Super Admin, Org Admin, and Store Manager.
 
-**Path (Super Admin):** Dashboard → **Organisaties / Organisations** (left sidebar) → click the org row → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**.
+| Who sees what |
+|---|
+| **Super Admin** — sees an organisation dropdown at the top; pick the org first, then the stores list. Can create / rename / deactivate. Can also do this via Organisations → drill-in (the old SA-only flow still works). |
+| **Org Admin** — sees a read-only header strip with their organisation name + BTW number + type + locale (managed by the vendor, contact support to change), then the stores list. Can create / rename / deactivate stores up to the licence limit. |
+| **Store Manager** — sees the same list (org-scoped). Can rename / deactivate; create depends on `stores.manage` permission (granted today). |
 
-**Path (Org Admin):** Dashboard → **Mijn organisatie / My organisation** (left sidebar — they see only their own org in the list) → click their org row → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**.
+**To add a store:**
 
-> **First-time setup hint for Org Admin:** when you log in and your org has zero stores, an orange callout above the table says *"Geen vestiging aangemaakt — Tik op uw organisatie hieronder → Vestigingen → + Vestiging toevoegen"*. Click the **Open →** button on the callout to jump straight to the Stores tab. The callout disappears once you've created at least one store.
+1. Sidebar → **Vestigingen / Stores**.
+2. Top-right → **+ Nieuwe vestiging / + New store**.
+3. The modal asks for: name, city, address, default BTW (defaults to 10), POS type (`native` for Josbin Electron / Android, `external` for an API-integrated third-party POS).
+4. Click **Vestiging aanmaken / Create store**. The store appears in the list with status *Actief*.
 
-> **License limit applies.** If your licence allows 1 store and you try to create a second, the dashboard returns *"License limit reached: 1 store(s). Ask your vendor to extend the licence."* (HTTP 409 `LICENSE_STORE_LIMIT_REACHED`). The vendor can bump the limit on the License Management screen — see [Chapter 15 §15.8](15-license-management.md#158-issuing-a-new-license-super-admin-in-dashboard-path).
+**To edit deep settings later** (logo upload, receipt header/footer, BTW number on the receipt, live preview): sidebar → **Vestigingsinstellingen / Store Settings** → pick the store from the dropdown. The Stores screen footer prints this hint.
+
+> **Licence limit is enforced live.** If your licence allows 1 store and you try to create the 2nd, the modal shows *"License limit reached: 1 store(s). Ask your vendor to extend the licence."* (HTTP 409 `LICENSE_STORE_LIMIT_REACHED`). The vendor bumps the limit on License Management — see [Chapter 15 §15.8](15-license-management.md#158-issuing-a-new-license-super-admin-in-dashboard-path).
+
+> **Why the Stores screen, not Organisations?** The Org Admin owns exactly one organisation by design (if your client runs two, they get two OAs, one per org). The Organisations list view, the "+ New organisation" button and the org details editor are all Super Admin tools. OAs run the stores; the org row is managed by the vendor and is read-only.
 
 The Add Store modal asks for:
 

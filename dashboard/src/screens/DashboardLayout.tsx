@@ -20,12 +20,13 @@ const PriceOverridesScreen  = lazy(() => import('@/screens/PriceOverridesScreen'
 const DiscountRulesScreen   = lazy(() => import('@/screens/DiscountRulesScreen'))
 const StoreComparisonScreen = lazy(() => import('@/screens/StoreComparisonScreen'))
 const StoreSettingsScreen          = lazy(() => import('@/screens/StoreSettingsScreen'))
+const StoresScreen                 = lazy(() => import('@/screens/StoresScreen'))
 const CatalogueImportExportScreen  = lazy(() => import('@/screens/CatalogueImportExportScreen'))
 const MyAccountScreen              = lazy(() => import('@/screens/MyAccountScreen'))
 const PosLauncherScreen            = lazy(() => import('@/screens/PosLauncherScreen'))
 
 type Screen =
-  | 'overview' | 'store' | 'reports' | 'organisations' | 'users' | 'api-keys'
+  | 'overview' | 'store' | 'reports' | 'organisations' | 'stores' | 'users' | 'api-keys'
   | 'z-reports' | 'audit-log' | 'licenses' | 'catalogue' | 'registers'
   | 'customers' | 'stock' | 'ai-insights' | 'price-overrides' | 'discount-rules' | 'compare' | 'store-settings' | 'import-export'
   | 'my-account' | 'pos-launcher'
@@ -218,10 +219,15 @@ export default function DashboardLayout() {
     { id: 'compare',        nl: 'Vergelijking',           en: 'Comparison',      icon: IC.compare,        roles: [SA, OA] },
     { id: 'ai-insights',    nl: 'AI-inzichten',           en: 'AI Insights',     icon: IC.ai,             roles: [SA, OA, SM] },
     { id: 'store-settings', nl: 'Vestigingsinstellingen', en: 'Store Settings',  icon: IC.storeSettings,  roles: [SA, OA, SM] },
-    // Open to Org Admin too — the OrganisationsScreen scopes to the user's
-    // own org for non-SA via the API. This is the OA's only path today to
-    // the "+ Add store" button (Organisations → drill in → Stores tab).
-    { id: 'organisations',  nl: 'Organisatie',            en: 'Organisation',    icon: IC.organisations,  roles: [SA, OA] },
+    // SA-only. OA has exactly one org (by design — if a customer runs two
+    // organisations, they get two OAs, one per org), so the list view makes
+    // no sense for them and they can't edit org details anyway (created and
+    // owned by SA). OA's store actions live on the dedicated Stores nav
+    // below; org info is shown read-only there.
+    { id: 'organisations',  nl: 'Organisaties',           en: 'Organisations',   icon: IC.organisations,  roles: [SA] },
+    // Stores nav — OA + SM operate here. SA can also use it; for SA it shows
+    // stores across all orgs scoped by the dashboard's selected store/org.
+    { id: 'stores',         nl: 'Vestigingen',            en: 'Stores',          icon: IC.organisations,  roles: [SA, OA, SM] },
     { id: 'users',          nl: 'Gebruikers',             en: 'Users',           icon: IC.users,          roles: [SA, OA, SM] },
     // API integration keys are sensitive — HQ only (matches backend gate).
     { id: 'api-keys',       nl: 'API-sleutels',           en: 'API Keys',        icon: IC.apikeys,        roles: [SA, OA] },
@@ -422,6 +428,7 @@ export default function DashboardLayout() {
             {screen === 'store' && selectedStoreId && <StoreDetailScreen storeId={selectedStoreId} />}
             {screen === 'reports'       && <ReportsScreen />}
             {screen === 'organisations' && <OrganisationsScreen />}
+            {screen === 'stores'        && <StoresScreen />}
             {screen === 'users'         && <UsersScreen />}
             {screen === 'api-keys'      && <ApiKeysScreen />}
             {screen === 'z-reports'     && <ZReportScreen />}
