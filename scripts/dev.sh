@@ -87,10 +87,13 @@ case "${1:-status}" in
     echo "  Horizon (queue) http://localhost:${API_PORT}/horizon"
     echo
     echo "Demo logins:"
-    echo "  Cashier   kassa@dehoop.sr    / Cashier@2026"
-    echo "  Manager   manager@dehoop.sr  / Manager@2026"
-    echo "  Org Admin orgadmin@dehoop.sr / OrgAdmin@2026"
-    echo "  Super Admin admin@josbin-pos.sr (2FA on — use dashboard)"
+    echo "  Cashier      kassa@dehoop.sr     / Cashier@2026"
+    echo "  Manager      manager@dehoop.sr   / Manager@2026"
+    echo "  Org Admin    orgadmin@dehoop.sr  / OrgAdmin@2026"
+    echo "  Super Admin  admin@josbin-pos.sr / JosbinPOS@2026!   (2FA required — scan QR on first login)"
+    echo
+    echo "Missing Super Admin? Run:"
+    echo "  docker exec josbin_${STACK}_app php artisan db:seed --class=SuperAdminSeeder --force"
     ;;
 
   logs)

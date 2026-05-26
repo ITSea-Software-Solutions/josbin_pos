@@ -29,10 +29,14 @@ URLs once `up`:
 
 Demo logins:
 
-- Cashier: `kassa@dehoop.sr` / `Cashier@2026`
-- Manager: `manager@dehoop.sr` / `Manager@2026`
-- Org Admin: `orgadmin@dehoop.sr` / `OrgAdmin@2026`
-- Super Admin: `admin@josbin-pos.sr` (2FA enrolled — use the dashboard's 2FA flow)
+| Role | Email | Password | 2FA |
+|---|---|---|---|
+| Cashier | `kassa@dehoop.sr` | `Cashier@2026` | no |
+| Store Manager | `manager@dehoop.sr` | `Manager@2026` | no |
+| Org Admin | `orgadmin@dehoop.sr` | `OrgAdmin@2026` | no |
+| **Super Admin** | `admin@josbin-pos.sr` | `JosbinPOS@2026!` | **yes (enforced)** |
+
+> **Super Admin first login:** The Super Admin is the only account with mandatory 2FA. On first login the dashboard prompts you to scan a QR code with **Google Authenticator** (or any TOTP app); subsequent logins ask for the 6-digit code. If demo doesn't show the Super Admin, run `docker exec josbin_demo_app php artisan db:seed --class=SuperAdminSeeder --force`.
 
 The longer manual install / Docker / Electron / Android sections are below if you need them.
 
