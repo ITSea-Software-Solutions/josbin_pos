@@ -1,0 +1,60 @@
+name: Integration smoke
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'docker/**'
+      - 'docker-compose*.yml'
+      - 'scripts/smoke-test-demo.sh'
+      - '.github/workflows/integration.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'backend/**'
+      - 'docker/**'
+      - 'docker-compose*.yml'
+      - 'scripts/smoke-test-demo.sh'
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: End-to-end smoke against demo stack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot demo stack
+        run: |
+          docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml up -d --wait
+          # `--wait` blocks on healthchecks; if app/nginx aren't healthy in
+          # 60s they fail the step instead of letting smoke time out later.
+
+      - name: Wait for /api/health
+        run: |
+          for i in {1..30}; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8082/api/health || true)
+            if [ "$code" = "200" ]; then echo "healthy after ${i}s"; exit 0; fi
+            sleep 1
+          done
+          echo "API never returned 200"; docker compose -p josbin_demo logs nginx app | tail -50; exit 1
+
+      - name: Run migrations + demo seeders
+        run: |
+          docker compose -p josbin_demo exec -T app php artisan migrate --force
+          docker compose -p josbin_demo exec -T app php artisan db:seed --class=DatabaseSeeder --force
+          docker compose -p josbin_demo exec -T app php artisan db:seed --class=DemoSeeder --force
+
+      - name: Smoke test
+        run: bash scripts/smoke-test-demo.sh
+
+      - name: Tail laravel.log on failure
+        if: failure()
+        run: docker compose -p josbin_demo exec -T app sh -c 'cat storage/logs/laravel.log | tail -200' || true
+
+      - name: Bring down
+        if: always()
+        run: docker compose -p josbin_demo down -v

@@ -64,21 +64,12 @@ jobs:
         working-directory: backend
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
-      - name: Copy .env
+      - name: Point .env.testing at the CI Postgres service
         working-directory: backend
-        run: cp .env.example .env.testing
-
-      - name: Configure test environment
-        working-directory: backend
-        run: |
-          sed -i 's/DB_HOST=postgres/DB_HOST=127.0.0.1/' .env.testing
-          sed -i 's/DB_DATABASE=josbin_pos/DB_DATABASE=josbin_pos_test/' .env.testing
-          sed -i 's/REDIS_HOST=redis/REDIS_HOST=127.0.0.1/' .env.testing
-          sed -i 's/REDIS_PASSWORD=secret/REDIS_PASSWORD=/' .env.testing
-
-      - name: Generate app key
-        working-directory: backend
-        run: php artisan key:generate --env=testing
+        # backend/.env.testing assumes the demo Docker network where the
+        # DB host is "postgres". The CI Postgres service is reachable as
+        # 127.0.0.1 — patch that one line and leave everything else.
+        run: sed -i 's/^DB_HOST=postgres$/DB_HOST=127.0.0.1/' .env.testing
 
       - name: Enable pgvector
         run: psql -h 127.0.0.1 -U josbin_pos -d josbin_pos_test -c "CREATE EXTENSION IF NOT EXISTS vector;" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
