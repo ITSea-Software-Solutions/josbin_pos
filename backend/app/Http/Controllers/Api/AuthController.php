@@ -490,6 +490,10 @@ class AuthController extends Controller
             'requires_2fa'          => $user->requires2FA(),
             'two_factor_confirmed'  => $user->two_factor_confirmed_at !== null,
             'organisation_id'       => $user->organisation_id,
+            // Surface store assignment so the dashboard / POS can show the
+            // cashier / manager which stores they're scoped to. Org-scoped
+            // roles always send an empty array (they ignore the pivot).
+            'store_ids'             => $user->isOrgScopedRole() ? [] : $user->stores()->pluck('stores.id')->all(),
             'permissions'           => $user->getAllPermissions()->pluck('name'),
             'last_login_at'         => $user->last_login_at?->toIso8601String(),
         ];

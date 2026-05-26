@@ -43,6 +43,19 @@ export default function MyAccountScreen() {
           <p style={{ margin: '2px 0 0', fontSize: 13, color: '#6b7280' }}>
             {ROLE_LABEL[user.role]?.[isNl ? 'nl' : 'en'] ?? user.role}  ·  {user.email}
           </p>
+          {/* Surface the user's store scope so they (and a supervisor over
+              their shoulder) can confirm exactly where they can act. Only
+              meaningful for cashier + store_manager; org-scoped roles ignore
+              the pivot so we don't render this line for them. */}
+          {(user.role === 'cashier' || user.role === 'store_manager') && (
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#7c3aed', fontWeight: 600 }}>
+              📍 {(user.store_ids ?? []).length === 0
+                ? (isNl ? 'Toegewezen aan alle vestigingen van deze organisatie' : 'Assigned to every store in this organisation')
+                : isNl
+                  ? `Toegewezen aan ${user.store_ids!.length} vestiging${user.store_ids!.length === 1 ? '' : 'en'}`
+                  : `Assigned to ${user.store_ids!.length} store${user.store_ids!.length === 1 ? '' : 's'}`}
+            </p>
+          )}
         </div>
       </div>
 

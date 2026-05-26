@@ -68,6 +68,8 @@ Tap **Gebruiker aanmaken / Create user**.
 
 When you pick **Cashier** or **Store Manager** as the role, an extra **Toegewezen vestiging(en) / Assigned store(s)** panel appears below the role selector. It lists every store in the organisation as a checkbox.
 
+> **Where you see the result:** the Users list table shows a **Vestiging(en) / Store(s)** column for every user — single store name, "N stores" pill (hover for the full list), "All stores" badge for empty assignment, or *n/a* for org-scoped roles. Cashiers and managers also see their own scope on their **My Account** page header (*"📍 Assigned to 1 store"* etc), so they can confirm it without asking you. Edit modal pre-fills the same picker with whatever's already assigned — editing a user no longer silently wipes their pivot.
+
 **Rules:**
 
 - **Tick the specific stores** the user works at. The cashier will see only those stores on the POS store-picker, and `register-open` returns *403 STORE_NOT_ASSIGNED* if they try to open a register at any other store. The Z-Report close and refund-approval endpoints enforce the same check for store managers.

@@ -488,6 +488,9 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
     locale: user.locale as 'nl' | 'en',
     is_active: user.is_active,
     password: '',
+    // Pre-fill store assignment from the user being edited so editing
+    // doesn't silently wipe the existing pivot.
+    store_ids: user.store_ids ?? [],
   })
   const [showPassword, setShowPassword] = useState(false)
   const needsOrg = ROLES_NEED_ORG.includes(form.role)
@@ -500,6 +503,12 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
         locale: form.locale, is_active: form.is_active,
       }
       if (form.password) payload.password = form.password
+      // Only send store_ids for store-scoped roles; backend ignores it
+      // for other roles anyway, but sending it would be misleading in
+      // the audit log diff.
+      if (form.role === 'cashier' || form.role === 'store_manager') {
+        payload.store_ids = form.store_ids
+      }
       return updateUser(user.id, payload)
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['users'] }); onClose() },
@@ -566,6 +575,17 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Organisatie' : 'Organisation'}</label>
               <OrgSelect value={form.organisation_id ?? ''} onChange={(v) => set('organisation_id', v || null)} orgs={orgs} isNl={isNl} />
             </div>
+          )}
+
+          {/* Store assignment — same picker as create form, pre-filled */}
+          {(form.role === 'cashier' || form.role === 'store_manager') && (
+            <StoreAssignmentPicker
+              orgId={form.organisation_id ?? currentUser?.organisation_id ?? null}
+              value={form.store_ids}
+              onChange={(ids) => set('store_ids', ids)}
+              isNl={isNl}
+              role={form.role}
+            />
           )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
@@ -800,6 +820,14 @@ export default function UsersScreen() {
   // Build a map of org id → org name for display in the table
   const orgMap = Object.fromEntries(orgs.map((o) => [o.id, o.name]))
 
+  // Build a store-id → store-name map for the Stores column. For non-SA the
+  // /api/stores list is already org-scoped, so this is a single cheap fetch.
+  const { data: allStores = [] } = useQuery({
+    queryKey: ['stores-for-users-table'],
+    queryFn: () => import('@/api/stores').then((m) => m.getStores()),
+  })
+  const storeMap = Object.fromEntries((allStores as Array<{ id: string; name: string }>).map((s) => [s.id, s.name]))
+
   const active  = users?.filter((u) => u.is_active).length ?? 0
   const with2fa = users?.filter((u) => u.two_factor_enabled).length ?? 0
   const total   = users?.length ?? 0
@@ -881,6 +909,7 @@ export default function UsersScreen() {
                   isNl ? 'Gebruiker' : 'User',
                   isNl ? 'E-mailadres' : 'Email',
                   isNl ? 'Rol' : 'Role',
+                  isNl ? 'Vestiging(en)' : 'Store(s)',
                   '2FA',
                   isNl ? 'Laatste login' : 'Last login',
                   isNl ? 'Status' : 'Status',
@@ -919,6 +948,30 @@ export default function UsersScreen() {
                   {/* Role */}
                   <td style={{ padding: '14px 20px' }}>
                     <RoleBadge role={user.role} isNl={isNl} />
+                  </td>
+                  {/* Store assignment — only meaningful for cashier + store_manager.
+                      Empty store_ids for those roles = "all stores in org" per the
+                      backfill rule; surface that explicitly instead of a blank cell
+                      so the table answers "who can act where" at a glance. */}
+                  <td style={{ padding: '14px 20px', fontSize: 12 }}>
+                    {(user.role === 'cashier' || user.role === 'store_manager') ? (
+                      (user.store_ids ?? []).length === 0 ? (
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: '#eef2ff', color: '#4338ca', fontWeight: 700 }}>
+                          {isNl ? 'Alle vestigingen' : 'All stores'}
+                        </span>
+                      ) : user.store_ids!.length === 1 ? (
+                        <span style={{ color: '#374151', fontWeight: 600 }}>
+                          {storeMap[user.store_ids![0]] ?? user.store_ids![0].slice(0, 8) + '…'}
+                        </span>
+                      ) : (
+                        <span title={user.store_ids!.map((id) => storeMap[id] ?? id).join(', ')}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: '#f3f4f6', color: '#374151', fontWeight: 700 }}>
+                          {user.store_ids!.length} {isNl ? 'vestigingen' : 'stores'}
+                        </span>
+                      )
+                    ) : (
+                      <span style={{ color: '#d1d5db', fontSize: 11.5 }}>{isNl ? 'n.v.t.' : 'n/a'}</span>
+                    )}
                   </td>
                   {/* 2FA */}
                   <td style={{ padding: '14px 20px' }}>
@@ -978,7 +1031,7 @@ export default function UsersScreen() {
               ))}
               {(users ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={7} style={{ padding: '60px 24px', textAlign: 'center' }}>
+                  <td colSpan={8} style={{ padding: '60px 24px', textAlign: 'center' }}>
                     <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
                     <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280' }}>
                       {isNl ? 'Geen gebruikers gevonden' : 'No users found'}

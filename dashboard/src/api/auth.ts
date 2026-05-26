@@ -9,6 +9,10 @@ export interface DashboardUser {
   organisation_id: string
   requires_2fa: boolean
   two_factor_confirmed: boolean
+  /** Stores the user is explicitly assigned to. Empty array = "all stores
+   *  in the org" (the backfill rule), and is always empty for org-scoped
+   *  roles (SA, OA, auditor, api_integration) — they ignore the pivot. */
+  store_ids?: string[]
 }
 
 export interface LoginResponse {
