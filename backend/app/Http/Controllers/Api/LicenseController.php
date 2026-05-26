@@ -47,9 +47,20 @@ class LicenseController extends Controller
         }
 
         $licenses = $query->get()->map(function ($lic) {
-            $daysLeft = now()->diffInDays(now()->parse($lic->valid_until), false);
+            // Whole days only — Carbon 3 returns a float by default which
+            // surfaced as "364.7965745746412 days left" in the UI.
+            $daysLeft = (int) floor(
+                now()->startOfDay()->diffInDays(now()->parse($lic->valid_until)->startOfDay(), false)
+            );
+            // Human-readable reference for SA to share with the client.
+            // The hash itself is one-way; this is a deterministic short
+            // identifier they can quote in an email or WhatsApp message.
+            $reference = 'JBN-' . strtoupper(substr(str_replace('-', '', $lic->id), 0, 4) . '-'
+                                            . substr(str_replace('-', '', $lic->id), 4, 4) . '-'
+                                            . substr(str_replace('-', '', $lic->id), 8, 4));
             return [
                 'id'                  => $lic->id,
+                'reference'           => $reference,
                 'organisation_id'     => $lic->organisation_id,
                 'organisation_name'   => $lic->organisation_name,
                 'tier'                => $lic->tier,
@@ -59,6 +70,7 @@ class LicenseController extends Controller
                 'valid_until'         => $lic->valid_until,
                 'days_remaining'      => $daysLeft,
                 'is_active'           => (bool) $lic->is_active,
+                'issued_at'           => $lic->created_at,
                 'last_validated_at'   => $lic->last_validated_at,
                 'grace_period_ends_at'=> $lic->grace_period_ends_at,
                 'renewal_status'      => $lic->renewal_status,

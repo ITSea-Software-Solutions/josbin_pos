@@ -8,6 +8,8 @@ import { getOrganisations, type Organisation } from '@/api/organisations'
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface License {
   id: string
+  /** Human-readable reference for sharing with the customer, e.g. JBN-3196-69C7-A119. */
+  reference: string
   organisation_id: string
   organisation_name: string
   tier: 'standard' | 'professional' | 'enterprise'
@@ -15,12 +17,43 @@ interface License {
   max_terminals: number
   valid_from: string
   valid_until: string
+  /** Integer days remaining; negative when expired. */
   days_remaining: number
   is_active: boolean
+  issued_at: string | null
   last_validated_at: string | null
   grace_period_ends_at: string | null
   renewal_status: string | null
   urgency: 'ok' | 'medium' | 'high' | 'critical'
+}
+
+/** Compose a printable / emailable certificate text. */
+function buildLicenseSummary(lic: License, isNl: boolean): string {
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString(isNl ? 'nl-NL' : 'en-GB') : '—'
+  return [
+    isNl ? 'Josbin POS — Licentiecertificaat' : 'Josbin POS — License Certificate',
+    '═════════════════════════════════════════',
+    '',
+    `${isNl ? 'Referentie'      : 'Reference'      }:  ${lic.reference}`,
+    `${isNl ? 'Organisatie'     : 'Organisation'   }:  ${lic.organisation_name}`,
+    `${isNl ? 'Tier'            : 'Tier'           }:  ${lic.tier}`,
+    `${isNl ? 'Max. vestigingen': 'Max. stores'    }:  ${lic.max_stores}`,
+    `${isNl ? 'Max. terminals'  : 'Max. terminals' }:  ${lic.max_terminals}`,
+    `${isNl ? 'Geldig vanaf'    : 'Valid from'     }:  ${fmt(lic.valid_from)}`,
+    `${isNl ? 'Geldig tot'      : 'Valid until'    }:  ${fmt(lic.valid_until)}`,
+    `${isNl ? 'Status'          : 'Status'         }:  ${lic.is_active ? (isNl ? 'Actief' : 'Active') : (isNl ? 'Geannuleerd' : 'Cancelled')}`,
+    lic.issued_at ? `${isNl ? 'Uitgegeven op' : 'Issued on'}:  ${fmt(lic.issued_at)}` : '',
+    '',
+    isNl
+      ? 'Quote dit referentienummer in alle communicatie met Josbin POS support.'
+      : 'Quote this reference number in all communication with Josbin POS support.',
+  ].filter(Boolean).join('\n')
+}
+
+function buildEmailSubject(lic: License, isNl: boolean): string {
+  return isNl
+    ? `Uw Josbin POS licentie — ${lic.reference}`
+    : `Your Josbin POS license — ${lic.reference}`
 }
 
 async function getLicenses(): Promise<License[]> {
@@ -91,14 +124,16 @@ function TierBadge({ tier }: { tier: string }) {
 }
 
 function DaysGauge({ days, isNl }: { days: number; isNl: boolean }) {
-  const expired = days < 0
-  const color = expired ? '#dc2626' : days <= 14 ? '#ea580c' : days <= 30 ? '#d97706' : '#16a34a'
-  const bg    = expired ? '#fef2f2' : days <= 14 ? '#fff7ed' : days <= 30 ? '#fffbeb' : '#f0fdf4'
+  // Always render whole days even if the API ever sneaks in a float again.
+  const n = Math.round(days)
+  const expired = n < 0
+  const color = expired ? '#dc2626' : n <= 14 ? '#ea580c' : n <= 30 ? '#d97706' : '#16a34a'
+  const bg    = expired ? '#fef2f2' : n <= 14 ? '#fff7ed' : n <= 30 ? '#fffbeb' : '#f0fdf4'
   return (
     <span style={{ fontWeight: 800, fontSize: 15, color, background: bg, padding: '3px 10px', borderRadius: 8, whiteSpace: 'nowrap' as const }}>
       {expired
-        ? `−${Math.abs(days)} ${isNl ? 'dag.' : 'days'}`
-        : `${days} ${isNl ? 'dag.' : 'days'}`}
+        ? `−${Math.abs(n)} ${isNl ? 'dag.' : 'days'}`
+        : `${n} ${isNl ? 'dag.' : 'days'}`}
     </span>
   )
 }
@@ -365,6 +400,32 @@ export default function LicenseScreen() {
   const [renewTarget, setRenewTarget] = useState<License | null>(null)
   const [formTarget, setFormTarget] = useState<License | 'new' | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<License | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  async function copyLicense(lic: License) {
+    const txt = buildLicenseSummary(lic, isNl)
+    try {
+      await navigator.clipboard.writeText(txt)
+      setCopiedId(lic.id)
+      setTimeout(() => setCopiedId((curr) => (curr === lic.id ? null : curr)), 1600)
+    } catch {
+      // Older browsers / non-https — fall back to a hidden textarea select.
+      const ta = document.createElement('textarea')
+      ta.value = txt; ta.style.position = 'fixed'; ta.style.top = '-1000px'
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopiedId(lic.id)
+      setTimeout(() => setCopiedId((curr) => (curr === lic.id ? null : curr)), 1600)
+    }
+  }
+
+  function emailLicense(lic: License) {
+    const subject = encodeURIComponent(buildEmailSubject(lic, isNl))
+    const body    = encodeURIComponent(buildLicenseSummary(lic, isNl))
+    // mailto: opens the OS mail client — works without any backend mail config.
+    // For server-side sending (BCC vendor, log to audit) wire a Mailable later.
+    window.location.href = `mailto:?subject=${subject}&body=${body}`
+  }
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => deleteLicense(id),
@@ -512,7 +573,14 @@ export default function LicenseScreen() {
                         <OrgAvatar name={lic.organisation_name} />
                         <div>
                           <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{lic.organisation_name}</div>
-                          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>{lic.id.slice(0, 8)}…</div>
+                          <div style={{ fontSize: 11.5, color: '#7c3aed', marginTop: 2, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600, letterSpacing: '0.3px' }}>
+                            {lic.reference}
+                          </div>
+                          {lic.issued_at && (
+                            <div style={{ fontSize: 10.5, color: '#9090a0', marginTop: 1 }}>
+                              {isNl ? 'Uitgegeven' : 'Issued'}: {new Date(lic.issued_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-GB')}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -561,7 +629,17 @@ export default function LicenseScreen() {
                       )}
                     </td>
                     <td style={{ padding: '14px 20px' }}>
-                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                        <button onClick={() => copyLicense(lic)}
+                          title={isNl ? 'Kopieer licentiecertificaat' : 'Copy license certificate'}
+                          style={{ height: 28, padding: '0 10px', borderRadius: 6, border: '1px solid ' + (copiedId === lic.id ? '#86efac' : '#e5e7eb'), background: copiedId === lic.id ? '#f0fdf4' : '#f9f9f9', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: copiedId === lic.id ? '#15803d' : '#374151', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          {copiedId === lic.id ? (isNl ? '✓ Gekopieerd' : '✓ Copied') : (isNl ? '⧉ Kopiëren' : '⧉ Copy')}
+                        </button>
+                        <button onClick={() => emailLicense(lic)}
+                          title={isNl ? 'Per e-mail naar klant verzenden' : 'Email to customer'}
+                          style={{ height: 28, padding: '0 10px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: '#374151', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          ✉ {isNl ? 'E-mail' : 'Email'}
+                        </button>
                         {lic.renewal_status !== 'renewal_pending' && lic.urgency !== 'ok' && (
                           <button onClick={() => setRenewTarget(lic)}
                             style={{ padding: '6px 12px', borderRadius: 8, background: lic.urgency === 'critical' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
