@@ -615,7 +615,10 @@ graph TB
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
 <script>
   mermaid.initialize({
-    startOnLoad: true,
+    // Don't auto-render at load — diagrams in hidden tabs (display:none)
+    // measure as 0×0 and render blank. We render each tab's diagrams the
+    // first time the tab becomes visible; see `showTab()` below.
+    startOnLoad: false,
     theme: 'dark',
     themeVariables: {
       darkMode: true,
@@ -639,19 +642,38 @@ graph TB
   // Tabs
   const tabs    = document.querySelectorAll('nav.tabs button');
   const panels  = document.querySelectorAll('section.tab');
-  tabs.forEach(btn => btn.addEventListener('click', () => {
-    const id = btn.dataset.tab;
-    tabs.forEach(b => b.classList.toggle('active', b === btn));
+  const rendered = new Set();   // tab ids we've already mermaid.run'd
+
+  async function showTab(id, fromUserClick = true) {
+    tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === id));
     panels.forEach(p => p.classList.toggle('active', p.id === id));
-    history.replaceState(null, '', '#' + id);
-    // Mermaid lazily renders only visible — force a render of the newly visible diagrams
-    requestAnimationFrame(() => mermaid.run({ querySelector: '#' + id + ' .mermaid' }).catch(() => {}));
-  }));
-  // Deep-link via hash
-  if (location.hash) {
-    const target = document.querySelector('nav.tabs button[data-tab="' + location.hash.slice(1) + '"]');
-    if (target) target.click();
+    if (fromUserClick) history.replaceState(null, '', '#' + id);
+    if (rendered.has(id)) return;
+    // Wait one frame so the panel is actually visible / measurable.
+    await new Promise(r => requestAnimationFrame(r));
+    const nodes = document.querySelectorAll('#' + id + ' .mermaid:not([data-processed="true"])');
+    if (!nodes.length) { rendered.add(id); return; }
+    try {
+      await mermaid.run({ nodes: Array.from(nodes) });
+      rendered.add(id);
+    } catch (err) {
+      console.error('mermaid render failed for tab', id, err);
+    }
   }
+
+  tabs.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
+
+  // Initial render — either the hash-linked tab or "overview".
+  const initial = location.hash && document.querySelector('nav.tabs button[data-tab="' + location.hash.slice(1) + '"]')
+    ? location.hash.slice(1)
+    : 'overview';
+  showTab(initial, false);
+
+  // Re-render if the user changes the hash without a click (back/forward).
+  window.addEventListener('hashchange', () => {
+    const id = location.hash.slice(1);
+    if (id && document.querySelector('section.tab#' + id)) showTab(id, false);
+  });
 </script>
 
 </body>
