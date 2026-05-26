@@ -152,6 +152,41 @@ Managers can configure default BTW settings:
 | Cash drawer pin | Pin 2 | Change to Pin 5 if drawer doesn't open |
 | Language | Nederlands | Per-user setting |
 | Date format | DD-MM-YYYY | Per-user setting |
+| Auto-launch on system boot | Off | Manager+ — see §13.8 |
+| Close + Restart buttons | (Manager+) | Visible only to Store Manager and above |
+
+---
+
+## 13.8 System (manager / store manager only)
+
+The **System** tab in Settings is hidden from cashier accounts. It shows three controls that belong to the manager who's responsible for the terminal:
+
+### Auto-launch on system boot
+
+A toggle (off by default). When on, Josbin POS opens automatically when the Windows machine boots — so the terminal is ready for the morning shift without anyone touching the keyboard.
+
+- **Turn it on for terminals that should "just work" every morning** — typical for cash desks
+- **Leave it off for back-office machines** — a manager's PC that also runs other software shouldn't auto-launch a full-screen POS
+
+This is per-device (lives in the Windows startup folder via the Electron app). Toggling it off requires Josbin POS to be running once to remove the entry; otherwise delete it manually from Windows: `Win+R` → `shell:startup` → delete the Josbin POS shortcut.
+
+### Restart app
+
+A button (Manager+ only). Closes the Electron window and re-opens it. Used when:
+
+- The catalogue won't refresh and you want a clean reload
+- The terminal has been running for days and feels sluggish
+- After a manual update where you want to be sure the new code is loaded
+
+> **Restart does NOT log you out.** Your session continues — when the new window opens you're still on the same screen, same store, same register session.
+
+### Close app
+
+A button (Manager+ only). Closes Josbin POS completely (Electron quits). Use at end of day or for maintenance.
+
+> **Closing during an open register?** You'll get a warning. Close your register first (Chapter 3 §3.5) or the next opener won't be able to start a new session on the same register.
+
+Both Close + Restart are manager-gated because a cashier accidentally tapping them mid-line would lose state. The cashier sees no buttons here at all.
 
 ---
 

@@ -41,14 +41,17 @@ The login screen asks for your **email address** and **password**.
 
 ## 1.3 Selecting your store
 
-After login, you see the **Store Selection** screen listing every store your account has access to.
+Cashiers and Store Managers are pinned to **one store** by the administrator who created their account. Right after login the system auto-routes you straight to that store's Open Register screen — the picker screen below is skipped entirely. This is the expected behaviour.
 
 ![Store selection screen](screenshots/01-store-select.png)
 
-1. Tap or click the name of your store.
-2. The main POS screen opens immediately.
+You only ever see this Store Selection screen if:
+- You're an Organisation Admin or Super Admin (org-scoped roles see every store), **or**
+- Your account is missing its store assignment (a setup error — ask your administrator to assign you to a store).
 
-> If you only have access to one store, the system may skip this screen and go straight to the POS.
+If you do see it: tap or click the name of your store. The main POS screen opens immediately.
+
+> **Need to work in two shops?** Ask your administrator to create a **second account** for the other store. One person can have one account per store; you can't switch a single account between stores.
 
 ---
 
@@ -100,6 +103,24 @@ Josbin POS is fully bilingual — Dutch and English.
 3. The language preference is saved per user. The next time you log in, it will remember your choice.
 
 Receipts are printed in whichever language is active at the time of the sale.
+
+---
+
+## 1.5a What if I see a yellow / amber / red license banner?
+
+You may occasionally see a coloured banner across the top of the dashboard when your shop logs in. It belongs to the **store's Josbin POS license**, not to you personally. What each colour means:
+
+| Banner | Stage | What's happening | What you do |
+|---|---|---|---|
+| 🟢 None | License is active and has > 30 days left | Normal operation | Nothing |
+| 🟡 Yellow ("30 days remaining") | License expires in less than 30 days | Manager gets a daily email reminder. POS works normally. | Mention it to the manager once; otherwise ignore |
+| 🟠 Amber ("14 days remaining") | License expires within 14 days | Manager gets daily emails. POS works normally. | Mention it to the manager today |
+| 🔴 Red ("Grace period") | License expired but the 14-day grace period is running | Full POS works, but the manager should renew now | Tell the manager immediately at the start of your shift |
+| 🔴 Red ("Sales blocked") | Grace period expired — POS is in soft-lock | **You cannot complete new sales** until the license is renewed. Existing data, reports, and exports still work. | Stop ringing sales. Call the manager. They contact Josbin (support@josbin-pos.sr or +597 471-0000). |
+
+> **Why this exists:** Suriname is far from the vendor's office. Network or payment delays could lock a shop out of selling for legitimate reasons. The 30 → 14 → grace → soft-lock timeline gives the manager four warnings + 28 days of "you can still sell" before any blocking happens. By the time you ever see "Sales blocked" as a cashier, the manager has had a month of yellow + amber + red warnings — not your fault, not your fix.
+
+For the full license lifecycle (manager-side actions, renewal flow) see [dashboard manual ch 15](../dashboard_manual/15-license-management.md).
 
 ---
 

@@ -19,6 +19,7 @@ Each chapter covers one part of the system. Read them in order if you are new, o
 | 3 | [Your Register — Open, Close, Reopen](03-register.md) | Cashier, Manager |
 | 4 | [Making a Sale](04-making-a-sale.md) | Cashier, Manager |
 | 5 | [Taking Payment](05-payment.md) | Cashier, Manager |
+| 5a | [Refunds and Voids](05a-refunds-and-voids.md) | Manager (cashier with approval) |
 | 6 | [Receipts — Print, PDF, Email](06-receipts.md) | Cashier, Manager |
 | 7 | [Customers](07-customers.md) | Cashier, Manager |
 | 8 | [Discounts](08-discounts.md) | Cashier, Manager |

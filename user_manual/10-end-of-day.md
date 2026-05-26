@@ -114,14 +114,29 @@ Below the cash reconciliation section, a history table shows the last 7 closed d
 
 ## 10.6 What to do if sync fails (status = Failed or Pending)
 
-The system has automatic retry. It will try again at 1 min → 5 min → 15 min → 30 min intervals.
+Josbin POS has **five layers of sync** so a day's data is never trapped on a single terminal. You don't have to memorise them — but knowing they exist explains why "Failed" usually fixes itself.
 
-If it still shows Failed after 30 minutes:
+**Layer 1 — real-time:** every sale you ring tries to push to the cloud within seconds. Quiet success, no UI noise.
 
-**Option A — Wait for internet to restore:**
-The system retries automatically. When internet returns, it will sync.
+**Layer 2 — auto retry on a schedule:** if Layer 1 fails (internet drop), the system retries the failed batch at **1 minute → 5 minutes → 15 minutes → 30 minutes**. You don't do anything — the yellow "Sync pending — N transactions queued" indicator on your manager screen tells you it's working through the backlog.
 
-**Option B — Export to USB and deliver manually:**
+**Layer 3 — forced retry on Z-Report close:** when you tap **Submit to Headquarters**, the system attempts the sync *right now*, with all queued days, in chronological order. This is the deliberate "I want this to land NOW" path. The button works even if Layer 2 has been quietly retrying — you're telling it to try once more, immediately.
+
+**Layer 4 — USB encrypted export:** if Layers 1–3 all fail (extended outage, dongle dead), use the manual export path below. AES-256 encrypted file, safe to send via email or WhatsApp.
+
+**Layer 5 — catch-up on internet restore:** the local server pings the cloud every 60 seconds. As soon as the internet comes back, **all queued days sync automatically in chronological order**, with each marked "synced late" in the audit log + sync timestamp. You don't have to re-tap anything; you'll see the row colour flip from yellow to green on its own.
+
+### What you should actually do
+
+**If status = Pending:** ignore it for 30 minutes. Layer 2 is retrying. If still pending after that, check the internet connection — restoring it triggers Layer 5 automatically.
+
+**If status = Failed (after 30+ min):**
+
+**Option A — Tap Submit to Headquarters again:** Layer 3 forced retry. Often works because Layer 2 has been quietly fixing the backlog and only the most recent submission stayed red.
+
+**Option B — Wait for internet to restore:** Layer 5 picks it up automatically when connectivity returns.
+
+**Option C — Export to USB and deliver manually (Layer 4):**
 1. In the history table, find the day with the failed sync.
 2. Click the **💾 .josbin_pos** button on that row.
 3. A `.josbin_pos` file downloads to your computer.
@@ -130,6 +145,8 @@ The system retries automatically. When internet returns, it will sync.
 6. Head office uploads the file in the Super Admin Dashboard.
 
 > **Important:** The `.josbin_pos` file is encrypted (AES-256). It is safe to send via email or WhatsApp.
+
+> **Did you know:** discrepancy notes you typed during cash reconciliation are visible to your manager in the audit log — even if the day's sync to HQ is delayed. So "I'll explain this discrepancy when I get back to head office" already happened; the note is already there. Type carefully.
 
 ---
 

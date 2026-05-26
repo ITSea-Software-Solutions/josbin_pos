@@ -140,6 +140,8 @@ Total       |        SRD 3,159.27  |     SRD 284.73
 - **BTW-exempt** row — basic foods, medicine, and other exempt products
 - The BTW amount in the 10% row is what must be declared to Belastingdienst
 
+> **Where's the formal "BTW report" / submission?** The POS does not have a BTW filing tab — that workflow lives on the dashboard, accessed by your manager / Org Admin. The per-day BTW totals YOU see in the breakdown table above are the same numbers that get filed; the dashboard adds a formal **Submit to Belastingdienst** action with audit-grade tracking + accept/dispute by the tax inspector. Full workflow: [dashboard manual ch 20 — BTW Submissions to Belastingdienst Suriname](../dashboard_manual/20-btw-submissions-belastingdienst.md). The per-store BTW *breakdown* used by your manager during a filing is in [dashboard manual ch 10 §10.4](../dashboard_manual/10-reports.md).
+
 ---
 
 ## Common questions about reports

@@ -82,6 +82,37 @@ All discounts are shown separately on the receipt:
 - Sale discount appears below the subtotal
 - The BTW is calculated on the discounted price (as required by law)
 
+### Worked example — discount-then-BTW order
+
+Belastingdienst Suriname requires BTW to be extracted **after** discounts are applied (not before). Here's exactly how that works in Josbin POS:
+
+```
+Cart:
+  Rice 5kg            SRD 38.50    (10% BTW)
+  Coca-Cola 1.5L      SRD 7.50     (10% BTW)
+                      ─────────
+  Subtotal            SRD 46.00    (tax-inclusive prices)
+
+Cashier applies 10% sale discount:
+  Discount            -SRD 4.60    (10% of 46.00)
+                      ─────────
+  After discount      SRD 41.40
+
+BTW extracted from the discounted total:
+  BTW (10%)            SRD 3.76    (= 41.40 - 41.40/1.10)
+  Net (excl. BTW)      SRD 37.64
+                      ─────────
+  Total to pay         SRD 41.40
+```
+
+Three things to notice:
+
+1. The **customer's price didn't change** between "after discount" and "Total to pay" — those are the same number. The BTW line is a *breakdown* of the SRD 41.40, not an addition on top.
+2. The BTW amount (SRD 3.76) is **less than 10% of the un-discounted subtotal** (SRD 4.60). That's correct — the discount reduces both the net price AND the BTW proportionally.
+3. The opposite order (BTW first, then discount) would **over-tax** the customer by SRD 0.84 on this single sale. Multiplied across a day's transactions, that's real money — and it's not legal under Surinamese BTW rules.
+
+The receipt prints all three numbers: subtotal, discount, BTW. The customer can verify the math.
+
 ---
 
 ## Common questions about discounts

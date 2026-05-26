@@ -114,6 +114,27 @@ These numbers update instantly after each completed sale.
 
 ---
 
+## 4.6a Low-stock and out-of-stock badges on the product grid
+
+When a product's stock at your store falls below its **low-stock threshold** (set per product by your manager), a small badge appears on the product tile:
+
+| Badge | Meaning | Can you still sell it? |
+|---|---|---|
+| 🟡 **LOW** | Stock is at or below the threshold (e.g. 5 left, threshold 5) | Yes — but warn the manager so they can reorder |
+| 🔴 **OUT** | Zero stock recorded at your store | Yes — but flag it; either the catalogue is wrong or the product is genuinely empty |
+
+The badges are **informational** — they don't block the sale. You can ring up a product even when it shows OUT, because:
+
+- The number in the system may not match the shelf (a delivery hasn't been logged yet).
+- The customer is holding the product, so it clearly exists.
+- Blocking would break the customer experience for an inventory-data problem.
+
+> **What the manager sees:** the dashboard's Stock screen lists every product currently LOW or OUT across the store, so they can act on shortages without waiting for a cashier to mention it. Reach out to your manager if you see a lot of red badges in one category — that's usually a missed delivery log.
+
+**Multi-store note:** the badge shows stock at **your store only**. A product that's OUT at your shop may have plenty in stock at the neighbouring branch. If you frequently need to send customers to the other branch, ask your manager to set up a per-store stock alert.
+
+---
+
 ## 4.6 What happens if a product is not found?
 
 If a barcode or search returns no result:

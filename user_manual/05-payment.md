@@ -2,6 +2,19 @@
 
 Once all products are in the cart, this chapter shows you how to complete the sale.
 
+**Payment methods available** (three standard at the top, three more under **More payment methods… / Meer betaalwijzen** for less-common situations):
+
+| Method | When to use | Cash drawer opens? |
+|---|---|---|
+| 💵 **Cash / Contant** | Customer pays in SRD cash | ✅ Yes |
+| 💳 **Card / PIN / Pin/Card** | Customer pays via external bank PIN terminal | ❌ No |
+| 🔀 **Mixed / Gemengd** | Part cash + part card | ✅ Yes (for cash portion) |
+| 🏦 **Bank transfer / Overschrijving** | B2B / government — customer transfers to your bank account; OA confirms when funds land | ❌ No (sale marked "awaiting confirmation") |
+| 📱 **Mobile transfer / Mobiel bankieren** | DSB Mobiel, Hakrinbank Online, Republic Mobile, etc. — customer pays via their banking app | ❌ No (same lifecycle as bank transfer) |
+| 💱 **Foreign cash / Vreemde valuta** | Customer pays in USD or EUR — system locks today's rate and shows both amounts on the receipt | ✅ Yes |
+
+> **About card reconciliation** (the optional fields after Card / PIN): if you fill in the bank name + approval code + last 4 digits from the customer's terminal slip, the OA can match daily card sales against the bank's settlement statement on the dashboard. **Skip & complete / Overslaan & afronden** is fine if the slip isn't out yet — the sale completes either way. Same for bank/mobile transfers — provider + reference are required so OA can find the funds when they land.
+
 ---
 
 ## 5.1 Opening the payment screen
