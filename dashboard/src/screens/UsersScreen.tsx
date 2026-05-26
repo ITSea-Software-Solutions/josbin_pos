@@ -93,13 +93,14 @@ function Avatar({ name }: { name: string }) {
 }
 
 // ─── StoreAssignmentPicker ───────────────────────────────────────────────────
-// Multi-select of stores under an org. Empty selection = "all stores in org"
-// (matches backend backfill semantics). Only meaningful for cashier +
-// store_manager — other roles are org-scoped so the picker is hidden.
+// Single-store picker. A user belongs to exactly one store (product decision —
+// no "floating cashiers", no "all stores in org" implicit grant). Required for
+// cashier + store_manager; hidden for every other role. Backend validates the
+// selection with StoreBelongsToOrg.
 function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
   orgId: string | null
-  value: string[]
-  onChange: (ids: string[]) => void
+  value: string | null
+  onChange: (id: string | null) => void
   isNl: boolean
   role: string
 }) {
@@ -109,10 +110,6 @@ function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
     enabled: !!orgId,
   })
 
-  function toggle(id: string) {
-    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
-  }
-
   if (!orgId) {
     return (
       <div style={{ padding: '10px 12px', background: '#f9fafb', border: '1px dashed #e5e7eb', borderRadius: 8, fontSize: 12, color: '#9090a0' }}>
@@ -121,36 +118,44 @@ function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
     )
   }
 
-  const noneSelected = value.length === 0
-  const allLabel = role === 'cashier'
-    ? (isNl ? 'Kassamedewerker kan elke kassa in deze organisatie openen.' : 'Cashier can open any register in this organisation.')
-    : (isNl ? 'Beheerder kan elke vestiging in deze organisatie beheren.' : 'Manager can manage every store in this organisation.')
+  const chevron = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090a0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
+
+  const helpText = role === 'cashier'
+    ? (isNl ? 'Kassamedewerker werkt op één vestiging — selecteer welke.' : 'Cashier works at one store — pick which one.')
+    : (isNl ? 'Winkelbeheerder beheert één vestiging — selecteer welke.' : 'Store manager runs one store — pick which one.')
 
   return (
     <div>
       <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-        {isNl ? 'Toegewezen vestiging(en)' : 'Assigned store(s)'}
+        {isNl ? 'Toegewezen vestiging' : 'Assigned store'} *
       </label>
-      <div style={{ border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', maxHeight: 180, overflowY: 'auto', background: '#fff' }}>
-        {isLoading ? (
-          <div style={{ fontSize: 12, color: '#9090a0' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
-        ) : stores.length === 0 ? (
-          <div style={{ fontSize: 12, color: '#9090a0' }}>
-            {isNl ? 'Deze organisatie heeft nog geen vestigingen — voeg er een toe via Vestigingen.' : 'This organisation has no stores yet — add one via Stores.'}
-          </div>
-        ) : (
-          stores.map((s) => (
-            <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', fontSize: 13, color: '#1c1c2e', cursor: 'pointer' }}>
-              <input type="checkbox" checked={value.includes(s.id)} onChange={() => toggle(s.id)} />
-              <span style={{ flex: 1 }}>{s.name}</span>
-              <span style={{ fontSize: 11, color: '#9090a0' }}>{s.city || ''}</span>
-            </label>
-          ))
-        )}
-      </div>
-      <p style={{ fontSize: 11.5, color: noneSelected ? '#7c3aed' : '#9090a0', marginTop: 5 }}>
-        {noneSelected ? `ℹ️ ${isNl ? 'Niets aangevinkt = alle vestigingen.' : 'Nothing ticked = all stores.'} ${allLabel}` :
-          isNl ? `Toegang tot ${value.length} vestiging${value.length === 1 ? '' : 'en'}.` : `Access to ${value.length} store${value.length === 1 ? '' : 's'}.`}
+      {isLoading ? (
+        <div style={{ padding: '10px 12px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 12, color: '#9090a0', background: '#fff' }}>
+          {isNl ? 'Vestigingen laden…' : 'Loading stores…'}
+        </div>
+      ) : stores.length === 0 ? (
+        <div style={{ padding: '10px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 10, fontSize: 12, color: '#92400e' }}>
+          {isNl
+            ? '⚠️ Deze organisatie heeft nog geen vestigingen. Maak eerst een vestiging aan onder Vestigingen.'
+            : '⚠️ This organisation has no stores yet. Create one via Stores first.'}
+        </div>
+      ) : (
+        <select
+          value={value ?? ''}
+          onChange={(e) => onChange(e.target.value || null)}
+          style={{ ...inputSt, appearance: 'none', backgroundImage: chevron, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 36, cursor: 'pointer' }}
+          onFocus={focusIn} onBlur={focusOut}
+        >
+          <option value="">{isNl ? '— Selecteer vestiging —' : '— Select store —'}</option>
+          {stores.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}{s.city ? ` · ${s.city}` : ''}
+            </option>
+          ))}
+        </select>
+      )}
+      <p style={{ fontSize: 11.5, color: '#9090a0', marginTop: 5 }}>
+        {helpText} {isNl ? 'Eén gebruiker, één vestiging.' : 'One user, one store.'}
       </p>
     </div>
   )
@@ -269,10 +274,14 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
     setForm((p) => ({ ...p, [field]: value }))
   }
 
+  const isStoreScoped = form.role === 'cashier' || form.role === 'store_manager'
   const canSubmit = !!form.name && !!form.email && !!form.password &&
     // Org is required ONLY for Super Admin creating a new user — for other
     // actors the backend fills it from their own org.
-    (!needsOrg || !isSuperAdmin || !!form.organisation_id)
+    (!needsOrg || !isSuperAdmin || !!form.organisation_id) &&
+    // Store-scoped roles must have a store picked. The backend would 422 the
+    // request anyway, but blocking the button gives faster feedback.
+    (!isStoreScoped || !!form.store_id)
 
   const chevron = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239090a0' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`
 
@@ -363,13 +372,14 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
             </p>
           )}
 
-          {/* Store assignment — cashier + store_manager only.
-              Empty selection = "all stores in org" (matches backend backfill). */}
+          {/* Store assignment — cashier + store_manager only. One user, one
+              store. Backend rejects creates with no store_id for these roles
+              and rejects any store_id at all for other roles. */}
           {(form.role === 'cashier' || form.role === 'store_manager') && (
             <StoreAssignmentPicker
               orgId={isSuperAdmin ? form.organisation_id : (currentUser?.organisation_id ?? null)}
-              value={form.store_ids ?? []}
-              onChange={(ids) => set('store_ids' as keyof CreateUserPayload, ids as never)}
+              value={form.store_id ?? null}
+              onChange={(id) => set('store_id' as keyof CreateUserPayload, id as never)}
               isNl={isNl}
               role={form.role}
             />
@@ -488,9 +498,9 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
     locale: user.locale as 'nl' | 'en',
     is_active: user.is_active,
     password: '',
-    // Pre-fill store assignment from the user being edited so editing
-    // doesn't silently wipe the existing pivot.
-    store_ids: user.store_ids ?? [],
+    // Pre-fill the user's single store assignment so editing doesn't silently
+    // wipe it. Null for org-scoped roles (auditor, api_integration, OA, SA).
+    store_id: user.store_id ?? null,
   })
   const [showPassword, setShowPassword] = useState(false)
   const needsOrg = ROLES_NEED_ORG.includes(form.role)
@@ -503,11 +513,12 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
         locale: form.locale, is_active: form.is_active,
       }
       if (form.password) payload.password = form.password
-      // Only send store_ids for store-scoped roles; backend ignores it
-      // for other roles anyway, but sending it would be misleading in
-      // the audit log diff.
+      // Only send store_id for store-scoped roles. For other roles the
+      // backend rejects the field as `prohibited`, and the controller
+      // auto-nulls store_id when role flips org-scoped — so omitting it
+      // here keeps the audit diff clean.
       if (form.role === 'cashier' || form.role === 'store_manager') {
-        payload.store_ids = form.store_ids
+        payload.store_id = form.store_id
       }
       return updateUser(user.id, payload)
     },
@@ -577,12 +588,13 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
             </div>
           )}
 
-          {/* Store assignment — same picker as create form, pre-filled */}
+          {/* Store assignment — same single-store picker as create form,
+              pre-filled with the user's current store. */}
           {(form.role === 'cashier' || form.role === 'store_manager') && (
             <StoreAssignmentPicker
               orgId={form.organisation_id ?? currentUser?.organisation_id ?? null}
-              value={form.store_ids}
-              onChange={(ids) => set('store_ids', ids)}
+              value={form.store_id}
+              onChange={(id) => set('store_id', id)}
               isNl={isNl}
               role={form.role}
             />
@@ -909,7 +921,11 @@ export default function UsersScreen() {
                   isNl ? 'Gebruiker' : 'User',
                   isNl ? 'E-mailadres' : 'Email',
                   isNl ? 'Rol' : 'Role',
-                  isNl ? 'Vestiging(en)' : 'Store(s)',
+                  isNl ? 'Vestiging' : 'Store',
+                  // SA-only: licence info is only meaningful to whoever can
+                  // issue / extend / revoke licences. Other roles see a
+                  // cleaner table without it.
+                  ...(isSuperAdmin ? [isNl ? 'Licentie' : 'Licence'] : []),
                   '2FA',
                   isNl ? 'Laatste login' : 'Last login',
                   isNl ? 'Status' : 'Status',
@@ -949,30 +965,77 @@ export default function UsersScreen() {
                   <td style={{ padding: '14px 20px' }}>
                     <RoleBadge role={user.role} isNl={isNl} />
                   </td>
-                  {/* Store assignment — only meaningful for cashier + store_manager.
-                      Empty store_ids for those roles = "all stores in org" per the
-                      backfill rule; surface that explicitly instead of a blank cell
-                      so the table answers "who can act where" at a glance. */}
+                  {/* Store assignment — only meaningful for cashier +
+                      store_manager. One user, one store. The store_name
+                      column comes from the backend's eager-loaded relation
+                      so the table renders without a per-row fetch. */}
                   <td style={{ padding: '14px 20px', fontSize: 12 }}>
                     {(user.role === 'cashier' || user.role === 'store_manager') ? (
-                      (user.store_ids ?? []).length === 0 ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: '#eef2ff', color: '#4338ca', fontWeight: 700 }}>
-                          {isNl ? 'Alle vestigingen' : 'All stores'}
-                        </span>
-                      ) : user.store_ids!.length === 1 ? (
+                      user.store_id ? (
                         <span style={{ color: '#374151', fontWeight: 600 }}>
-                          {storeMap[user.store_ids![0]] ?? user.store_ids![0].slice(0, 8) + '…'}
+                          {user.store_name ?? storeMap[user.store_id] ?? user.store_id.slice(0, 8) + '…'}
                         </span>
                       ) : (
-                        <span title={user.store_ids!.map((id) => storeMap[id] ?? id).join(', ')}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: '#f3f4f6', color: '#374151', fontWeight: 700 }}>
-                          {user.store_ids!.length} {isNl ? 'vestigingen' : 'stores'}
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: '#fef3c7', color: '#92400e', fontWeight: 700 }}
+                          title={isNl ? 'Wijs een vestiging toe via Bewerken.' : 'Assign a store via Edit.'}>
+                          ⚠️ {isNl ? 'Geen vestiging' : 'No store'}
                         </span>
                       )
                     ) : (
                       <span style={{ color: '#d1d5db', fontSize: 11.5 }}>{isNl ? 'n.v.t.' : 'n/a'}</span>
                     )}
                   </td>
+                  {/* Licence — SA-only column. Shows tier · valid_from →
+                      valid_until + a status pill. Lets the SA spot at a
+                      glance which orgs are running on which licence, when
+                      it expires, and whether anyone's in grace/lock. */}
+                  {isSuperAdmin && (
+                    <td style={{ padding: '14px 20px', fontSize: 12 }}>
+                      {user.org_license ? (() => {
+                        const lic = user.org_license
+                        const statusColor: Record<string, { bg: string; fg: string; border: string }> = {
+                          active:     { bg: '#f0fdf4', fg: '#15803d', border: '#bbf7d0' },
+                          warning_30: { bg: '#fefce8', fg: '#a16207', border: '#fde68a' },
+                          warning_14: { bg: '#fff7ed', fg: '#c2410c', border: '#fed7aa' },
+                          grace:      { bg: '#fef2f2', fg: '#b91c1c', border: '#fecaca' },
+                          soft_lock:  { bg: '#fef2f2', fg: '#991b1b', border: '#fca5a5' },
+                          hard_lock:  { bg: '#1f1f1f', fg: '#fecaca', border: '#7f1d1d' },
+                        }
+                        const c = statusColor[lic.renewal_status] ?? statusColor.active
+                        const statusLabel: Record<string, { nl: string; en: string }> = {
+                          active:     { nl: 'Actief',          en: 'Active' },
+                          warning_30: { nl: '< 30 dagen',      en: '< 30 days' },
+                          warning_14: { nl: '< 14 dagen',      en: '< 14 days' },
+                          grace:      { nl: 'Verlopen (grace)', en: 'Expired (grace)' },
+                          soft_lock:  { nl: 'Soft-lock',       en: 'Soft-lock' },
+                          hard_lock:  { nl: 'Hard-lock',       en: 'Hard-lock' },
+                        }
+                        const sl = statusLabel[lic.renewal_status] ?? statusLabel.active
+                        return (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontWeight: 700, color: '#1c1c2e', textTransform: 'capitalize' }}>{lic.tier}</span>
+                              <span style={{ padding: '1px 7px', borderRadius: 10, fontSize: 10.5, fontWeight: 700, background: c.bg, color: c.fg, border: `1px solid ${c.border}` }}>
+                                {sl[isNl ? 'nl' : 'en']}
+                              </span>
+                            </div>
+                            <div style={{ color: '#9090a0', fontSize: 11 }}>
+                              {lic.valid_from ?? '—'} → {lic.valid_until ?? '—'}
+                            </div>
+                          </div>
+                        )
+                      })() : (
+                        user.organisation_id ? (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 8px', borderRadius: 6, background: '#fef3c7', color: '#92400e', fontWeight: 700, fontSize: 11.5 }}
+                            title={isNl ? 'Geen actieve licentie — vestigingen kunnen niet aangemaakt worden tot er een licentie is uitgegeven.' : 'No active licence — stores cannot be created until one is issued.'}>
+                            ⚠️ {isNl ? 'Geen licentie' : 'No licence'}
+                          </span>
+                        ) : (
+                          <span style={{ color: '#d1d5db', fontSize: 11.5 }}>{isNl ? 'n.v.t.' : 'n/a'}</span>
+                        )
+                      )}
+                    </td>
+                  )}
                   {/* 2FA */}
                   <td style={{ padding: '14px 20px' }}>
                     {user.two_factor_enabled ? (

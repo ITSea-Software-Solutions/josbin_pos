@@ -26,14 +26,12 @@ class StoreController extends Controller
             $query->where('organisation_id', $user->organisation_id);
         }
 
-        // Cashier + Store Manager are further restricted to their assigned
-        // stores (empty assignment = all stores in org — backfill semantics
-        // from User::canAccessStore). Org Admin / Auditor see the full org.
+        // Cashier + Store Manager are strictly tied to a single store. No
+        // multi-store assignment, no "all stores in org" fallback — a user
+        // without store_id (data error) sees nothing rather than the whole
+        // org. Org Admin / Auditor / API see the full org.
         if (! $user->isSuperAdmin() && ! $user->isOrgScopedRole()) {
-            $assigned = $user->stores()->pluck('stores.id');
-            if ($assigned->isNotEmpty()) {
-                $query->whereIn('id', $assigned);
-            }
+            $query->where('id', $user->store_id ?? '00000000-0000-0000-0000-000000000000');
         }
 
         if ($request->boolean('active_only', true)) {

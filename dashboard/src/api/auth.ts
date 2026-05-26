@@ -9,10 +9,13 @@ export interface DashboardUser {
   organisation_id: string
   requires_2fa: boolean
   two_factor_confirmed: boolean
-  /** Stores the user is explicitly assigned to. Empty array = "all stores
-   *  in the org" (the backfill rule), and is always empty for org-scoped
-   *  roles (SA, OA, auditor, api_integration) — they ignore the pivot. */
-  store_ids?: string[]
+  /** The single store this user belongs to (cashier + store_manager only).
+   *  Always null for org-scoped roles (super_admin, organisation_admin,
+   *  auditor, api_integration) — they operate at the org level and have no
+   *  single store. There is no "all stores in org" implicit grant. */
+  store_id?: string | null
+  /** Name of the assigned store, for display in headers / nav badges. */
+  store_name?: string | null
 }
 
 export interface LoginResponse {

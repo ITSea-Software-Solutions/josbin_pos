@@ -10,9 +10,27 @@ export interface User {
   two_factor_enabled: boolean
   last_login_at: string | null
   is_active: boolean
-  /** Stores this user is assigned to. Empty array = all stores in the org
-   *  (backfill semantics — see backend User::canAccessStore). */
-  store_ids?: string[]
+  /** The single store this user belongs to. Required at the application layer
+   *  for cashier + store_manager; null for org-scoped roles (super_admin,
+   *  organisation_admin, auditor, api_integration). No "all stores" semantics —
+   *  a user with role cashier/store_manager and a null store_id is a data
+   *  error and will be blocked from store-scoped actions. */
+  store_id?: string | null
+  /** Name of the assigned store, for display. Populated by the backend
+   *  index endpoint via eager-loaded relation; null for org-scoped roles. */
+  store_name?: string | null
+  /** The active licence on this user's organisation. Populated by the SA
+   *  users-list endpoint so the table can show tier · valid_from · valid_until
+   *  next to each row without an N+1. Null when the user has no org (e.g.
+   *  super_admin) or the org has no active licence. */
+  org_license?: {
+    tier: string
+    max_stores: number
+    valid_from: string | null
+    valid_until: string | null
+    renewal_status: 'active' | 'warning_30' | 'warning_14' | 'grace' | 'soft_lock' | 'hard_lock'
+    is_active: boolean
+  } | null
 }
 
 export interface CreateUserPayload {
@@ -23,8 +41,9 @@ export interface CreateUserPayload {
   organisation_id: string | null
   locale: 'nl' | 'en'
   send_welcome_email?: boolean
-  /** Cashier + store_manager only. Empty = all stores in org. */
-  store_ids?: string[]
+  /** Cashier + store_manager only. Required for those roles, prohibited
+   *  for org-scoped roles. One user belongs to exactly one store. */
+  store_id?: string | null
 }
 
 export async function getUsers(): Promise<User[]> {

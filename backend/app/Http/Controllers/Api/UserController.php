@@ -60,15 +60,41 @@ class UserController extends Controller
         }
 
         $users = $query
-            ->select(['id', 'name', 'email', 'role', 'locale', 'organisation_id',
+            ->select(['id', 'name', 'email', 'role', 'locale', 'organisation_id', 'store_id',
                 'two_factor_confirmed_at', 'is_active', 'last_login_at', 'created_at'])
-            ->with('organisation:id,name', 'stores:id,name')
+            ->with('organisation:id,name', 'store:id,name')
             ->paginate($request->integer('per_page', 25));
 
-        // Add computed two_factor_enabled + store_ids[] for frontend.
-        $users->getCollection()->transform(function (User $u) {
+        // Build a one-shot map of organisation_id → active license so the
+        // table can render licence type / start / expiry per row without a
+        // per-row query (was N+1 when each row hit the licenses table).
+        $orgIds = $users->getCollection()->pluck('organisation_id')->filter()->unique();
+        $licenses = $orgIds->isNotEmpty()
+            ? \App\Models\License::whereIn('organisation_id', $orgIds)
+                ->where('is_active', true)
+                ->orderByDesc('valid_until')
+                ->get()
+                ->keyBy('organisation_id')
+            : collect();
+
+        // Add computed two_factor_enabled + store_name + org_license for the
+        // frontend. store_id is already on the row; store_name comes off the
+        // eager-loaded relation. org_license lets the SA users-table show
+        // licence tier / start / expiry / status at a glance.
+        $users->getCollection()->transform(function (User $u) use ($licenses) {
             $u->two_factor_enabled = $u->two_factor_confirmed_at !== null;
-            $u->store_ids          = $u->stores->pluck('id')->all();
+            $u->store_name         = $u->store?->name;
+
+            $lic = $u->organisation_id ? $licenses->get($u->organisation_id) : null;
+            $u->org_license = $lic ? [
+                'tier'           => $lic->tier,
+                'max_stores'     => $lic->max_stores,
+                'valid_from'     => $lic->valid_from?->toDateString(),
+                'valid_until'    => $lic->valid_until?->toDateString(),
+                'renewal_status' => $lic->computeRenewalStatus(),
+                'is_active'      => (bool) $lic->is_active,
+            ] : null;
+
             return $u;
         });
 
@@ -83,6 +109,9 @@ class UserController extends Controller
         $actor = $request->user();
         $manageableRoles = self::MANAGEABLE_ROLES[$actor->role] ?? [];
 
+        $storeScoped = ['cashier', 'store_manager'];
+        $isStoreScoped = in_array($request->input('role'), $storeScoped, true);
+
         $data = $request->validate([
             'name'            => ['required', 'string', 'max:200'],
             'email'           => ['required', 'email', 'max:200', 'unique:users,email'],
@@ -93,11 +122,12 @@ class UserController extends Controller
                 ? ['required', 'uuid', 'exists:organisations,id']
                 : ['prohibited'],
             'is_active'       => ['sometimes', 'boolean'],
-            // Store assignment — only meaningful for cashier / store_manager.
-            // Empty = all stores in org (backfill semantics). Other roles
-            // (super_admin / org_admin / auditor) ignore the pivot.
-            'store_ids'       => ['sometimes', 'array'],
-            'store_ids.*'     => ['uuid', 'exists:stores,id'],
+            // Single-store assignment. Required for cashier + store_manager
+            // (one user, one store — no floating cashiers, no "all stores"
+            // grant). Prohibited for org-scoped roles to keep the data clean.
+            'store_id'        => $isStoreScoped
+                ? ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]
+                : ['prohibited'],
         ]);
 
         // Non-super-admin users always belong to actor's org
@@ -105,21 +135,17 @@ class UserController extends Controller
             $data['organisation_id'] = $actor->organisation_id;
         }
 
-        $storeIds = $data['store_ids'] ?? [];
-        unset($data['store_ids']);
-
         $user = User::create([
             ...$data,
             'is_active' => $data['is_active'] ?? true,
         ]);
 
-        // Sync store assignments — only persist when role can be store-scoped.
-        if (! empty($storeIds) && in_array($user->role, [User::ROLE_CASHIER, User::ROLE_STORE_MANAGER], true)) {
-            $this->syncUserStores($user, $storeIds, $actor->id);
+        if (isset($data['store_id'])) {
+            $this->logStoreAssignment($actor, $user, null, $data['store_id']);
         }
 
         return response()->json([
-            'data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'stores:id,name')),
+            'data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'store:id,name')),
         ], 201);
     }
 
@@ -139,6 +165,9 @@ class UserController extends Controller
         $actor = $request->user();
         $manageableRoles = self::MANAGEABLE_ROLES[$actor->role] ?? [];
 
+        $effectiveRole = $request->input('role', $user->role);
+        $isStoreScoped = in_array($effectiveRole, ['cashier', 'store_manager'], true);
+
         $data = $request->validate([
             'name'       => ['sometimes', 'string', 'max:200'],
             'email'      => ['sometimes', 'email', 'max:200', Rule::unique('users', 'email')->ignore($user->id)],
@@ -146,25 +175,26 @@ class UserController extends Controller
             'role'       => ['sometimes', Rule::in($manageableRoles)],
             'locale'     => ['sometimes', Rule::in(['nl', 'en'])],
             'is_active'  => ['sometimes', 'boolean'],
-            'store_ids'   => ['sometimes', 'array'],
-            'store_ids.*' => ['uuid', 'exists:stores,id'],
+            'store_id'   => $isStoreScoped
+                ? ['sometimes', 'required', 'uuid', new \App\Rules\StoreBelongsToOrg]
+                : ['prohibited'],
         ]);
-
-        $storeIds = $data['store_ids'] ?? null;
-        unset($data['store_ids']);
 
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
         }
 
+        // If the role just flipped from store-scoped to org-scoped, drop the
+        // stale store_id so the user doesn't carry a dangling assignment.
+        if (isset($data['role']) && ! $isStoreScoped) {
+            $data['store_id'] = null;
+        }
+
+        $previousStoreId = $user->store_id;
         $user->update($data);
 
-        // Sync store assignments (only for store-scoped roles). Pass an
-        // empty array intentionally to clear all assignments → grants
-        // "all stores in org" via the backfill rule.
-        $effectiveRole = $data['role'] ?? $user->role;
-        if ($storeIds !== null && in_array($effectiveRole, [User::ROLE_CASHIER, User::ROLE_STORE_MANAGER], true)) {
-            $this->syncUserStores($user, $storeIds, $actor->id);
+        if (array_key_exists('store_id', $data) && $data['store_id'] !== $previousStoreId) {
+            $this->logStoreAssignment($actor, $user, $previousStoreId, $data['store_id']);
         }
 
         // If role changed or deactivated — revoke all tokens (force re-login everywhere)
@@ -172,50 +202,36 @@ class UserController extends Controller
             $user->tokens()->delete();
         }
 
-        return response()->json(['data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'stores:id,name'))]);
+        return response()->json(['data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'store:id,name'))]);
     }
 
     /**
-     * Sync the user_stores pivot and write an audit entry capturing the diff
-     * (which stores were added / removed and by whom).
+     * Audit the user → store assignment change with the from/to delta.
      */
-    private function syncUserStores(User $user, array $storeIds, string $actorId): void
+    private function logStoreAssignment(User $actor, User $target, ?string $from, ?string $to): void
     {
-        // Verify every store_id belongs to the user's org — refuse cross-org.
-        $valid = \App\Models\Store::whereIn('id', $storeIds)
-            ->where('organisation_id', $user->organisation_id)
-            ->pluck('id')->all();
-
-        $previous = $user->stores()->pluck('stores.id')->all();
-        $payload  = collect($valid)->mapWithKeys(fn ($id) => [$id => ['assigned_at' => now(), 'assigned_by' => $actorId]])->all();
-
-        $user->stores()->sync($payload);
-
-        $added   = array_values(array_diff($valid, $previous));
-        $removed = array_values(array_diff($previous, $valid));
-        if ($added || $removed) {
-            \DB::table('audit_logs')->insert([
-                'user_id'         => $actorId,
-                'organisation_id' => $user->organisation_id,
-                'event'           => 'user.stores_assigned',
-                'auditable_type'  => 'user',
-                'auditable_id'    => $user->id,
-                'old_values'      => json_encode(['store_ids' => $previous]),
-                'new_values'      => json_encode(['store_ids' => $valid, 'added' => $added, 'removed' => $removed]),
-                'ip_address'      => request()->ip(),
-                'created_at'      => now(),
-            ]);
-        }
+        \DB::table('audit_logs')->insert([
+            'user_id'         => $actor->id,
+            'organisation_id' => $target->organisation_id,
+            'event'           => 'user.store_assigned',
+            'auditable_type'  => 'user',
+            'auditable_id'    => $target->id,
+            'old_values'      => json_encode(['store_id' => $from]),
+            'new_values'      => json_encode(['store_id' => $to]),
+            'ip_address'      => request()->ip(),
+            'created_at'      => now(),
+        ]);
     }
 
     /**
-     * Add `store_ids` to the user JSON so the dashboard can render the
-     * multi-select pre-filled, and so other consumers see the scope.
+     * Surface store_id on the user payload so the dashboard can show the
+     * single-store dropdown pre-filled and the table can render a name.
      */
     private function formatUser(User $user): array
     {
         $arr = $user->toArray();
-        $arr['store_ids'] = $user->stores->pluck('id')->all();
+        $arr['store_id']   = $user->store_id;
+        $arr['store_name'] = $user->store?->name;
         return $arr;
     }
 

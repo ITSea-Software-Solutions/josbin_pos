@@ -6,7 +6,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -22,7 +21,7 @@ class User extends Authenticatable implements Auditable
 
     protected $fillable = [
         'name', 'email', 'password',
-        'organisation_id', 'role', 'locale',
+        'organisation_id', 'store_id', 'role', 'locale',
         'two_factor_secret', 'two_factor_recovery_codes',
         'passkey_credential', 'last_login_at', 'is_active',
     ];
@@ -53,6 +52,10 @@ class User extends Authenticatable implements Auditable
     public const ROLE_CASHIER            = 'cashier';
     public const ROLE_AUDITOR            = 'auditor';
     public const ROLE_API_INTEGRATION    = 'api_integration';
+    // Belastingdienst Suriname tax officer. Cross-organisation read-only
+    // access, strictly limited to BTW submissions + their own audit trail.
+    // Has no organisation_id (like Super Admin) and is created only by SA.
+    public const ROLE_TAX_INSPECTOR      = 'tax_inspector';
 
     public const ROLES = [
         self::ROLE_SUPER_ADMIN,
@@ -61,6 +64,7 @@ class User extends Authenticatable implements Auditable
         self::ROLE_CASHIER,
         self::ROLE_AUDITOR,
         self::ROLE_API_INTEGRATION,
+        self::ROLE_TAX_INSPECTOR,
     ];
 
     // ── Relationships ─────────────────────────────────────────────────────────
@@ -76,13 +80,13 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
-     * Stores this user is explicitly assigned to. Empty = all stores in the
-     * user's organisation (backfill semantics — see canAccessStore()).
+     * The single store this user belongs to. Required at the application
+     * layer for cashier + store_manager roles; null for org-scoped roles
+     * (super_admin, organisation_admin, auditor, api_integration).
      */
-    public function stores(): BelongsToMany
+    public function store(): BelongsTo
     {
-        return $this->belongsToMany(Store::class, 'user_stores')
-            ->withPivot('assigned_at', 'assigned_by');
+        return $this->belongsTo(Store::class);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -107,8 +111,9 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
-     * Roles that operate at the org level and ignore the user_stores pivot.
-     * Cashier + store_manager are the only roles where the pivot matters.
+     * Roles that operate at the org level and have no single store of their
+     * own. Cashier + store_manager are the only roles where users.store_id
+     * is required.
      */
     public function isOrgScopedRole(): bool
     {
@@ -117,6 +122,20 @@ class User extends Authenticatable implements Auditable
             self::ROLE_ORGANISATION_ADMIN,
             self::ROLE_AUDITOR,
             self::ROLE_API_INTEGRATION,
+            self::ROLE_TAX_INSPECTOR,
+        ], true);
+    }
+
+    /**
+     * Tax inspector is cross-organisation by design (Belastingdienst regulates
+     * every taxpayer on the platform), so canAccessStore must short-circuit
+     * the org-match check that applies to other org-scoped roles.
+     */
+    public function isCrossOrgRole(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_TAX_INSPECTOR,
         ], true);
     }
 
@@ -127,25 +146,20 @@ class User extends Authenticatable implements Auditable
      *   - super_admin: yes for any store anywhere.
      *   - org-scoped roles (org_admin / auditor / api_integration): yes for
      *     any store within their organisation.
-     *   - cashier / store_manager: yes for stores in their org AND either
-     *     (a) they have an empty user_stores assignment (= all in org), or
-     *     (b) the pivot includes this store_id.
-     *
-     * The empty-assignment fallback preserves backward compatibility with
-     * users created before the pivot existed.
+     *   - cashier / store_manager: yes ONLY if users.store_id === $storeId.
+     *     They belong to exactly one store; there is no "all stores in org"
+     *     fallback.
      */
     public function canAccessStore(string $storeId): bool
     {
         if ($this->isSuperAdmin()) return true;
 
-        // Reject anything outside the user's own org first — cheap check.
         $store = Store::find($storeId);
         if (! $store || $store->organisation_id !== $this->organisation_id) return false;
 
         if ($this->isOrgScopedRole()) return true;
 
-        $assigned = $this->stores()->pluck('stores.id');
-        return $assigned->isEmpty() || $assigned->contains($storeId);
+        return $this->store_id === $storeId;
     }
 
     /**
@@ -154,8 +168,15 @@ class User extends Authenticatable implements Auditable
      */
     public const TWO_FACTOR_POLICY_KEY = 'two_factor_required_roles';
 
-    /** Roles for which 2FA is always required and cannot be disabled by policy. */
-    public const TWO_FACTOR_ALWAYS_ROLES = [self::ROLE_SUPER_ADMIN];
+    /**
+     * Roles for which 2FA is always required and cannot be disabled by policy.
+     * Tax inspector is government-by-definition (Belastingdienst Suriname) so
+     * they carry the same mandatory-2FA treatment as Super Admin.
+     */
+    public const TWO_FACTOR_ALWAYS_ROLES = [
+        self::ROLE_SUPER_ADMIN,
+        self::ROLE_TAX_INSPECTOR,
+    ];
 
     /**
      * 2FA is mandatory and non-bypassable for Super Admin and government

@@ -64,21 +64,22 @@ Tap **Gebruiker aanmaken / Create user**.
 
 ### 3.2.1 Store assignment (cashier + store_manager only)
 
-![User form with the store assignment multi-select for a cashier role](screenshots/03-user-form-store-picker.png)
+![User form with the assigned-store dropdown for a cashier role](screenshots/03-user-form-store-picker.png)
 
-When you pick **Cashier** or **Store Manager** as the role, an extra **Toegewezen vestiging(en) / Assigned store(s)** panel appears below the role selector. It lists every store in the organisation as a checkbox.
+When you pick **Cashier** or **Store Manager** as the role, an extra **Toegewezen vestiging / Assigned store** dropdown appears below the role selector. It lists every store in the organisation — pick exactly one. **One user, one store.**
 
-> **Where you see the result:** the Users list table shows a **Vestiging(en) / Store(s)** column for every user — single store name, "N stores" pill (hover for the full list), "All stores" badge for empty assignment, or *n/a* for org-scoped roles. Cashiers and managers also see their own scope on their **My Account** page header (*"📍 Assigned to 1 store"* etc), so they can confirm it without asking you. Edit modal pre-fills the same picker with whatever's already assigned — editing a user no longer silently wipes their pivot.
+> **Where you see the result:** the Users list table shows a **Vestiging / Store** column with the store name for every cashier/manager, *n/a* for org-scoped roles, and a yellow ⚠️ *Geen vestiging / No store* warning for any cashier/manager with a missing assignment (data-entry error — fix it via Edit). Cashiers and managers also see their own assignment on their **My Account** page header (*"📍 Assigned to De Hoop — Paramaribo Centrum"*), so they can confirm it without asking you. The Edit modal pre-fills the same dropdown with whatever's already set — editing a user no longer silently wipes the store link.
 
 **Rules:**
 
-- **Tick the specific stores** the user works at. The cashier will see only those stores on the POS store-picker, and `register-open` returns *403 STORE_NOT_ASSIGNED* if they try to open a register at any other store. The Z-Report close and refund-approval endpoints enforce the same check for store managers.
-- **Leave everything unticked** = the user can access **every** store in the org. Useful for floating cashiers who cover any branch, for the catch-all "any staff member" pattern, and for backward compatibility with users created before this feature existed (they keep working).
-- **Org Admin, Auditor, Super Admin, API Integration** roles are org-scoped — the picker is hidden because the pivot is ignored for them.
+- **Pick exactly one store** the user works at. The cashier will see only that store on the POS (the chooser auto-selects it on login), and `register-open` returns *403 STORE_NOT_ASSIGNED* if they try to open a register at any other store. The Z-Report close and refund-approval endpoints enforce the same check for store managers.
+- **Required for Cashier + Store Manager.** The Create / Save button stays disabled until you pick one. The backend also 422s a create with a missing or invalid `store_id` for these roles.
+- **Prohibited for org-scoped roles** (Org Admin, Auditor, Super Admin, API Integration). The picker is hidden for them and the backend rejects any `store_id` value with a 422. They operate at the org level by design — no single store of their own.
+- **Need someone on two shops?** Create two accounts (one per store). There is no multi-store assignment and no "floating cashier" pattern — that's a deliberate decision to keep audit attribution clean and prevent silent cross-store sales.
 
-Recorded in the audit log as `user.stores_assigned` with the diff: which stores were added, which were removed, by whom, and when. So a Rekenkamer auditor can prove "this cashier was assigned only to De Hoop — Paramaribo Centrum on 12 May 2026".
+Recorded in the audit log as `user.store_assigned` with the from→to delta, by whom, and when. So a Rekenkamer auditor can prove "this cashier was assigned only to De Hoop — Paramaribo Centrum on 12 May 2026, moved to De Hoop — Nickerie on 23 May 2026".
 
-When you change a store-scoped user's role to an org-scoped one (e.g. promote a Store Manager to Org Admin), the pivot rows stay but are ignored by `canAccessStore`. Demoting back later automatically re-applies them. Cleanest if you also clear the pivot when promoting, but not required.
+When you change a store-scoped user's role to an org-scoped one (e.g. promote a Store Manager to Org Admin), the dashboard auto-clears the now-meaningless `store_id` and the backend logs the change. Demoting back later requires picking a store again.
 
 ### After the user is created
 

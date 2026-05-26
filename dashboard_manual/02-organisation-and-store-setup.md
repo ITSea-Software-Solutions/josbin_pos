@@ -76,7 +76,7 @@ Click any row in the Organisations list. A right-hand panel opens with two tabs:
 
 The **Bewerken / Edit** button at the top opens the full edit form. Everything is editable except the currency (always SRD). Toggling `is_active` off deactivates the entire organisation — no user in it can log in until reactivated.
 
-The **Push catalogus / Push catalogue** button on the row triggers an immediate WebSocket broadcast of the current product catalogue to every connected POS terminal in this org. Use it after a bulk price change so cashiers don't have to wait for the next natural refresh.
+The **Push catalogus / Push catalogue** button lives on **Catalogus / Catalogue → top-right header** (not on the Organisations row). It triggers an immediate WebSocket broadcast of the current product catalogue to every connected POS terminal in this org. Use it after a bulk price change so cashiers don't have to wait for the next natural refresh. See [Chapter 4 §4.8](04-catalogue.md).
 
 ---
 
@@ -90,7 +90,7 @@ The **Push catalogus / Push catalogue** button on the row triggers an immediate 
 | Who sees what |
 |---|
 | **Super Admin** — sees an organisation dropdown at the top; pick the org first, then the stores list. Can create / rename / deactivate. Can also do this via Organisations → drill-in (the old SA-only flow still works). |
-| **Org Admin** — sees a read-only header strip with their organisation name + BTW number + type + locale (managed by the vendor, contact support to change), then the stores list. Can create / rename / deactivate stores up to the licence limit. |
+| **Org Admin** — sees a read-only header strip with their organisation name + BTW number + type + locale (managed by your Josbin POS vendor — email `support@josbin-pos.sr` to change), then the stores list. Can create / rename / deactivate stores up to the licence limit. |
 | **Store Manager** — sees the same list (org-scoped). Can rename / deactivate; create depends on `stores.manage` permission (granted today). |
 
 **To add a store:**
@@ -229,17 +229,17 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
 >    ↓
 > Catalogus / Catalogue (sidebar) → + Product manually, or
 >    Import / Export → Download Excel template → fill → upload
->    → "📡 Push to all tills" button at the top once everything's loaded
+>    → "📡 Push catalogue to POS" button (Catalogue header, top-right) once everything's loaded
 >    ↓
 > Kassabeheer / Registers (sidebar) → pick store → + Add register for each till
 >    ↓
 > Gebruikers / Users (sidebar) → + Add cashiers and store managers
->    → tick "Toegewezen vestiging(en)" so they're scoped to the right branch(es)
+>    → pick their one assigned store from "Toegewezen vestiging / Assigned store"
 >    ↓
 > Cashiers log into the POS app, single-store auto-picks, open register, sell.
 > ```
 
-5. **Log in** at the dashboard URL. Lands on Overview showing `0 stores, 0 sales today`. **No Organisations menu — that's Super-Admin-only.** The OA's home for store work is **Vestigingen / Stores** in the sidebar, with a read-only header showing the org name + BTW number + type + locale (vendor-managed, contact support to change).
+5. **Log in** at the dashboard URL. Lands on Overview showing `0 stores, 0 sales today`. **No Organisations menu — that's Super-Admin-only.** The OA's home for store work is **Vestigingen / Stores** in the sidebar, with a read-only header showing the org name + BTW number + type + locale (managed by your Josbin POS vendor — email `support@josbin-pos.sr` for changes).
 
 6. **Add the first store.**
    Dashboard → **Vestigingen / Stores** → **+ Nieuwe vestiging / + New store**:
@@ -293,13 +293,13 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
 12. **Sanity check.**
     Dashboard → **Vestigingen / Stores**. Both branches listed, both *Actief*. Registers screen, switching between the two stores, shows 3 + 1 = 4 total registers.
 
-13. **Add cashiers and scope them to the right store.**
-    Dashboard → **Gebruikers / Users** → **+ Nieuwe gebruiker** → role `Cashier`:
-    - Sharmila Jankipersad → tick **only Paramaribo Centrum** in the *Toegewezen vestiging(en)* panel.
-    - Rashied Alibaks → tick **only Nieuw Nickerie**.
-    - Floating relief cashier → leave the panel **empty** (= access to both stores).
+13. **Add cashiers and pin each one to a single store.**
+    Dashboard → **Gebruikers / Users** → **+ Nieuwe gebruiker** → role `Cashier`. The **Toegewezen vestiging / Assigned store** dropdown appears below the role — pick exactly one.
+    - Sharmila Jankipersad → store `De Hoop — Paramaribo Centrum`.
+    - Rashied Alibaks → store `De Hoop — Nieuw Nickerie`.
+    - Relief cashier who covers both shops? Create **two accounts** (one per store). One user, one store — there is no multi-store assignment and no "floating cashier" implicit grant. See [Chapter 1 §1.3 footnote ‡](01-roles-and-permissions.md) for why.
 
-    Same idea if you appoint a Store Manager: tick the branch(es) they actually run.
+    Same picker for Store Manager: pick the one branch they actually run.
 
 14. **Hand cashiers their POS install + credentials.**
     When Sharmila logs into the POS, her single assigned store auto-skips the picker — she lands straight on the Open Register gate at Paramaribo. If she ever tries the API for a Nickerie register, she gets `403 STORE_NOT_ASSIGNED`.

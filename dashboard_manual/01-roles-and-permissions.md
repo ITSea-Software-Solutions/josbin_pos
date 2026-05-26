@@ -85,7 +85,7 @@ The **person who runs one physical shop**. Reports to the Org Admin at HQ.
 
 **Cannot do:** bulk-import the catalogue, push the catalogue, create API keys (those are HQ-level — single-shop businesses can solve this by giving the same person Org Admin instead, see §1.6).
 
-**Store-scoped.** Store Managers can be **assigned to specific stores**. A manager assigned only to *De Hoop — Paramaribo Centrum* cannot close a register, approve a refund, or run the Z-Report at *De Hoop — Nickerie*. Set the assignment when you create or edit the user (Users → role = Store Manager → tick the stores). Leave it empty to grant all stores in the org — the "floating manager" pattern. See [Chapter 3 §3.2.1](03-users.md#321-store-assignment-cashier--store_manager-only) for the picker + audit trail.
+**Store-scoped — one store per manager.** A Store Manager is pinned to exactly one store. Set it when you create the user (Users → role = Store Manager → pick a store from the dropdown). A manager assigned to *De Hoop — Paramaribo Centrum* cannot close a register, approve a refund, or run the Z-Report at *De Hoop — Nickerie*. If you need someone managing both, create two manager accounts (or use Org Admin, which is org-scoped). See [Chapter 3 §3.2.1](03-users.md#321-store-assignment-cashier--store_manager-only) for the picker + audit trail.
 
 **Real-world example:** Rashied Alibaks at "De Hoop — Paramaribo Centrum". He opens the shop, sets the day's USD→SRD rate, makes sure all cashiers reconcile their drawers at end of shift.
 
@@ -105,7 +105,7 @@ The **person ringing up customers** on the POS terminal.
 
 **Where they work:** the **POS app** on the till — *not* the dashboard. If a cashier logs into the dashboard, they only see their personal "My Account" page (own sales, own shifts, profile + password).
 
-**Store-scoped.** Cashiers can be **assigned to specific stores**. On the POS store-picker they only see their assigned stores; if assigned to exactly one, the picker auto-skips. Try to open a register at a store you aren't assigned to → *403 STORE_NOT_ASSIGNED*. Leave the assignment empty when you create the user to allow them at any store in the org (the "floating cashier" pattern).
+**Store-scoped — one store per cashier.** Every cashier is pinned to exactly one store. The POS skips the store-picker entirely on login and routes them straight to that store's Open Register screen. Trying to open a register at a different store → *403 STORE_NOT_ASSIGNED*. If the same person works two shops, create two accounts (one per store) — there is no multi-store cashier and no "floating" assignment.
 
 **Real-world example:** Sharmila Jankipersad on Kassa 1 at "De Hoop — Paramaribo Centrum". Assigned to that one store. Logs in, picker auto-routes to Paramaribo, opens her till, sells for 8 hours, closes the till.
 
@@ -177,7 +177,7 @@ Concrete list of what each role can touch. Every row is enforced by the backend 
 
 > ✅ = full access · view = read-only · ❌ = denied. Cross-organisation visibility is denied at the database query level — a Store Manager from one company cannot see data from another company, ever.
 >
-> ‡ **Store-scoped for Cashier + Store Manager.** When a user has explicit stores ticked on their profile (see [Chapter 3 §3.2.1](03-users.md#321-store-assignment-cashier--store_manager-only)) they can act only at those stores. Empty assignment = "all stores in the org" (the floating-staff pattern, also the backfill for users created before the pivot existed). Enforced at the API layer (`User::canAccessStore`) — `/api/registers/{id}/open`, refund authz, and Z-Report close all return `403 STORE_NOT_ASSIGNED` if violated. Cashiers' POS store-picker also only shows their assigned stores.
+> ‡ **One store per Cashier / Store Manager — strict 1:1.** Every user with role Cashier or Store Manager is pinned to exactly one store via the **Assigned store** dropdown on their profile (see [Chapter 3 §3.2.1](03-users.md#321-store-assignment-cashier--store_manager-only)). There is no "all stores in the org" implicit grant and no multi-store assignment — if Anita works both shops, create two accounts. Enforced at the API layer (`User::canAccessStore`) — `/api/registers/{id}/open`, refund authz, and Z-Report close all return `403 STORE_NOT_ASSIGNED` if a cashier tries to act at any other store. The POS store-picker also auto-selects their one assigned store on login, skipping the chooser screen.
 
 ---
 
