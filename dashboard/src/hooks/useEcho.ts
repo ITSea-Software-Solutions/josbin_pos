@@ -19,16 +19,49 @@ window.Pusher = Pusher
 
 let echoInstance: Echo<'reverb'> | null = null
 
-function createEchoInstance(): Echo<'reverb'> {
+interface ReverbConfig { app_key: string; host: string; port: number; scheme: string }
+let reverbConfig: ReverbConfig | null = null
+
+/**
+ * Reverb host / port / app_key differ per stack. Instead of juggling
+ * VITE_REVERB_* env vars on every dev session, the backend advertises its
+ * coordinates at /api/environment. Call discoverReverbConfig() once after we
+ * know the API base URL — the cached result is reused for every getEcho().
+ */
+export async function discoverReverbConfig(): Promise<ReverbConfig> {
+  if (reverbConfig) return reverbConfig
+  const apiBase = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/$/, '')
+  try {
+    const res = await fetch(`${apiBase}/environment`, { headers: { Accept: 'application/json' } })
+    if (res.ok) {
+      const j = await res.json()
+      if (j?.reverb?.host && j?.reverb?.port) {
+        reverbConfig = j.reverb as ReverbConfig
+        return reverbConfig
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+  reverbConfig = {
+    app_key: import.meta.env.VITE_REVERB_APP_KEY ?? 'josbin_pos-key',
+    host:    import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
+    port:    parseInt(import.meta.env.VITE_REVERB_PORT ?? '6001'),
+    scheme:  import.meta.env.VITE_REVERB_SCHEME ?? 'http',
+  }
+  return reverbConfig
+}
+
+function createEchoInstance(cfg: ReverbConfig): Echo<'reverb'> {
   const token = localStorage.getItem('josbin_pos_dashboard_token')
 
   return new Echo({
     broadcaster: 'reverb',
-    key: import.meta.env.VITE_REVERB_APP_KEY ?? 'josbin_pos-reverb',
-    wsHost: import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
-    wsPort: parseInt(import.meta.env.VITE_REVERB_PORT ?? '6001'),
-    wssPort: parseInt(import.meta.env.VITE_REVERB_PORT ?? '6001'),
-    forceTLS: import.meta.env.VITE_REVERB_SCHEME === 'https',
+    key:    cfg.app_key,
+    wsHost: cfg.host,
+    wsPort: cfg.port,
+    wssPort: cfg.port,
+    forceTLS: cfg.scheme === 'https',
     enabledTransports: ['ws', 'wss'],
     authEndpoint: '/broadcasting/auth',
     auth: {
@@ -42,7 +75,13 @@ function createEchoInstance(): Echo<'reverb'> {
 
 export function getEcho(): Echo<'reverb'> {
   if (!echoInstance) {
-    echoInstance = createEchoInstance()
+    const cfg = reverbConfig ?? {
+      app_key: import.meta.env.VITE_REVERB_APP_KEY ?? 'josbin_pos-key',
+      host:    import.meta.env.VITE_REVERB_HOST ?? window.location.hostname,
+      port:    parseInt(import.meta.env.VITE_REVERB_PORT ?? '6001'),
+      scheme:  'http',
+    }
+    echoInstance = createEchoInstance(cfg)
   }
   return echoInstance
 }

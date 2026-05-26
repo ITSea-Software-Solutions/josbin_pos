@@ -36,10 +36,22 @@ use Illuminate\Support\Facades\Route;
 Route::get('health', HealthController::class)->name('health');
 
 // ── Environment flags (unauthenticated — so login screen can render the DEMO banner)
+// Also advertises the Reverb WS host/port for this stack so the frontend doesn't
+// have to guess (live and demo run Reverb on different host ports).
 Route::get('environment', function () {
+    $isDemo = (bool) config('josbin_pos.demo_mode');
     return response()->json([
-        'demo_mode' => (bool) config('josbin_pos.demo_mode'),
+        'demo_mode' => $isDemo,
         'sandbox'   => (bool) config('josbin_pos.sandbox'),
+        'reverb' => [
+            'app_key' => env('REVERB_APP_KEY', config('reverb.apps.apps.0.key', 'josbin_pos-reverb')),
+            // PUBLIC host/port the browser must reach — set REVERB_PUBLIC_HOST
+            // / REVERB_PUBLIC_PORT in .env (or docker compose env). Falls back
+            // to current request host and the in-container 8080.
+            'host'    => env('REVERB_PUBLIC_HOST', request()->getHost()),
+            'port'    => (int) env('REVERB_PUBLIC_PORT', $isDemo ? 6002 : 6001),
+            'scheme'  => env('REVERB_PUBLIC_SCHEME', request()->isSecure() ? 'https' : 'http'),
+        ],
     ]);
 })->name('environment');
 

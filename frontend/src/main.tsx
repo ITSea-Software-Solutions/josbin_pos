@@ -2,8 +2,13 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import App from './App'
+import { discoverReverbConfig } from '@/hooks/useEcho'
 import './i18n'
 import './index.css'
+
+// Ask the backend for its WS coordinates before anything tries to subscribe.
+// Non-blocking — Echo falls back to env / defaults if this fails.
+void discoverReverbConfig()
 
 const queryClient = new QueryClient({
   defaultOptions: {
