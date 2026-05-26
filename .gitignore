@@ -62,3 +62,6 @@ yarn-debug.log*
 # Coverage
 coverage/
 .nyc_output/
+
+# Stray SQLite file created if phpunit.xml ever falls back to sqlite
+backend/josbin_pos_demo

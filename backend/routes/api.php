@@ -260,6 +260,9 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
     // License Management (SPOS-license)
     Route::prefix('licenses')->name('licenses.')->group(function () {
         Route::get('/',              [LicenseController::class, 'index'])->name('index');
+        Route::post('/',             [LicenseController::class, 'store'])->name('store');
+        Route::patch('{id}',         [LicenseController::class, 'update'])->name('update');
+        Route::delete('{id}',        [LicenseController::class, 'destroy'])->name('destroy');
         Route::post('{id}/renew',    [LicenseController::class, 'renew'])->name('renew');
     });
 

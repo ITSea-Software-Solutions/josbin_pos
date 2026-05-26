@@ -4,6 +4,13 @@
 
 This is the operational playbook from "customer asks for a quote" to "customer signs off on year three". For the architectural side of how licensing works internally (encryption, fingerprint hashing, validation cycle, IonCube encoding) see [`/docs/11-license-and-delivery.md`](../docs/11-license-and-delivery.md).
 
+> **Two issuance paths** — pick the right one for the deal:
+>
+> - **Path A — License Server (on-prem, IonCube-encoded delivery)** — the original architecture (described in this chapter). Use when you ship a hardware-bound IonCube install to a customer's site. Customer activates by pasting a `JBN-…` key on their POS install.
+> - **Path B — In-dashboard issuance (SaaS / internal / dev orgs)** — Super Admin clicks **+ Issue license** on the Dashboard's License screen, picks an organisation, sets tier + limits + dates. No external License Server required. Most useful for SaaS-style deployments where you host the backend yourself. **The `max_stores` limit is enforced live** — when an Org Admin tries to create the (N+1)th store, the API returns `409 LICENSE_STORE_LIMIT_REACHED` and the dashboard shows the limit message.
+>
+> Both paths produce the same `licenses` row in the main app's DB and trigger the same renewal/expiry behaviour. The difference is who *issues* the licence and how the customer activates it. The org-creation flow is independent of either — Super Admin creates Orgs + Org Admin users normally; the licence is attached separately. Org Admin can then self-serve stores up to `max_stores`.
+
 ---
 
 ## 16.1 Who's who

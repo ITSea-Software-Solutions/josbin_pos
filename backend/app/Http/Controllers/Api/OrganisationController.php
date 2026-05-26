@@ -129,6 +129,29 @@ class OrganisationController extends Controller
     {
         $this->authorize('update', $organisation);
 
+        // Enforce the license's max_stores cap. We allow store creation when
+        // the org has *no* active licence (dev / pre-issuance state) so the
+        // initial setup flow isn't blocked, but as soon as one exists the
+        // count is enforced. Super Admin can always override by lifting the
+        // limit via the License screen.
+        $activeLicense = \DB::table('licenses')
+            ->where('organisation_id', $organisation->id)
+            ->where('is_active', true)
+            ->orderByDesc('valid_until')
+            ->first();
+
+        if ($activeLicense) {
+            $currentStoreCount = \App\Models\Store::where('organisation_id', $organisation->id)->count();
+            if ($currentStoreCount >= $activeLicense->max_stores) {
+                return response()->json([
+                    'message' => "License limit reached: {$activeLicense->max_stores} store(s). Ask your vendor to extend the licence.",
+                    'code'    => 'LICENSE_STORE_LIMIT_REACHED',
+                    'limit'   => $activeLicense->max_stores,
+                    'current' => $currentStoreCount,
+                ], 409);
+            }
+        }
+
         $data = $request->validate([
             'name'              => ['required', 'string', 'max:200'],
             'address'           => ['nullable', 'string', 'max:500'],

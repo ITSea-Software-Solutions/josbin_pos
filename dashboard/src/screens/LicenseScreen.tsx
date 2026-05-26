@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
+import { useDashboardAuthStore } from '@/store/authStore'
+import { getOrganisations, type Organisation } from '@/api/organisations'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface License {
@@ -28,6 +30,24 @@ async function getLicenses(): Promise<License[]> {
 
 async function requestRenewal(id: string, notes: string): Promise<void> {
   await apiClient.post(`/licenses/${id}/renew`, { notes })
+}
+
+interface LicensePayload {
+  organisation_id: string
+  tier: License['tier']
+  max_stores: number
+  max_terminals: number
+  valid_from: string
+  valid_until: string
+}
+async function createLicense(p: LicensePayload): Promise<void> {
+  await apiClient.post('/licenses', p)
+}
+async function updateLicense(id: string, p: Partial<LicensePayload & { is_active: boolean }>): Promise<void> {
+  await apiClient.patch(`/licenses/${id}`, p)
+}
+async function deleteLicense(id: string): Promise<void> {
+  await apiClient.delete(`/licenses/${id}`)
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -203,11 +223,153 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
   )
 }
 
+// ─── Issue / Edit license modal (Super Admin only) ───────────────────────────
+function LicenseFormModal({
+  license, isNl, onClose,
+}: { license: License | 'new'; isNl: boolean; onClose: () => void }) {
+  const qc = useQueryClient()
+  const isNew = license === 'new'
+  const today = new Date().toISOString().slice(0, 10)
+  const nextYear = new Date(Date.now() + 365 * 24 * 3600 * 1000).toISOString().slice(0, 10)
+
+  const [orgId, setOrgId] = useState(isNew ? '' : license.organisation_id)
+  const [tier, setTier] = useState<License['tier']>(isNew ? 'standard' : license.tier)
+  const [maxStores, setMaxStores] = useState(isNew ? 1 : license.max_stores)
+  const [maxTerminals, setMaxTerminals] = useState(isNew ? 4 : license.max_terminals)
+  const [validFrom, setValidFrom] = useState(isNew ? today : license.valid_from.slice(0, 10))
+  const [validUntil, setValidUntil] = useState(isNew ? nextYear : license.valid_until.slice(0, 10))
+  const [isActive, setIsActive] = useState(isNew ? true : license.is_active)
+  const [error, setError] = useState('')
+
+  const { data: orgs = [] } = useQuery({
+    queryKey: ['organisations'],
+    queryFn: () => getOrganisations(),
+    enabled: isNew, // only need the dropdown when issuing new
+  })
+
+  const mutation = useMutation({
+    mutationFn: () => {
+      const payload = { organisation_id: orgId, tier, max_stores: maxStores, max_terminals: maxTerminals, valid_from: validFrom, valid_until: validUntil }
+      return isNew
+        ? createLicense(payload)
+        : updateLicense(license.id, { tier, max_stores: maxStores, max_terminals: maxTerminals, valid_from: validFrom, valid_until: validUntil, is_active: isActive })
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['licenses'] }); onClose() },
+    onError: (e: unknown) => setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isNl ? 'Fout' : 'Error')),
+  })
+
+  const canSubmit = !!orgId && maxStores > 0 && maxTerminals > 0 && validFrom < validUntil
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 540, boxShadow: '0 24px 64px rgba(0,0,0,.35)' }}>
+        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #f0f0f8' }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+            {isNew ? (isNl ? 'Nieuwe licentie uitgeven' : 'Issue new license')
+                   : (isNl ? 'Licentie bewerken' : 'Edit license')}
+          </h3>
+          <p style={{ fontSize: 12, color: '#9090a0', marginTop: 4 }}>
+            {isNew
+              ? (isNl ? 'In-dashboard licentie. Voor on-prem IonCube-installaties: gebruik de Licence Server (zie hoofdstuk 16).' : 'In-dashboard licence. For on-prem IonCube installs use the Licence Server (see ch 16).')
+              : (typeof license !== 'string' ? license.organisation_name : '')}
+          </p>
+        </div>
+        <div style={{ padding: '18px 24px 20px' }}>
+          {error && <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#dc2626' }}>{error}</div>}
+
+          {isNew && (
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Organisatie *' : 'Organisation *'}</label>
+              <select value={orgId} onChange={(e) => setOrgId(e.target.value)}
+                style={{ width: '100%', height: 38, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13, background: '#fff' }}>
+                <option value="">{isNl ? '— kies een organisatie —' : '— pick an organisation —'}</option>
+                {(orgs as Organisation[]).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
+              </select>
+            </div>
+          )}
+
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>Tier</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {(['standard', 'professional', 'enterprise'] as const).map((t) => (
+                <button key={t} onClick={() => setTier(t)} type="button"
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: tier === t ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: tier === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: tier === t ? '#7c3aed' : '#6b7280', cursor: 'pointer', textTransform: 'capitalize' }}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Max. vestigingen' : 'Max. stores'}</label>
+              <input type="number" min={1} max={200} value={maxStores} onChange={(e) => setMaxStores(parseInt(e.target.value) || 1)}
+                style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13 }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Max. terminals' : 'Max. terminals'}</label>
+              <input type="number" min={1} max={2000} value={maxTerminals} onChange={(e) => setMaxTerminals(parseInt(e.target.value) || 1)}
+                style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13 }} />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Geldig vanaf' : 'Valid from'}</label>
+              <input type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)}
+                style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13 }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Geldig tot' : 'Valid until'}</label>
+              <input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)}
+                style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13 }} />
+            </div>
+          </div>
+
+          {!isNew && (
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', marginBottom: 14, cursor: 'pointer' }}>
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} />
+              {isNl ? 'Licentie actief' : 'License is active'}
+            </label>
+          )}
+
+          <p style={{ fontSize: 11, color: '#9090a0', marginBottom: 14, lineHeight: 1.5 }}>
+            {isNl
+              ? 'De vestiging-limiet (max. vestigingen) wordt afgedwongen op het moment dat de Org Admin probeert een nieuwe vestiging aan te maken (409 LICENSE_STORE_LIMIT_REACHED).'
+              : 'The store limit (max. stores) is enforced when an Org Admin tries to create a new store (409 LICENSE_STORE_LIMIT_REACHED).'}
+          </p>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button onClick={onClose}
+              style={{ flex: 1, padding: '11px 0', borderRadius: 10, border: '1px solid #e5e7eb', background: '#f9fafb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+              {isNl ? 'Annuleren' : 'Cancel'}
+            </button>
+            <button onClick={() => mutation.mutate()} disabled={!canSubmit || mutation.isPending}
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!canSubmit || mutation.isPending) ? 0.5 : 1 }}>
+              {mutation.isPending ? '…' : (isNew ? (isNl ? 'Licentie uitgeven' : 'Issue license') : (isNl ? 'Opslaan' : 'Save'))}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main screen ─────────────────────────────────────────────────────────────
 export default function LicenseScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
+  const isSuperAdmin = useDashboardAuthStore((s) => s.isSuperAdmin())
+  const qc = useQueryClient()
   const [renewTarget, setRenewTarget] = useState<License | null>(null)
+  const [formTarget, setFormTarget] = useState<License | 'new' | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<License | null>(null)
+
+  const deleteMut = useMutation({
+    mutationFn: (id: string) => deleteLicense(id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['licenses'] }); setDeleteTarget(null) },
+  })
 
   const { data: licenses, isLoading } = useQuery({
     queryKey: ['licenses'],
@@ -223,15 +385,23 @@ export default function LicenseScreen() {
     <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
 
       {/* Page header */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
-          {isNl ? 'Licentiebeheer' : 'License Management'}
-        </h1>
-        <p style={{ fontSize: 14, color: '#6b7280' }}>
-          {isNl
-            ? 'Beheer en verleng licenties voor alle organisaties op het platform.'
-            : 'Manage and renew licenses for all organisations on the platform.'}
-        </p>
+      <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+            {isNl ? 'Licentiebeheer' : 'License Management'}
+          </h1>
+          <p style={{ fontSize: 14, color: '#6b7280' }}>
+            {isNl
+              ? 'Beheer en verleng licenties voor alle organisaties op het platform.'
+              : 'Manage and renew licenses for all organisations on the platform.'}
+          </p>
+        </div>
+        {isSuperAdmin && (
+          <button onClick={() => setFormTarget('new')}
+            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,.3)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            + {isNl ? 'Nieuwe licentie' : 'Issue license'}
+          </button>
+        )}
       </div>
 
       {/* Stats row */}
@@ -391,24 +561,23 @@ export default function LicenseScreen() {
                       )}
                     </td>
                     <td style={{ padding: '14px 20px' }}>
-                      {lic.renewal_status !== 'renewal_pending' && lic.urgency !== 'ok' && (
-                        <button
-                          onClick={() => setRenewTarget(lic)}
-                          style={{
-                            padding: '6px 14px', borderRadius: 8,
-                            background: lic.urgency === 'critical'
-                              ? 'linear-gradient(135deg, #dc2626, #b91c1c)'
-                              : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-                            color: '#fff', border: 'none', fontSize: 12, fontWeight: 700,
-                            cursor: 'pointer', whiteSpace: 'nowrap',
-                            boxShadow: lic.urgency === 'critical'
-                              ? '0 2px 8px rgba(220,38,38,.3)'
-                              : '0 2px 8px rgba(124,58,237,.3)',
-                          }}
-                        >
-                          {isNl ? 'Vernieuwen' : 'Renew'}
-                        </button>
-                      )}
+                      <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                        {lic.renewal_status !== 'renewal_pending' && lic.urgency !== 'ok' && (
+                          <button onClick={() => setRenewTarget(lic)}
+                            style={{ padding: '6px 12px', borderRadius: 8, background: lic.urgency === 'critical' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            {isNl ? 'Vernieuwen' : 'Renew'}
+                          </button>
+                        )}
+                        {isSuperAdmin && (
+                          <>
+                            <button onClick={() => setFormTarget(lic)} title={isNl ? 'Bewerken' : 'Edit'}
+                              style={{ height: 28, width: 28, borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', cursor: 'pointer', fontSize: 13 }}>✎</button>
+                            <button onClick={() => setDeleteTarget(lic)} title={isNl ? 'Deactiveren' : 'Deactivate'}
+                              disabled={!lic.is_active}
+                              style={{ height: 28, width: 28, borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: lic.is_active ? 'pointer' : 'not-allowed', fontSize: 13, opacity: lic.is_active ? 1 : 0.4 }}>🗑</button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -461,6 +630,39 @@ export default function LicenseScreen() {
       {/* Renewal modal */}
       {renewTarget && (
         <RenewalModal license={renewTarget} isNl={isNl} onClose={() => setRenewTarget(null)} />
+      )}
+
+      {/* Issue / Edit modal (Super Admin) */}
+      {formTarget && (
+        <LicenseFormModal license={formTarget} isNl={isNl} onClose={() => setFormTarget(null)} />
+      )}
+
+      {/* Deactivate confirm */}
+      {deleteTarget && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDeleteTarget(null) }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 10 }}>
+              {isNl ? `Licentie deactiveren?` : `Deactivate license?`}
+            </h3>
+            <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>
+              <strong>{deleteTarget.organisation_name}</strong> — {deleteTarget.tier}.{' '}
+              {isNl
+                ? 'De licentierij blijft staan in het auditlogboek; alleen is_active wordt op false gezet. Vestiging-aanmaken stopt onmiddellijk.'
+                : 'The licence row remains in the audit log; only is_active is set to false. Store-creation stops immediately.'}
+            </p>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => setDeleteTarget(null)}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: '1px solid #e5e7eb', background: '#f9fafb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                {isNl ? 'Annuleren' : 'Cancel'}
+              </button>
+              <button onClick={() => deleteMut.mutate(deleteTarget.id)} disabled={deleteMut.isPending}
+                style={{ flex: 2, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#dc2626,#b91c1c)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: deleteMut.isPending ? 0.5 : 1 }}>
+                {deleteMut.isPending ? '…' : (isNl ? 'Deactiveren' : 'Deactivate')}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

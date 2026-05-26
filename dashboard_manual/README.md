@@ -25,23 +25,22 @@ Each chapter covers one area of the dashboard. Read 1 → 18 if you're new to Jo
 | 2 | [Organisation & store setup](02-organisation-and-store-setup.md) | Super Admin, Org Admin |
 | 3 | [Users — create, edit, deactivate](03-users.md) | Org Admin, Store Manager |
 | 4 | [Product catalogue & categories](04-catalogue-and-categories.md) | Org Admin, Store Manager |
-| 5 | Bulk import (CSV / Excel) *(coming soon)* | Org Admin |
-| 6 | Pricing & per-store overrides *(coming soon)* | Org Admin |
-| 7 | Discount rules *(coming soon)* | Org Admin, Store Manager |
-| 8 | Stock management *(coming soon)* | Org Admin, Store Manager |
-| 9 | Customers *(coming soon)* | Org Admin, Store Manager |
-| 10 | Reports — daily, monthly, BTW, Rekenkamer *(coming soon)* | Everyone except Cashier |
-| 11 | Z-Reports & end-of-day sync *(coming soon)* | Store Manager |
-| 12 | API integrations & webhooks *(coming soon)* | Org Admin |
-| 13 | Audit log *(coming soon)* | Org Admin, Auditor |
-| 14 | AI insights *(coming soon)* | Org Admin, Store Manager |
-| 15 | License management — UI overview *(coming soon)* | Super Admin |
+| 5 | [Bulk import (CSV / Excel)](05-bulk-import-csv-excel.md) | Org Admin |
+| 6 | [Pricing & per-store overrides](06-pricing-and-per-store-overrides.md) | Org Admin |
+| 7 | [Discount rules](07-discount-rules.md) | Org Admin, Store Manager |
+| 8 | [Stock management](08-stock-management.md) | Org Admin, Store Manager |
+| 9 | [Customers](09-customers.md) | Org Admin, Store Manager |
+| **10** | **[Reports — daily, monthly, BTW, Rekenkamer](10-reports.md)** | **Everyone except Cashier** |
+| **11** | **[Z-Reports & end-of-day sync](11-z-reports-and-end-of-day-sync.md)** | **Store Manager + Org Admin** |
+| 12 | [API integrations & webhooks](12-api-integrations-and-webhooks.md) | Org Admin |
+| 13 | [Audit log](13-audit-log.md) | Org Admin, Auditor |
+| 14 | [AI insights](14-ai-insights.md) | Org Admin, Store Manager |
+| 15 | [License management — UI overview](15-license-management.md) | Super Admin |
 | **16** | **[License operations — sales, install, renew, recover](16-license-operations.md)** | **Vendor (you) + customer IT contact** |
-| 17 | Security policy (2FA per role) *(coming soon)* | Super Admin |
-| 17 | Demo mode *(coming soon)* | Everyone |
-| 18 | My Account — your profile, password, performance *(coming soon)* | Everyone |
+| 17 | [Security policy (2FA per role)](17-security-policy.md) | Super Admin |
+| 18 | [My Account — your profile, password, performance](18-my-account.md) | Everyone |
 
-Chapters marked *coming soon* are planned but not yet written. The link will go live as content is added.
+All chapters are now written.
 
 ---
 
