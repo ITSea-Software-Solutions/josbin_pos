@@ -43,17 +43,27 @@ class DevelopmentDataSeeder extends Seeder
         );
 
         // ── Users ─────────────────────────────────────────────────────────────
+        // Manager + Cashier are store-scoped roles: under the strict 1:1 model
+        // they must carry users.store_id. Pin both to De Hoop — Paramaribo so
+        // the demo flow works end-to-end without needing a manual assignment.
         $manager = User::firstOrCreate(
             ['email' => 'manager@dehoop.sr'],
             [
                 'name'            => 'Rashied Alibaks',
                 'password'        => Hash::make('Manager@2026'),
                 'organisation_id' => $org->id,
+                'store_id'        => $store->id,
                 'role'            => User::ROLE_STORE_MANAGER,
                 'locale'          => 'nl',
                 'is_active'       => true,
             ]
         );
+        // firstOrCreate skips updates on re-runs, so backfill store_id for
+        // any pre-existing demo user that was seeded before the 1:1 refactor.
+        if (! $manager->store_id) {
+            $manager->store_id = $store->id;
+            $manager->save();
+        }
         $manager->assignRole(User::ROLE_STORE_MANAGER);
 
         $cashier = User::firstOrCreate(
@@ -62,11 +72,16 @@ class DevelopmentDataSeeder extends Seeder
                 'name'            => 'Sharmila Jankipersad',
                 'password'        => Hash::make('Cashier@2026'),
                 'organisation_id' => $org->id,
+                'store_id'        => $store->id,
                 'role'            => User::ROLE_CASHIER,
                 'locale'          => 'nl',
                 'is_active'       => true,
             ]
         );
+        if (! $cashier->store_id) {
+            $cashier->store_id = $store->id;
+            $cashier->save();
+        }
         $cashier->assignRole(User::ROLE_CASHIER);
 
         // Org Admin — HQ catalogue owner (CSV/Excel imports, push to POS, etc.).
@@ -83,6 +98,23 @@ class DevelopmentDataSeeder extends Seeder
             ]
         );
         $orgAdmin->assignRole(User::ROLE_ORGANISATION_ADMIN);
+
+        // Belastingdienst Suriname tax inspector — cross-organisation read-only
+        // account for the demo. 2FA is mandatory (enforced via
+        // User::TWO_FACTOR_ALWAYS_ROLES) so first login will prompt QR setup.
+        // Demo creds: belastingdienst@gov.sr / Inspector@2026
+        $taxInspector = User::firstOrCreate(
+            ['email' => 'belastingdienst@gov.sr'],
+            [
+                'name'            => 'Belastingdienst Suriname',
+                'password'        => Hash::make('Inspector@2026'),
+                'organisation_id' => null, // cross-org by design
+                'role'            => User::ROLE_TAX_INSPECTOR,
+                'locale'          => 'nl',
+                'is_active'       => true,
+            ]
+        );
+        $taxInspector->assignRole(User::ROLE_TAX_INSPECTOR);
 
         // ── Categories ────────────────────────────────────────────────────────
         $categories = [
@@ -195,6 +227,26 @@ class DevelopmentDataSeeder extends Seeder
                 'organisation_id' => $org->id,
                 'name'            => 'Loopklant',
                 'is_active'       => true,
+            ]
+        );
+
+        // ── License ───────────────────────────────────────────────────────────
+        // The OrganisationController::storeCreate gate refuses store creation
+        // unless the org has an active licence. Seed a `professional` licence
+        // valid for one year so the OA demo flow ("create a second store")
+        // works end-to-end without an SA having to issue one first.
+        $licenseKey = 'DEMO-' . strtoupper(bin2hex(random_bytes(8)));
+        \App\Models\License::firstOrCreate(
+            ['organisation_id' => $org->id, 'is_active' => true],
+            [
+                'license_key_hash' => \App\Models\License::hashKey($licenseKey),
+                'tier'             => 'professional',
+                'max_stores'       => 5,
+                'max_terminals'    => 10,
+                'valid_from'       => now()->subDays(30)->toDateString(),
+                'valid_until'      => now()->addYear()->toDateString(),
+                'is_active'        => true,
+                'renewal_status'   => 'active',
             ]
         );
     }

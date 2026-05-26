@@ -90,6 +90,11 @@ class RolesAndPermissionsSeeder extends Seeder
 
             // Audit log
             'audit.view',
+
+            // BTW submissions (Belastingdienst Suriname filings)
+            'btw.submit',              // OA / SM: create new submission
+            'btw.view_submissions',    // tax_inspector + SA: read across orgs
+            'btw.review_submission',   // tax_inspector: accept / dispute
         ];
 
         foreach ($permissions as $perm) {
@@ -121,6 +126,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'settings.manage',
             'labels.print',
             'audit.view',
+            // OA owns BTW filings for their org. Can view their own filings
+            // (cross-org visibility is gated separately in the controller).
+            'btw.submit',
+            'btw.view_submissions',
         ]);
 
         // Store Manager — manages their assigned store
@@ -139,6 +148,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'ai.insights',
             'settings.manage',
             'labels.print',
+            // Single-store managers in small Surinamese shops often file their
+            // own BTW. Granting submit + view-own here.
+            'btw.submit',
+            'btw.view_submissions',
         ]);
 
         // Cashier — POS screen + store-level reports (read-only, own store)
@@ -173,6 +186,17 @@ class RolesAndPermissionsSeeder extends Seeder
             'sales.create', 'sales.view',
             'products.view',
             'reports.daily',
+        ]);
+
+        // Belastingdienst Suriname tax inspector — cross-organisation read-
+        // only access to BTW filings. Can accept or dispute filings but never
+        // see catalogue, sales detail, customers, or anything else. 2FA is
+        // mandatory (enforced via User::TWO_FACTOR_ALWAYS_ROLES).
+        $taxInspector = Role::firstOrCreate(['name' => User::ROLE_TAX_INSPECTOR, 'guard_name' => 'web']);
+        $taxInspector->syncPermissions([
+            'btw.view_submissions',
+            'btw.review_submission',
+            'audit.view',  // their own action trail; controller scopes to events touching their reviews
         ]);
     }
 }
