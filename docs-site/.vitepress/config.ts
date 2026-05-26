@@ -162,7 +162,8 @@ export default defineConfig({
             { text: '2. Organisation & store setup', link: '/dashboard_manual/02-organisation-and-store-setup' },
             { text: '3. Users — create/edit/deactivate', link: '/dashboard_manual/03-users' },
             { text: '4. Catalogue & categories',     link: '/dashboard_manual/04-catalogue-and-categories' },
-            // 5-18 added as chapters land
+            { text: '16. License operations — sales, install, renew, recover', link: '/dashboard_manual/16-license-operations' },
+            // 5-15, 17-18 added as chapters land
           ],
         },
       ],

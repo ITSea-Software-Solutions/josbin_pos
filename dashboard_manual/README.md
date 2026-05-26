@@ -35,8 +35,9 @@ Each chapter covers one area of the dashboard. Read 1 → 18 if you're new to Jo
 | 12 | API integrations & webhooks *(coming soon)* | Org Admin |
 | 13 | Audit log *(coming soon)* | Org Admin, Auditor |
 | 14 | AI insights *(coming soon)* | Org Admin, Store Manager |
-| 15 | License management *(coming soon)* | Super Admin |
-| 16 | Security policy (2FA per role) *(coming soon)* | Super Admin |
+| 15 | License management — UI overview *(coming soon)* | Super Admin |
+| **16** | **[License operations — sales, install, renew, recover](16-license-operations.md)** | **Vendor (you) + customer IT contact** |
+| 17 | Security policy (2FA per role) *(coming soon)* | Super Admin |
 | 17 | Demo mode *(coming soon)* | Everyone |
 | 18 | My Account — your profile, password, performance *(coming soon)* | Everyone |
 

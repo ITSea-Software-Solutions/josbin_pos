@@ -4,6 +4,40 @@ Enterprise Point of Sale and multi-store management platform built for Suriname.
 
 ---
 
+## Quick start — one command
+
+```bash
+bash scripts/dev.sh up      # boots demo Docker + POS + Dashboard + Docs
+bash scripts/dev.sh status  # show URLs + demo logins
+bash scripts/dev.sh down    # stop everything
+bash scripts/dev.sh logs    # tail dev-server logs
+```
+
+Live stack instead of demo: `JOSBIN_STACK=live bash scripts/dev.sh up`. Sandbox: `JOSBIN_STACK=sandbox`.
+
+URLs once `up`:
+
+| | URL |
+|---|---|
+| **POS app** (cashier — Electron + browser) | http://localhost:5173 |
+| **Dashboard** (manager / org admin / super admin) | http://localhost:5174 |
+| **Docs site** (Developer Docs + User Manual) | http://localhost:5180 |
+| **Architecture diagrams** (interactive HTML) | http://localhost:5180/architecture.html |
+| **API health** | http://localhost:8082/api/health |
+| **Swagger / OpenAPI** | http://localhost:8082/api/v1/docs |
+| **Horizon** (queue) | http://localhost:8082/horizon |
+
+Demo logins:
+
+- Cashier: `kassa@dehoop.sr` / `Cashier@2026`
+- Manager: `manager@dehoop.sr` / `Manager@2026`
+- Org Admin: `orgadmin@dehoop.sr` / `OrgAdmin@2026`
+- Super Admin: `admin@josbin-pos.sr` (2FA enrolled — use the dashboard's 2FA flow)
+
+The longer manual install / Docker / Electron / Android sections are below if you need them.
+
+---
+
 ## Stack
 
 | Layer | Technology |
