@@ -2,6 +2,14 @@
 
 Enterprise Point of Sale and multi-store management platform built for Suriname. Three-layer architecture: Electron POS desktop app, Super Admin web dashboard, and Open Integration API.
 
+> **New to the codebase?** Read these in order:
+> 1. This README (quick start + test commands)
+> 2. [`CLAUDE.md`](CLAUDE.md) — the product spec (what we're building + why)
+> 3. [`CLAUDE_WORKING_GUIDE.md`](CLAUDE_WORKING_GUIDE.md) — the *how we work* doc (surfaces checklist, end-to-end journeys, gotcha registry, conventions)
+> 4. [`FEATURES_AND_FLOWS.md`](FEATURES_AND_FLOWS.md) — feature catalogue + user-journey flows (does the system already do X? where? what status?)
+>
+> Docs 3 and 4 are living — keep adding to them.
+
 ---
 
 ## Quick start — one command
@@ -520,6 +528,139 @@ npm run dev           # Vite dev server at :5174
 npm run build         # Production build
 npm run type-check
 ```
+
+---
+
+## Running the tests
+
+There are **four** test suites in this repo. Each runs independently so you can run only the ones you care about, and **all four also run automatically on every PR** via `.github/workflows/` (backend.yml, frontend.yml, dashboard.yml, integration.yml).
+
+| Suite | Where | Driver | Runs in CI |
+|---|---|---|---|
+| Backend PHPUnit | `backend/tests/` | PHPUnit + Postgres (separate test DB) | `backend.yml` |
+| POS unit tests | `frontend/src/**/*.test.ts` | Vitest | `frontend.yml` |
+| Dashboard unit tests | `dashboard/src/**/*.test.ts` | Vitest | `dashboard.yml` |
+| Demo smoke test (HTTP) | `scripts/smoke-test-demo.sh` | bash + curl through the demo container | `integration.yml` |
+
+### Prerequisites
+
+- Backend tests need the Docker stack up. The boot script handles both live and demo: `bash scripts/dev.sh up` (or the explicit `docker compose up -d` from the [Running the project](#running-the-project) section).
+- Frontend / dashboard tests need `npm install` once in each folder.
+- The smoke test needs the **demo** stack up specifically (it talks to container `josbin_demo_app`). Either bring up just demo, or both stacks side by side:
+  ```bash
+  # demo only
+  docker compose -p josbin_demo \
+    -f docker-compose.yml -f docker-compose.demo.yml up -d --build
+  ```
+
+### 1. Backend PHPUnit (Laravel)
+
+The backend runs against a dedicated **`josbin_pos_test` database** inside the same Postgres container, configured via `backend/.env.testing` (already committed). Tests use `RefreshDatabase` — the schema is migrated fresh per test class, so you don't need to seed anything manually.
+
+```bash
+# Full suite (≈ 9 s for ~100 tests on a recent laptop)
+docker compose exec app php artisan test
+
+# One file
+docker compose exec app php artisan test --filter=UserStoreAssignmentTest
+
+# One method
+docker compose exec app php artisan test --filter=UserStoreAssignmentTest::test_cashier_without_store_id_cannot_access_any_store
+
+# Coverage report (writes HTML to backend/coverage/)
+docker compose exec app php artisan test --coverage-html=coverage
+```
+
+> Method-name convention: PHPUnit only discovers methods that start with `test_`. The `/** @test */` annotation is **not** registered under this project's config — use the prefix.
+
+If you're on the demo stack (different container name):
+
+```bash
+docker exec josbin_demo_app php artisan test
+```
+
+### 2. POS unit tests (Vitest, in `frontend/`)
+
+Pure-TS unit tests for the cart store, BTW helpers, ESC/POS byte builder, etc. No DOM, no network — they run in Node and finish in <1 s.
+
+```bash
+cd frontend
+npm install          # first time only
+npm run test         # watch mode
+npm run test:run     # one-shot (use this in CI / scripts)
+npm run test:ui      # browser UI for picking individual tests
+
+# TypeScript-only check (no test execution)
+npm run type-check
+```
+
+### 3. Dashboard unit tests (Vitest, in `dashboard/`)
+
+Same Vitest setup as the POS, for shared components used by the dashboard. The dashboard relies more on TypeScript + ESLint than unit tests, so the suite is small — `type-check` is the main signal.
+
+```bash
+cd dashboard
+npm install
+npm run test         # watch mode
+npm run test:run     # one-shot
+npm run type-check   # tsc --noEmit — primary safety net for the dashboard
+```
+
+### 4. Demo smoke test (`scripts/smoke-test-demo.sh`)
+
+End-to-end HTTP probe that exercises the most important authenticated flows against the running demo stack: login, /auth/me, list stores, list products, BTW report, register lifecycle, sales, refunds, audit log. Useful before a release to confirm the whole stack still talks to itself.
+
+```bash
+# Bring up the demo stack first (see Prerequisites above)
+bash scripts/smoke-test-demo.sh
+```
+
+Important: the script runs `curl` **inside** the demo `app` container (`josbin_demo_app`), not from your host. That bypasses the per-IP rate-limit bucket that your browser tabs share with host curl — so the smoke test stays deterministic even with the dashboard or POS open in another tab. Don't change it to host curl.
+
+Expected output: a sequence of green ✅ probes ending in `All checks passed`. Any red ❌ line points at the specific endpoint that failed, with the response body.
+
+### Run everything (the "before I push" checklist)
+
+```bash
+# Backend
+docker compose exec app php artisan test
+
+# Frontend POS
+cd frontend && npm run type-check && npm run test:run && cd ..
+
+# Dashboard
+cd dashboard && npm run type-check && npm run test:run && cd ..
+
+# Smoke test (needs demo stack up)
+bash scripts/smoke-test-demo.sh
+```
+
+### CI — GitHub Actions
+
+The four workflows under `.github/workflows/` mirror the four suites above and run on every push and PR:
+
+- **backend.yml** — boots Postgres + Redis services, runs `php artisan test` against `.env.testing`.
+- **frontend.yml** — installs POS deps, runs `type-check` + `test:run`.
+- **dashboard.yml** — same for the dashboard.
+- **integration.yml** — boots the demo stack with `docker compose` and runs `scripts/smoke-test-demo.sh`.
+
+A red check blocks merge. To reproduce a CI failure locally, run the matching command from the table above.
+
+### Troubleshooting
+
+**Backend tests fail with "database does not exist"**
+The test DB is created by `docker/postgres/init.sql` on first start. If you're hitting this on an older volume, recreate the test DB by hand:
+
+```bash
+docker compose exec postgres psql -U josbin_pos -d postgres -c "CREATE DATABASE josbin_pos_test;"
+docker compose exec app php artisan migrate --env=testing
+```
+
+**Smoke test exits with `connection refused` to `http://nginx`**
+The demo stack isn't up. The script talks to the **demo** stack only (container `josbin_demo_app`, network alias `nginx`). Bring it up with the demo compose command in Prerequisites.
+
+**Vitest fails with `Cannot find module '@/...'`**
+Run `npm install` in the folder you're testing. The path alias is configured in `vite.config.ts` + `tsconfig.json` and only works after deps are linked.
 
 ---
 

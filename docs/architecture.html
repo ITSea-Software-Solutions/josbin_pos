@@ -269,7 +269,7 @@ erDiagram
 
   USER ||--o{ REGISTER_SESSION : "cashier of"
   USER ||--o{ SALE : "rings up"
-  USER }o--o{ STORE : "assigned to (user_stores)"
+  STORE ||--o{ USER : "pins (users.store_id)"
   USER ||--o{ LICENSE : "issued by"
   ORGANISATION ||--o{ LICENSE : "scoped to"
 

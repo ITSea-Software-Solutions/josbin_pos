@@ -2,6 +2,12 @@ You are helping a software development team build Josbin POS — a complete ente
 
 Read everything below carefully before responding to anything.
 
+> **Read these too** (in this order at session start):
+>  1. [`CLAUDE_WORKING_GUIDE.md`](CLAUDE_WORKING_GUIDE.md) — engineering discipline. Surfaces checklist (§2), end-to-end journeys (§3), gotcha registry (§4). Walk §2 before declaring any task done. Add new gotchas to §4 as we discover them.
+>  2. [`FEATURES_AND_FLOWS.md`](FEATURES_AND_FLOWS.md) — feature catalogue. Every feature with status (✅ / 🟡 / 🔲), the flows that wire features together, code-location quick map, roles→features matrix. The fastest way to answer "does the system already do X?".
+>
+> Both are living docs — update them when you add or change features.
+
 ---
 
 ## PROJECT NAME & CONTEXT
@@ -177,8 +183,9 @@ Your client = Super Admin (full platform access, manages all organisations)
   └── Organisation Admin (manages their organisation only — e.g. head office of a supermarket chain)
         └── Store Manager (manages their assigned store(s) only)
               └── Cashier (POS screen only)
-              └── Auditor (read-only — for government compliance officers)
+              └── Auditor (read-only — for internal compliance officers / Rekenkamer)
 API Integration (machine account for third-party POS systems)
+Tax Inspector (Belastingdienst Suriname — cross-organisation read-only, BTW filings only, 2FA mandatory)
 
 Organisation = one customer (e.g. "Supermarkt De Hoop" or "Ministerie van Financiën")
 Store = one physical location under an organisation

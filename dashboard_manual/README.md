@@ -39,6 +39,9 @@ Each chapter covers one area of the dashboard. Read 1 → 18 if you're new to Jo
 | **16** | **[License operations — sales, install, renew, recover](16-license-operations.md)** | **Vendor (you) + customer IT contact** |
 | 17 | [Security policy (2FA per role)](17-security-policy.md) | Super Admin |
 | 18 | [My Account — your profile, password, performance](18-my-account.md) | Everyone |
+| 19 | [Kassabeheer / Registers — physical tills, sessions, reopen flow](19-registers.md) | Manager+ |
+| 20 | [BTW Submissions — formal filings to Belastingdienst Suriname](20-btw-submissions-belastingdienst.md) | OA, SM, Inspector, SA |
+| 21 | [Tax Inspector role — Belastingdienst cross-org access](21-tax-inspector.md) | SA (creating), Inspector (using) |
 
 All chapters are now written.
 
