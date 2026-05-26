@@ -8,6 +8,10 @@
 // matchers should install it with:
 //   npm i -D @testing-library/jest-dom
 const jestDomModule = '@testing-library/jest-dom'
+// Mark the file as a module so TS allows top-level await on the dynamic
+// import below (TS1375).
+export {}
+
 try {
   // Indirect specifier prevents Vite's static import-analysis from
   // resolving the path at config time.

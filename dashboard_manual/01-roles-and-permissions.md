@@ -145,11 +145,11 @@ Concrete list of what each role can touch. Every row is enforced by the backend 
 | Log into the **dashboard** | ✅ | ✅ | ✅ | view My Account only | ✅ (read-only) | ❌ |
 | Log into the **POS** | (rare) | ❌ | ❌ | ✅ | ❌ | ❌ |
 | **My Account** (own sales, shifts, password) | ✅ | ✅ | ✅ | ✅ | ✅ | n/a |
-| **Ring up a sale** | ✅ | ❌ | ✅ | ✅ | ❌ | ✅ (via API) |
-| **Refund / void** a sale | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Ring up a sale** | ✅ | ❌ | ✅‡ | ✅‡ | ❌ | ✅ (via API) |
+| **Refund / void** a sale | ✅ | ✅ | ✅‡ | ❌ | ❌ | ❌ |
 | **Lock the daily exchange rate** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Open / close a register** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
-| **Run a Z-Report** + submit to HQ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Open / close a register** | ✅ | ✅ | ✅‡ | ✅‡ | ❌ | ❌ |
+| **Run a Z-Report** + submit to HQ | ✅ | ✅ | ✅‡ | ❌ | ❌ | ❌ |
 | **View / create individual products** | ✅ | ✅ | ✅ | view only | view only | view only |
 | **Delete products** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Bulk import** (CSV / Excel) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -165,14 +165,19 @@ Concrete list of what each role can touch. Every row is enforced by the backend 
 | **Rekenkamer signed PDF export** | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
 | **AI insights** (weekly summary, anomalies) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Create / edit **users** | ✅ | ✅ | ✅ (cashiers only) | ❌ | ❌ | ❌ |
+| **Assign cashier/manager to specific stores** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Delete users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Create / edit **stores** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Manage **organisations** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Create / edit / deactivate **stores** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| View own **organisation read-only** (Stores screen header) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Create / edit **organisations** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Manage **API keys** (issue, revoke) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | View **audit log** | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
-| Manage **licenses** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Issue / edit / revoke **licenses** (in-dashboard) | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Request** licence renewal (vendor processes) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 > ✅ = full access · view = read-only · ❌ = denied. Cross-organisation visibility is denied at the database query level — a Store Manager from one company cannot see data from another company, ever.
+>
+> ‡ **Store-scoped for Cashier + Store Manager.** When a user has explicit stores ticked on their profile (see [Chapter 3 §3.2.1](03-users.md#321-store-assignment-cashier--store_manager-only)) they can act only at those stores. Empty assignment = "all stores in the org" (the floating-staff pattern, also the backfill for users created before the pivot existed). Enforced at the API layer (`User::canAccessStore`) — `/api/registers/{id}/open`, refund authz, and Z-Report close all return `403 STORE_NOT_ASSIGNED` if violated. Cashiers' POS store-picker also only shows their assigned stores.
 
 ---
 

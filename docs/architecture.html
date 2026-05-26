@@ -269,6 +269,9 @@ erDiagram
 
   USER ||--o{ REGISTER_SESSION : "cashier of"
   USER ||--o{ SALE : "rings up"
+  USER }o--o{ STORE : "assigned to (user_stores)"
+  USER ||--o{ LICENSE : "issued by"
+  ORGANISATION ||--o{ LICENSE : "scoped to"
 
   SALE ||--|{ SALE_ITEM : "lines"
   SALE }o--|| CUSTOMER : "for"
@@ -312,9 +315,12 @@ graph LR
   SA --> UC1["Manage organisations"]
   SA --> UC2["Manage users + roles + 2FA policy"]
   SA --> UC3["View audit log (all orgs)"]
-  SA --> UC4["License management"]
+  SA --> UC4["Issue / edit / revoke licences (in-dashboard, Path B)"]
+  SA --> UC4b["Set tier + max_stores + max_terminals"]
 
-  OA --> UC5["Push catalogue to stores"]
+  OA --> UC5["Add / deactivate stores (up to licence cap)"]
+  OA --> UC5b["Assign cashiers to specific stores"]
+  OA --> UC5c["Push catalogue to all tills (Reverb broadcast)"]
   OA --> UC6["Import CSV/XLSX products"]
   OA --> UC7["Consolidated BTW + Z-Reports"]
   OA --> UC8["API keys + webhooks"]

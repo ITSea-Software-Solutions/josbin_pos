@@ -214,26 +214,39 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
 
 > **Sandra's "first day" mental model** — from logging in to selling:
 > ```
-> Log in → My organisation (sidebar) → Stores tab → + Add store → Open Stores tab again to add the 2nd store
->       → Catalogue (sidebar) → either + Add product manually, or Import / Export → Excel template
->       → Registers (sidebar) → + Add register for each till at each store
->       → Users (sidebar) → + Add cashier accounts
-> Cashiers log into the POS app, open their register, sell.
+> Log in
+>    ↓
+> Vestigingen / Stores (sidebar) → read-only org header confirms she's in De Hoop
+>    → + Nieuwe vestiging — add Paramaribo Centrum + Nieuw Nickerie (licence cap = 2)
+>    ↓
+> Vestigingsinstellingen / Store Settings (sidebar) → pick a store → upload logo,
+>    fill BTW number on receipt, customise header/footer (live preview on the right)
+>    ↓
+> Catalogus / Catalogue (sidebar) → + Product manually, or
+>    Import / Export → Download Excel template → fill → upload
+>    → "📡 Push to all tills" button at the top once everything's loaded
+>    ↓
+> Kassabeheer / Registers (sidebar) → pick store → + Add register for each till
+>    ↓
+> Gebruikers / Users (sidebar) → + Add cashiers and store managers
+>    → tick "Toegewezen vestiging(en)" so they're scoped to the right branch(es)
+>    ↓
+> Cashiers log into the POS app, single-store auto-picks, open register, sell.
 > ```
 
-5. **Log in** at the dashboard URL. She lands on the Overview screen, which shows `0 stores, 0 sales today`. The sidebar shows **Mijn organisatie / My organisation** (her view of the Organisations screen — scoped to her org).
+5. **Log in** at the dashboard URL. Lands on Overview showing `0 stores, 0 sales today`. **No Organisations menu — that's Super-Admin-only.** The OA's home for store work is **Vestigingen / Stores** in the sidebar, with a read-only header showing the org name + BTW number + type + locale (vendor-managed, contact support to change).
 
 6. **Add the first store.**
-   Dashboard → **Mijn organisatie / My organisation** → click `Supermarkt De Hoop NV` → **Vestigingen / Stores** tab → **+ Vestiging toevoegen / + Add store**:
+   Dashboard → **Vestigingen / Stores** → **+ Nieuwe vestiging / + New store**:
    - Name: `De Hoop — Paramaribo Centrum`
    - City: `Paramaribo`
    - Address: `Domineestraat 12`
    - Default BTW: `10`
    - POS type: `Josbin POS (native)`
-   - Create.
+   - Create. Appears in the list as *Actief*.
 
-6. **Customise the Paramaribo receipt.**
-   Dashboard → Store Settings → pick `De Hoop — Paramaribo Centrum`:
+7. **Customise the Paramaribo receipt.**
+   Dashboard → **Vestigingsinstellingen / Store Settings** → pick `De Hoop — Paramaribo Centrum`:
    - BTW registration number: `SR-BTW-123456789`
    - Header:
      ```
@@ -247,17 +260,17 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
      www.dehoop.sr
      ```
    - Logo: upload `dehoop-logo.png`.
-   - Save changes — checks the live preview on the right looks correct.
+   - Save — live preview on the right reflects every change.
 
-7. **Add the registers for Paramaribo.**
-   Dashboard → Registers → Manage Registers tab → store dropdown set to Paramaribo Centrum:
+8. **Add the registers for Paramaribo.**
+   Dashboard → **Kassabeheer / Registers** → Manage tab → store dropdown set to Paramaribo Centrum:
    - Add `Kassa 1`
    - Add `Kassa 2`
    - Add `Servicebalie`
    Three rows appear, numbered 1, 2, 3.
 
-8. **Add the second store.**
-   Back to Organisations → click De Hoop → Stores tab → + Add store:
+9. **Add the second store.**
+   Back to **Vestigingen / Stores** → **+ Nieuwe vestiging / + Add store**:
    - Name: `De Hoop — Nieuw Nickerie`
    - City: `Nieuw Nickerie`
    - Address: `R.P. Bharosstraat 8`
@@ -265,17 +278,28 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
    - POS type: `Josbin POS (native)`
    - Create.
 
-9. **Customise the Nickerie receipt.**
-   Same as step 6 but with Nickerie's address and phone number. The Nickerie store needs its own header so customers in Nickerie don't get a receipt printed with the Paramaribo phone number on it.
+10. **Customise the Nickerie receipt.**
+    Same as step 7 but with Nickerie's address and phone number. The Nickerie store needs its own header so customers in Nickerie don't get a receipt printed with the Paramaribo phone number on it.
 
-10. **Add the Nickerie register.**
-    Registers → Manage Registers → store dropdown set to Nieuw Nickerie:
+11. **Add the Nickerie register.**
+    Registers → Manage tab → store dropdown set to Nieuw Nickerie:
     - Add `Kassa 1`.
 
-11. **Sanity check.**
-    Back to Dashboard → Organisations. The De Hoop row now shows `2 stores`. Click in, Stores tab: both branches listed, both *Actief*. Registers screen, switching between the two stores, shows 3 + 1 = 4 total registers.
+12. **Sanity check.**
+    Dashboard → **Vestigingen / Stores**. Both branches listed, both *Actief*. Registers screen, switching between the two stores, shows 3 + 1 = 4 total registers.
 
-That's it — the organisation is fully set up in roughly 10 minutes. Next steps for Sandra: load the catalogue (Chapter 4 + bulk import in Chapter 5), then create Store Manager and Cashier accounts (Chapter 3).
+13. **Add cashiers and scope them to the right store.**
+    Dashboard → **Gebruikers / Users** → **+ Nieuwe gebruiker** → role `Cashier`:
+    - Sharmila Jankipersad → tick **only Paramaribo Centrum** in the *Toegewezen vestiging(en)* panel.
+    - Rashied Alibaks → tick **only Nieuw Nickerie**.
+    - Floating relief cashier → leave the panel **empty** (= access to both stores).
+
+    Same idea if you appoint a Store Manager: tick the branch(es) they actually run.
+
+14. **Hand cashiers their POS install + credentials.**
+    When Sharmila logs into the POS, her single assigned store auto-skips the picker — she lands straight on the Open Register gate at Paramaribo. If she ever tries the API for a Nickerie register, she gets `403 STORE_NOT_ASSIGNED`.
+
+That's it — the organisation is fully set up in roughly 15 minutes. Next steps for Sandra: load the catalogue (Chapter 4 + bulk import in Chapter 5).
 
 ---
 

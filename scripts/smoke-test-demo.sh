@@ -176,6 +176,14 @@ hit "OA: GET /api/dashboard/reports/btw"          200 GET "/api/dashboard/report
 hit "OA: GET /api/dashboard/z-reports"            200 GET /api/dashboard/z-reports --token "$T_OA"
 hit "OA: GET /api/dashboard/reports/consolidated" 200 GET "/api/dashboard/reports/consolidated?date_from=2026-05-01&date_to=2026-05-31" --token "$T_OA"
 hit "OA: GET /api/licenses"                       200 GET /api/licenses --token "$T_OA"
+# License create/edit are SA-only (and SA has 2FA on demo). Verify the OA
+# correctly gets 403 instead of being silently allowed.
+hit "OA cannot POST /api/licenses (SA-only)"      403 POST /api/licenses --token "$T_OA" --body '{"organisation_id":"00000000-0000-0000-0000-000000000000","tier":"standard","max_stores":1,"max_terminals":1,"valid_from":"2026-05-26","valid_until":"2027-05-26"}'
+
+# Store-assignment endpoints exposed for OA via the user-create flow.
+# Just probe that the users endpoint round-trips store_ids[] (a 200 OK is
+# enough; pivot correctness is covered by tests/Feature/UserStoreAssignmentTest).
+hit "OA: GET /api/users (sees store_ids)"         200 GET /api/users --token "$T_OA"
 hit "OA: GET /api/audit-log"                      200 GET /api/audit-log --token "$T_OA"
 hit "OA: GET /api/settings/two-factor-policy"     403 GET /api/settings/two-factor-policy --token "$T_OA"
 
