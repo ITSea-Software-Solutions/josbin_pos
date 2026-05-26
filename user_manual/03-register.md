@@ -33,6 +33,8 @@ Put differently: the **register** is the lane at the front of the shop. The **se
 
 After you log in and pick your store, you land on the **Open Register** screen.
 
+![Open Register screen — list of available registers](screenshots/03-open-register-gate.png)
+
 **Steps:**
 
 1. **Pick the register** you'll be using (e.g. *Kassa 1*, *Kassa 2*). The list shows all registers configured for your store — tap the one you want.
@@ -41,6 +43,9 @@ After you log in and pick your store, you land on the **Open Register** screen.
 2. **Enter the opening float** — the cash already in the drawer when you start (e.g. `200.00`).
    - This is the "starting bank" the manager left in the drawer overnight or that you brought from petty cash.
    - Use the decimal point — `200.00`, not `200,00`.
+
+   ![Opening float entry — numpad for counting starting cash](screenshots/03-opening-float.png)
+
 3. Tap **Open Register**.
 
 **What happens next:**
