@@ -40,7 +40,12 @@ class SalePolicy
 
     public function refund(User $user, Sale $sale): bool
     {
-        return $user->can('sales.refund') && $this->ownsSale($user, $sale);
+        if (! $user->can('sales.refund') || ! $this->ownsSale($user, $sale)) return false;
+        // Additionally enforce store-assignment for store-scoped roles. A
+        // Store Manager assigned to Paramaribo can't refund a Nickerie sale.
+        // Org Admin / Auditor / Super Admin keep org-wide scope (see
+        // User::isOrgScopedRole + canAccessStore backfill semantics).
+        return $sale->store_id ? $user->canAccessStore($sale->store_id) : true;
     }
 
     /**

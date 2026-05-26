@@ -151,6 +151,9 @@ class ReportController extends Controller
         ]);
 
         $storeId    = $request->input('store_id');
+
+        // Store Manager must be assigned to the store they're closing.
+        abort_unless($request->user()->canAccessStore($storeId), 403, 'Store not assigned to user.');
         $reportDate = today()->toDateString();
 
         // Check not already closed today

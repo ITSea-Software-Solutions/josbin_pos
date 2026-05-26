@@ -62,6 +62,20 @@ The Create User modal opens. Fields:
 
 Tap **Gebruiker aanmaken / Create user**.
 
+### 3.2.1 Store assignment (cashier + store_manager only)
+
+When you pick **Cashier** or **Store Manager** as the role, an extra **Toegewezen vestiging(en) / Assigned store(s)** panel appears below the role selector. It lists every store in the organisation as a checkbox.
+
+**Rules:**
+
+- **Tick the specific stores** the user works at. The cashier will see only those stores on the POS store-picker, and `register-open` returns *403 STORE_NOT_ASSIGNED* if they try to open a register at any other store. The Z-Report close and refund-approval endpoints enforce the same check for store managers.
+- **Leave everything unticked** = the user can access **every** store in the org. Useful for floating cashiers who cover any branch, for the catch-all "any staff member" pattern, and for backward compatibility with users created before this feature existed (they keep working).
+- **Org Admin, Auditor, Super Admin, API Integration** roles are org-scoped — the picker is hidden because the pivot is ignored for them.
+
+Recorded in the audit log as `user.stores_assigned` with the diff: which stores were added, which were removed, by whom, and when. So a Rekenkamer auditor can prove "this cashier was assigned only to De Hoop — Paramaribo Centrum on 12 May 2026".
+
+When you change a store-scoped user's role to an org-scoped one (e.g. promote a Store Manager to Org Admin), the pivot rows stay but are ignored by `canAccessStore`. Demoting back later automatically re-applies them. Cleanest if you also clear the pivot when promoting, but not required.
+
 ### After the user is created
 
 A green confirmation banner appears at the top of the Users screen with the email and password in plain text, plus a **Kopieer inloggegevens / Copy credentials** button. **Show this to the user once and only once.** The plaintext password is never displayed again — if they lose it, you reset it (§3.7).

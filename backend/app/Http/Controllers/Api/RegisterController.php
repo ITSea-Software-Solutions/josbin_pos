@@ -137,6 +137,15 @@ class RegisterController extends Controller
     {
         $user = $request->user();
 
+        // Cashier / Store Manager must be assigned to this store.
+        // Empty assignment = all stores in org (backfill).
+        if (! $user->canAccessStore($register->store_id)) {
+            return response()->json([
+                'message' => 'U bent niet toegewezen aan deze vestiging. (You are not assigned to this store.)',
+                'code'    => 'STORE_NOT_ASSIGNED',
+            ], 403);
+        }
+
         $request->validate([
             'opening_float' => ['required', 'numeric', 'min:0'],
         ]);

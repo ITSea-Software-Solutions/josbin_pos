@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getUsers, createUser, updateUser, type User, type CreateUserPayload } from '@/api/users'
-import { getOrganisations, type Organisation } from '@/api/organisations'
+import { getOrganisations, getOrgStores, type Organisation, type Store } from '@/api/organisations'
 import { getTwoFactorPolicy, updateTwoFactorPolicy } from '@/api/securityPolicy'
 import { useDashboardAuthStore } from '@/store/authStore'
 
@@ -88,6 +88,70 @@ function Avatar({ name }: { name: string }) {
   return (
     <div style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, background: `hsl(${hue},55%,88%)`, color: `hsl(${hue},55%,35%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800 }}>
       {initials}
+    </div>
+  )
+}
+
+// ─── StoreAssignmentPicker ───────────────────────────────────────────────────
+// Multi-select of stores under an org. Empty selection = "all stores in org"
+// (matches backend backfill semantics). Only meaningful for cashier +
+// store_manager — other roles are org-scoped so the picker is hidden.
+function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
+  orgId: string | null
+  value: string[]
+  onChange: (ids: string[]) => void
+  isNl: boolean
+  role: string
+}) {
+  const { data: stores = [], isLoading } = useQuery({
+    queryKey: ['org-stores-picker', orgId],
+    queryFn: () => orgId ? getOrgStores(orgId) : Promise.resolve([] as Store[]),
+    enabled: !!orgId,
+  })
+
+  function toggle(id: string) {
+    onChange(value.includes(id) ? value.filter((x) => x !== id) : [...value, id])
+  }
+
+  if (!orgId) {
+    return (
+      <div style={{ padding: '10px 12px', background: '#f9fafb', border: '1px dashed #e5e7eb', borderRadius: 8, fontSize: 12, color: '#9090a0' }}>
+        {isNl ? 'Kies eerst een organisatie hierboven.' : 'Pick an organisation above first.'}
+      </div>
+    )
+  }
+
+  const noneSelected = value.length === 0
+  const allLabel = role === 'cashier'
+    ? (isNl ? 'Kassamedewerker kan elke kassa in deze organisatie openen.' : 'Cashier can open any register in this organisation.')
+    : (isNl ? 'Beheerder kan elke vestiging in deze organisatie beheren.' : 'Manager can manage every store in this organisation.')
+
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+        {isNl ? 'Toegewezen vestiging(en)' : 'Assigned store(s)'}
+      </label>
+      <div style={{ border: '1.5px solid #e5e7eb', borderRadius: 10, padding: '10px 12px', maxHeight: 180, overflowY: 'auto', background: '#fff' }}>
+        {isLoading ? (
+          <div style={{ fontSize: 12, color: '#9090a0' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
+        ) : stores.length === 0 ? (
+          <div style={{ fontSize: 12, color: '#9090a0' }}>
+            {isNl ? 'Deze organisatie heeft nog geen vestigingen — voeg er een toe via Vestigingen.' : 'This organisation has no stores yet — add one via Stores.'}
+          </div>
+        ) : (
+          stores.map((s) => (
+            <label key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 0', fontSize: 13, color: '#1c1c2e', cursor: 'pointer' }}>
+              <input type="checkbox" checked={value.includes(s.id)} onChange={() => toggle(s.id)} />
+              <span style={{ flex: 1 }}>{s.name}</span>
+              <span style={{ fontSize: 11, color: '#9090a0' }}>{s.city || ''}</span>
+            </label>
+          ))
+        )}
+      </div>
+      <p style={{ fontSize: 11.5, color: noneSelected ? '#7c3aed' : '#9090a0', marginTop: 5 }}>
+        {noneSelected ? `ℹ️ ${isNl ? 'Niets aangevinkt = alle vestigingen.' : 'Nothing ticked = all stores.'} ${allLabel}` :
+          isNl ? `Toegang tot ${value.length} vestiging${value.length === 1 ? '' : 'en'}.` : `Access to ${value.length} store${value.length === 1 ? '' : 's'}.`}
+      </p>
     </div>
   )
 }
@@ -297,6 +361,18 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
                 ? `Deze gebruiker wordt automatisch toegevoegd aan uw organisatie (${currentUser?.organisation_id?.slice(0,8) ?? ''}…).`
                 : `This user will be added to your organisation (${currentUser?.organisation_id?.slice(0,8) ?? ''}…).`}
             </p>
+          )}
+
+          {/* Store assignment — cashier + store_manager only.
+              Empty selection = "all stores in org" (matches backend backfill). */}
+          {(form.role === 'cashier' || form.role === 'store_manager') && (
+            <StoreAssignmentPicker
+              orgId={isSuperAdmin ? form.organisation_id : (currentUser?.organisation_id ?? null)}
+              value={form.store_ids ?? []}
+              onChange={(ids) => set('store_ids' as keyof CreateUserPayload, ids as never)}
+              isNl={isNl}
+              role={form.role}
+            />
           )}
 
           {/* Locale */}

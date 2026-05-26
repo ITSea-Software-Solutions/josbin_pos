@@ -62,12 +62,13 @@ class UserController extends Controller
         $users = $query
             ->select(['id', 'name', 'email', 'role', 'locale', 'organisation_id',
                 'two_factor_confirmed_at', 'is_active', 'last_login_at', 'created_at'])
-            ->with('organisation:id,name')
+            ->with('organisation:id,name', 'stores:id,name')
             ->paginate($request->integer('per_page', 25));
 
-        // Add computed two_factor_enabled boolean for frontend convenience
+        // Add computed two_factor_enabled + store_ids[] for frontend.
         $users->getCollection()->transform(function (User $u) {
             $u->two_factor_enabled = $u->two_factor_confirmed_at !== null;
+            $u->store_ids          = $u->stores->pluck('id')->all();
             return $u;
         });
 
@@ -92,6 +93,11 @@ class UserController extends Controller
                 ? ['required', 'uuid', 'exists:organisations,id']
                 : ['prohibited'],
             'is_active'       => ['sometimes', 'boolean'],
+            // Store assignment — only meaningful for cashier / store_manager.
+            // Empty = all stores in org (backfill semantics). Other roles
+            // (super_admin / org_admin / auditor) ignore the pivot.
+            'store_ids'       => ['sometimes', 'array'],
+            'store_ids.*'     => ['uuid', 'exists:stores,id'],
         ]);
 
         // Non-super-admin users always belong to actor's org
@@ -99,13 +105,21 @@ class UserController extends Controller
             $data['organisation_id'] = $actor->organisation_id;
         }
 
+        $storeIds = $data['store_ids'] ?? [];
+        unset($data['store_ids']);
+
         $user = User::create([
             ...$data,
             'is_active' => $data['is_active'] ?? true,
         ]);
 
+        // Sync store assignments — only persist when role can be store-scoped.
+        if (! empty($storeIds) && in_array($user->role, [User::ROLE_CASHIER, User::ROLE_STORE_MANAGER], true)) {
+            $this->syncUserStores($user, $storeIds, $actor->id);
+        }
+
         return response()->json([
-            'data' => $user->makeVisible([])->load('organisation:id,name'),
+            'data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'stores:id,name')),
         ], 201);
     }
 
@@ -114,7 +128,7 @@ class UserController extends Controller
     {
         $this->authorize('view', $user);
 
-        return response()->json(['data' => $user->load('organisation:id,name')]);
+        return response()->json(['data' => $this->formatUser($user->load('organisation:id,name', 'stores:id,name'))]);
     }
 
     /** PUT /api/users/{user} */
@@ -132,7 +146,12 @@ class UserController extends Controller
             'role'       => ['sometimes', Rule::in($manageableRoles)],
             'locale'     => ['sometimes', Rule::in(['nl', 'en'])],
             'is_active'  => ['sometimes', 'boolean'],
+            'store_ids'   => ['sometimes', 'array'],
+            'store_ids.*' => ['uuid', 'exists:stores,id'],
         ]);
+
+        $storeIds = $data['store_ids'] ?? null;
+        unset($data['store_ids']);
 
         if (isset($data['password'])) {
             $data['password'] = Hash::make($data['password']);
@@ -140,12 +159,64 @@ class UserController extends Controller
 
         $user->update($data);
 
+        // Sync store assignments (only for store-scoped roles). Pass an
+        // empty array intentionally to clear all assignments → grants
+        // "all stores in org" via the backfill rule.
+        $effectiveRole = $data['role'] ?? $user->role;
+        if ($storeIds !== null && in_array($effectiveRole, [User::ROLE_CASHIER, User::ROLE_STORE_MANAGER], true)) {
+            $this->syncUserStores($user, $storeIds, $actor->id);
+        }
+
         // If role changed or deactivated — revoke all tokens (force re-login everywhere)
         if (isset($data['role']) || (isset($data['is_active']) && ! $data['is_active'])) {
             $user->tokens()->delete();
         }
 
-        return response()->json(['data' => $user->fresh()->load('organisation:id,name')]);
+        return response()->json(['data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'stores:id,name'))]);
+    }
+
+    /**
+     * Sync the user_stores pivot and write an audit entry capturing the diff
+     * (which stores were added / removed and by whom).
+     */
+    private function syncUserStores(User $user, array $storeIds, string $actorId): void
+    {
+        // Verify every store_id belongs to the user's org — refuse cross-org.
+        $valid = \App\Models\Store::whereIn('id', $storeIds)
+            ->where('organisation_id', $user->organisation_id)
+            ->pluck('id')->all();
+
+        $previous = $user->stores()->pluck('stores.id')->all();
+        $payload  = collect($valid)->mapWithKeys(fn ($id) => [$id => ['assigned_at' => now(), 'assigned_by' => $actorId]])->all();
+
+        $user->stores()->sync($payload);
+
+        $added   = array_values(array_diff($valid, $previous));
+        $removed = array_values(array_diff($previous, $valid));
+        if ($added || $removed) {
+            \DB::table('audit_logs')->insert([
+                'user_id'         => $actorId,
+                'organisation_id' => $user->organisation_id,
+                'event'           => 'user.stores_assigned',
+                'auditable_type'  => 'user',
+                'auditable_id'    => $user->id,
+                'old_values'      => json_encode(['store_ids' => $previous]),
+                'new_values'      => json_encode(['store_ids' => $valid, 'added' => $added, 'removed' => $removed]),
+                'ip_address'      => request()->ip(),
+                'created_at'      => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Add `store_ids` to the user JSON so the dashboard can render the
+     * multi-select pre-filled, and so other consumers see the scope.
+     */
+    private function formatUser(User $user): array
+    {
+        $arr = $user->toArray();
+        $arr['store_ids'] = $user->stores->pluck('id')->all();
+        return $arr;
     }
 
     /** DELETE /api/users/{user} — deactivate, not hard delete */

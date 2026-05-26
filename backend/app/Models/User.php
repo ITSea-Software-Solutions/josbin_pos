@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -74,6 +75,16 @@ class User extends Authenticatable implements Auditable
         return $this->hasMany(Sale::class, 'cashier_id');
     }
 
+    /**
+     * Stores this user is explicitly assigned to. Empty = all stores in the
+     * user's organisation (backfill semantics — see canAccessStore()).
+     */
+    public function stores(): BelongsToMany
+    {
+        return $this->belongsToMany(Store::class, 'user_stores')
+            ->withPivot('assigned_at', 'assigned_by');
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     public function isSuperAdmin(): bool
@@ -93,6 +104,48 @@ class User extends Authenticatable implements Auditable
     public function isGovernmentUser(): bool
     {
         return $this->organisation?->is_government ?? false;
+    }
+
+    /**
+     * Roles that operate at the org level and ignore the user_stores pivot.
+     * Cashier + store_manager are the only roles where the pivot matters.
+     */
+    public function isOrgScopedRole(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_SUPER_ADMIN,
+            self::ROLE_ORGANISATION_ADMIN,
+            self::ROLE_AUDITOR,
+            self::ROLE_API_INTEGRATION,
+        ], true);
+    }
+
+    /**
+     * Can this user act on the given store?
+     *
+     * Rules:
+     *   - super_admin: yes for any store anywhere.
+     *   - org-scoped roles (org_admin / auditor / api_integration): yes for
+     *     any store within their organisation.
+     *   - cashier / store_manager: yes for stores in their org AND either
+     *     (a) they have an empty user_stores assignment (= all in org), or
+     *     (b) the pivot includes this store_id.
+     *
+     * The empty-assignment fallback preserves backward compatibility with
+     * users created before the pivot existed.
+     */
+    public function canAccessStore(string $storeId): bool
+    {
+        if ($this->isSuperAdmin()) return true;
+
+        // Reject anything outside the user's own org first — cheap check.
+        $store = Store::find($storeId);
+        if (! $store || $store->organisation_id !== $this->organisation_id) return false;
+
+        if ($this->isOrgScopedRole()) return true;
+
+        $assigned = $this->stores()->pluck('stores.id');
+        return $assigned->isEmpty() || $assigned->contains($storeId);
     }
 
     /**

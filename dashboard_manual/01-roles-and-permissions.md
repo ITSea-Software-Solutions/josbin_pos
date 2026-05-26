@@ -85,6 +85,8 @@ The **person who runs one physical shop**. Reports to the Org Admin at HQ.
 
 **Cannot do:** bulk-import the catalogue, push the catalogue, create API keys (those are HQ-level — single-shop businesses can solve this by giving the same person Org Admin instead, see §1.6).
 
+**Store-scoped.** Store Managers can be **assigned to specific stores**. A manager assigned only to *De Hoop — Paramaribo Centrum* cannot close a register, approve a refund, or run the Z-Report at *De Hoop — Nickerie*. Set the assignment when you create or edit the user (Users → role = Store Manager → tick the stores). Leave it empty to grant all stores in the org — the "floating manager" pattern. See [Chapter 3 §3.2.1](03-users.md#321-store-assignment-cashier--store_manager-only) for the picker + audit trail.
+
 **Real-world example:** Rashied Alibaks at "De Hoop — Paramaribo Centrum". He opens the shop, sets the day's USD→SRD rate, makes sure all cashiers reconcile their drawers at end of shift.
 
 ### 🧾 Cashier (at the till)
@@ -103,7 +105,9 @@ The **person ringing up customers** on the POS terminal.
 
 **Where they work:** the **POS app** on the till — *not* the dashboard. If a cashier logs into the dashboard, they only see their personal "My Account" page (own sales, own shifts, profile + password).
 
-**Real-world example:** Sharmila Jankipersad on Kassa 1. Logs in, opens the till, sells for 8 hours, closes the till.
+**Store-scoped.** Cashiers can be **assigned to specific stores**. On the POS store-picker they only see their assigned stores; if assigned to exactly one, the picker auto-skips. Try to open a register at a store you aren't assigned to → *403 STORE_NOT_ASSIGNED*. Leave the assignment empty when you create the user to allow them at any store in the org (the "floating cashier" pattern).
+
+**Real-world example:** Sharmila Jankipersad on Kassa 1 at "De Hoop — Paramaribo Centrum". Assigned to that one store. Logs in, picker auto-routes to Paramaribo, opens her till, sells for 8 hours, closes the till.
 
 ### 👁️ Auditor (read-only)
 

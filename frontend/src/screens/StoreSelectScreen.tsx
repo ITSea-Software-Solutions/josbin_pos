@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
@@ -15,6 +16,16 @@ export default function StoreSelectScreen() {
     queryKey: ['my-stores'],
     queryFn: getMyStores,
   })
+
+  // If the cashier is assigned to exactly one store (or there's only one
+  // store in the org), skip the picker entirely and route straight to
+  // OpenRegisterGate. Matches the single-register auto-pick pattern on
+  // the register gate.
+  useEffect(() => {
+    if (!isLoading && stores.length === 1) {
+      setStoreId(stores[0].id)
+    }
+  }, [isLoading, stores, setStoreId])
 
   function handleSelect(store: Store) {
     setStoreId(store.id)
