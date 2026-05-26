@@ -71,6 +71,13 @@ export interface Product {
   btw_rate: string // DECIMAL(5,2)
   btw_exempt: boolean
   stock_qty: number
+  /**
+   * Optional — present on responses that include per-store stock context.
+   * The POS endpoint (`/api/products/pos`) doesn't return this today, so
+   * the cashier-facing warning relies on a separate low-stock lookup
+   * (see `useLowStockSet`). Out-of-stock detection still works without it.
+   */
+  low_stock_threshold?: number
   image_url: string | null
 }
 

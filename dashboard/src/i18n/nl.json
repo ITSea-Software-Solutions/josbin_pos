@@ -13,6 +13,20 @@
     "avgBasket": "Gem. bon",
     "allOrgs": "Alle organisaties"
   },
+  "stock": {
+    "alerts": {
+      "tileTitle": "Voorraadwaarschuwingen",
+      "tileSub": "{{low}} laag · {{out}} op",
+      "tileNone": "Voorraad in orde",
+      "bannerOne": "{{count}} product is laag of op — bekijk nu",
+      "bannerMany": "{{count}} producten zijn laag of op — bekijk nu",
+      "reviewNow": "Nu bekijken",
+      "lowOnlyToggle": "Alleen lage voorraad tonen",
+      "showAll": "Alles tonen",
+      "outBadge": "OP",
+      "lowBadge": "LAAG"
+    }
+  },
   "errors": {
     "serverError": "Serverfout. Probeer het opnieuw.",
     "networkError": "Netwerkfout. Controleer uw verbinding."

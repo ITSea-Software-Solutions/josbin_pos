@@ -6,6 +6,7 @@ import { useDashboardAuthStore } from '@/store/authStore'
 import { useOrgChannel, usePlatformChannel } from '@/hooks/useEcho'
 import { formatSRD } from '@/utils/currency'
 import { getWeeklySummary, getAnomalies, type AnomalyEntry } from '@/api/ai'
+import { getStockAlertSummary } from '@/api/stock'
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({
@@ -154,12 +155,28 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-export default function DashboardOverview({ onStoreSelect }: { onStoreSelect: (id: string) => void }) {
-  const { i18n } = useTranslation()
+export default function DashboardOverview({
+  onStoreSelect,
+  onOpenStockAlerts,
+}: {
+  onStoreSelect: (id: string) => void
+  /** Called when the manager clicks the "Stock alerts" tile — should jump to the Stock screen with the low-stock filter on. */
+  onOpenStockAlerts?: () => void
+}) {
+  const { t, i18n } = useTranslation()
   const qc     = useQueryClient()
   const user   = useDashboardAuthStore((s) => s.user)
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null)
   const isNl = i18n.language === 'nl'
+
+  // Stock-alert tile — refreshed every couple of minutes so a manager who
+  // adjusts stock from another screen sees the counter update on the way back.
+  const { data: stockAlerts } = useQuery({
+    queryKey: ['stock-alerts-summary'],
+    queryFn: () => getStockAlertSummary(),
+    refetchInterval: 120_000,
+    staleTime: 30_000,
+  })
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['platform-summary'],
@@ -270,6 +287,17 @@ export default function DashboardOverview({ onStoreSelect }: { onStoreSelect: (i
         />
       </div>
 
+      {/* Stock alerts tile — clickable, deep-links into Stock screen filtered
+         to low-stock only. Always rendered: the "all OK" state acts as a
+         reassuring green confirmation for managers on quiet mornings. */}
+      {stockAlerts && (
+        <StockAlertTile
+          summary={stockAlerts}
+          onClick={onOpenStockAlerts}
+          t={t}
+        />
+      )}
+
       {/* Org filter tabs */}
       {data.orgs.length > 1 && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -338,6 +366,90 @@ export default function DashboardOverview({ onStoreSelect }: { onStoreSelect: (i
       {/* AI Widgets row */}
       <AiWidgets isNl={isNl} />
 
+    </div>
+  )
+}
+
+// ─── Stock alert tile ─────────────────────────────────────────────────────────
+function StockAlertTile({
+  summary, onClick, t,
+}: {
+  summary: { low_count: number; out_count: number; total_count: number }
+  onClick?: () => void
+  t: (key: string, opts?: Record<string, unknown>) => string
+}) {
+  const hasAlerts = summary.total_count > 0
+  const clickable = hasAlerts && !!onClick
+
+  return (
+    <div
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? onClick : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } } : undefined}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 16,
+        background: hasAlerts ? '#fffbeb' : '#f0fdf4',
+        border: hasAlerts ? '1px solid #fde68a' : '1px solid #bbf7d0',
+        borderRadius: 14, padding: '14px 20px', marginBottom: 24,
+        cursor: clickable ? 'pointer' : 'default',
+        transition: 'transform 0.15s, box-shadow 0.15s',
+      }}
+      onMouseEnter={e => {
+        if (clickable) {
+          e.currentTarget.style.boxShadow = '0 6px 20px rgba(245,158,11,0.18)'
+          e.currentTarget.style.transform = 'translateY(-1px)'
+        }
+      }}
+      onMouseLeave={e => {
+        if (clickable) {
+          e.currentTarget.style.boxShadow = 'none'
+          e.currentTarget.style.transform = 'none'
+        }
+      }}
+    >
+      <div style={{
+        width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+        background: hasAlerts ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #16a34a, #15803d)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        boxShadow: hasAlerts ? '0 4px 14px rgba(245,158,11,0.35)' : '0 4px 14px rgba(22,163,74,0.3)',
+      }}>
+        <span style={{ fontSize: 20 }} aria-hidden>{hasAlerts ? '⚠️' : '✓'}</span>
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: hasAlerts ? '#92400e' : '#15803d', marginBottom: 2 }}>
+          {t('stock.alerts.tileTitle')}
+        </p>
+        <p style={{ fontSize: 14, fontWeight: 600, color: hasAlerts ? '#1c1c2e' : '#15803d' }}>
+          {hasAlerts
+            ? t('stock.alerts.tileSub', { low: summary.low_count, out: summary.out_count })
+            : t('stock.alerts.tileNone')}
+        </p>
+      </div>
+
+      {hasAlerts && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {summary.out_count > 0 && (
+            <span style={{
+              fontSize: 11, fontWeight: 800, letterSpacing: '0.5px',
+              background: '#dc2626', color: '#fff',
+              padding: '4px 10px', borderRadius: 6,
+            }}>
+              {summary.out_count} {t('stock.alerts.outBadge')}
+            </span>
+          )}
+          {clickable && (
+            <span style={{
+              fontSize: 12.5, fontWeight: 700, color: '#92400e',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              {t('stock.alerts.reviewNow')}
+              <span aria-hidden style={{ fontSize: 14 }}>→</span>
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }

@@ -78,6 +78,33 @@
       "confirmCard": "Betaling bevestigen",
       "processing": "Verwerken..."
     },
+    "refund": {
+      "title": "Verkoop terugbetalen",
+      "action": "Terugbetalen",
+      "originalReceipt": "Originele bon",
+      "occurredAt": "Datum",
+      "customer": "Klant",
+      "originalTotal": "Origineel totaal",
+      "items": "Artikelen",
+      "selectItems": "Selecteer artikelen en hoeveelheden voor terugbetaling",
+      "item": "Artikel",
+      "available": "Beschikbaar",
+      "qtyToRefund": "Aantal terug",
+      "lineTotal": "Regeltotaal",
+      "reason": "Reden (verplicht)",
+      "reasonPlaceholder": "Waarom wordt dit terugbetaald? (min. 5 tekens)",
+      "totalRefund": "Terugbetaling totaal",
+      "confirm": "Terugbetalen SRD {{amount}}",
+      "cancel": "Annuleren",
+      "processing": "Terugbetaling verwerken...",
+      "noItems": "Selecteer minimaal één artikel met een aantal > 0",
+      "reasonTooShort": "Reden moet minimaal 5 tekens bevatten",
+      "success": "Terugbetaling verwerkt",
+      "successDetail": "Terugbetalingsbon #{{number}} aangemaakt voor SRD {{amount}}.",
+      "close": "Sluiten",
+      "refundedStatus": "Terugbetaling",
+      "loadingSale": "Verkoopdetails laden..."
+    },
     "receipt": {
       "title": "Kassabon",
       "email": "Bon per e-mail",
@@ -106,6 +133,12 @@
       "manual": "Handmatig invoeren",
       "notFound": "Product niet gevonden voor streepjescode: {{barcode}}",
       "scanning": "Scannen..."
+    },
+    "stockWarning": {
+      "lowOne": "Lage voorraad: nog 1",
+      "lowMany": "Lage voorraad: nog {{count}}",
+      "out": "Niet op voorraad — overleg met manager?",
+      "outShort": "Niet op voorraad"
     }
   },
   "reports": {

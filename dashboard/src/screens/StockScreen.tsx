@@ -14,6 +14,17 @@ interface Product {
   category?: { name_nl: string; name_en: string } | null
 }
 
+/**
+ * Stock is stored as decimal(10,3) but is almost always whole units in
+ * Surinamese retail (one egg, one can of milk). Trim trailing zeros so the
+ * UI shows "12" rather than "12.000" — keeps the table dense and readable.
+ */
+function formatStockQty(qty: number): string {
+  if (!Number.isFinite(qty)) return '0'
+  const rounded = Math.round(qty * 1000) / 1000
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toString().replace(/0+$/, '').replace(/\.$/, '')
+}
+
 // ─── Stock Adjust Modal ────────────────────────────────────────────────────────
 function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockProduct; isNl: boolean; onClose: () => void }) {
   const qc = useQueryClient()
@@ -170,10 +181,15 @@ function MovementHistory({ product, isNl, onClose }: { product: Product; isNl: b
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
-export default function StockScreen() {
-  const { i18n } = useTranslation()
+interface StockScreenProps {
+  /** Optional initial tab. Used when the overview deep-links via the "Stock alerts" tile. */
+  initialActiveTab?: 'all' | 'low'
+}
+
+export default function StockScreen({ initialActiveTab = 'all' }: StockScreenProps = {}) {
+  const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
-  const [activeTab, setActiveTab] = useState<'all' | 'low'>('all')
+  const [activeTab, setActiveTab] = useState<'all' | 'low'>(initialActiveTab)
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [adjustProduct, setAdjustProduct] = useState<Product | null>(null)
@@ -190,12 +206,18 @@ export default function StockScreen() {
   const { data: lowStockData = [], isLoading: lowLoading } = useQuery({
     queryKey: ['low-stock'],
     queryFn: () => getLowStockProducts(),
-    enabled: activeTab === 'low',
+    // Always fetch — we need the count for the alert banner shown on the
+    // "all" tab too. The payload is small (capped at 50 by default).
+    enabled: true,
   })
 
   const products = activeTab === 'all' ? (allData?.data ?? []) : (lowStockData as Product[])
   const lastPage = activeTab === 'all' ? (allData?.last_page ?? 1) : 1
   const isLoading = activeTab === 'all' ? allLoading : lowLoading
+
+  // Split low-stock list into "out" vs "low but in stock" for the banner copy.
+  const outCount = (lowStockData as LowStockProduct[]).filter(p => parseFloat(p.stock_qty) <= 0).length
+  const lowCount = lowStockData.length - outCount
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
@@ -208,32 +230,78 @@ export default function StockScreen() {
         </p>
       </div>
 
+      {/* Top alert banner — yellow callout when any product is low/out of stock.
+         Stays visible on both tabs so it works as a global "you have stock
+         work to do" reminder. The button switches the tab to the focused
+         low-stock view (equivalent to ?lowOnly=1 in a router-based world). */}
+      {lowStockData.length > 0 && activeTab !== 'low' && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 12,
+          padding: '12px 18px', borderRadius: 12,
+          background: '#fffbeb', border: '1px solid #fde68a',
+          marginBottom: 20,
+        }}>
+          <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden>⚠️</span>
+          <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: '#92400e' }}>
+            {t(lowStockData.length === 1 ? 'stock.alerts.bannerOne' : 'stock.alerts.bannerMany',
+              { count: lowStockData.length })}
+            {outCount > 0 && (
+              <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: '#b91c1c' }}>
+                ({outCount} {t('stock.alerts.outBadge')})
+              </span>
+            )}
+          </span>
+          <button
+            onClick={() => setActiveTab('low')}
+            style={{
+              height: 32, padding: '0 14px', borderRadius: 8, border: 'none',
+              background: '#d97706', color: '#fff', fontSize: 12.5, fontWeight: 700,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            {t('stock.alerts.reviewNow')}
+          </button>
+        </div>
+      )}
+
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid #e9e9ef' }}>
         {([
           { key: 'all', nl: 'Alle producten', en: 'All products' },
           { key: 'low', nl: `Lage voorraad${lowStockData.length > 0 ? ` (${lowStockData.length})` : ''}`, en: `Low stock${lowStockData.length > 0 ? ` (${lowStockData.length})` : ''}` },
-        ] as const).map(t => (
-          <button key={t.key} onClick={() => setActiveTab(t.key)}
+        ] as const).map(tab => (
+          <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             style={{
               padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
-              fontSize: 14, fontWeight: activeTab === t.key ? 700 : 500,
-              color: activeTab === t.key ? (t.key === 'low' ? '#dc2626' : '#7c3aed') : '#6b7280',
-              borderBottom: activeTab === t.key ? `2px solid ${t.key === 'low' ? '#dc2626' : '#7c3aed'}` : '2px solid transparent',
+              fontSize: 14, fontWeight: activeTab === tab.key ? 700 : 500,
+              color: activeTab === tab.key ? (tab.key === 'low' ? '#dc2626' : '#7c3aed') : '#6b7280',
+              borderBottom: activeTab === tab.key ? `2px solid ${tab.key === 'low' ? '#dc2626' : '#7c3aed'}` : '2px solid transparent',
               marginBottom: -2,
             }}>
-            {isNl ? t.nl : t.en}
+            {isNl ? tab.nl : tab.en}
           </button>
         ))}
       </div>
 
-      {/* Low stock alert banner */}
+      {/* Focused low-stock banner — kept distinct from the global yellow one
+         so the colour intensity matches "you're already on the alert tab". */}
       {activeTab === 'low' && lowStockData.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px', borderRadius: 10, background: '#fef2f2', border: '1px solid #fecaca', marginBottom: 20 }}>
           <span style={{ fontSize: 18 }}>⚠️</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: '#dc2626' }}>
-            {isNl ? `${lowStockData.length} product(en) onder de minimumdrempel` : `${lowStockData.length} product(s) below minimum threshold`}
+            {isNl
+              ? `${lowCount} laag · ${outCount} op voorraad`
+              : `${lowCount} low · ${outCount} out of stock`}
           </span>
+          <button
+            onClick={() => setActiveTab('all')}
+            style={{
+              marginLeft: 'auto', height: 28, padding: '0 12px', borderRadius: 6, border: '1px solid #fecaca',
+              background: '#fff', color: '#dc2626', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            {t('stock.alerts.showAll')}
+          </button>
         </div>
       )}
 
@@ -280,15 +348,41 @@ export default function StockScreen() {
                 </p>
               </td></tr>
             ) : products.map((p, i) => {
-              const isLow = parseFloat(p.low_stock_threshold) > 0 && parseFloat(p.stock_qty) <= parseFloat(p.low_stock_threshold)
+              const qty = parseFloat(p.stock_qty)
+              const threshold = parseFloat(p.low_stock_threshold)
+              // "out" wins over "low" — never paint a zero-stock row yellow.
+              const isOut = qty <= 0
+              const isLow = !isOut && threshold > 0 && qty <= threshold
+
+              // Pastel backgrounds — strong enough to scan a busy table,
+              // weak enough not to drown out the row text.
+              const baseBg = isOut ? 'rgba(220,38,38,.06)' : isLow ? 'rgba(245,158,11,.08)' : undefined
+              const hoverBg = isOut ? 'rgba(220,38,38,.10)' : isLow ? 'rgba(245,158,11,.13)' : 'rgba(124,58,237,.025)'
+
               return (
                 <tr key={p.id}
-                  style={{ borderBottom: i < products.length - 1 ? '1px solid #f3f3f8' : 'none', background: isLow ? 'rgba(220,38,38,.02)' : undefined }}
-                  onMouseEnter={e => (e.currentTarget.style.background = isLow ? 'rgba(220,38,38,.04)' : 'rgba(124,58,237,.025)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = isLow ? 'rgba(220,38,38,.02)' : '')}
+                  style={{ borderBottom: i < products.length - 1 ? '1px solid #f3f3f8' : 'none', background: baseBg }}
+                  onMouseEnter={e => (e.currentTarget.style.background = hoverBg)}
+                  onMouseLeave={e => (e.currentTarget.style.background = baseBg ?? '')}
                 >
                   <td style={{ padding: '12px 16px' }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? p.name_nl : p.name_en}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? p.name_nl : p.name_en}</p>
+                      {isOut && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 800, letterSpacing: '0.5px',
+                          background: '#dc2626', color: '#fff',
+                          padding: '2px 7px', borderRadius: 4,
+                        }}>{t('stock.alerts.outBadge')}</span>
+                      )}
+                      {isLow && (
+                        <span style={{
+                          fontSize: 10, fontWeight: 800, letterSpacing: '0.5px',
+                          background: '#f59e0b', color: '#fff',
+                          padding: '2px 7px', borderRadius: 4,
+                        }}>{t('stock.alerts.lowBadge')}</span>
+                      )}
+                    </div>
                     {p.barcode && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9090a0', fontFamily: 'monospace' }}>{p.barcode}</p>}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>
@@ -297,15 +391,15 @@ export default function StockScreen() {
                   <td style={{ padding: '12px 16px' }}>
                     <span style={{
                       fontSize: 15, fontWeight: 800,
-                      color: isLow ? '#dc2626' : parseFloat(p.stock_qty) === 0 ? '#9090a0' : '#16a34a',
+                      color: isOut ? '#dc2626' : isLow ? '#b45309' : '#16a34a',
                       display: 'flex', alignItems: 'center', gap: 6,
                     }}>
-                      {isLow && <span style={{ fontSize: 14 }}>⚠️</span>}
-                      {parseFloat(p.stock_qty).toFixed(0)}
+                      {(isOut || isLow) && <span style={{ fontSize: 14 }} aria-hidden>⚠️</span>}
+                      {formatStockQty(qty)}
                     </span>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>
-                    {parseFloat(p.low_stock_threshold) > 0 ? parseFloat(p.low_stock_threshold).toFixed(0) : '—'}
+                    {threshold > 0 ? formatStockQty(threshold) : '—'}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', gap: 6 }}>

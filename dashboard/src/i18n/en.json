@@ -13,6 +13,20 @@
     "avgBasket": "Avg. basket",
     "allOrgs": "All organisations"
   },
+  "stock": {
+    "alerts": {
+      "tileTitle": "Stock alerts",
+      "tileSub": "{{low}} low · {{out}} out",
+      "tileNone": "All stock OK",
+      "bannerOne": "{{count}} product is low or out of stock — review now",
+      "bannerMany": "{{count}} products are low or out of stock — review now",
+      "reviewNow": "Review now",
+      "lowOnlyToggle": "Show only low-stock items",
+      "showAll": "Show all",
+      "outBadge": "OUT",
+      "lowBadge": "LOW"
+    }
+  },
   "errors": {
     "serverError": "Server error. Please try again.",
     "networkError": "Network error. Check your connection."

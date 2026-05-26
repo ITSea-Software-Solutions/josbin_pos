@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
+import { useLowStockSet } from '@/hooks/useLowStockSet'
 import { getPosProducts, getCategories, getProductByBarcode } from '@/api/products'
 import CategoryFilter from './CategoryFilter'
 import ProductCard from './ProductCard'
@@ -32,6 +33,8 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     queryFn: getCategories,
     staleTime: 1000 * 60 * 10,
   })
+
+  const { data: lowStockIds } = useLowStockSet(storeId)
 
   // Barcode scanner — USB HID keyboard wedge sends chars rapidly then Enter
   const handleBarcodeSearch = useCallback(async (barcode: string) => {
@@ -127,6 +130,7 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
                 key={product.id}
                 product={product}
                 display={productDisplay}
+                isLowStock={lowStockIds?.has(product.id) ?? false}
                 onAdd={addProduct}
               />
             ))}

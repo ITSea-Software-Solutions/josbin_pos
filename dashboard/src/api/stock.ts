@@ -39,9 +39,55 @@ export interface LowStockProduct {
   category?: { name_nl: string; name_en: string } | null
 }
 
-export async function getLowStockProducts(params?: { per_page?: number }): Promise<LowStockProduct[]> {
+export async function getLowStockProducts(params?: { per_page?: number; store_id?: string }): Promise<LowStockProduct[]> {
   const res = await apiClient.get<{ data: LowStockProduct[] }>('/products', {
-    params: { low_stock: true, per_page: params?.per_page ?? 50, active_only: true },
+    params: {
+      low_stock: true,
+      per_page: params?.per_page ?? 50,
+      active_only: true,
+      ...(params?.store_id ? { store_id: params.store_id } : {}),
+    },
   })
   return res.data.data ?? []
+}
+
+/**
+ * Tiny stock-alert summary used by the dashboard overview tile.
+ *
+ * We can't ask the backend for an out-of-stock count directly (no dedicated
+ * filter exists and the brief explicitly forbids adding endpoints), so we
+ * fetch up to `per_page` low-stock rows and split them client-side:
+ *   - out  → stock_qty <= 0
+ *   - low  → 0 < stock_qty <= threshold
+ *
+ * Payload stays small (under ~30 KB even at 200 rows) and lets one query
+ * power both badges without a second round-trip.
+ */
+export async function getStockAlertSummary(storeId?: string): Promise<{
+  low_count: number
+  out_count: number
+  total_count: number
+}> {
+  const res = await apiClient.get<{
+    data: LowStockProduct[]
+    total?: number
+  }>('/products', {
+    params: {
+      low_stock: true,
+      per_page: 200,
+      active_only: true,
+      ...(storeId ? { store_id: storeId } : {}),
+    },
+  })
+  const rows = res.data.data ?? []
+  let out = 0
+  let low = 0
+  for (const r of rows) {
+    if (parseFloat(r.stock_qty) <= 0) out += 1
+    else low += 1
+  }
+  // `total` from Laravel pagination is the authoritative combined figure,
+  // fall back to the row count if it's missing.
+  const total = typeof res.data.total === 'number' ? res.data.total : rows.length
+  return { low_count: low, out_count: out, total_count: total }
 }

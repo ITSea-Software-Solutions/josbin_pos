@@ -430,10 +430,23 @@ class BtwCalculationServiceTest extends TestCase
     /** @test */
     public function test_large_quantity_decimal_precision(): void
     {
-        // 999.999 kg at SRD 1.00 each, 10% BTW
+        // 999.999 kg at SRD 1.00 each, 10% BTW — BCMath multiplies exactly,
+        // then half-up rounding to 2dp gives 1000.00.
         $r = $this->btw->calculateLineItem('1.00', '999.999', '10');
-        $this->assertSame('999.999', (string) round(1.0 * 999.999, 3)); // sanity
-        $this->assertSame('1000.00', $r['line_gross']); // rounded to 2dp
+        $this->assertSame('1000.00', $r['line_gross']);
+        // BTW = 1000 - 1000/1.10 = 90.909... → rounds to 90.91
+        $this->assertSame('90.91', $r['btw_amount']);
+    }
+
+    /** @test */
+    public function test_very_large_total_preserves_two_decimal_precision(): void
+    {
+        // 5,000,000.00 single-unit at 10%: BTW = 5,000,000 - 5,000,000/1.10
+        //   = 5,000,000 - 4,545,454.5454... = 454,545.4545... → 454,545.45
+        $r = $this->btw->calculateLineItem('5000000.00', '1', '10');
+        $this->assertSame('5000000.00', $r['line_gross']);
+        $this->assertSame('454545.45',  $r['btw_amount']);
+        $this->assertSame('4545454.55', $r['btw_base']);
     }
 
     /** @test */

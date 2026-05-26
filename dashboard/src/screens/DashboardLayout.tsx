@@ -157,6 +157,10 @@ export default function DashboardLayout() {
   const defaultScreen: Screen = user?.role === 'cashier' ? 'my-account' : 'overview'
   const [screen, setScreen]               = useState<Screen>(defaultScreen)
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
+  // When the dashboard deep-links into the stock screen (e.g. via the
+  // "Stock alerts" tile on the overview) we use this to pre-select the
+  // low-stock tab. Cleared whenever the user navigates anywhere else.
+  const [stockInitialTab, setStockInitialTab] = useState<'all' | 'low'>('all')
   const isNl = i18n.language === 'nl'
 
   // Machine accounts (API integrations) have no business in the dashboard UI.
@@ -176,8 +180,18 @@ export default function DashboardLayout() {
     )
   }
 
-  function go(s: Screen) { setScreen(s) }
+  function go(s: Screen) {
+    // Any nav move that isn't an explicit "open Stock with low-only" should
+    // reset the deep-link flag, so a later click on the sidebar lands on the
+    // normal "all products" tab.
+    if (s !== 'stock') setStockInitialTab('all')
+    setScreen(s)
+  }
   function openStore(id: string) { setSelectedStoreId(id); setScreen('store') }
+  function openStockLowOnly() {
+    setStockInitialTab('low')
+    setScreen('stock')
+  }
 
   // Every nav item declares the roles allowed to see it. Filter below denies
   // by default for any role not listed. Cashier is never granted any dashboard
@@ -401,7 +415,7 @@ export default function DashboardLayout() {
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <Suspense fallback={<ScreenLoading />}>
-            {screen === 'overview'      && <DashboardOverview onStoreSelect={openStore} />}
+            {screen === 'overview'      && <DashboardOverview onStoreSelect={openStore} onOpenStockAlerts={openStockLowOnly} />}
             {screen === 'store' && selectedStoreId && <StoreDetailScreen storeId={selectedStoreId} />}
             {screen === 'reports'       && <ReportsScreen />}
             {screen === 'organisations' && <OrganisationsScreen />}
@@ -413,7 +427,7 @@ export default function DashboardLayout() {
             {screen === 'catalogue'     && <CatalogueScreen />}
             {screen === 'registers'     && <RegistersScreen />}
             {screen === 'customers'     && <CustomersScreen />}
-            {screen === 'stock'         && <StockScreen />}
+            {screen === 'stock'         && <StockScreen initialActiveTab={stockInitialTab} />}
             {screen === 'ai-insights'   && <AiInsightsScreen />}
             {screen === 'price-overrides' && <PriceOverridesScreen />}
             {screen === 'discount-rules'  && <DiscountRulesScreen />}

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getSales, voidSale, getReceiptPdfUrl } from '@/api/sales'
+import { useAuthStore } from '@/store/authStore'
+import RefundModal from '@/components/pos/RefundModal'
 import type { Sale } from '@/types/models'
 
 function VoidModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
@@ -89,6 +91,9 @@ export default function SalesHistoryScreen({ storeId }: Props) {
   const [dateFilter, setDateFilter] = useState(() => new Date().toISOString().slice(0, 10))
   const [page, setPage] = useState(1)
   const [voidTarget, setVoidTarget] = useState<Sale | null>(null)
+  const [refundTarget, setRefundTarget] = useState<Sale | null>(null)
+
+  const canRefund = useAuthStore((s) => s.hasPermission('sales.refund'))
 
   const { data, isLoading } = useQuery({
     queryKey: ['sales-history', storeId, dateFilter, search, page],
@@ -234,6 +239,17 @@ export default function SalesHistoryScreen({ storeId }: Props) {
                             ✕
                           </button>
                         )}
+                        {/* Refund — only completed positive-total sales, permission gated.
+                            Refund rows themselves are completed with negative totals; skip them. */}
+                        {canRefund && sale.status === 'completed' && parseFloat(sale.total_srd) > 0 && (
+                          <button
+                            onClick={() => setRefundTarget(sale)}
+                            title={isNl ? 'Terugbetalen' : 'Refund'}
+                            style={{ height: 30, padding: '0 10px', borderRadius: 6, border: '1px solid rgba(217,119,6,.3)', background: 'rgba(217,119,6,.08)', color: '#b45309', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}
+                          >
+                            ↩ {isNl ? 'Terug' : 'Refund'}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -269,6 +285,14 @@ export default function SalesHistoryScreen({ storeId }: Props) {
 
       {voidTarget && (
         <VoidModal sale={voidTarget} onClose={() => setVoidTarget(null)} />
+      )}
+
+      {refundTarget && (
+        <RefundModal
+          isOpen={!!refundTarget}
+          sale={refundTarget}
+          onClose={() => setRefundTarget(null)}
+        />
       )}
     </div>
   )

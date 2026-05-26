@@ -5,14 +5,26 @@ import type { ProductDisplay } from '@/store/settingsStore'
 interface ProductCardProps {
   product: Product
   display: ProductDisplay
+  /** Whether this product is currently flagged "low stock" for the store. */
+  isLowStock?: boolean
   onAdd: (product: Product) => void
 }
 
-export default function ProductCard({ product, display, onAdd }: ProductCardProps) {
-  const { i18n } = useTranslation()
+export default function ProductCard({ product, display, isLowStock = false, onAdd }: ProductCardProps) {
+  const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const name = isNl ? product.name_nl : product.name_en
   const price = parseFloat(product.price).toFixed(2)
+
+  // Out beats low. We never block the tap — the cashier can still add the
+  // product to the cart and the cart row repeats the warning more prominently.
+  const isOut = typeof product.stock_qty === 'number' && product.stock_qty <= 0
+  const showLow = !isOut && isLowStock
+  const stockBadge = isOut
+    ? { text: t('pos.stockWarning.outShort'), bg: '#dc2626', fg: '#fff' }
+    : showLow
+      ? { text: typeof product.stock_qty === 'number' ? `${Math.max(0, Math.floor(product.stock_qty))}` : '—', bg: '#f59e0b', fg: '#fff' }
+      : null
 
   return (
     <button
@@ -60,6 +72,28 @@ export default function ProductCard({ product, display, onAdd }: ProductCardProp
           }}
         >
           BTW-vrij
+        </span>
+      )}
+
+      {/* Stock-alert pill — top-left corner so it doesn't collide with the
+         BTW-vrij badge on the right. Tells the cashier why the row will
+         show a warning once it's in the cart. */}
+      {stockBadge && (
+        <span
+          style={{
+            position: 'absolute',
+            top: 5,
+            left: 5,
+            fontSize: 9,
+            fontWeight: 800,
+            background: stockBadge.bg,
+            color: stockBadge.fg,
+            padding: '2px 6px',
+            borderRadius: 4,
+            letterSpacing: '0.4px',
+          }}
+        >
+          {stockBadge.text}
         </span>
       )}
 

@@ -78,6 +78,33 @@
       "confirmCard": "Confirm Payment",
       "processing": "Processing..."
     },
+    "refund": {
+      "title": "Refund Sale",
+      "action": "Refund",
+      "originalReceipt": "Original receipt",
+      "occurredAt": "Date",
+      "customer": "Customer",
+      "originalTotal": "Original total",
+      "items": "Items",
+      "selectItems": "Select items and quantities to refund",
+      "item": "Item",
+      "available": "Available",
+      "qtyToRefund": "Refund qty",
+      "lineTotal": "Line total",
+      "reason": "Reason (required)",
+      "reasonPlaceholder": "Why is this being refunded? (min. 5 chars)",
+      "totalRefund": "Refund total",
+      "confirm": "Refund SRD {{amount}}",
+      "cancel": "Cancel",
+      "processing": "Processing refund...",
+      "noItems": "Select at least one item with quantity > 0",
+      "reasonTooShort": "Reason must be at least 5 characters",
+      "success": "Refund processed",
+      "successDetail": "Refund receipt #{{number}} created for SRD {{amount}}.",
+      "close": "Close",
+      "refundedStatus": "Refund",
+      "loadingSale": "Loading sale details..."
+    },
     "receipt": {
       "title": "Receipt",
       "email": "Email receipt",
@@ -106,6 +133,12 @@
       "manual": "Enter manually",
       "notFound": "Product not found for barcode: {{barcode}}",
       "scanning": "Scanning..."
+    },
+    "stockWarning": {
+      "lowOne": "Low stock: 1 left",
+      "lowMany": "Low stock: {{count}} left",
+      "out": "Out of stock — confirm with manager?",
+      "outShort": "Out of stock"
     }
   },
   "reports": {

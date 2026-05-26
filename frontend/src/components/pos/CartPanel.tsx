@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCartStore } from '@/store/cartStore'
+import { useSettingsStore } from '@/store/settingsStore'
+import { useLowStockSet } from '@/hooks/useLowStockSet'
 import DiscountModal from './DiscountModal'
 import LineItemEditModal from './LineItemEditModal'
 import type { CartItem } from '@/types/models'
@@ -13,6 +15,8 @@ interface CartPanelProps {
 export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
   const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
+  const storeId = useSettingsStore((s) => s.storeId)
+  const { data: lowStockIds } = useLowStockSet(storeId)
 
   const items = useCartStore((s) => s.items)
   const totals = useCartStore((s) => s.totals)
@@ -73,6 +77,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
                 key={item.product.id}
                 item={item}
                 isNl={isNl}
+                isLowStock={lowStockIds?.has(item.product.id) ?? false}
                 onEdit={() => setEditItem(item)}
                 onQtyChange={(qty) => updateQuantity(item.product.id, qty)}
               />
@@ -220,15 +225,27 @@ function TotalsRow({
 }
 
 function CartLineItem({
-  item, isNl, onEdit, onQtyChange,
+  item, isNl, isLowStock, onEdit, onQtyChange,
 }: {
   item: CartItem
   isNl: boolean
+  isLowStock: boolean
   onEdit: () => void
   onQtyChange: (qty: number) => void
 }) {
+  const { t } = useTranslation()
   const name = isNl ? item.product.name_nl : item.product.name_en
   const hasDiscount = item.discount && item.discount.value > 0
+
+  // Out-of-stock takes precedence over the low-stock hint. The cashier can
+  // still complete the sale either way — this is informational only, the
+  // manager-approval gate is a separate feature.
+  const stockQty = item.product.stock_qty
+  const isOut = typeof stockQty === 'number' && stockQty <= 0
+  const showLow = !isOut && isLowStock
+
+  // Soft background tint mirrors the dashboard's row colour scheme.
+  const bg = isOut ? 'rgba(220,38,38,0.08)' : showLow ? 'rgba(245,158,11,0.10)' : undefined
 
   return (
     <div
@@ -239,6 +256,7 @@ function CartLineItem({
         padding: '8px 16px',
         borderBottom: '1px solid var(--border-color)',
         cursor: 'pointer',
+        background: bg,
       }}
       onClick={onEdit}
     >
@@ -254,7 +272,7 @@ function CartLineItem({
         <QtyBtn onClick={() => onQtyChange(item.quantity + 1)}>+</QtyBtn>
       </div>
 
-      {/* Name + price */}
+      {/* Name + price + stock warning */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', fontWeight: 500,
@@ -266,6 +284,37 @@ function CartLineItem({
           SRD {parseFloat(item.computed.unitPrice).toFixed(2)}
           {item.product.btw_exempt ? '' : ` · BTW ${item.btwRateOverride ?? item.product.btw_rate}%`}
         </div>
+        {isOut && (
+          <div
+            role="alert"
+            style={{
+              marginTop: 4, fontSize: 11, fontWeight: 700,
+              color: '#b91c1c',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            <span aria-hidden>⛔</span>
+            <span>{t('pos.stockWarning.out')}</span>
+          </div>
+        )}
+        {showLow && (
+          <div
+            role="status"
+            style={{
+              marginTop: 4, fontSize: 11, fontWeight: 700,
+              color: '#92400e',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}
+          >
+            <span aria-hidden>⚠️</span>
+            <span>
+              {typeof stockQty === 'number'
+                ? t(stockQty === 1 ? 'pos.stockWarning.lowOne' : 'pos.stockWarning.lowMany',
+                    { count: Math.max(0, Math.floor(stockQty)) })
+                : t('pos.stockWarning.lowMany', { count: 0 })}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Line total */}

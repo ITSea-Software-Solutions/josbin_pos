@@ -58,6 +58,23 @@ export async function voidSale(saleId: string, reason: string): Promise<Sale> {
   return data.data
 }
 
+export interface RefundItemPayload {
+  sale_item_id: string
+  quantity: number
+}
+
+export async function refundSale(
+  saleId: string,
+  reason: string,
+  items: RefundItemPayload[],
+): Promise<Sale> {
+  const { data } = await apiClient.post<{ data: Sale }>(`/sales/${saleId}/refund`, {
+    reason,
+    items,
+  })
+  return data.data
+}
+
 export async function getSales(params: {
   store_id: string
   date?: string
