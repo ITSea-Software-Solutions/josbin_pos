@@ -83,7 +83,9 @@ class ZReportCloseTest extends TestCase
 
         $response->assertStatus(201);
         $response->assertJsonPath('data.store_id', $this->store->id);
-        $response->assertJsonPath('data.report_date', today()->toDateString());
+        // report_date casts to date but Eloquent serialises Carbon as full ISO
+        // — assert the date prefix matches today (AST).
+        $this->assertStringStartsWith(today()->toDateString(), $response->json('data.report_date'));
         $response->assertJsonPath('data.sync_status', 'pending');
 
         $this->assertDatabaseCount('z_reports', 1);

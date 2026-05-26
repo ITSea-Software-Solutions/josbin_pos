@@ -23,8 +23,19 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- Tests run against a real Postgres database: the schema uses
+             Postgres-specific features (uuid + gen_random_uuid, pgvector,
+             pg_advisory_xact_lock, ON CONFLICT, ALTER COLUMN ... USING)
+             that SQLite cannot emulate. Use the demo container's
+             josbin_pos_test database, which has pgcrypto + vector
+             extensions pre-installed. RefreshDatabase wipes between
+             tests so cross-pollution is impossible. -->
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_HOST" value="postgres"/>
+        <env name="DB_PORT" value="5432"/>
+        <env name="DB_DATABASE" value="josbin_pos_test"/>
+        <env name="DB_USERNAME" value="josbin_pos"/>
+        <env name="DB_PASSWORD" value="secret"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
