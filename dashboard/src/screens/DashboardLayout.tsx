@@ -24,12 +24,16 @@ const StoresScreen                 = lazy(() => import('@/screens/StoresScreen')
 const CatalogueImportExportScreen  = lazy(() => import('@/screens/CatalogueImportExportScreen'))
 const MyAccountScreen              = lazy(() => import('@/screens/MyAccountScreen'))
 const PosLauncherScreen            = lazy(() => import('@/screens/PosLauncherScreen'))
+const BtwSubmissionsScreen         = lazy(() => import('@/screens/BtwSubmissionsScreen'))
+const BtwSubmissionDetailScreen    = lazy(() => import('@/screens/BtwSubmissionDetailScreen'))
+const TaxInspectorDashboard        = lazy(() => import('@/screens/TaxInspectorDashboard'))
+const PendingPaymentsScreen        = lazy(() => import('@/screens/PendingPaymentsScreen'))
 
 type Screen =
   | 'overview' | 'store' | 'reports' | 'organisations' | 'stores' | 'users' | 'api-keys'
   | 'z-reports' | 'audit-log' | 'licenses' | 'catalogue' | 'registers'
   | 'customers' | 'stock' | 'ai-insights' | 'price-overrides' | 'discount-rules' | 'compare' | 'store-settings' | 'import-export'
-  | 'my-account' | 'pos-launcher'
+  | 'my-account' | 'pos-launcher' | 'btw-submissions' | 'btw-submission-detail' | 'tax-dashboard' | 'pending-payments'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 const IC = {
@@ -154,10 +158,22 @@ export default function DashboardLayout() {
   const user       = useDashboardAuthStore((s) => s.user)
   const logout     = useDashboardAuthStore((s) => s.logout)
 
-  // Cashier (and any role without overview access) lands on My Account first.
-  const defaultScreen: Screen = user?.role === 'cashier' ? 'my-account' : 'overview'
+  // Default landing screen by role:
+  //   - Cashier        → My Account (no dashboard ops; they live in the POS)
+  //   - Tax Inspector  → Tax Inspector Dashboard (KPI overview; can click into list)
+  //   - Everyone else  → Overview (the daily KPI screen)
+  const defaultScreen: Screen =
+    user?.role === 'cashier'       ? 'my-account' :
+    user?.role === 'tax_inspector' ? 'tax-dashboard' :
+    'overview'
   const [screen, setScreen]               = useState<Screen>(defaultScreen)
   const [selectedStoreId, setSelectedStoreId] = useState<string | null>(null)
+  // Task #82 — BTW submission detail navigation. The list screen calls
+  // openSubmissionDetail(id) which routes to the detail screen.
+  const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null)
+  // Pre-applied filter when the user click-throughs from Tax Inspector
+  // Dashboard's tiles into the list ("pending review" → status=filed).
+  const [btwListInitialFilter, setBtwListInitialFilter] = useState<{ status?: 'filed' | 'disputed'; organisation_id?: string } | undefined>(undefined)
   // When the dashboard deep-links into the stock screen (e.g. via the
   // "Stock alerts" tile on the overview) we use this to pre-select the
   // low-stock tab. Cleared whenever the user navigates anywhere else.
@@ -186,6 +202,9 @@ export default function DashboardLayout() {
     // reset the deep-link flag, so a later click on the sidebar lands on the
     // normal "all products" tab.
     if (s !== 'stock') setStockInitialTab('all')
+    // Reset BTW list pre-filter when sidebar nav fires — only Tax Inspector
+    // Dashboard's tile clicks should land with a filter.
+    if (s !== 'btw-submissions') setBtwListInitialFilter(undefined)
     setScreen(s)
   }
   function openStore(id: string) { setSelectedStoreId(id); setScreen('store') }
@@ -193,52 +212,181 @@ export default function DashboardLayout() {
     setStockInitialTab('low')
     setScreen('stock')
   }
+  // Task #82 — open the BTW detail screen for a specific submission.
+  function openSubmissionDetail(id: string) {
+    setSelectedSubmissionId(id)
+    setScreen('btw-submission-detail')
+  }
+  // Task #82 — landing-screen tile click jumps to the list with a filter pre-set.
+  function openBtwListWithFilter(f?: { status?: 'filed' | 'disputed'; organisation_id?: string }) {
+    setBtwListInitialFilter(f)
+    setScreen('btw-submissions')
+  }
 
-  // Every nav item declares the roles allowed to see it. Filter below denies
-  // by default for any role not listed. Cashier is never granted any dashboard
-  // nav — they're redirected to the POS app at the layout root.
+  // Nav is sectioned per role following industry-standard SaaS B2B layouts
+  // (Stripe / Shopify Plus / Datadog org-admin). Each item declares which
+  // section it sits under per role — same screen lives under "Platform" for
+  // SA (governance work) and under "Operations" for OA (daily ops).
+  //
+  // Section rules:
+  //   • PLATFORM        — SA's core job: tenants, licences, governance, users,
+  //                       audit, AI at platform level. The only daily home.
+  //   • OPERATIONS      — daily ops (overview, reports, Z-reports, AI insights,
+  //                       comparison, customers) where an OA / SM lives.
+  //   • CATALOGUE       — product / price / discount / stock management.
+  //   • ORGANISATION    — org wiring: stores, users, API keys, audit log,
+  //                       registers, store settings.
+  //   • SUPPORT TOOLS   — SA-only: operational tenant data they CAN reach for
+  //                       client support, but isn't their daily job. Clearly
+  //                       labelled so SA doesn't browse a client's BTW reports
+  //                       for fun. Industry convention: tenant data lives
+  //                       behind an "impersonate" or clearly-marked section.
+  //   • COMPLIANCE      — Auditor's read-only home: Z-reports + audit log.
+  //   • ACCOUNT         — self-service. Always last in every role's nav.
+  //
+  // Cashier never gets dashboard nav (redirected to POS at layout root);
+  // api_integration is shut out above this block.
   const SA = 'super_admin', OA = 'organisation_admin', SM = 'store_manager', AU = 'auditor', CA = 'cashier'
-  const nav: { id: Screen; nl: string; en: string; icon: React.ReactNode; roles: string[] }[] = [
-    // Mijn Profiel — everyone gets self-service: own stats, shifts, password.
-    { id: 'my-account',     nl: 'Mijn Profiel',           en: 'My Account',      icon: IC.users,          roles: [SA, OA, SM, AU, CA] },
-    { id: 'pos-launcher',   nl: 'POS-app openen',         en: 'Open POS app',    icon: IC.registers,      roles: [SA, OA, SM, CA] },
-    { id: 'overview',       nl: 'Dashboard',              en: 'Dashboard',       icon: IC.overview,       roles: [SA, OA, SM, AU] },
-    { id: 'z-reports',      nl: 'Z-Rapporten',            en: 'Z-Reports',       icon: IC.zreports,       roles: [SA, OA, SM, AU] },
-    { id: 'reports',        nl: 'Rapporten',              en: 'Reports',         icon: IC.reports,        roles: [SA, OA, SM, AU] },
-    { id: 'catalogue',      nl: 'Catalogus',              en: 'Catalogue',       icon: IC.catalogue,      roles: [SA, OA, SM] },
-    // Matches the backend `products.import` permission. Store Manager has it
-    // too — single-store / single-manager Suriname shops are common, so the
-    // manager often is the catalogue owner in practice.
-    { id: 'import-export',  nl: 'Import / Export',        en: 'Import / Export', icon: IC.importExport,   roles: [SA, OA, SM] },
-    { id: 'registers',      nl: 'Kassabeheer',            en: 'Registers',       icon: IC.registers,      roles: [SA, OA, SM] },
-    { id: 'customers',      nl: 'Klanten',                en: 'Customers',       icon: IC.customers,      roles: [SA, OA, SM] },
-    { id: 'stock',          nl: 'Voorraad',               en: 'Stock',           icon: IC.stock,          roles: [SA, OA, SM] },
-    // Per-store pricing is HQ-managed.
-    { id: 'price-overrides',nl: 'Prijsoverschrijvingen',  en: 'Price Overrides', icon: IC.prices,         roles: [SA, OA] },
-    { id: 'discount-rules', nl: 'Kortingsregels',         en: 'Discount Rules',  icon: IC.discounts,      roles: [SA, OA, SM] },
-    { id: 'compare',        nl: 'Vergelijking',           en: 'Comparison',      icon: IC.compare,        roles: [SA, OA] },
-    { id: 'ai-insights',    nl: 'AI-inzichten',           en: 'AI Insights',     icon: IC.ai,             roles: [SA, OA, SM] },
-    { id: 'store-settings', nl: 'Vestigingsinstellingen', en: 'Store Settings',  icon: IC.storeSettings,  roles: [SA, OA, SM] },
-    // SA-only. OA has exactly one org (by design — if a customer runs two
-    // organisations, they get two OAs, one per org), so the list view makes
-    // no sense for them and they can't edit org details anyway (created and
-    // owned by SA). OA's store actions live on the dedicated Stores nav
-    // below; org info is shown read-only there.
-    { id: 'organisations',  nl: 'Organisaties',           en: 'Organisations',   icon: IC.organisations,  roles: [SA] },
-    // Stores nav — OA + SM operate here. SA can also use it; for SA it shows
-    // stores across all orgs scoped by the dashboard's selected store/org.
-    { id: 'stores',         nl: 'Vestigingen',            en: 'Stores',          icon: IC.organisations,  roles: [SA, OA, SM] },
-    { id: 'users',          nl: 'Gebruikers',             en: 'Users',           icon: IC.users,          roles: [SA, OA, SM] },
-    // API integration keys are sensitive — HQ only (matches backend gate).
-    { id: 'api-keys',       nl: 'API-sleutels',           en: 'API Keys',        icon: IC.apikeys,        roles: [SA, OA] },
-    { id: 'audit-log',      nl: 'Auditlogboek',           en: 'Audit Log',       icon: IC.audit,          roles: [SA, OA, AU] },
-    { id: 'licenses',       nl: 'Licenties',              en: 'Licenses',        icon: IC.license,        roles: [SA] },
+  // Belastingdienst Suriname tax inspector. Cross-org read-only access, lives
+  // entirely in COMPLIANCE — they don't need Platform, Operations, or anything
+  // else. Two items: BTW Submissions + My Account.
+  const TI = 'tax_inspector'
+  type Section = 'platform' | 'operations' | 'catalogue' | 'organisation' | 'support_tools' | 'compliance' | 'account'
+
+  // Per-role section order. A section absent from this list never renders for
+  // that role even if a nav item is tagged for it.
+  const SECTION_ORDER: Record<string, Section[]> = {
+    [SA]: ['platform', 'support_tools', 'account'],
+    [OA]: ['operations', 'catalogue', 'organisation', 'account'],
+    [SM]: ['operations', 'catalogue', 'organisation', 'account'],
+    [AU]: ['operations', 'compliance', 'account'],
+    [TI]: ['compliance', 'account'],
+    [CA]: ['account'],
+  }
+
+  const SECTION_LABEL: Record<Section, { nl: string; en: string }> = {
+    platform:      { nl: 'Platform',              en: 'Platform' },
+    operations:    { nl: 'Operaties',             en: 'Operations' },
+    catalogue:     { nl: 'Catalogus',             en: 'Catalogue' },
+    organisation:  { nl: 'Organisatie',           en: 'Organisation' },
+    support_tools: { nl: 'Support — tenant data', en: 'Support — tenant data' },
+    compliance:    { nl: 'Compliance',            en: 'Compliance' },
+    account:       { nl: 'Account',               en: 'Account' },
+  }
+
+  type NavItem = {
+    id: Screen; nl: string; en: string; icon: React.ReactNode
+    sections: Partial<Record<string, Section>>
+  }
+  const nav: NavItem[] = [
+    // ── Overview / dashboard ────────────────────────────────────────────────
+    // SA: platform-wide pulse. OA/SM/Auditor: daily ops KPI screen.
+    { id: 'overview', nl: 'Dashboard', en: 'Dashboard', icon: IC.overview,
+      sections: { [SA]: 'platform', [OA]: 'operations', [SM]: 'operations', [AU]: 'operations' } },
+
+    // ── Tenant governance — SA's core job ───────────────────────────────────
+    { id: 'organisations', nl: 'Organisaties', en: 'Organisations', icon: IC.organisations,
+      sections: { [SA]: 'platform' } },
+    { id: 'licenses', nl: 'Licenties', en: 'Licenses', icon: IC.license,
+      sections: { [SA]: 'platform' } },
+
+    // ── Users ───────────────────────────────────────────────────────────────
+    // SA: platform-wide user mgmt (other SAs + OAs across orgs). OA/SM: org users.
+    { id: 'users', nl: 'Gebruikers', en: 'Users', icon: IC.users,
+      sections: { [SA]: 'platform', [OA]: 'organisation', [SM]: 'organisation' } },
+
+    // ── Audit log ───────────────────────────────────────────────────────────
+    // SA: platform governance. OA: own-org compliance. Auditor: home tab.
+    // Tax inspector also gets it under Compliance — limited to their own
+    // review actions (the audit log controller scopes for them).
+    { id: 'audit-log', nl: 'Auditlogboek', en: 'Audit Log', icon: IC.audit,
+      sections: { [SA]: 'platform', [OA]: 'organisation', [AU]: 'compliance', [TI]: 'compliance' } },
+
+    // ── Tax / BTW Dashboard (the new KPI landing for TI; also OA's own-org view) ──
+    // Renders cross-tenant KPIs for TI/SA, scoped-to-own-org for OA.
+    { id: 'tax-dashboard', nl: 'BTW Dashboard', en: 'BTW Dashboard', icon: IC.overview,
+      sections: { [TI]: 'compliance', [OA]: 'operations' } },
+
+    // ── BTW Submissions (Belastingdienst Suriname filings) ──────────────────
+    // OA/SM: daily / monthly filing flow → Operations (their daily work).
+    // SA: support drill-in into customer compliance → Platform.
+    // Tax inspector: secondary to the dashboard above — list view of all filings.
+    { id: 'btw-submissions', nl: 'BTW-aangiftes', en: 'BTW Submissions', icon: IC.zreports,
+      sections: { [SA]: 'platform', [OA]: 'operations', [SM]: 'operations', [TI]: 'compliance' } },
+
+    // ── Pending Payments (bank/mobile transfers awaiting confirmation) ──────
+    // OA owns confirming that funds landed; SA can also act for support.
+    { id: 'pending-payments', nl: 'Openstaande betalingen', en: 'Pending Payments', icon: IC.zreports,
+      sections: { [SA]: 'support_tools', [OA]: 'operations' } },
+
+    // ── AI insights ─────────────────────────────────────────────────────────
+    // SA: cross-tenant patterns. OA/SM: org-scoped insights.
+    { id: 'ai-insights', nl: 'AI-inzichten', en: 'AI Insights', icon: IC.ai,
+      sections: { [SA]: 'platform', [OA]: 'operations', [SM]: 'operations' } },
+
+    // ── API keys ────────────────────────────────────────────────────────────
+    // SA: external-integration governance. OA: their integration setup.
+    { id: 'api-keys', nl: 'API-sleutels', en: 'API Keys', icon: IC.apikeys,
+      sections: { [SA]: 'platform', [OA]: 'organisation' } },
+
+    // ── Stores ──────────────────────────────────────────────────────────────
+    // SA: drill-in for support. OA/SM: daily org-mgmt home.
+    { id: 'stores', nl: 'Vestigingen', en: 'Stores', icon: IC.organisations,
+      sections: { [SA]: 'support_tools', [OA]: 'organisation', [SM]: 'organisation' } },
+
+    // ── Operational reports ─────────────────────────────────────────────────
+    { id: 'reports', nl: 'Rapporten', en: 'Reports', icon: IC.reports,
+      sections: { [SA]: 'support_tools', [OA]: 'operations', [SM]: 'operations', [AU]: 'operations' } },
+    { id: 'z-reports', nl: 'Z-Rapporten', en: 'Z-Reports', icon: IC.zreports,
+      sections: { [SA]: 'support_tools', [OA]: 'operations', [SM]: 'operations', [AU]: 'compliance' } },
+    { id: 'compare', nl: 'Vergelijking', en: 'Comparison', icon: IC.compare,
+      sections: { [SA]: 'support_tools', [OA]: 'operations' } },
+
+    // ── Catalogue & pricing ─────────────────────────────────────────────────
+    { id: 'catalogue', nl: 'Catalogus', en: 'Catalogue', icon: IC.catalogue,
+      sections: { [SA]: 'support_tools', [OA]: 'catalogue', [SM]: 'catalogue' } },
+    // import-export: OA + SM. Single-shop managers often own the catalogue.
+    { id: 'import-export', nl: 'Import / Export', en: 'Import / Export', icon: IC.importExport,
+      sections: { [SA]: 'support_tools', [OA]: 'catalogue', [SM]: 'catalogue' } },
+    { id: 'price-overrides', nl: 'Prijsoverschrijvingen', en: 'Price Overrides', icon: IC.prices,
+      sections: { [SA]: 'support_tools', [OA]: 'catalogue' } },
+    { id: 'discount-rules', nl: 'Kortingsregels', en: 'Discount Rules', icon: IC.discounts,
+      sections: { [SA]: 'support_tools', [OA]: 'catalogue', [SM]: 'catalogue' } },
+    { id: 'stock', nl: 'Voorraad', en: 'Stock', icon: IC.stock,
+      sections: { [SA]: 'support_tools', [OA]: 'catalogue', [SM]: 'catalogue' } },
+
+    // ── Registers / customers / store settings ──────────────────────────────
+    { id: 'registers', nl: 'Kassabeheer', en: 'Registers', icon: IC.registers,
+      sections: { [SA]: 'support_tools', [OA]: 'organisation', [SM]: 'organisation' } },
+    { id: 'customers', nl: 'Klanten', en: 'Customers', icon: IC.customers,
+      sections: { [SA]: 'support_tools', [OA]: 'operations', [SM]: 'operations' } },
+    { id: 'store-settings', nl: 'Vestigingsinstellingen', en: 'Store Settings', icon: IC.storeSettings,
+      sections: { [SA]: 'support_tools', [OA]: 'organisation', [SM]: 'organisation' } },
+
+    // ── Account (self-service) — always last ────────────────────────────────
+    { id: 'my-account', nl: 'Mijn Profiel', en: 'My Account', icon: IC.users,
+      sections: { [SA]: 'account', [OA]: 'account', [SM]: 'account', [AU]: 'account', [TI]: 'account', [CA]: 'account' } },
+    // POS launcher: only roles that actually ring up sales. SA + Auditor
+    // never ring up — removed from their nav (was a footgun).
+    { id: 'pos-launcher', nl: 'POS-app openen', en: 'Open POS app', icon: IC.registers,
+      sections: { [OA]: 'account', [SM]: 'account', [CA]: 'account' } },
   ]
+
+  // Group nav items by section for the current role, preserving the order
+  // items appear in the `nav` array above.
+  const role = user?.role ?? ''
+  const visibleByGroup: Array<{ section: Section; items: NavItem[] }> = (SECTION_ORDER[role] ?? [])
+    .map((sec) => ({
+      section: sec,
+      items: nav.filter((item) => item.sections[role] === sec),
+    }))
+    .filter((g) => g.items.length > 0)
 
   const initials = (user?.name ?? 'SA').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
   const roleBadge: Record<string, string> = {
     super_admin: 'Super Admin', organisation_admin: isNl ? 'Org. Beheerder' : 'Org. Admin',
     store_manager: isNl ? 'Winkelbeheerder' : 'Store Manager', auditor: isNl ? 'Controleur' : 'Auditor',
+    tax_inspector: isNl ? 'Belastinginspecteur' : 'Tax Inspector',
   }
   const currentLabel = screen === 'store'
     ? (isNl ? 'Winkeldetails' : 'Store Details')
@@ -277,47 +425,54 @@ export default function DashboardLayout() {
           </div>
         </div>
 
-        {/* Nav */}
+        {/* Nav — sectioned per role.
+            Each section gets a small caps label so SA can tell "this is my
+            day job" (Platform) from "this is tenant data, only here for
+            support" (Support Tools). OA/SM/Auditor see their own sections;
+            see SECTION_ORDER above. */}
         <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', padding: '0 8px', marginBottom: 8 }}>
-            {isNl ? 'NAVIGATIE' : 'MAIN MENU'}
-          </p>
-
-          {nav.filter(item => item.roles.includes(user?.role ?? '')).map(item => {
-            const active = screen === item.id
-            return (
-              <button
-                key={item.id}
-                onClick={() => go(item.id)}
-                style={{
-                  width: '100%', display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '10px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                  marginBottom: 2, textAlign: 'left', fontSize: 13.5, fontWeight: active ? 600 : 500,
-                  transition: 'all 0.15s ease',
-                  background: active ? 'linear-gradient(90deg, rgba(124,58,237,0.25), rgba(79,70,229,0.15))' : 'transparent',
-                  color: active ? '#a78bfa' : 'rgba(255,255,255,0.55)',
-                  borderLeft: active ? '3px solid #7c3aed' : '3px solid transparent',
-                }}
-                onMouseEnter={e => {
-                  if (!active) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
-                  }
-                }}
-                onMouseLeave={e => {
-                  if (!active) {
-                    e.currentTarget.style.background = 'transparent'
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.55)'
-                  }
-                }}
-              >
-                <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0, color: active ? '#a78bfa' : 'inherit' }}>
-                  {item.icon}
-                </span>
-                {isNl ? item.nl : item.en}
-              </button>
-            )
-          })}
+          {visibleByGroup.map((group, idx) => (
+            <div key={group.section} style={{ marginBottom: idx === visibleByGroup.length - 1 ? 0 : 14 }}>
+              <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', padding: '0 8px', marginBottom: 8, marginTop: idx === 0 ? 0 : 0 }}>
+                {SECTION_LABEL[group.section][isNl ? 'nl' : 'en']}
+              </p>
+              {group.items.map((item) => {
+                const active = screen === item.id
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => go(item.id)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '10px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                      marginBottom: 2, textAlign: 'left', fontSize: 13.5, fontWeight: active ? 600 : 500,
+                      transition: 'all 0.15s ease',
+                      background: active ? 'linear-gradient(90deg, rgba(124,58,237,0.25), rgba(79,70,229,0.15))' : 'transparent',
+                      color: active ? '#a78bfa' : 'rgba(255,255,255,0.55)',
+                      borderLeft: active ? '3px solid #7c3aed' : '3px solid transparent',
+                    }}
+                    onMouseEnter={e => {
+                      if (!active) {
+                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.85)'
+                      }
+                    }}
+                    onMouseLeave={e => {
+                      if (!active) {
+                        e.currentTarget.style.background = 'transparent'
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.55)'
+                      }
+                    }}
+                  >
+                    <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0, color: active ? '#a78bfa' : 'inherit' }}>
+                      {item.icon}
+                    </span>
+                    {isNl ? item.nl : item.en}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
 
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', margin: '12px 0' }} />
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.25)', padding: '0 8px', marginBottom: 8 }}>
@@ -446,6 +601,22 @@ export default function DashboardLayout() {
             {screen === 'import-export'   && <CatalogueImportExportScreen />}
             {screen === 'my-account'      && <MyAccountScreen />}
             {screen === 'pos-launcher'    && <PosLauncherScreen />}
+            {screen === 'btw-submissions' && (
+              <BtwSubmissionsScreen
+                onOpenDetail={openSubmissionDetail}
+                initialFilter={btwListInitialFilter}
+              />
+            )}
+            {screen === 'btw-submission-detail' && selectedSubmissionId && (
+              <BtwSubmissionDetailScreen
+                submissionId={selectedSubmissionId}
+                onBack={() => setScreen('btw-submissions')}
+              />
+            )}
+            {screen === 'tax-dashboard' && (
+              <TaxInspectorDashboard onNavigateToSubmissions={openBtwListWithFilter} />
+            )}
+            {screen === 'pending-payments' && <PendingPaymentsScreen />}
           </Suspense>
         </div>
       </div>

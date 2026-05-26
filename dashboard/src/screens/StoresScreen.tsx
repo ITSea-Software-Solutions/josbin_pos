@@ -20,6 +20,8 @@ import {
   getOrganisations, getOrgStores, createStore, updateStore, deactivateStore,
   type Organisation, type Store, type CreateStorePayload,
 } from '@/api/organisations'
+import { getLicenses, type License } from '@/api/licenses'
+import { useVendor } from '@/hooks/useVendor'
 
 const TYPE_LABEL: Record<string, { nl: string; en: string }> = {
   retail:    { nl: 'Detailhandel', en: 'Retail' },
@@ -45,6 +47,7 @@ function StatusBadge({ active, isNl }: { active: boolean; isNl: boolean }) {
 // ─── Add store modal ─────────────────────────────────────────────────────────
 function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean; onClose: () => void }) {
   const qc = useQueryClient()
+  const vendor = useVendor()
   const [form, setForm] = useState<CreateStorePayload>({
     name: '', address: '', city: '', default_btw_rate: '10.00', pos_type: 'native',
   })
@@ -52,14 +55,32 @@ function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean;
 
   const mutation = useMutation({
     mutationFn: () => createStore(orgId, form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['org-stores', orgId] }); onClose() },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['org-stores', orgId] }); qc.invalidateQueries({ queryKey: ['licenses'] }); onClose() },
     onError: (e: unknown) => {
       const r = (e as { response?: { data?: { message?: string; code?: string } } })?.response?.data
-      setError(r?.code === 'LICENSE_STORE_LIMIT_REACHED'
-        ? (isNl
-            ? `${r.message ?? 'Licentie-limiet bereikt.'} Vraag uw vendor om de licentie uit te breiden.`
-            : `${r.message ?? 'License limit reached.'} Ask your vendor to extend the licence.`)
-        : (r?.message ?? (isNl ? 'Aanmaken mislukt' : 'Create failed')))
+      // Three distinct licence failure modes. Name the vendor (Josbin) and
+      // their email explicitly — "ask the Super Admin" is meaningless to an
+      // OA who doesn't know what a Super Admin is. Source: useVendor hook →
+      // /api/environment → config('josbin_pos.vendor').
+      switch (r?.code) {
+        case 'LICENSE_REQUIRED':
+          setError(isNl
+            ? `Geen actieve licentie. E-mail ${vendor.name} op ${vendor.email} om een licentie aan te vragen voor deze organisatie.`
+            : `No active licence. Email ${vendor.name} at ${vendor.email} to request a licence for this organisation.`)
+          break
+        case 'LICENSE_EXPIRED':
+          setError(isNl
+            ? `${r.message ?? 'Licentie verlopen.'} E-mail ${vendor.name} (${vendor.email}) voor vernieuwing.`
+            : `${r.message ?? 'Licence expired.'} Email ${vendor.name} (${vendor.email}) to renew.`)
+          break
+        case 'LICENSE_STORE_LIMIT_REACHED':
+          setError(isNl
+            ? `${r.message ?? 'Licentielimiet bereikt.'} E-mail ${vendor.name} (${vendor.email}) voor een hoger pakket of limietverhoging.`
+            : `${r.message ?? 'License limit reached.'} Email ${vendor.name} (${vendor.email}) for a higher tier or limit extension.`)
+          break
+        default:
+          setError(r?.message ?? (isNl ? 'Aanmaken mislukt' : 'Create failed'))
+      }
     },
   })
 
@@ -172,6 +193,7 @@ export default function StoresScreen() {
   const isNl = i18n.language === 'nl'
   const isSuperAdmin = useDashboardAuthStore((s) => s.isSuperAdmin())
   const user = useDashboardAuthStore((s) => s.user)
+  const vendor = useVendor()
   const qc = useQueryClient()
 
   // SA can switch orgs via dropdown; OA + SM are locked to their own org.
@@ -184,6 +206,42 @@ export default function StoresScreen() {
     queryFn: () => getOrgStores(activeOrgId),
     enabled: !!activeOrgId,
   })
+
+  // Licence info for the active org. The /api/licenses endpoint already
+  // scopes by the caller's role (SA sees all, OA sees only their own), so
+  // we filter client-side by activeOrgId to pick the latest active one.
+  const { data: licenses = [] } = useQuery<License[]>({
+    queryKey: ['licenses'],
+    queryFn: getLicenses,
+    enabled: !!activeOrgId,
+  })
+  const orgLicense: License | undefined = licenses
+    .filter((l) => l.organisation_id === activeOrgId && l.is_active)
+    .sort((a, b) => (a.valid_until < b.valid_until ? 1 : -1))[0]
+
+  // Compute whether store creation is allowed under the current licence.
+  // Mirrors the backend gate in OrganisationController::storeCreate so the
+  // button state matches the 422 the API would return.
+  const storeCount = (stores as Store[]).length
+  const noLicense    = !orgLicense
+  const expired      = orgLicense?.renewal_status === 'soft_lock' || orgLicense?.renewal_status === 'hard_lock'
+  const atLimit      = !!orgLicense && storeCount >= orgLicense.max_stores
+  const canCreate    = !!activeOrgId && !noLicense && !expired && !atLimit
+  // Concrete tooltip text on the disabled "+ Nieuwe vestiging" button so
+  // the OA doesn't have to guess who to contact. Names Josbin explicitly
+  // because that's who they need to email — they don't know what a
+  // "Super Admin" is. Mirrors the banner copy below for consistency.
+  const blockReason  = !activeOrgId ? null
+    : noLicense ? (isNl
+        ? `Geen actieve licentie — vraag ${vendor.name} (${vendor.email}) om er een uit te geven.`
+        : `No active licence — ask ${vendor.name} (${vendor.email}) to issue one.`)
+    : expired ? (isNl
+        ? `Licentie verlopen op ${orgLicense!.valid_until}. Vraag ${vendor.name} (${vendor.email}) om vernieuwing.`
+        : `Licence expired on ${orgLicense!.valid_until}. Ask ${vendor.name} (${vendor.email}) to renew.`)
+    : atLimit ? (isNl
+        ? `Licentielimiet bereikt: ${storeCount}/${orgLicense!.max_stores} vestigingen. Vraag ${vendor.name} om een hoger pakket (${vendor.email}).`
+        : `Licence limit reached: ${storeCount}/${orgLicense!.max_stores} stores. Ask ${vendor.name} for a higher tier (${vendor.email}).`)
+    : null
 
   // For OA/SM, fetch their own org row to show the read-only header.
   const { data: ownOrg } = useQuery({
@@ -217,8 +275,9 @@ export default function StoresScreen() {
               : 'Manage your organisation’s stores. Click a store to edit its receipt template, logo, and BTW settings.'}
           </p>
         </div>
-        <button onClick={() => setAddOpen(true)} disabled={!activeOrgId}
-          style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: activeOrgId ? 'pointer' : 'not-allowed', opacity: activeOrgId ? 1 : 0.5, boxShadow: '0 4px 12px rgba(124,58,237,.3)', whiteSpace: 'nowrap' }}>
+        <button onClick={() => setAddOpen(true)} disabled={!canCreate}
+          title={blockReason ?? undefined}
+          style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5, boxShadow: '0 4px 12px rgba(124,58,237,.3)', whiteSpace: 'nowrap' }}>
           + {isNl ? 'Nieuwe vestiging' : 'New store'}
         </button>
       </div>
@@ -253,10 +312,111 @@ export default function StoresScreen() {
           </div>
           <p style={{ marginTop: 8, fontSize: 11, color: '#9090a0' }}>
             {isNl
-              ? 'Organisatiegegevens worden door uw Josbin POS leverancier beheerd en zijn alleen-lezen. Neem contact op met support voor wijzigingen.'
-              : 'Organisation details are managed by your Josbin POS vendor and are read-only. Contact support for changes.'}
+              ? `Organisatiegegevens worden door ${vendor.name} (uw Josbin POS leverancier) beheerd en zijn alleen-lezen. Voor wijzigingen: e-mail `
+              : `Organisation details are managed by ${vendor.name} (your Josbin POS vendor) and are read-only. For changes, email `}
+            <a href={`mailto:${vendor.email}?subject=${encodeURIComponent(`[${headerOrg.name}] Organisation details change request`)}`}
+               style={{ color: '#7c3aed', fontWeight: 700 }}>{vendor.email}</a>
+            {isNl ? ' of bel ' : ' or call '}
+            <a href={`tel:${vendor.phone.replace(/\s/g, '')}`} style={{ color: '#7c3aed', fontWeight: 700 }}>{vendor.phone}</a>.
           </p>
         </div>
+      )}
+
+      {/* Licence banner — shows tier, expiry, usage and any block reason.
+          Rendered whenever an org is selected so the OA always knows their
+          licence state at a glance. Mirrors the backend gate so disabled
+          buttons in this screen have a visible justification right above.
+
+          The "no licence" variant gives a one-click mailto with the org name
+          pre-filled in the subject and body, so the OA doesn't have to think
+          about what to write or who to write to. */}
+      {activeOrgId && (
+        noLicense ? (() => {
+          const orgName = headerOrg?.name ?? (isNl ? '(uw organisatie)' : '(your organisation)')
+          const subject = isNl
+            ? `Licentie aanvragen voor ${orgName}`
+            : `License request for ${orgName}`
+          const body = isNl
+            ? `Beste ${vendor.name},\n\nWij willen graag een Josbin POS licentie aanvragen voor onze organisatie:\n\nOrganisatie: ${orgName}\nContactpersoon: ${user?.name ?? ''}\nE-mail: ${user?.email ?? ''}\n\nGraag horen wij welke pakketten en prijzen beschikbaar zijn.\n\nMet vriendelijke groet,\n${user?.name ?? ''}`
+            : `Hello ${vendor.name},\n\nWe would like to request a Josbin POS license for our organisation:\n\nOrganisation: ${orgName}\nContact: ${user?.name ?? ''}\nEmail: ${user?.email ?? ''}\n\nPlease let us know which tiers and pricing are available.\n\nKind regards,\n${user?.name ?? ''}`
+          const mailto = `mailto:${vendor.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+          return (
+            <div style={{ marginBottom: 16, padding: '14px 18px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 12, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ fontSize: 22, lineHeight: 1 }}>⚠️</div>
+              <div style={{ flex: 1, fontSize: 13, color: '#991b1b' }}>
+                <strong style={{ display: 'block', marginBottom: 4 }}>
+                  {isNl ? 'Geen actieve licentie' : 'No active licence'}
+                </strong>
+                <p style={{ margin: '0 0 8px' }}>
+                  {isNl
+                    ? `${orgName} heeft nog geen Josbin POS licentie. Zonder licentie kunt u geen vestigingen aanmaken of nieuwe gebruikers koppelen.`
+                    : `${orgName} doesn't have a Josbin POS license yet. Without one you can't create stores or add new users.`}
+                </p>
+                <p style={{ margin: '0 0 10px' }}>
+                  {isNl ? 'Vraag een licentie aan bij ' : 'Request a license from '}
+                  <strong>{vendor.name}</strong>:
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <a href={mailto}
+                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', background: '#dc2626', color: '#fff', borderRadius: 8, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>
+                    ✉ {isNl ? 'Stuur e-mail' : 'Send email'}
+                  </a>
+                  <span style={{ fontSize: 11.5, color: '#7f1d1d' }}>
+                    {isNl ? 'opent uw e-mailprogramma met een kant-en-klaar bericht aan ' : 'opens your email client with a pre-filled message to '}
+                    <a href={`mailto:${vendor.email}`} style={{ color: '#7f1d1d', fontWeight: 700 }}>{vendor.email}</a>
+                    {' · '}
+                    <a href={`tel:${vendor.phone.replace(/\s/g, '')}`} style={{ color: '#7f1d1d', fontWeight: 700 }}>{vendor.phone}</a>
+                  </span>
+                </div>
+              </div>
+            </div>
+          )
+        })() : (() => {
+          const lic = orgLicense!
+          const statusColor: Record<string, { bg: string; fg: string; border: string }> = {
+            active:     { bg: '#f0fdf4', fg: '#15803d', border: '#bbf7d0' },
+            warning_30: { bg: '#fefce8', fg: '#a16207', border: '#fde68a' },
+            warning_14: { bg: '#fff7ed', fg: '#c2410c', border: '#fed7aa' },
+            grace:      { bg: '#fef2f2', fg: '#b91c1c', border: '#fecaca' },
+            soft_lock:  { bg: '#fef2f2', fg: '#991b1b', border: '#fca5a5' },
+            hard_lock:  { bg: '#1f1f1f', fg: '#fecaca', border: '#7f1d1d' },
+          }
+          const c = statusColor[lic.renewal_status ?? 'active'] ?? statusColor.active
+          return (
+            <div style={{ marginBottom: 16, padding: '14px 18px', background: '#fff', border: `1px solid ${c.border}`, borderRadius: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                    {isNl ? 'Licentie' : 'Licence'}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#1c1c2e', marginTop: 2, textTransform: 'capitalize' }}>
+                    {lic.tier}
+                    <span style={{ marginLeft: 8, padding: '2px 9px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: c.bg, color: c.fg, border: `1px solid ${c.border}`, textTransform: 'none' }}>
+                      {lic.renewal_status === 'active' ? (isNl ? 'Actief' : 'Active') :
+                       lic.renewal_status === 'warning_30' ? (isNl ? 'Verloopt < 30 dagen' : 'Expires < 30 days') :
+                       lic.renewal_status === 'warning_14' ? (isNl ? 'Verloopt < 14 dagen' : 'Expires < 14 days') :
+                       lic.renewal_status === 'grace'      ? (isNl ? 'Verlopen (grace)'   : 'Expired (grace)') :
+                       lic.renewal_status === 'soft_lock'  ? (isNl ? 'Soft-lock'          : 'Soft-lock') :
+                                                              (isNl ? 'Hard-lock'         : 'Hard-lock')}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 24, marginLeft: 'auto', fontSize: 12, color: '#6b7280' }}>
+                  <span><strong>{isNl ? 'Geldig' : 'Valid'}:</strong> {lic.valid_from} → {lic.valid_until}</span>
+                  <span style={{ color: atLimit ? '#dc2626' : '#15803d', fontWeight: 700 }}>
+                    <strong>{isNl ? 'Vestigingen' : 'Stores'}:</strong> {storeCount} / {lic.max_stores}
+                  </span>
+                  <span><strong>Ref:</strong> {lic.reference}</span>
+                </div>
+              </div>
+              {blockReason && (
+                <p style={{ marginTop: 10, padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, color: '#991b1b' }}>
+                  ⚠️ {blockReason}
+                </p>
+              )}
+            </div>
+          )
+        })()
       )}
 
       {/* Stores list */}
@@ -276,8 +436,9 @@ export default function StoresScreen() {
             <p style={{ fontSize: 12, color: '#9090a0', marginBottom: 16 }}>
               {isNl ? 'Voeg uw eerste vestiging toe om te beginnen.' : 'Add your first store to get started.'}
             </p>
-            <button onClick={() => setAddOpen(true)}
-              style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={() => setAddOpen(true)} disabled={!canCreate}
+              title={blockReason ?? undefined}
+              style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5 }}>
               + {isNl ? 'Nieuwe vestiging' : 'New store'}
             </button>
           </div>

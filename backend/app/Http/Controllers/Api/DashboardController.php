@@ -570,4 +570,133 @@ class DashboardController extends Controller
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
     }
+
+    /**
+     * GET /api/dashboard/platform-overview
+     *
+     * Super Admin's vendor-level pulse across every tenant on the platform.
+     * Unlike `summary` (which is org-scoped and gives a manager their store
+     * cards), this answers questions an SA actually asks daily:
+     *
+     *   - How many orgs are healthy / expiring soon / locked?
+     *   - How many active vs deactivated orgs?
+     *   - What's the network-wide revenue today / week / month?
+     *   - How many POS terminals have rung sales in the last 24h?
+     *   - Which orgs have BTW filings pending review by tax inspector?
+     *   - What's the next licence expiring?
+     */
+    public function platformOverview(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if (! $user->isSuperAdmin()) {
+            return response()->json(['message' => 'Forbidden — super admin only.'], 403);
+        }
+
+        $tz = config('josbin_pos.timezone', 'America/Paramaribo');
+        $now = \Illuminate\Support\Carbon::now($tz);
+
+        // ── Org licence health buckets ───────────────────────────────────────
+        $orgs = \App\Models\Organisation::query()
+            ->select(['id', 'name', 'is_active'])
+            ->withMax('licenses', 'valid_until')
+            ->get();
+
+        $licenseStatusBuckets = [
+            'no_license'   => 0,
+            'active'       => 0,
+            'expiring_30'  => 0,
+            'expiring_14'  => 0,
+            'grace'        => 0,
+            'soft_lock'    => 0,
+            'hard_lock'    => 0,
+        ];
+
+        foreach ($orgs as $org) {
+            $expiresAt = $org->licenses_max_valid_until;
+            if (! $expiresAt) {
+                $licenseStatusBuckets['no_license']++;
+                continue;
+            }
+            $exp = \Illuminate\Support\Carbon::parse($expiresAt, $tz);
+            $daysLeft = (int) floor($now->copy()->startOfDay()->diffInDays($exp, false));
+            if ($daysLeft >= 30)      $licenseStatusBuckets['active']++;
+            elseif ($daysLeft >= 14)  $licenseStatusBuckets['expiring_30']++;
+            elseif ($daysLeft >= 0)   $licenseStatusBuckets['expiring_14']++;
+            elseif ($daysLeft >= -14) $licenseStatusBuckets['grace']++;
+            elseif ($daysLeft >= -44) $licenseStatusBuckets['soft_lock']++;
+            else                      $licenseStatusBuckets['hard_lock']++;
+        }
+
+        // ── Network-wide revenue (today / week / month) ──────────────────────
+        $todayStart = $now->copy()->startOfDay();
+        $weekStart  = $now->copy()->subDays(6)->startOfDay();
+        $monthStart = $now->copy()->startOfMonth();
+
+        $revenue = \DB::table('sales')
+            ->where('status', 'completed')
+            ->selectRaw('
+                SUM(CASE WHEN occurred_at >= ? THEN total_srd ELSE 0 END) as today,
+                SUM(CASE WHEN occurred_at >= ? THEN total_srd ELSE 0 END) as week,
+                SUM(CASE WHEN occurred_at >= ? THEN total_srd ELSE 0 END) as month,
+                COUNT(CASE WHEN occurred_at >= ? THEN 1 ELSE NULL END) as tx_today
+            ', [$todayStart, $weekStart, $monthStart, $todayStart])
+            ->first();
+
+        // ── Terminal activity — distinct registers that rang sales in 24h ────
+        $activeRegisters = \DB::table('sales')
+            ->where('occurred_at', '>=', $now->copy()->subHours(24))
+            ->whereNotNull('register_session_id')
+            ->distinct('register_session_id')
+            ->count('register_session_id');
+
+        $totalRegisters = \DB::table('registers')->where('is_active', true)->count();
+
+        // ── BTW filings queue — pending review by tax inspector ──────────────
+        $pendingFilings = \DB::table('btw_submissions')
+            ->where('status', \App\Models\BtwSubmission::STATUS_FILED)
+            ->count();
+
+        // ── Next licence expiring (gives SA a heads-up) ──────────────────────
+        $nextExpiring = \App\Models\License::query()
+            ->where('valid_until', '>=', $now->copy()->subDays(14)->toDateString()) // include those just into grace
+            ->where('is_active', true)
+            ->with('organisation:id,name')
+            ->orderBy('valid_until')
+            ->limit(5)
+            ->get(['id', 'organisation_id', 'tier', 'valid_until', 'is_active']);
+
+        // ── Recent SA actions for audit transparency ─────────────────────────
+        $recentSaActions = \DB::table('audit_logs')
+            ->whereIn('event', ['license.issued', 'license.renewed', 'organisation.created', 'user.created'])
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get(['id', 'event', 'user_id', 'auditable_type', 'auditable_id', 'created_at']);
+
+        return response()->json([
+            'data' => [
+                'generated_at'      => $now->toIso8601String(),
+                'orgs' => [
+                    'total'    => $orgs->count(),
+                    'active'   => $orgs->where('is_active', true)->count(),
+                    'inactive' => $orgs->where('is_active', false)->count(),
+                    'license_health' => $licenseStatusBuckets,
+                ],
+                'revenue_srd' => [
+                    'today' => number_format((float) ($revenue->today ?? 0), 2, '.', ''),
+                    'week'  => number_format((float) ($revenue->week  ?? 0), 2, '.', ''),
+                    'month' => number_format((float) ($revenue->month ?? 0), 2, '.', ''),
+                ],
+                'transactions_today' => (int) ($revenue->tx_today ?? 0),
+                'terminals' => [
+                    'active_24h' => $activeRegisters,
+                    'total'      => $totalRegisters,
+                ],
+                'btw' => [
+                    'filings_pending_inspector_review' => $pendingFilings,
+                ],
+                'next_expiring_licenses' => $nextExpiring,
+                'recent_sa_actions'      => $recentSaActions,
+            ],
+        ]);
+    }
 }

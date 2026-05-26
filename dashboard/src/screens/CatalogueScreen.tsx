@@ -269,6 +269,63 @@ function CategoryFormModal({ cat, orgId, isNl, onClose }: {
 }
 
 // ─── ProductFormModal ─────────────────────────────────────────────────────────
+// ─── BTW rate dropdown with "Custom %" option ────────────────────────────────
+// Suriname BTW is currently a flat 10% on most goods + 0% (exempt) on basic
+// foodstuffs / medicine. But some products (alcohol, tobacco, luxury) have
+// historically carried different rates, and Belastingdienst can change rates
+// without a code release. So we ship the two common rates as one-click options
+// and let the user enter any rate the law allows.
+//
+// Internally the form stores `btw_rate` as a string ("10", "0", "7.5", …) —
+// the dropdown decides whether to render the custom input by checking whether
+// the current value is one of the presets.
+function BtwRateField({ value, onChange, isNl }: {
+  value: string
+  onChange: (v: string) => void
+  isNl: boolean
+}) {
+  const PRESETS = ['0', '10']
+  const isCustom = !PRESETS.includes(value)
+  const [mode, setMode] = useState<'preset' | 'custom'>(isCustom ? 'custom' : 'preset')
+
+  function handleSelect(v: string) {
+    if (v === '__custom__') {
+      setMode('custom')
+      // Don't clear value — the user may have typed it already; otherwise start blank.
+      if (PRESETS.includes(value)) onChange('')
+    } else {
+      setMode('preset')
+      onChange(v)
+    }
+  }
+
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>BTW %</label>
+      <select
+        value={mode === 'custom' ? '__custom__' : value}
+        onChange={(e) => handleSelect(e.target.value)}
+        style={selectSt} onFocus={fi} onBlur={fo}
+      >
+        <option value="0">{isNl ? '0% (vrijgesteld)' : '0% (exempt)'}</option>
+        <option value="10">{isNl ? '10% (standaard)' : '10% (standard)'}</option>
+        <option value="__custom__">{isNl ? 'Aangepast…' : 'Custom…'}</option>
+      </select>
+      {mode === 'custom' && (
+        <input
+          type="number" min="0" max="100" step="0.01"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={isNl ? 'bijv. 7.5' : 'e.g. 7.5'}
+          style={{ ...inputSt, marginTop: 6, fontFamily: 'monospace' }}
+          onFocus={fi} onBlur={fo}
+          autoFocus
+        />
+      )}
+    </div>
+  )
+}
+
 function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
   product?: Product; categories: Category[]; orgId: string | null; isNl: boolean; onClose: () => void
 }) {
@@ -371,13 +428,11 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
               <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)}
                 placeholder="0.00" style={inputSt} onFocus={fi} onBlur={fo} />
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>BTW %</label>
-              <select value={form.btw_rate} onChange={(e) => set('btw_rate', e.target.value)} style={selectSt} onFocus={fi} onBlur={fo}>
-                <option value="0">0%</option>
-                <option value="10">10%</option>
-              </select>
-            </div>
+            <BtwRateField
+              value={form.btw_rate}
+              onChange={(v) => set('btw_rate', v)}
+              isNl={isNl}
+            />
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Voorraad' : 'Stock'}</label>
               <input type="number" min="0" step="0.001" value={form.stock_qty ?? '0'} onChange={(e) => set('stock_qty', e.target.value)}

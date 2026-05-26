@@ -129,27 +129,48 @@ class OrganisationController extends Controller
     {
         $this->authorize('update', $organisation);
 
-        // Enforce the license's max_stores cap. We allow store creation when
-        // the org has *no* active licence (dev / pre-issuance state) so the
-        // initial setup flow isn't blocked, but as soon as one exists the
-        // count is enforced. Super Admin can always override by lifting the
-        // limit via the License screen.
-        $activeLicense = \DB::table('licenses')
-            ->where('organisation_id', $organisation->id)
+        // ── License gate ─────────────────────────────────────────────────────
+        // Stores are licensed assets. Block creation in three cases:
+        //   1. No active license issued for this org → LICENSE_REQUIRED
+        //   2. License is past its grace period (soft- or hard-lock) → LICENSE_EXPIRED
+        //   3. Already at the tier's max_stores → LICENSE_STORE_LIMIT_REACHED
+        // Every payload includes structured `code` + bilingual message so the
+        // frontend can show a specific banner and the OA knows exactly what to
+        // ask their Super Admin / vendor for.
+        //
+        // No "dev fallback" — historically we allowed unlimited stores when
+        // no license existed, but that turned "no license" into the most
+        // permissive state, which is upside-down. The demo seeder issues a
+        // professional license so the demo flow isn't affected.
+        $activeLicense = \App\Models\License::where('organisation_id', $organisation->id)
             ->where('is_active', true)
             ->orderByDesc('valid_until')
             ->first();
 
-        if ($activeLicense) {
-            $currentStoreCount = \App\Models\Store::where('organisation_id', $organisation->id)->count();
-            if ($currentStoreCount >= $activeLicense->max_stores) {
-                return response()->json([
-                    'message' => "License limit reached: {$activeLicense->max_stores} store(s). Ask your vendor to extend the licence.",
-                    'code'    => 'LICENSE_STORE_LIMIT_REACHED',
-                    'limit'   => $activeLicense->max_stores,
-                    'current' => $currentStoreCount,
-                ], 409);
-            }
+        if (! $activeLicense) {
+            return response()->json([
+                'message' => 'Geen actieve licentie voor deze organisatie. Vraag de Super Admin om een licentie uit te geven voordat u vestigingen aanmaakt. / No active licence for this organisation. Ask the Super Admin to issue a licence before creating stores.',
+                'code'    => 'LICENSE_REQUIRED',
+            ], 422);
+        }
+
+        if ($activeLicense->isSoftLocked() || $activeLicense->isHardLocked()) {
+            return response()->json([
+                'message' => "Licentie verlopen op {$activeLicense->valid_until->format('d-m-Y')}. Vernieuw de licentie voordat u nieuwe vestigingen aanmaakt. / Licence expired on {$activeLicense->valid_until->format('Y-m-d')}. Renew before creating new stores.",
+                'code'        => 'LICENSE_EXPIRED',
+                'valid_until' => $activeLicense->valid_until->toDateString(),
+                'renewal_status' => $activeLicense->computeRenewalStatus(),
+            ], 422);
+        }
+
+        $currentStoreCount = \App\Models\Store::where('organisation_id', $organisation->id)->count();
+        if ($currentStoreCount >= $activeLicense->max_stores) {
+            return response()->json([
+                'message' => "Licentielimiet bereikt: {$activeLicense->max_stores} vestiging(en). Upgrade naar een hoger pakket of vraag uw leverancier de limiet te verhogen. / License limit reached: {$activeLicense->max_stores} store(s). Upgrade your tier or ask your vendor to extend the licence.",
+                'code'    => 'LICENSE_STORE_LIMIT_REACHED',
+                'limit'   => $activeLicense->max_stores,
+                'current' => $currentStoreCount,
+            ], 422);
         }
 
         $data = $request->validate([

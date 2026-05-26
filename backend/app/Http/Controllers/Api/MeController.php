@@ -179,4 +179,105 @@ class MeController extends Controller
             'message' => 'Wachtwoord gewijzigd. Andere apparaten zijn uitgelogd.',
         ]);
     }
+
+    /**
+     * GET /api/me/activity
+     *
+     * The current user's own activity feed — audit_logs rows where this user
+     * is either the actor (`user_id`) or the target (`auditable_id` matching
+     * their UUID). Lets SA / OA / Auditor / API roles see "what have I done
+     * recently?" without the operational data they don't own (Performance,
+     * Shifts) that ring-up roles get instead.
+     */
+    public function activity(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+
+        $rows = \DB::table('audit_logs')
+            ->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere(function ($qq) use ($user) {
+                      $qq->where('auditable_type', 'user')->where('auditable_id', $user->id);
+                  });
+            })
+            ->orderByDesc('created_at')
+            ->limit($request->integer('limit', 50))
+            ->get([
+                'id', 'event', 'auditable_type', 'auditable_id',
+                'old_values', 'new_values', 'ip_address', 'created_at',
+            ]);
+
+        return response()->json(['data' => $rows]);
+    }
+
+    /**
+     * GET /api/me/sessions
+     *
+     * The current user's active Sanctum tokens (= active devices / browser
+     * sessions). Each row exposes name, ip, last_used_at, created_at, and a
+     * flag for which one is THIS request. UI uses the flag to disable the
+     * "Revoke" button on the current session (you can't revoke the one
+     * you're using; logout does that).
+     */
+    public function sessions(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        $currentId = $request->user()->currentAccessToken()?->id;
+
+        $sessions = $user->tokens()
+            ->orderByDesc('last_used_at')
+            ->orderByDesc('created_at')
+            ->get(['id', 'name', 'abilities', 'last_used_at', 'expires_at', 'created_at'])
+            ->map(fn ($t) => [
+                'id'            => $t->id,
+                'name'          => $t->name,
+                'abilities_count' => is_array($t->abilities) ? count($t->abilities) : 0,
+                'last_used_at'  => $t->last_used_at?->toIso8601String(),
+                'expires_at'    => $t->expires_at?->toIso8601String(),
+                'created_at'    => $t->created_at?->toIso8601String(),
+                'is_current'    => $t->id === $currentId,
+            ]);
+
+        return response()->json(['data' => $sessions]);
+    }
+
+    /**
+     * DELETE /api/me/sessions/{tokenId}
+     *
+     * Revoke one of the user's own tokens. Cannot revoke the current request's
+     * own token (returns 422 — "use logout for that").
+     */
+    public function revokeSession(\Illuminate\Http\Request $request, int $tokenId): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        $currentId = $request->user()->currentAccessToken()?->id;
+
+        if ($tokenId === $currentId) {
+            return response()->json([
+                'message' => 'Cannot revoke the current session. Use POST /api/auth/logout instead.',
+                'code'    => 'CANNOT_REVOKE_SELF',
+            ], 422);
+        }
+
+        $token = $user->tokens()->where('id', $tokenId)->first();
+        if (! $token) {
+            return response()->json(['message' => 'Session not found.'], 404);
+        }
+
+        $token->delete();
+
+        \DB::table('audit_logs')->insert([
+            'user_id'         => $user->id,
+            'organisation_id' => $user->organisation_id,
+            'event'           => 'session.revoked_self',
+            'auditable_type'  => 'personal_access_token',
+            'auditable_id'    => (string) $tokenId,
+            'old_values'      => null,
+            'new_values'      => json_encode(['name' => $token->name]),
+            'ip_address'      => $request->ip(),
+            'created_at'      => now(),
+        ]);
+
+        return response()->json(['message' => 'Session revoked.']);
+    }
 }

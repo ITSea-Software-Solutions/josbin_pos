@@ -168,7 +168,7 @@ Useful for: backup before a big change, sending the catalogue to an accountant o
 
 You usually **don't** need to press it. Every single-product save and every bulk import broadcasts a `catalogue.refresh` signal on the WebSocket; connected terminals reload within seconds.
 
-The **📡 Catalogus pushen naar kassa's / Push catalogue to POS terminals** button (top-right of the Price Overrides screen, see [Chapter 6](06-pricing-and-per-store-overrides.md)) forces a fresh broadcast. Use it when:
+The **📡 Catalogus pushen naar kassa's / Push catalogue to POS terminals** button (top-right of the **Catalogus / Catalogue** screen header, see [Chapter 4 §4.8](04-catalogue.md)) forces a fresh broadcast. Use it when:
 
 - A terminal was offline during your import and you've just seen it reconnect.
 - You re-enabled a category that was previously hidden and the terminal hasn't picked it up.

@@ -7,6 +7,7 @@ import { useOrgChannel, usePlatformChannel } from '@/hooks/useEcho'
 import { formatSRD } from '@/utils/currency'
 import { getWeeklySummary, getAnomalies, type AnomalyEntry } from '@/api/ai'
 import { getStockAlertSummary } from '@/api/stock'
+import PlatformOverviewPanel from '@/screens/PlatformOverviewPanel'
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({
@@ -240,8 +241,14 @@ export default function DashboardOverview({
     ? (hour < 12 ? 'Goedemorgen' : hour < 18 ? 'Goedemiddag' : 'Goedenavond')
     : (hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening')
 
+  const isSuperAdmin = user?.role === 'super_admin'
+
   return (
     <div style={{ padding: '28px 32px', maxWidth: 1600 }}>
+
+      {/* Task #73 — Super Admin sees the platform-pulse panel above the
+          per-store cards. OA / SM / Auditor see only the existing org view. */}
+      {isSuperAdmin && <PlatformOverviewPanel />}
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>

@@ -140,7 +140,7 @@ Every save on the Price Overrides screen broadcasts a `catalogue.refresh` signal
 
 **To push:**
 
-1. Top-right of the Price Overrides screen → **📡 Catalogus pushen naar kassa's / Push catalogue to POS terminals**.
+1. Open **Catalogus / Catalogue** (sidebar) → top-right header → **📡 Catalogus pushen naar kassa's / Push catalogue to POS terminals**. (The button used to live here on the Price Overrides screen and was moved to Catalogue so HQ can push after any catalogue or pricing change from one place.)
 2. The button flips through three states:
    - `📡 Versturen… / Pushing…` (in-flight)
    - `✓ Verstuurd! / ✓ Pushed!` (success, green for 3 seconds)

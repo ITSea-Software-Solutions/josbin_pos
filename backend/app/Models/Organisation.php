@@ -47,4 +47,9 @@ class Organisation extends Model implements Auditable
     {
         return $this->hasMany(Customer::class);
     }
+
+    public function licenses(): HasMany
+    {
+        return $this->hasMany(License::class);
+    }
 }

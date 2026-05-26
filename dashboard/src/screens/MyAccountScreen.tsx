@@ -4,10 +4,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
   getMySalesSummary, getMyShifts, updateMyProfile, changeMyPassword,
+  getMyActivity, getMySessions, revokeMySession,
   type SalesWindow, type Shift,
 } from '@/api/me'
 
-type Tab = 'performance' | 'profile' | 'shifts'
+type Tab = 'performance' | 'profile' | 'shifts' | 'activity' | 'sessions'
 
 const ROLE_LABEL: Record<string, { nl: string; en: string }> = {
   super_admin:        { nl: 'Super Admin',         en: 'Super Admin' },
@@ -15,21 +16,46 @@ const ROLE_LABEL: Record<string, { nl: string; en: string }> = {
   store_manager:      { nl: 'Winkelbeheerder',     en: 'Store Manager' },
   cashier:            { nl: 'Kassamedewerker',     en: 'Cashier' },
   auditor:            { nl: 'Controleur',          en: 'Auditor' },
+  api_integration:    { nl: 'API-integratie',      en: 'API Integration' },
 }
+
+/**
+ * Roles that actually ring up sales / open a register. Only those see
+ * "My performance" + "My shifts" — everyone else (SA, OA, Auditor, API)
+ * operates at the org level and has no sales/shifts of their own, so
+ * showing those tabs to them would just render empty cards forever.
+ */
+const RINGS_UP_ROLES = ['cashier', 'store_manager'] as const
 
 export default function MyAccountScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const user = useDashboardAuthStore((s) => s.user)
-  const [tab, setTab] = useState<Tab>('performance')
+
+  // Build the tab list per role BEFORE the useState so the initial tab
+  // is one this role can actually see. Without this an SA lands on a
+  // hidden "performance" tab and gets a blank page.
+  const ringsUp = !!user && (RINGS_UP_ROLES as readonly string[]).includes(user.role)
+  const tabs: { id: Tab; nl: string; en: string }[] = ringsUp
+    ? [
+        { id: 'performance', nl: 'Mijn prestaties',        en: 'My performance' },
+        { id: 'shifts',      nl: 'Mijn diensten',          en: 'My shifts' },
+        { id: 'activity',    nl: 'Mijn activiteit',        en: 'My activity' },
+        { id: 'sessions',    nl: 'Actieve apparaten',      en: 'Active sessions' },
+        { id: 'profile',     nl: 'Profiel & wachtwoord',   en: 'Profile & password' },
+      ]
+    : [
+        // SA / OA / Auditor / API Integration — no sales/shifts, but they
+        // have an audit trail of their own actions worth seeing + active
+        // sessions worth being able to revoke (security hygiene).
+        { id: 'activity',    nl: 'Mijn activiteit',        en: 'My activity' },
+        { id: 'sessions',    nl: 'Actieve apparaten',      en: 'Active sessions' },
+        { id: 'profile',     nl: 'Profiel & wachtwoord',   en: 'Profile & password' },
+      ]
+
+  const [tab, setTab] = useState<Tab>(tabs[0].id)
 
   if (!user) return null
-
-  const tabs: { id: Tab; nl: string; en: string }[] = [
-    { id: 'performance', nl: 'Mijn prestaties', en: 'My performance' },
-    { id: 'shifts',      nl: 'Mijn diensten',   en: 'My shifts' },
-    { id: 'profile',     nl: 'Profiel & wachtwoord', en: 'Profile & password' },
-  ]
 
   return (
     <div style={{ padding: 28, maxWidth: 960, margin: '0 auto' }}>
@@ -43,17 +69,19 @@ export default function MyAccountScreen() {
           <p style={{ margin: '2px 0 0', fontSize: 13, color: '#6b7280' }}>
             {ROLE_LABEL[user.role]?.[isNl ? 'nl' : 'en'] ?? user.role}  ·  {user.email}
           </p>
-          {/* Surface the user's store scope so they (and a supervisor over
-              their shoulder) can confirm exactly where they can act. Only
-              meaningful for cashier + store_manager; org-scoped roles ignore
-              the pivot so we don't render this line for them. */}
+          {/* Surface the user's single-store scope so they (and a supervisor
+              over their shoulder) can confirm exactly where they can act. Only
+              meaningful for cashier + store_manager; org-scoped roles operate
+              at the org level and don't have a single store. */}
           {(user.role === 'cashier' || user.role === 'store_manager') && (
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#7c3aed', fontWeight: 600 }}>
-              📍 {(user.store_ids ?? []).length === 0
-                ? (isNl ? 'Toegewezen aan alle vestigingen van deze organisatie' : 'Assigned to every store in this organisation')
-                : isNl
-                  ? `Toegewezen aan ${user.store_ids!.length} vestiging${user.store_ids!.length === 1 ? '' : 'en'}`
-                  : `Assigned to ${user.store_ids!.length} store${user.store_ids!.length === 1 ? '' : 's'}`}
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: user.store_id ? '#7c3aed' : '#dc2626', fontWeight: 600 }}>
+              📍 {user.store_id
+                ? (isNl
+                    ? `Toegewezen aan ${user.store_name ?? '—'}`
+                    : `Assigned to ${user.store_name ?? '—'}`)
+                : (isNl
+                    ? 'Geen vestiging toegewezen — vraag uw beheerder om u te koppelen.'
+                    : 'No store assigned — ask your administrator to assign one.')}
             </p>
           )}
         </div>
@@ -76,9 +104,13 @@ export default function MyAccountScreen() {
         ))}
       </div>
 
-      {tab === 'performance' && <PerformanceTab isNl={isNl} />}
-      {tab === 'shifts'      && <ShiftsTab isNl={isNl} />}
-      {tab === 'profile'     && <ProfileTab isNl={isNl} />}
+      {/* Render guards mirror the role gate above — defence in depth in case
+          a future deep-link / state restore tries to land on a hidden tab. */}
+      {tab === 'performance' && ringsUp && <PerformanceTab isNl={isNl} />}
+      {tab === 'shifts'      && ringsUp && <ShiftsTab isNl={isNl} />}
+      {tab === 'activity'                && <ActivityTab isNl={isNl} />}
+      {tab === 'sessions'                && <SessionsTab isNl={isNl} />}
+      {tab === 'profile'                 && <ProfileTab isNl={isNl} />}
     </div>
   )
 }
@@ -195,6 +227,137 @@ const fmtDate = (iso: string | null) => iso ? new Date(iso).toLocaleString('nl-N
 const discrepancyColor = (d: string | null) => !d || Number(d) === 0 ? '#374151' : Number(d) < 0 ? '#dc2626' : '#15803d'
 const th = (): React.CSSProperties => ({ padding: '12px 16px', fontSize: 11, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.04em' })
 const td = (): React.CSSProperties => ({ padding: '12px 16px', color: '#1c1c2e' })
+
+// ─── Activity log (own actions) ──────────────────────────────────────────────
+//
+// Pulls /api/me/activity — rows from audit_logs where this user is the actor
+// or the target. Useful for SA/OA/Auditor reviewing "what did I touch today",
+// and for cashiers wanting to see their own action trail.
+
+const EVENT_LABEL: Record<string, { nl: string; en: string; tint: string }> = {
+  'auth.login_success':         { nl: 'Ingelogd',                    en: 'Logged in',                tint: '#16a34a' },
+  'single_device_logout':       { nl: 'Andere apparaten uitgelogd',  en: 'Other devices logged out', tint: '#f59e0b' },
+  'geo_alert_login':            { nl: '⚠️ Login buiten Suriname',     en: '⚠️ Login outside Suriname', tint: '#dc2626' },
+  'session.revoked_self':       { nl: 'Sessie ingetrokken',          en: 'Session revoked',          tint: '#7c3aed' },
+  'user.store_assigned':        { nl: 'Vestiging-toewijzing aangepast', en: 'Store assignment changed', tint: '#2563eb' },
+  'btw.submitted':              { nl: 'BTW-aangifte ingediend',      en: 'BTW submission filed',     tint: '#16a34a' },
+  'btw.accepted':               { nl: 'BTW-aangifte geaccepteerd',   en: 'BTW submission accepted',  tint: '#15803d' },
+  'btw.disputed':               { nl: 'BTW-aangifte betwist',        en: 'BTW submission disputed',  tint: '#dc2626' },
+  'btw.superseded':             { nl: 'BTW-aangifte vervangen',      en: 'BTW submission superseded',tint: '#a16207' },
+  'sale.payment_confirmed':     { nl: 'Betaling bevestigd',          en: 'Payment confirmed',        tint: '#15803d' },
+  'sale.refunded':              { nl: 'Verkoop terugbetaald',        en: 'Sale refunded',            tint: '#f59e0b' },
+  'sale.voided':                { nl: 'Verkoop geannuleerd',         en: 'Sale voided',              tint: '#dc2626' },
+  'z_report.closed':            { nl: 'Z-Rapport gesloten',          en: 'Z-Report closed',          tint: '#7c3aed' },
+  'z_report.submitted':         { nl: 'Z-Rapport verstuurd naar HQ', en: 'Z-Report sent to HQ',      tint: '#7c3aed' },
+}
+
+function ActivityTab({ isNl }: { isNl: boolean }) {
+  const { data: rows = [], isLoading } = useQuery({
+    queryKey: ['me', 'activity'],
+    queryFn:  () => getMyActivity(100),
+  })
+
+  if (isLoading) return <p style={{ color: '#6b7280' }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+  if (rows.length === 0) return <p style={{ color: '#6b7280' }}>{isNl ? 'Geen recente activiteit.' : 'No recent activity.'}</p>
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+            <th style={th()}>{isNl ? 'Wanneer' : 'When'}</th>
+            <th style={th()}>{isNl ? 'Wat' : 'What'}</th>
+            <th style={th()}>{isNl ? 'Doel' : 'Target'}</th>
+            <th style={th()}>IP</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const label = EVENT_LABEL[r.event] ?? { nl: r.event, en: r.event, tint: '#6b7280' }
+            return (
+              <tr key={r.id} style={{ borderBottom: i < rows.length - 1 ? '1px solid #f3f4f6' : 'none' }}>
+                <td style={{ ...td(), fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(r.created_at)}</td>
+                <td style={{ ...td(), fontSize: 13 }}>
+                  <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: label.tint, marginRight: 8 }} />
+                  <strong style={{ color: label.tint }}>{label[isNl ? 'nl' : 'en']}</strong>
+                </td>
+                <td style={{ ...td(), fontSize: 12, color: '#6b7280', fontFamily: 'monospace' }}>
+                  {r.auditable_type}{r.auditable_id ? ` · ${String(r.auditable_id).slice(0, 8)}…` : ''}
+                </td>
+                <td style={{ ...td(), fontSize: 12, color: '#9ca3af', fontFamily: 'monospace' }}>{r.ip_address ?? '—'}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ─── Active sessions (own tokens) ────────────────────────────────────────────
+
+function SessionsTab({ isNl }: { isNl: boolean }) {
+  const qc = useQueryClient()
+  const { data: sessions = [], isLoading } = useQuery({
+    queryKey: ['me', 'sessions'],
+    queryFn:  getMySessions,
+  })
+
+  const revoke = useMutation({
+    mutationFn: revokeMySession,
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['me', 'sessions'] }),
+  })
+
+  if (isLoading) return <p style={{ color: '#6b7280' }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+
+  return (
+    <div>
+      <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 12 }}>
+        {isNl
+          ? 'Elk apparaat / browser waarmee u bent ingelogd is een sessie. Intrekken om een verloren of vergeten apparaat direct uit te loggen.'
+          : 'Each device or browser you logged in from is a session. Revoke to immediately log out a lost or forgotten one.'}
+      </p>
+      <div style={{ background: '#fff', borderRadius: 12, border: '1px solid #e5e7eb', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr style={{ background: '#f9fafb', borderBottom: '1px solid #e5e7eb' }}>
+              <th style={th()}>{isNl ? 'Apparaat / naam' : 'Device / name'}</th>
+              <th style={th()}>{isNl ? 'Laatst gebruikt' : 'Last used'}</th>
+              <th style={th()}>{isNl ? 'Aangemaakt' : 'Created'}</th>
+              <th style={th()}>{isNl ? 'Verloopt' : 'Expires'}</th>
+              <th style={th()}>{isNl ? 'Actie' : 'Action'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {sessions.map((s, i) => (
+              <tr key={s.id} style={{ borderBottom: i < sessions.length - 1 ? '1px solid #f3f4f6' : 'none', background: s.is_current ? 'rgba(124,58,237,0.04)' : undefined }}>
+                <td style={{ ...td(), fontSize: 13 }}>
+                  <div style={{ fontWeight: 600 }}>{s.name}</div>
+                  {s.is_current && <div style={{ fontSize: 11, color: '#7c3aed', fontWeight: 700 }}>{isNl ? '◉ Deze sessie' : '◉ This session'}</div>}
+                </td>
+                <td style={{ ...td(), fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(s.last_used_at)}</td>
+                <td style={{ ...td(), fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(s.created_at)}</td>
+                <td style={{ ...td(), fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(s.expires_at)}</td>
+                <td style={{ ...td() }}>
+                  {s.is_current ? (
+                    <span style={{ fontSize: 11.5, color: '#9ca3af', fontStyle: 'italic' }}>
+                      {isNl ? 'gebruik uitloggen' : 'use logout'}
+                    </span>
+                  ) : (
+                    <button onClick={() => revoke.mutate(s.id)} disabled={revoke.isPending}
+                      style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#b91c1c', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+                      ✗ {isNl ? 'Intrekken' : 'Revoke'}
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
 
 // ─── Profile + password ──────────────────────────────────────────────────────
 

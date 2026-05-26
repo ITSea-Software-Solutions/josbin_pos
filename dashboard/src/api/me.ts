@@ -48,3 +48,40 @@ export async function changeMyPassword(payload: { current_password: string; new_
   const { data } = await apiClient.post<{ message: string }>('/me/password', payload)
   return data
 }
+
+// ─── Task #72 — Activity log + Sessions for org-scoped roles ────────────────
+
+export interface MyActivityRow {
+  id: number
+  event: string
+  auditable_type: string
+  auditable_id: string
+  old_values: unknown
+  new_values: unknown
+  ip_address: string | null
+  created_at: string
+}
+
+export async function getMyActivity(limit = 50): Promise<MyActivityRow[]> {
+  const { data } = await apiClient.get<{ data: MyActivityRow[] }>('/me/activity', { params: { limit } })
+  return data.data
+}
+
+export interface MySession {
+  id: number
+  name: string
+  abilities_count: number
+  last_used_at: string | null
+  expires_at: string | null
+  created_at: string | null
+  is_current: boolean
+}
+
+export async function getMySessions(): Promise<MySession[]> {
+  const { data } = await apiClient.get<{ data: MySession[] }>('/me/sessions')
+  return data.data
+}
+
+export async function revokeMySession(tokenId: number): Promise<void> {
+  await apiClient.delete(`/me/sessions/${tokenId}`)
+}

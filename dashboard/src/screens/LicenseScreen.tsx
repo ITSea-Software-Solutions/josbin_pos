@@ -1,31 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import apiClient from '@/api/client'
 import { useDashboardAuthStore } from '@/store/authStore'
 import { getOrganisations, type Organisation } from '@/api/organisations'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface License {
-  id: string
-  /** Human-readable reference for sharing with the customer, e.g. JBN-3196-69C7-A119. */
-  reference: string
-  organisation_id: string
-  organisation_name: string
-  tier: 'standard' | 'professional' | 'enterprise'
-  max_stores: number
-  max_terminals: number
-  valid_from: string
-  valid_until: string
-  /** Integer days remaining; negative when expired. */
-  days_remaining: number
-  is_active: boolean
-  issued_at: string | null
-  last_validated_at: string | null
-  grace_period_ends_at: string | null
-  renewal_status: string | null
-  urgency: 'ok' | 'medium' | 'high' | 'critical'
-}
+import {
+  getLicenses, requestRenewal, createLicense, updateLicense, deleteLicense,
+  type License,
+} from '@/api/licenses'
 
 /** Compose a printable / emailable certificate text. */
 function buildLicenseSummary(lic: License, isNl: boolean): string {
@@ -56,32 +37,7 @@ function buildEmailSubject(lic: License, isNl: boolean): string {
     : `Your Josbin POS license — ${lic.reference}`
 }
 
-async function getLicenses(): Promise<License[]> {
-  const res = await apiClient.get<{ data: License[] }>('/licenses')
-  return res.data.data
-}
-
-async function requestRenewal(id: string, notes: string): Promise<void> {
-  await apiClient.post(`/licenses/${id}/renew`, { notes })
-}
-
-interface LicensePayload {
-  organisation_id: string
-  tier: License['tier']
-  max_stores: number
-  max_terminals: number
-  valid_from: string
-  valid_until: string
-}
-async function createLicense(p: LicensePayload): Promise<void> {
-  await apiClient.post('/licenses', p)
-}
-async function updateLicense(id: string, p: Partial<LicensePayload & { is_active: boolean }>): Promise<void> {
-  await apiClient.patch(`/licenses/${id}`, p)
-}
-async function deleteLicense(id: string): Promise<void> {
-  await apiClient.delete(`/licenses/${id}`)
-}
+// Licence fetchers + mutations now live in @/api/licenses (imported at top).
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 const URGENCY_CFG = {
