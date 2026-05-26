@@ -34,7 +34,7 @@
 
 If a cashier closes their register at 14:00 because they're going home, that's a register close. If a different cashier opens the same register at 14:05 to take the evening shift, that's a new register session — no Z-Report yet. The Z-Report happens **once**, at the very end, when all the cashiers are done.
 
-The dashboard's **Z-Rapporten & Synchronisatie / Z-Reports & Sync** screen shows only the second kind (`z_reports` rows). For register-session history at the cashier level, see the **Registers** screen ([Chapter 8 — Registers](08-registers.md)) — that's where you investigate "which cashier was on Kassa 2 between 09:00 and 14:00".
+The dashboard's **Z-Rapporten & Synchronisatie / Z-Reports & Sync** screen shows only the second kind (`z_reports` rows). For register-session history at the cashier level, open **Kassabeheer / Registers** (sidebar) → pick a store → **Geschiedenis / History** tab — that's where you investigate "which cashier was on Kassa 2 between 09:00 and 14:00". The cashier-side flow (open shift, hand-off, close, manager *Reopen for next shift*) lives in the POS user manual: [user_manual / 03-register](../user_manual/03-register.md).
 
 ---
 
@@ -340,11 +340,21 @@ HTTP/1.1 409 Conflict
 
 Both 409s are by design — preventing duplicate state changes from making a mess.
 
-### What if a store really needs to "reopen" a closed day?
+### Two reopens, often confused
 
-This is rare and almost always wrong. If a Z-Report was closed at 17:00 and a refund needs to be issued at 17:30, the right answer is to process the refund into the **next** trading day, not to "reopen" the previous day. The Z-Report is a legal-style audit boundary; reopening it would invalidate the BTW report, the consolidated dashboard, and any reports already filed.
+There are **two** things that can be "reopened" — they're at different layers and have very different consequences:
 
-The Registers screen ([Chapter 8](08-registers.md)) covers the **manager reopens a closed register session** flow, which is the lighter-weight version of this — and that one *is* designed for normal "the cashier closed too early" scenarios. Z-Report itself stays closed once closed.
+| Action | What it does | When it's right |
+|---|---|---|
+| **Reopen a register session** (manager action, [ch 19 §19.7](19-registers.md)) | Marks an already-closed cashier-shift session as `cleared`, so the next cashier can open a fresh session on the same physical till. Both sessions roll up into the same Z-Report at end-of-day. | **Common, fully supported.** Cashier A closes at 14:00, Cashier B starts the evening shift on the same Kassa. |
+| **Reopen the Z-Report itself** for a closed day | Undo the day's legal-style audit boundary. | **Almost never right.** The Z-Report is the audit-grade close — reopening invalidates the BTW report, the consolidated dashboard, and any filings already sent to Belastingdienst. |
+
+**Z-Report itself stays closed once closed**, by design. If a sale needs to be undone after Z-close, the right answer is:
+- Process the refund / void on the original sale row — that creates a counter-row tomorrow's reports pick up automatically.
+- The original Z-Report's totals are unchanged; the offset is recorded under tomorrow's date with the original sale id linked.
+- BTW and bank reconciliation work cleanly because both sides of the entry exist with timestamps.
+
+The full register-session reopen flow (cashier hand-off, manager approval for mid-day reopens, force-close, audit trail) is documented in [Chapter 19 — Registers](19-registers.md).
 
 If the underlying need is genuinely *"we have to back out a sale that was rung up wrong"*, that's a void/refund on the original sale row, which counts under the next day's reports. The original Z-Report's totals don't change; the void is documented in the audit log and the Rekenkamer export (see [Chapter 10 §10.6](10-reports.md#106-rekenkamer-export--the-court-of-audit-pdf)).
 
@@ -430,7 +440,7 @@ REMEMBER
 - **Manager End of Day workflow on the POS** — [POS user manual ch 10](../user_manual/10-end-of-day.md). The step-by-step from the manager's perspective.
 - **Reports that read closed-day data** — [Chapter 10 — Reports](10-reports.md). The analytical side; this chapter is the operational side.
 - **Audit log entries for closes + submits** — [Chapter 13 — Audit Log](13-audit-log.md) *(coming soon)*.
-- **Registers — physical till management + reopen-session workflow** — [Chapter 8 — Registers](08-registers.md) *(coming soon)*.
+- **Registers — physical till management + History + reopen workflow** — [Chapter 19 — Kassabeheer / Registers](19-registers.md). Cashier-side flow lives at [POS user manual ch 3](../user_manual/03-register.md).
 - **Roles & permissions** — [Chapter 1 — Roles & Permissions](01-roles-and-permissions.md).
 - **Honest status of each fallback layer** — [`docs/offline-fallback-verification.md`](../docs/offline-fallback-verification.md). Keep this open during demos.
 - **Developer-side data model** — [`docs/06-register-and-z-report.md`](../docs/06-register-and-z-report.md) (planned), [`docs/07-sync-and-offline.md`](../docs/07-sync-and-offline.md) (planned).

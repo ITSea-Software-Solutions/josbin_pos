@@ -41,9 +41,34 @@ class SaleController extends Controller
         $data = $request->validate([
             'store_id'            => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'customer_id'         => ['nullable', 'uuid', 'exists:customers,id'],
-            'payment_method'      => ['required', Rule::in(['cash', 'card', 'mixed'])],
+            'payment_method'      => ['required', Rule::in(\App\Models\Sale::PAYMENT_METHODS)],
             'cash_tendered'       => ['nullable', 'numeric', 'min:0'],
             'card_amount'         => ['nullable', 'numeric', 'min:0'],
+            // Card reconciliation fields — optional, all four nullable so the
+            // cashier can skip them and the sale still completes. They become
+            // relevant when payment_method is 'card' or 'mixed'; ignored
+            // silently on pure cash sales (we don't reject — keeps the API
+            // forgiving for non-Suriname integrators).
+            'card_bank'           => ['nullable', 'string', 'max:32'],
+            'card_approval_code'  => ['nullable', 'string', 'max:16'],
+            'card_terminal_ref'   => ['nullable', 'string', 'max:32'],
+            'card_last_four'      => ['nullable', 'string', 'size:4', 'regex:/^[0-9]{4}$/'],
+            // Phase 2 payment methods — bank_transfer / mobile_transfer /
+            // foreign_cash. Same forgiving-fields pattern: only persisted when
+            // relevant; silently ignored otherwise.
+            //   - provider: bank name (transfer) OR app name (mobile)
+            //   - reference: sender's payment ref / TX ID
+            //   - sender_name: payer name (B2B / govt invoicing)
+            //   - foreign_*: USD/EUR + amount + locked rate at sale time
+            'payment_provider'    => ['nullable', 'string', 'max:64'],
+            'payment_reference'   => ['nullable', 'string', 'max:64'],
+            'payment_sender_name' => ['nullable', 'string', 'max:120'],
+            'foreign_currency'    => ['nullable', 'string', 'size:3', Rule::in(['USD', 'EUR'])],
+            'foreign_amount'      => ['nullable', 'numeric', 'min:0'],
+            // Phase 3 — QR / mobile-wallet. Opaque payload the wallet scanned;
+            // we don't parse it (provider-specific format) but store it for
+            // future webhook matching.
+            'qr_payload'          => ['nullable', 'string', 'max:1024'],
             'sale_discount_srd'   => ['nullable', 'numeric', 'min:0'],
             'sale_discount_pct'   => ['nullable', 'numeric', 'min:0', 'max:100'],
             'source'              => ['sometimes', Rule::in(['pos', 'api', 'import'])],
@@ -58,6 +83,45 @@ class SaleController extends Controller
             'items.*.btw_exempt'  => ['sometimes', 'boolean'],
             'items.*.discount_srd'=> ['nullable', 'numeric', 'min:0'],
         ]);
+
+        // Per-method required-field enforcement. These can't go in the rule
+        // array above because they cross-reference payment_method.
+        $method = $data['payment_method'];
+        if (in_array($method, [\App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER], true)) {
+            // bank_transfer needs the bank name; mobile_transfer needs the app
+            // name. Both go in payment_provider. Reference is also required —
+            // without it there's no way to match the inbound credit later.
+            if (empty($data['payment_provider'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'payment_provider' => $method === \App\Models\Sale::PM_BANK_TRANSFER
+                        ? 'Bank name is required for bank-transfer payments.'
+                        : 'App / provider name is required for mobile-transfer payments.',
+                ]);
+            }
+            if (empty($data['payment_reference'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'payment_reference' => 'A sender reference / transaction ID is required so the OA can confirm the funds when they land.',
+                ]);
+            }
+        }
+        if ($method === \App\Models\Sale::PM_FOREIGN_CASH) {
+            // Must declare currency AND amount; rate is locked server-side.
+            if (empty($data['foreign_currency']) || ! isset($data['foreign_amount'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'foreign_currency' => 'Currency and amount are both required for foreign-cash payments.',
+                ]);
+            }
+        }
+        if ($method === \App\Models\Sale::PM_QR_PAYMENT) {
+            // Provider is required so reports can group by wallet. The QR
+            // payload itself is optional — many wallets give the cashier only
+            // a reference number to type in, no scannable code.
+            if (empty($data['payment_provider'])) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'payment_provider' => 'Wallet / provider name is required for QR payments.',
+                ]);
+            }
+        }
 
         // Idempotency: if external_sale_ref already exists for this store, return existing
         if (! empty($data['external_sale_ref'])) {
@@ -147,6 +211,27 @@ class SaleController extends Controller
                 'payment_method'      => $data['payment_method'],
                 'cash_received_srd'   => $cashTendered,
                 'card_amount_srd'     => $cardAmount,
+                // Reconciliation fields — only persisted when this sale
+                // involves a card. Strip otherwise so a `cash` sale never
+                // accidentally carries leftover bank metadata from a
+                // forgetful integrator.
+                'card_bank'           => in_array($data['payment_method'], ['card', 'mixed'], true) ? ($data['card_bank'] ?? null) : null,
+                'card_approval_code'  => in_array($data['payment_method'], ['card', 'mixed'], true) ? ($data['card_approval_code'] ?? null) : null,
+                'card_terminal_ref'   => in_array($data['payment_method'], ['card', 'mixed'], true) ? ($data['card_terminal_ref'] ?? null) : null,
+                'card_last_four'      => in_array($data['payment_method'], ['card', 'mixed'], true) ? ($data['card_last_four'] ?? null) : null,
+                // Phase 2/3 — transfer + foreign + QR fields. Same forgiving
+                // pattern as card_*: silently nulled when not applicable.
+                // qr_payment also uses payment_provider + payment_reference
+                // alongside the QR-specific qr_payload.
+                'payment_provider'    => in_array($data['payment_method'], [\App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER, \App\Models\Sale::PM_QR_PAYMENT], true) ? ($data['payment_provider'] ?? null) : null,
+                'payment_reference'   => in_array($data['payment_method'], [\App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER, \App\Models\Sale::PM_QR_PAYMENT], true) ? ($data['payment_reference'] ?? null) : null,
+                'payment_sender_name' => in_array($data['payment_method'], [\App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER], true) ? ($data['payment_sender_name'] ?? null) : null,
+                'foreign_currency'    => $data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH ? ($data['foreign_currency'] ?? null) : null,
+                'foreign_amount'      => $data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH ? ($data['foreign_amount'] ?? null) : null,
+                // Foreign cash locks the day's rate at sale time — same rate
+                // we already pull for the SRD column on every receipt.
+                'foreign_rate_used'   => $data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH ? $rate->usd_to_srd : null,
+                'qr_payload'          => $data['payment_method'] === \App\Models\Sale::PM_QR_PAYMENT ? ($data['qr_payload'] ?? null) : null,
                 'change_srd'          => $changeDue,
                 'status'              => 'completed',
                 'source'              => $data['source'] ?? 'pos',
@@ -494,6 +579,93 @@ class SaleController extends Controller
         $this->receipt->sendEmail($sale, $data['email'], $data['locale'] ?? 'nl');
 
         return response()->json(['message' => 'Kassabon verstuurd naar ' . $data['email']]);
+    }
+
+    /**
+     * GET /api/sales/pending-payments
+     *
+     * Lists bank_transfer / mobile_transfer sales that the OA hasn't yet
+     * confirmed funds for. Scoped by org for OA/SM; SA sees all orgs.
+     * Powered by the partial index `sales_pending_payment_idx`.
+     */
+    public function pendingPaymentsQueue(Request $request): JsonResponse
+    {
+        $this->authorize('viewAny', Sale::class);
+
+        $user = $request->user();
+        $query = Sale::query()
+            ->whereIn('payment_method', Sale::PM_PENDING_CONFIRMATION)
+            ->whereNull('payment_confirmed_at')
+            ->where('status', 'completed')
+            ->with('store:id,name,organisation_id', 'cashier:id,name', 'customer:id,name')
+            ->orderByDesc('occurred_at');
+
+        // Non-super-admin: scope to own org via the store relation.
+        if (! $user->isSuperAdmin()) {
+            $query->whereHas('store', fn ($q) => $q->where('organisation_id', $user->organisation_id));
+        }
+
+        if ($request->filled('store_id')) {
+            $query->where('store_id', $request->input('store_id'));
+        }
+
+        return response()->json($query->paginate($request->integer('per_page', 50)));
+    }
+
+    /**
+     * POST /api/sales/{sale}/confirm-payment
+     *
+     * OA marks a bank_transfer / mobile_transfer sale as funded once they
+     * verify the credit landed in the bank account. Audit-logged.
+     */
+    public function confirmPayment(Request $request, Sale $sale): JsonResponse
+    {
+        $this->authorize('confirmPayment', $sale);
+
+        if (! in_array($sale->payment_method, Sale::PM_PENDING_CONFIRMATION, true)) {
+            return response()->json([
+                'message' => 'Only bank_transfer and mobile_transfer sales can be confirmed.',
+                'code'    => 'CONFIRM_NOT_APPLICABLE',
+            ], 422);
+        }
+        if ($sale->payment_confirmed_at !== null) {
+            return response()->json([
+                'message' => 'This payment is already confirmed.',
+                'code'    => 'ALREADY_CONFIRMED',
+                'confirmed_at' => $sale->payment_confirmed_at->toIso8601String(),
+            ], 409);
+        }
+
+        $note = $request->validate([
+            'note' => ['nullable', 'string', 'max:500'],
+        ])['note'] ?? null;
+
+        $sale->update([
+            'payment_confirmed_at' => now(),
+            'payment_confirmed_by' => $request->user()->id,
+        ]);
+
+        \DB::table('audit_logs')->insert([
+            'user_id'         => $request->user()->id,
+            'organisation_id' => $sale->store->organisation_id,
+            'event'           => 'sale.payment_confirmed',
+            'auditable_type'  => 'sale',
+            'auditable_id'    => $sale->id,
+            'old_values'      => json_encode(['payment_confirmed_at' => null]),
+            'new_values'      => json_encode([
+                'payment_confirmed_at' => now()->toIso8601String(),
+                'method'    => $sale->payment_method,
+                'provider'  => $sale->payment_provider,
+                'reference' => $sale->payment_reference,
+                'note'      => $note,
+            ]),
+            'ip_address'      => $request->ip(),
+            'created_at'      => now(),
+        ]);
+
+        return response()->json([
+            'data' => $sale->fresh()->load('store:id,name', 'cashier:id,name'),
+        ]);
     }
 
     /** GET /api/sales */

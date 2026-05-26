@@ -131,6 +131,58 @@
     <td class="right">SRD {{ $sale['change'] }}</td>
   </tr>
   @endif
+  {{-- Card reconciliation — shows on the slip when the cashier filled the
+       bank fields. Helps the customer verify the right card was charged and
+       lets the OA cross-reference the bank's settlement report by approval
+       code. PCI-safe: we only carry last 4, never the full PAN. --}}
+  @if(in_array($sale['payment_method'], ['card', 'mixed']) && !empty($sale['card_bank']))
+  <tr>
+    <td class="label">{{ $t['paid_by'] ?? 'Paid by' }}</td>
+    <td class="right">{{ $sale['card_bank'] }}@if(!empty($sale['card_last_four'])) ····{{ $sale['card_last_four'] }}@endif</td>
+  </tr>
+  @if(!empty($sale['card_approval_code']))
+  <tr>
+    <td class="label">{{ $t['auth_code'] ?? 'Auth' }}</td>
+    <td class="right">{{ $sale['card_approval_code'] }}</td>
+  </tr>
+  @endif
+  @if(!empty($sale['card_terminal_ref']))
+  <tr>
+    <td class="label">{{ $t['terminal_ref'] ?? 'Term. ref' }}</td>
+    <td class="right" style="font-size:9px">{{ $sale['card_terminal_ref'] }}</td>
+  </tr>
+  @endif
+  @endif
+  {{-- Phase 2 — bank_transfer / mobile_transfer / foreign_cash --}}
+  @if(in_array($sale['payment_method'], ['bank_transfer', 'mobile_transfer']) && !empty($sale['payment_provider']))
+  <tr>
+    <td class="label">{{ $t['paid_via'] ?? 'Paid via' }}</td>
+    <td class="right">{{ $sale['payment_provider'] }}</td>
+  </tr>
+  @if(!empty($sale['payment_reference']))
+  <tr>
+    <td class="label">{{ $t['payment_ref'] ?? 'Ref.' }}</td>
+    <td class="right" style="font-size:9px">{{ $sale['payment_reference'] }}</td>
+  </tr>
+  @endif
+  @if(empty($sale['payment_confirmed_at']))
+  <tr>
+    <td colspan="2" class="right" style="font-size:9px; color:#b45309">⏳ {{ $t['awaiting_confirmation'] ?? 'Awaiting bank confirmation' }}</td>
+  </tr>
+  @endif
+  @endif
+  @if($sale['payment_method'] === 'foreign_cash' && !empty($sale['foreign_currency']))
+  <tr>
+    <td class="label">{{ $t['paid_in_foreign'] ?? 'Paid' }}</td>
+    <td class="right">{{ $sale['foreign_currency'] }} {{ number_format((float) $sale['foreign_amount'], 2, '.', ',') }}</td>
+  </tr>
+  @if(!empty($sale['foreign_rate_used']))
+  <tr>
+    <td class="label" style="font-size:9px">{{ $t['rate_used'] ?? 'Rate' }}</td>
+    <td class="right" style="font-size:9px">1 {{ $sale['foreign_currency'] }} = SRD {{ number_format((float) $sale['foreign_rate_used'], 4, '.', '') }}</td>
+  </tr>
+  @endif
+  @endif
 </table>
 <div class="hr"></div>
 

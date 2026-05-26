@@ -61,4 +61,15 @@ class SalePolicy
     {
         return $user->can('sales.hold');
     }
+
+    /**
+     * Confirming a bank_transfer / mobile_transfer sale (funds landed) is OA-
+     * level work — same gate as voids, since it's effectively an accounting
+     * action. SA + OA only; SM doesn't have access to the bank statement.
+     */
+    public function confirmPayment(User $user, Sale $sale): bool
+    {
+        return $this->ownsSale($user, $sale)
+            && in_array($user->role, [User::ROLE_SUPER_ADMIN, User::ROLE_ORGANISATION_ADMIN], true);
+    }
 }

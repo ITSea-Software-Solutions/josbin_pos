@@ -467,6 +467,36 @@ A failed validation returns HTTP `422` with the field-level error message. The d
 
 ---
 
+## 10.11a HQ-side exchange rate visibility (audit + override)
+
+Every sale carries the **`exchange_rate_used`** that was locked the day it was rung — same rate we show on the receipt's USD line. This isn't UI noise; it's an audit anchor.
+
+### Where you see it as OA / SA
+
+- **Per sale** — Sales list (Dashboard → Sales) → click a sale → the detail panel shows `Wisselkoers: 1 USD = SRD 37.5000` at the bottom. Locked at the moment of sale; never recomputed.
+- **Per day** — Dashboard → Reports → Daily → the report's metadata section shows the rate locked for that date. If a manager overrode it mid-day, both rates are listed with the OA who made the change and the timestamp.
+- **Per month** — Dashboard → Reports → Monthly → if the rate changed during the month, the report lists the most-used rate plus a count of sales at each distinct rate.
+
+### Where it gets audit-logged
+
+Three events touch the rate, all written to `audit_logs`:
+
+| Event | When | Who | What's in `new_values` |
+|---|---|---|---|
+| `rate.locked` | Scheduled `rates:lock` artisan command runs (daily 06:00 AST) | system | source (api / manual), USD→SRD value, markup_pct |
+| `rate.manual_override` | Manager taps "Override" on the POS rate screen | the SM | old_rate, new_rate, reason |
+| `rate.fetched_unlocked` | `/rates/fetch` called outside the scheduled run (preview only — no sale impact) | OA / SM | api_response_rate, applied_markup_pct |
+
+### Why this matters
+
+Belastingdienst Suriname asks "what rate was used for the USD line on this receipt?" — and the answer has to be reproducible months later, even if the rate has moved since. Storing `exchange_rate_used` on every sale row makes the answer trivial: query the sale, read the column, done. No retroactive recomputation, no "well, today's rate is X so I think back then it was Y".
+
+If a customer comes back with a receipt from 3 months ago and disputes the USD amount, you can pull the sale, see the rate that was locked, and confirm the math directly. Same for a Rekenkamer auditor reviewing a historical trade.
+
+> **Practical reminder:** if the daily rate-fetch fails (ExchangeRate-API down, network issue), the system uses **yesterday's locked rate**. Audit log carries `rate.locked` with `source = 'fallback_previous'`. The OA gets an email so they know to manually re-lock once connectivity is back. **No sales are blocked** by a missing rate fetch — the previous day's rate just keeps applying until manually overridden.
+
+---
+
 ## 10.12 Cross-references
 
 - **What permission lets whom run what** — [Chapter 1 — Roles & Permissions](01-roles-and-permissions.md).

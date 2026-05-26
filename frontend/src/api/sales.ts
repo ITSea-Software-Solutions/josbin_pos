@@ -1,12 +1,28 @@
 import apiClient from './client'
 import type { Sale, HeldBill } from '@/types/models'
 
+export type PaymentMethodSlug = 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash'
+
 export interface CreateSalePayload {
   store_id: string
   customer_id?: string | null
-  payment_method: 'cash' | 'card' | 'mixed'
+  payment_method: PaymentMethodSlug
   cash_tendered?: number
   card_amount?: number
+  // Optional card reconciliation — copied from the bank's PIN terminal slip
+  // so the OA can match card sales against the bank settlement statement.
+  // Backend nulls these on cash-only sales even if accidentally sent.
+  card_bank?: string
+  card_approval_code?: string
+  card_terminal_ref?: string
+  card_last_four?: string
+  // Phase 2 — bank_transfer / mobile_transfer / foreign_cash. See backend
+  // migration 2026_05_26_050001_extend_payment_methods_for_suriname.php.
+  payment_provider?: string       // bank name (transfer) OR app name (mobile)
+  payment_reference?: string      // sender's payment ref / TX ID
+  payment_sender_name?: string    // optional payer name (B2B / govt)
+  foreign_currency?: 'USD' | 'EUR'
+  foreign_amount?: number
   sale_discount_srd?: number
   sale_discount_pct?: number
   // Client-side idempotency key: send the same value on retries so the backend

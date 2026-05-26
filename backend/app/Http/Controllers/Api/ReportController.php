@@ -350,9 +350,43 @@ class ReportController extends Controller
                 AVG(total_srd) as avg_basket,
                 SUM(CASE WHEN payment_method = \'cash\' THEN total_srd ELSE 0 END) as cash_total,
                 SUM(CASE WHEN payment_method = \'card\' THEN total_srd ELSE 0 END) as card_total,
-                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total
+                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total,
+                SUM(CASE WHEN payment_method = \'bank_transfer\'   THEN total_srd ELSE 0 END) as bank_transfer_total,
+                SUM(CASE WHEN payment_method = \'mobile_transfer\' THEN total_srd ELSE 0 END) as mobile_transfer_total,
+                SUM(CASE WHEN payment_method = \'foreign_cash\'    THEN total_srd ELSE 0 END) as foreign_cash_total,
+                SUM(CASE WHEN payment_method = \'qr_payment\'      THEN total_srd ELSE 0 END) as qr_payment_total
             ')
             ->first();
+
+        // Phase 1 + 2 reconciliation breakdown — group card sales by issuing
+        // bank AND transfer/mobile sales by provider so the OA can tick each
+        // bucket against the matching bank settlement statement. NULL bank
+        // = "cashier skipped the recon panel" (a real, actionable signal).
+        $bankBreakdown = Sale::query()
+            ->where('store_id', $storeId)
+            ->where('status', 'completed')
+            ->whereDate('occurred_at', '>=', $from)
+            ->whereDate('occurred_at', '<=', $to)
+            ->whereIn('payment_method', ['card', 'mixed', 'bank_transfer', 'mobile_transfer', 'qr_payment'])
+            ->selectRaw('
+                payment_method,
+                COALESCE(card_bank, payment_provider) as provider,
+                COUNT(*) as tx_count,
+                SUM(CASE
+                    WHEN payment_method = \'mixed\' THEN COALESCE(card_amount_srd, 0)
+                    ELSE total_srd
+                END) as provider_total
+            ')
+            ->groupBy('payment_method', DB::raw('COALESCE(card_bank, payment_provider)'))
+            ->orderByDesc('provider_total')
+            ->get()
+            ->map(fn ($row) => [
+                'payment_method' => $row->payment_method,
+                'provider'       => $row->provider,  // null = cashier skipped recon
+                'tx_count'       => (int) $row->tx_count,
+                'total_srd'      => number_format((float) $row->provider_total, 2, '.', ''),
+            ])
+            ->toArray();
 
         $voidCount = Sale::where('store_id', $storeId)
             ->where('status', 'voided')
@@ -409,6 +443,14 @@ class ReportController extends Controller
             'cash_total_srd'    => number_format((float) ($sales->cash_total ?? 0), 2, '.', ''),
             'card_total_srd'    => number_format((float) ($sales->card_total ?? 0), 2, '.', ''),
             'mixed_total_srd'   => number_format((float) ($sales->mixed_total ?? 0), 2, '.', ''),
+            // Phase 2/3 method totals (always present; 0.00 when unused).
+            'bank_transfer_total_srd'   => number_format((float) ($sales->bank_transfer_total   ?? 0), 2, '.', ''),
+            'mobile_transfer_total_srd' => number_format((float) ($sales->mobile_transfer_total ?? 0), 2, '.', ''),
+            'foreign_cash_total_srd'    => number_format((float) ($sales->foreign_cash_total    ?? 0), 2, '.', ''),
+            'qr_payment_total_srd'      => number_format((float) ($sales->qr_payment_total      ?? 0), 2, '.', ''),
+            // Reconciliation rows for bank statement matching. Each row pairs
+            // a payment_method with the provider/bank (or null = skipped).
+            'bank_breakdown'    => $bankBreakdown,
             'btw_breakdown'     => array_map(fn ($row) => (array) $row + [
                 'base_srd' => number_format((float) ($row->net_base ?? 0), 2, '.', ''),
                 'btw_srd'  => number_format((float) ($row->btw_total ?? 0), 2, '.', ''),

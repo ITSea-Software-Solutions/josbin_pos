@@ -43,6 +43,11 @@ Route::get('environment', function () {
     return response()->json([
         'demo_mode' => $isDemo,
         'sandbox'   => (bool) config('josbin_pos.sandbox'),
+        // Vendor contact for any UI surface that tells a client to "contact
+        // support" — licence banners, read-only org header, certificate PDF.
+        // Resellers override per-deployment via JOSBIN_POS_VENDOR_* env vars.
+        // Public so the login screen + unauthenticated pages can render it.
+        'vendor'    => config('josbin_pos.vendor'),
         'reverb' => [
             'app_key' => env('REVERB_APP_KEY', config('reverb.apps.apps.0.key', 'josbin_pos-reverb')),
             // PUBLIC host/port the browser must reach — set REVERB_PUBLIC_HOST
@@ -80,6 +85,10 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::get('shifts',        [\App\Http\Controllers\Api\MeController::class, 'shifts'])->name('shifts');
         Route::patch('profile',     [\App\Http\Controllers\Api\MeController::class, 'updateProfile'])->name('profile');
         Route::post('password',     [\App\Http\Controllers\Api\MeController::class, 'changePassword'])->name('password');
+        // Task #72 — own activity log + own active sessions for SA/OA/Auditor/API.
+        Route::get('activity',        [\App\Http\Controllers\Api\MeController::class, 'activity'])->name('activity');
+        Route::get('sessions',        [\App\Http\Controllers\Api\MeController::class, 'sessions'])->name('sessions');
+        Route::delete('sessions/{tokenId}', [\App\Http\Controllers\Api\MeController::class, 'revokeSession'])->name('sessions.revoke');
     });
 
     // Auth
@@ -99,6 +108,9 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::get('reports/btw',                 [DashboardController::class, 'consolidatedBtwReport'])->name('reports.btw');
         Route::get('reports/btw/export',          [DashboardController::class, 'exportBtw'])->name('reports.btw.export');
         Route::get('z-reports',              [DashboardController::class, 'zReports'])->name('z-reports');
+        // Task #73 — platform-level KPIs across all orgs (SA only). The
+        // existing /summary is org-scoped; this is the vendor view.
+        Route::get('platform-overview',      [DashboardController::class, 'platformOverview'])->name('platform-overview');
     });
 
     // AI Features v1 (SPOS-AI)
@@ -199,11 +211,15 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::post('hold',            [SaleController::class, 'hold'])->name('hold');
         Route::get('held',             [SaleController::class, 'heldList'])->name('held');
         Route::delete('held/{heldBill}',[SaleController::class, 'restore'])->name('restore');
+        // Phase 2: pending-payments queue for OA. MUST be declared before the
+        // {sale} routes or Laravel binds "pending-payments" as a sale id.
+        Route::get('pending-payments',        [SaleController::class, 'pendingPaymentsQueue'])->name('pending-payments');
         Route::get('{sale}',              [SaleController::class, 'show'])->name('show');
         Route::post('{sale}/void',        [SaleController::class, 'void'])->name('void');
         Route::post('{sale}/refund',      [SaleController::class, 'refund'])->name('refund');
         Route::get('{sale}/receipt/pdf',  [SaleController::class, 'receiptPdf'])->name('receipt.pdf');
         Route::post('{sale}/receipt/email',[SaleController::class, 'receiptEmail'])->name('receipt.email');
+        Route::post('{sale}/confirm-payment', [SaleController::class, 'confirmPayment'])->name('confirm-payment');
     });
 
     // Register sessions (cash drawer open/close)
@@ -280,6 +296,25 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::get('export',        [ReportController::class, 'export'])->name('export');
         Route::get('rekenkamer',    [RekenkamerController::class, 'export'])->name('rekenkamer');
     });
+
+    // ── BTW Submissions (Belastingdienst Suriname filings) ───────────────────
+    // OA / SM file (POST), can view their own org's submissions.
+    // tax_inspector + SA see cross-org and can accept/dispute filed ones.
+    Route::prefix('btw-submissions')->name('btw-submissions.')->group(function () {
+        // Static paths first — Laravel binds {btwSubmission} greedily.
+        Route::get('inspector-dashboard',     [\App\Http\Controllers\Api\BtwSubmissionController::class, 'inspectorDashboard'])->name('inspector-dashboard');
+        Route::post('preview',                [\App\Http\Controllers\Api\BtwSubmissionController::class, 'preview'])->name('preview');
+        Route::get('/',                       [\App\Http\Controllers\Api\BtwSubmissionController::class, 'index'])->name('index');
+        Route::post('/',                      [\App\Http\Controllers\Api\BtwSubmissionController::class, 'store'])->name('store');
+        Route::get('{btwSubmission}/detail',  [\App\Http\Controllers\Api\BtwSubmissionController::class, 'detail'])->name('detail');
+        Route::get('{btwSubmission}',         [\App\Http\Controllers\Api\BtwSubmissionController::class, 'show'])->name('show');
+        Route::post('{btwSubmission}/accept', [\App\Http\Controllers\Api\BtwSubmissionController::class, 'accept'])->name('accept');
+        Route::post('{btwSubmission}/dispute',[\App\Http\Controllers\Api\BtwSubmissionController::class, 'dispute'])->name('dispute');
+        // Resubmission — marks the original superseded AND creates a fresh
+        // filed row with recomputed totals for the same period. Same OA/SM
+        // gate as create; only allowed on filed/disputed (not accepted).
+        Route::post('{btwSubmission}/supersede', [\App\Http\Controllers\Api\BtwSubmissionController::class, 'supersede'])->name('supersede');
+    });
 });
 
 // ── Open Integration API — Layer 3 (SPOS-307) ────────────────────────────────
@@ -304,6 +339,12 @@ Route::prefix('v1')->name('v1.')->group(function () {
     Route::get('openapi.json', [ApiDocsController::class, 'spec'])->name('docs.spec');
     Route::get('docs',         [ApiDocsController::class, 'ui'])->name('docs.ui');
 });
+
+// ── QR / mobile-wallet webhook (Phase 3 scaffolding, task #79) ───────────────
+// Public — PSP partners post here. Authenticated by HMAC signature in headers.
+// Endpoint returns 503 unless josbin_pos.qr_webhooks_enabled is true.
+Route::post('qr-payments/webhook', [\App\Http\Controllers\Api\QrPaymentWebhookController::class, 'handle'])
+    ->name('qr-payments.webhook');
 
 // ── Receipt PDF — browser-safe (supports ?token= query param) ────────────────
 // Declared outside the auth:sanctum group so AuthenticateViaQueryToken runs first.

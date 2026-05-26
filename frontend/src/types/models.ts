@@ -91,7 +91,7 @@ export interface Customer {
   visit_count: number
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'mixed'
+export type PaymentMethod = 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash'
 export type SaleStatus = 'completed' | 'voided' | 'held'
 
 export interface SaleItem {

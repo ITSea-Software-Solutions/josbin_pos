@@ -18,6 +18,19 @@ class Sale extends Model implements Auditable
         'store_id', 'cashier_id', 'register_session_id', 'customer_id', 'sale_number',
         'subtotal_srd', 'discount_srd', 'btw_srd', 'total_srd',
         'payment_method', 'cash_received_srd', 'change_srd', 'card_amount_srd',
+        // Optional card reconciliation fields — captured from the bank's PIN
+        // terminal slip so the OA can match daily card sales to the bank
+        // settlement statement. See migration `2026_05_26_040001_add_card_
+        // reconciliation_to_sales.php` for the design rationale.
+        'card_bank', 'card_approval_code', 'card_terminal_ref', 'card_last_four',
+        // Phase 2 — bank_transfer / mobile_transfer / foreign_cash. See
+        // migration `2026_05_26_050001_extend_payment_methods_for_suriname.php`.
+        'payment_provider', 'payment_reference', 'payment_sender_name',
+        'payment_confirmed_at', 'payment_confirmed_by',
+        'foreign_currency', 'foreign_amount', 'foreign_rate_used',
+        // Phase 3 — qr_payment scaffolding. See migration
+        // `2026_05_26_060001_add_qr_payment_scaffolding.php`.
+        'qr_payload',
         'status', 'source', 'exchange_rate_used',
         'void_reason', 'voided_by', 'voided_at', 'void_approved_by',
         'external_sale_ref', 'occurred_at',
@@ -34,7 +47,41 @@ class Sale extends Model implements Auditable
         'exchange_rate_used' => 'decimal:4',
         'voided_at'          => 'datetime',
         'occurred_at'        => 'datetime',
+        'payment_confirmed_at' => 'datetime',
+        'foreign_amount'       => 'decimal:2',
+        'foreign_rate_used'    => 'decimal:4',
     ];
+
+    // ── Payment method constants ──────────────────────────────────────────────
+    public const PM_CASH            = 'cash';
+    public const PM_CARD            = 'card';
+    public const PM_MIXED           = 'mixed';
+    public const PM_BANK_TRANSFER   = 'bank_transfer';
+    public const PM_MOBILE_TRANSFER = 'mobile_transfer';
+    public const PM_FOREIGN_CASH    = 'foreign_cash';
+    // Phase 3 — QR / mobile-wallet scaffolding. Lifecycle mirrors transfers
+    // (pending → confirmed by OA or by a future PSP webhook).
+    public const PM_QR_PAYMENT      = 'qr_payment';
+
+    public const PAYMENT_METHODS = [
+        self::PM_CASH, self::PM_CARD, self::PM_MIXED,
+        self::PM_BANK_TRANSFER, self::PM_MOBILE_TRANSFER, self::PM_FOREIGN_CASH,
+        self::PM_QR_PAYMENT,
+    ];
+
+    /** Methods that don't settle the cash drawer the moment the sale is rung. */
+    public const PM_PENDING_CONFIRMATION = [
+        self::PM_BANK_TRANSFER,
+        self::PM_MOBILE_TRANSFER,
+        self::PM_QR_PAYMENT,
+    ];
+
+    /** Is this sale still waiting for OA to confirm the funds landed? */
+    public function isAwaitingPaymentConfirmation(): bool
+    {
+        return in_array($this->payment_method, self::PM_PENDING_CONFIRMATION, true)
+            && $this->payment_confirmed_at === null;
+    }
 
     public function store(): BelongsTo
     {
