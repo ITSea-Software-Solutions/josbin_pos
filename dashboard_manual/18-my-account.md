@@ -89,7 +89,44 @@ Discrepancies are surfaced explicitly here so the cashier sees their own history
 
 ---
 
-## 18.5 Tab 3 — Profile & password
+## 18.4a Tab 3 — My activity (org-scoped roles too)
+
+SA, OA, Auditor, API Integration, and tax_inspector don't ring sales — but they still take *administrative* actions worth seeing. The **Mijn activiteit / My activity** tab shows the user's own entries from the platform audit log: who they edited, when, from what IP, and the before/after of the change.
+
+![My account — Activity tab](./screenshots/18-my-account-activity.png)
+
+The list:
+- 100 most recent events the user themselves triggered (older events live in the full audit log — Chapter 13)
+- Each row shows event name, target type+id, AST timestamp, and IP
+- Click a row to expand the old → new diff (same shape the OA sees in the global audit log)
+
+This is the user's own personal accountability surface — "what did I do last week?" — and a quick sanity check before doing something sensitive ("did I already grant Sandra that permission, or was I about to?").
+
+> Cashier and Store Manager *also* see this tab, in addition to the My performance + My shifts tabs above — useful when the manager forgot which override note they typed at 14:00.
+
+---
+
+## 18.4b Tab 4 — Actieve apparaten / Active sessions
+
+A list of every device currently logged in as you, with the option to revoke any one. Same row data the OA sees in the platform-wide session manager, scoped to your own user.
+
+![My account — Active sessions tab](./screenshots/18-my-account-sessions.png)
+
+| Column | What it shows |
+|---|---|
+| Apparaat / Device | Browser + OS sniff from the user-agent ("Chrome on macOS", "Edge on Windows 11") |
+| Locatie / Location | IP + approximate city (Paramaribo, Nickerie, etc.) |
+| Laatst gezien / Last seen | Most recent request from this token, AST |
+| Status | "Huidige sessie / This session" highlight for the one you're on right now |
+| Actie / Action | **Beëindig / Revoke** button — invalidates the token immediately |
+
+Revoking your own current session logs you out instantly (you'll land back on the login screen). Revoke any other row to kill a stale device, a forgotten cafe browser, or a tablet you've lost — without having to change your password.
+
+> **Security hygiene tip:** if you see a row from an IP / device you don't recognise, revoke it AND change your password (Profile tab below). Then email Josbin support — we'll check the audit log for what that session did.
+
+---
+
+## 18.5 Tab 5 — Profile & password
 
 Two cards side by side:
 

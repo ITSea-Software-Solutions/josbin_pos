@@ -6,6 +6,8 @@ If you're looking for the **per-store BTW breakdown** you see inside daily/month
 
 Path: **Dashboard → BTW-aangiftes / BTW Submissions**.
 
+![BTW Submissions screen — filings list with status badges](./screenshots/20-btw-submissions-list.png)
+
 ---
 
 ## 20.1 What a "submission" is, and who files them
@@ -32,6 +34,8 @@ Both kinds are stored. The inspector can drill into a daily for a specific date 
 ## 20.2 Filing a submission (OA / SM workflow)
 
 **Path:** Dashboard → BTW-aangiftes → **+ Nieuwe aangifte / + New submission**.
+
+![Submit BTW submission modal — period picker + preview](./screenshots/20-submit-btw-modal.png)
 
 ### Step 1 — Pick the period
 

@@ -4,6 +4,8 @@ The **Registers** screen is the manager's home for the physical tills under thei
 
 Path: **Dashboard → Kassabeheer / Registers** (in the *Organisation* section of the sidebar for OA / SM; *Support tools* for SA).
 
+![Registers screen — OA scope](./screenshots/19-registers-screen.png)
+
 > This chapter was promised by cross-refs in ch 11 for some time and finally landed. If you came here via "Chapter 8" or "Chapter 19" from elsewhere, this is it.
 
 ---

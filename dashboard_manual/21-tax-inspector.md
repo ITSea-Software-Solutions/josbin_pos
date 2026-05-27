@@ -46,6 +46,8 @@ If you're working in the demo stack:
 - Password: `Inspector@2026`
 - On first login they'll be prompted to set up 2FA — scan the QR with Google Authenticator.
 
+> **No screenshots in this chapter (yet).** Because 2FA is mandatory and non-bypassable for this role, the headless Playwright screenshot suite can't reach the inspector's UI without a manual 2FA-secret clear via `php artisan tinker`. Run the suite by hand after clearing the secret (see the task report) to capture `21-tax-inspector-dashboard.png` and the cross-org submissions list. Until then the chapter relies on prose + the underlying screen designs you can see by logging into the demo stack directly.
+
 ---
 
 ## 21.3 What the inspector sees when they log in

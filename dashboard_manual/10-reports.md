@@ -497,6 +497,24 @@ If a customer comes back with a receipt from 3 months ago and disputes the USD a
 
 ---
 
+## 10.11b Pending payments queue (bank + mobile transfers awaiting confirmation)
+
+Bank transfers and mobile transfers (DSB Mobiel, Hakrinbank Online, Republic Mobile) are recorded immediately at the till, but the cash hasn't actually moved yet — the customer's bank still has to settle the transfer into the store's account. Until OA confirms funds landed, those sales sit in a **Pending Payments** queue.
+
+**Path:** Dashboard → **Openstaande betalingen / Pending Payments** (Operations section, OA / SM).
+
+![Pending Payments queue — awaiting confirmation](./screenshots/20-pending-payments-queue.png)
+
+What you do here:
+1. Open your bank app / statement.
+2. Match each pending row by transfer provider + reference (the cashier captured these at the till from the customer's screen).
+3. Click **✓ Confirm received / Bevestig ontvangst** on the row.
+4. The sale flips to fully `completed`, drops out of the queue, and counts in today's daily totals from that point.
+
+> **Why this exists:** Belastingdienst counts a sale only when payment has actually landed, not when the cashier rang it. Carrying these in a separate queue keeps daily totals honest and prevents accidental double-counting when the funds finally arrive on a later business day. The original sale row keeps its `occurred_at` timestamp for audit; the `confirmed_at` column records when the funds actually settled, and who confirmed.
+
+---
+
 ## 10.12 Cross-references
 
 - **What permission lets whom run what** — [Chapter 1 — Roles & Permissions](01-roles-and-permissions.md).

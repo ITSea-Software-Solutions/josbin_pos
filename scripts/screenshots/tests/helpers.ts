@@ -17,6 +17,7 @@ export const SEED = {
   orgAdmin:     { email: 'orgadmin@dehoop.sr',      password: 'OrgAdmin@2026'  },
   storeManager: { email: 'manager@dehoop.sr',       password: 'Manager@2026'   },
   cashier:      { email: 'kassa@dehoop.sr',         password: 'Cashier@2026'   },
+  taxInspector: { email: 'belastingdienst@gov.sr',  password: 'Inspector@2026' },
 }
 
 /**

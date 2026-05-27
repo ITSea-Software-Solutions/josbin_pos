@@ -579,6 +579,146 @@ test('dash ch.15 — license list + issue + edit modals (Super Admin)', async ({
  *   - Issue-license modal on the License screen.
  *   - Organisations list across all organisations.
  *   - Audit log across all organisations.
+ *   - Platform Overview (SA-only landing).
+ *   - Tax Inspector Dashboard (tax_inspector also 2FA-mandatory).
  * See the task report for the documented workaround (temporarily clear the
- * SA's 2FA secret via `php artisan tinker`, capture, re-enable).
+ * SA's / inspector's 2FA secret via `php artisan tinker`, capture, re-enable).
  */
+
+// ─── Chapter 19 — Registers ─────────────────────────────────────────────────
+
+test('dash ch.19 — registers screen (OA scope)', async ({ page }) => {
+  await loginOrgAdmin(page)
+  await navTo(page, 'Kassabeheer', 'Registers')
+  await settle(page, 900)
+  await shoot(page, 'dashboard_manual', '19-registers-screen')
+
+  // Open the "+ Nieuwe kassa" modal if present.
+  const newBtn = page.getByRole('button', { name: /nieuwe kassa|new register/i }).first()
+  if (await newBtn.isVisible().catch(() => false)) {
+    await newBtn.click()
+    await settle(page, 400)
+    await shoot(page, 'dashboard_manual', '19-new-register-modal')
+    const cancel = page.getByRole('button', { name: /annuleren|cancel|sluiten/i }).first()
+    if (await cancel.isVisible().catch(() => false)) await cancel.click().catch(() => {})
+  }
+})
+
+// ─── Chapter 20 — BTW Submissions (Belastingdienst filings) ─────────────────
+
+test('dash ch.20 — BTW submissions list + submit modal (OA)', async ({ page }) => {
+  await loginOrgAdmin(page)
+  await navTo(page, 'BTW-aangiftes', 'BTW Submissions')
+  await settle(page, 1000)
+  await shoot(page, 'dashboard_manual', '20-btw-submissions-list')
+
+  // Submit-new modal.
+  const submitBtn = page.getByRole('button', { name: /nieuwe aangifte|submit btw|nieuwe btw|file btw/i }).first()
+  if (await submitBtn.isVisible().catch(() => false)) {
+    await submitBtn.click()
+    await settle(page, 700)
+    await shoot(page, 'dashboard_manual', '20-submit-btw-modal')
+    const cancel = page.getByRole('button', { name: /annuleren|cancel/i }).first()
+    if (await cancel.isVisible().catch(() => false)) await cancel.click().catch(() => {})
+  }
+})
+
+test('dash ch.20 — BTW submission detail (OA)', async ({ page }) => {
+  await loginOrgAdmin(page)
+  await navTo(page, 'BTW-aangiftes', 'BTW Submissions')
+  await settle(page, 1000)
+
+  // Click first row's "Bekijken / View" link if a filing exists.
+  const firstView = page.getByRole('button', { name: /bekijken|view|details/i }).first()
+  if (await firstView.isVisible().catch(() => false)) {
+    await firstView.click()
+    await settle(page, 800)
+    await shoot(page, 'dashboard_manual', '20-btw-submission-detail')
+  } else {
+    // No filings yet — at least capture the empty-state list with helpful copy.
+    await shoot(page, 'dashboard_manual', '20-btw-submissions-empty')
+  }
+})
+
+// ─── Pending payments (bank / mobile transfer confirmation queue) ───────────
+
+test('dash ch.20 — pending payments queue (OA)', async ({ page }) => {
+  await loginOrgAdmin(page)
+  // Item lives under Operations / Compliance — try both labels.
+  const navItem = page.locator('aside button', { hasText: /openstaande betalingen|pending payments/i }).first()
+  if (await navItem.isVisible().catch(() => false)) {
+    await navItem.click()
+    await settle(page, 800)
+    await shoot(page, 'dashboard_manual', '20-pending-payments-queue')
+  } else {
+    test.skip(true, 'Pending Payments nav item not visible for this role/seed.')
+  }
+})
+
+// ─── Chapter 18 — My Account Activity + Sessions (org-scoped roles) ─────────
+
+test('dash ch.18 — my account activity tab (OA)', async ({ page }) => {
+  await loginOrgAdmin(page)
+  await navTo(page, 'Mijn Profiel', 'My Account')
+  await settle(page, 900)
+
+  const activityTab = page.getByRole('button', { name: /activiteit|activity/i }).first()
+  if (await activityTab.isVisible().catch(() => false)) {
+    await activityTab.click()
+    await settle(page, 600)
+    await shoot(page, 'dashboard_manual', '18-my-account-activity')
+  } else {
+    test.skip(true, 'Activity tab not visible for this role.')
+  }
+})
+
+test('dash ch.18 — my account sessions tab (OA)', async ({ page }) => {
+  await loginOrgAdmin(page)
+  await navTo(page, 'Mijn Profiel', 'My Account')
+  await settle(page, 900)
+
+  const sessionsTab = page.getByRole('button', { name: /actieve apparaten|active sessions|sessions/i }).first()
+  if (await sessionsTab.isVisible().catch(() => false)) {
+    await sessionsTab.click()
+    await settle(page, 600)
+    await shoot(page, 'dashboard_manual', '18-my-account-sessions')
+  } else {
+    test.skip(true, 'Sessions tab not visible for this role.')
+  }
+})
+
+// ─── Chapter 21 — Tax Inspector Dashboard (best-effort, often skips) ────────
+//
+// tax_inspector has 2FA enforced (TWO_FACTOR_ALWAYS_ROLES). On a clean demo
+// stack the user lands on the 2FA setup screen on first login — skip with a
+// helpful note instead of failing.
+
+test('dash ch.21 — tax inspector dashboard (skip if 2FA prompt)', async ({ page }) => {
+  await page.goto(URLS.dashboard)
+  await settle(page, 600)
+  await fill(page, /e-?mail|email/i, SEED.taxInspector.email)
+  await fill(page, /wachtwoord|password/i, SEED.taxInspector.password)
+  await page.getByRole('button', { name: /inloggen|aanmelden|sign[ -]?in|log[ -]?in|login/i })
+    .first().click()
+  await settle(page, 2500)
+
+  const onTwoFactor = await page.getByText(/tweestap|two[- ]?factor|authenticator|set up/i)
+    .first().isVisible({ timeout: 3_000 }).catch(() => false)
+  if (onTwoFactor) {
+    test.skip(true, 'tax_inspector 2FA prompt — clear the secret via tinker then re-run.')
+  }
+
+  try {
+    await page.locator('aside').first().waitFor({ state: 'visible', timeout: 8_000 })
+  } catch {
+    test.skip(true, 'tax_inspector login did not reach the dashboard sidebar.')
+  }
+
+  await settle(page, 600)
+  await shoot(page, 'dashboard_manual', '21-tax-inspector-dashboard')
+
+  // Drill into BTW Submissions cross-org view.
+  await navTo(page, 'BTW-aangiftes', 'BTW Submissions')
+  await settle(page, 800)
+  await shoot(page, 'dashboard_manual', '21-tax-inspector-submissions-list')
+})
