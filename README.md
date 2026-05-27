@@ -9,6 +9,8 @@ Enterprise Point of Sale and multi-store management platform built for Suriname.
 > 4. [`FEATURES_AND_FLOWS.md`](FEATURES_AND_FLOWS.md) — feature catalogue + user-journey flows (does the system already do X? where? what status?)
 >
 > Docs 3 and 4 are living — keep adding to them.
+>
+> **Pre-sales / training assets:** [`marketing/video-scripts/`](marketing/video-scripts/) — five Loom-ready narration scripts (3–5 min each) for the highest-leverage demos (cashier daily cycle, BTW filing, multi-store HQ, tax inspector, payment methods).
 
 ---
 
