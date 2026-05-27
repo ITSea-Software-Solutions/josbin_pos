@@ -134,7 +134,7 @@ Twee kaarten naast elkaar:
 
 | Veld | Bewerken | Notities |
 |---|:-:|---|
-| **Naam** | ja | Vrije tekst, 2–120 tekens. Gebruikt op bonnen als "Kassamedewerker: <naam>" en in het auditlogboek. |
+| **Naam** | ja | Vrije tekst, 2–120 tekens. Gebruikt op bonnen als "Kassamedewerker: `<naam>`" en in het auditlogboek. |
 | **E-mail** | ja | Gebruikt voor login en wachtwoord-reset. Moet platformbreed uniek zijn. |
 | **Taal** | ja | `nl` of `en` — directe per-gebruiker switch, geen restart. Direct opgeslagen bij formulierverzending. |
 

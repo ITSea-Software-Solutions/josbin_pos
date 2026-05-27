@@ -134,7 +134,7 @@ Two cards side by side:
 
 | Field | Edits | Notes |
 |---|:-:|---|
-| **Naam / Name** | yes | Free text, 2–120 characters. Used on receipts as "Kassamedewerker: <name>" and in the audit log. |
+| **Naam / Name** | yes | Free text, 2–120 characters. Used on receipts as "Kassamedewerker: `<name>`" and in the audit log. |
 | **E-mail** | yes | Used for login and password-reset. Must be unique platform-wide. |
 | **Taal / Language** | yes | `nl` or `en` — instant per-user switch, no restart. Saved immediately on form submit. |
 

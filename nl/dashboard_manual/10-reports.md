@@ -348,7 +348,7 @@ Wanneer een Rekenkamer-inspecteur vraagt "is deze PDF authentiek?", is het antwo
 1. De SHA-256 hash staat op de PDF en is ook geregistreerd in ons auditlog op de server-zijde op het moment van generatie.
 2. Geef ze de hash van ons serverlog; ze vergelijken het met de hash op de PDF voor hen. Match = authentiek.
 
-Wanneer de ondertekeningsinfrastructuur wordt geleverd, vereenvoudigt het antwoord tot: "open de PDF, kijk naar het handtekeningspaneel, de ondertekenaar is *<Organisatienaam>* op *<datum>*".
+Wanneer de ondertekeningsinfrastructuur wordt geleverd, vereenvoudigt het antwoord tot: "open de PDF, kijk naar het handtekeningspaneel, de ondertekenaar is *`<Organisatienaam>`* op *`<datum>`*".
 
 ### Hoe te exporteren
 

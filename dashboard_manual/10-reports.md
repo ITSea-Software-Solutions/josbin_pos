@@ -348,7 +348,7 @@ When a Rekenkamer inspector asks "is this PDF authentic?", today the answer is:
 1. The SHA-256 hash is on the PDF and also recorded in our audit log on the server side at the moment of generation.
 2. Hand them the hash from our server log; they compare it to the hash on the PDF in front of them. Match = authentic.
 
-When the signing infrastructure ships, the answer simplifies to: "open the PDF, look at the signature panel, the signer is *<Organisation Name>* on *<date>*".
+When the signing infrastructure ships, the answer simplifies to: "open the PDF, look at the signature panel, the signer is *`<Organisation Name>`* on *`<date>`*".
 
 ### How to export
 
