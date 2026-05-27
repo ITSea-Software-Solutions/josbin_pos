@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "vitepress dev --port 5180 --host",
     "build": "vitepress build",
+    "build:itsea": "BASE_PATH=/josbin-docs/ vitepress build",
     "preview": "vitepress preview --port 5180"
   },
   "devDependencies": {

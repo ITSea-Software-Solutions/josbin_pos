@@ -21,6 +21,18 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
+  // Base path for assets — read from BASE_PATH env var so the same config
+  // builds for any deploy target. Default '/' for local dev / preview.
+  //
+  // Examples:
+  //   BASE_PATH=/josbin-docs/ npm run build   → itsea.com/josbin-docs/
+  //   BASE_PATH=/            npm run build    → docs.itsea.com root
+  //   (default)              npm run dev      → localhost
+  //
+  // The trailing slash matters — VitePress treats `/josbin-docs` and
+  // `/josbin-docs/` differently for asset URL rewrites.
+  base: process.env.BASE_PATH || '/',
+
   // Some sidebar entries point to chapters not yet written. They get a 404
   // page until the chapter lands. Once all chapters exist this can be set
   // back to false (or removed) for strict link checking.
@@ -34,10 +46,151 @@ export default defineConfig({
     'user_manual/README.md':          'user_manual/index.md',
     'dashboard_manual/README.md':     'dashboard_manual/index.md',
     'trainer_cheatsheets/README.md':  'trainer_cheatsheets/index.md',
+    // Dutch mirrors
+    'nl/docs/README.md':                'nl/docs/index.md',
+    'nl/user_manual/README.md':         'nl/user_manual/index.md',
+    'nl/dashboard_manual/README.md':    'nl/dashboard_manual/index.md',
+    'nl/trainer_cheatsheets/README.md': 'nl/trainer_cheatsheets/index.md',
   },
 
   title: 'Josbin POS',
   description: 'Developer documentation and user manual for Josbin POS — Suriname enterprise POS platform.',
+
+  // ── Locales (English default, Dutch mirror under /nl/) ────────────────────
+  //
+  // The English files live at the canonical paths (/user_manual/*, etc.).
+  // The Dutch mirror lives under /nl/ — same chapter numbering, same file
+  // names, translated content. The navbar gets an EN/NL switcher that
+  // jumps to the equivalent NL page automatically.
+  //
+  // Adding a third locale (Sranantongo, …) only requires another sibling
+  // directory + a new locale entry below — no chapter restructuring needed.
+  locales: {
+    root: {
+      label: 'English',
+      lang: 'en-US',
+    },
+    nl: {
+      label: 'Nederlands',
+      lang: 'nl-NL',
+      link: '/nl/',
+      themeConfig: {
+        nav: [
+          { text: 'Home',              link: '/nl/' },
+          { text: 'Architectuur',      link: '/architecture.html', target: '_blank' },
+          { text: 'Ontwikkelaarsdocs', link: '/nl/docs/' },
+          { text: 'Handleiding POS',   link: '/nl/user_manual/' },
+          { text: 'Handleiding Dashboard', link: '/nl/dashboard_manual/' },
+          { text: 'Trainersbladen',    link: '/nl/trainer_cheatsheets/' },
+        ],
+        sidebar: {
+          '/nl/docs/': [
+            {
+              text: 'Aan de slag',
+              collapsed: false,
+              items: [
+                { text: 'Overzicht',                       link: '/nl/docs/' },
+                { text: '0. Installatie & setup',          link: '/nl/docs/00-installation-and-setup' },
+                { text: '1. Architectuuroverzicht',        link: '/nl/docs/01-architecture' },
+              ],
+            },
+            {
+              text: 'Verdiepende hoofdstukken',
+              collapsed: false,
+              items: [
+                { text: '2. Datamodel',                    link: '/nl/docs/02-data-model' },
+                { text: '3. Auth & rollen',                link: '/nl/docs/03-auth-and-roles' },
+                { text: '4. Verkooplevenscyclus',          link: '/nl/docs/04-sale-lifecycle' },
+                { text: '5. BTW-pipeline',                 link: '/nl/docs/05-btw-pipeline' },
+                { text: '6. Kassa & Z-Rapport',            link: '/nl/docs/06-register-and-z-report' },
+                { text: '7. Synchronisatie & offline',     link: '/nl/docs/07-sync-and-offline' },
+                { text: '8. Integratie-API',               link: '/nl/docs/08-integration-api' },
+                { text: '9. Realtime broadcasts',          link: '/nl/docs/09-realtime-broadcasts' },
+                { text: '10. Jobs & schema',               link: '/nl/docs/10-jobs-and-schedules' },
+                { text: '11. Licentie & oplevering',       link: '/nl/docs/11-license-and-delivery' },
+                { text: '12. Code-overzicht',              link: '/nl/docs/12-code-map' },
+                { text: '13. Ontwikkelworkflow',           link: '/nl/docs/13-dev-workflow' },
+              ],
+            },
+          ],
+          '/nl/user_manual/': [
+            {
+              text: 'POS-handleiding',
+              collapsed: false,
+              items: [
+                { text: 'Overzicht',                                  link: '/nl/user_manual/' },
+                { text: '1. Aan de slag — inloggen',                  link: '/nl/user_manual/01-getting-started' },
+                { text: '2. Dagelijkse setup — wisselkoers',          link: '/nl/user_manual/02-daily-setup' },
+                { text: '3. Uw kassa',                                link: '/nl/user_manual/03-register' },
+                { text: '4. Een verkoop maken',                       link: '/nl/user_manual/04-making-a-sale' },
+                { text: '5. Betaling aannemen',                       link: '/nl/user_manual/05-payment' },
+                { text: '5a. Terugbetalingen & annuleringen',         link: '/nl/user_manual/05a-refunds-and-voids' },
+                { text: '6. Bonnen',                                  link: '/nl/user_manual/06-receipts' },
+                { text: '7. Klanten',                                 link: '/nl/user_manual/07-customers' },
+                { text: '8. Kortingen',                               link: '/nl/user_manual/08-discounts' },
+                { text: '9. Vastgehouden bonnen',                     link: '/nl/user_manual/09-hold-bills' },
+                { text: '10. Einde dag — Z-Rapport',                  link: '/nl/user_manual/10-end-of-day' },
+                { text: '11. Rapporten',                              link: '/nl/user_manual/11-reports' },
+                { text: '12. Barcode & label printen',                link: '/nl/user_manual/12-barcode-labels' },
+                { text: '13. Instellingen',                           link: '/nl/user_manual/13-settings' },
+              ],
+            },
+          ],
+          '/nl/dashboard_manual/': [
+            {
+              text: 'Dashboard-handleiding',
+              collapsed: false,
+              items: [
+                { text: 'Overzicht',                                     link: '/nl/dashboard_manual/' },
+                { text: '1. Rollen & rechten',                           link: '/nl/dashboard_manual/01-roles-and-permissions' },
+                { text: '2. Organisatie & vestiging opzetten',           link: '/nl/dashboard_manual/02-organisation-and-store-setup' },
+                { text: '3. Gebruikers',                                 link: '/nl/dashboard_manual/03-users' },
+                { text: '4. Catalogus & categorieën',                    link: '/nl/dashboard_manual/04-catalogue-and-categories' },
+                { text: '5. Bulkimport (CSV / Excel)',                   link: '/nl/dashboard_manual/05-bulk-import-csv-excel' },
+                { text: '6. Prijzen & vestigingsspecifieke overschrijvingen', link: '/nl/dashboard_manual/06-pricing-and-per-store-overrides' },
+                { text: '7. Kortingsregels',                             link: '/nl/dashboard_manual/07-discount-rules' },
+                { text: '8. Voorraadbeheer',                             link: '/nl/dashboard_manual/08-stock-management' },
+                { text: '9. Klanten',                                    link: '/nl/dashboard_manual/09-customers' },
+                { text: '10. Rapporten — dagelijks, maandelijks, BTW, Rekenkamer', link: '/nl/dashboard_manual/10-reports' },
+                { text: '11. Z-Rapporten & einde-dag synchronisatie',    link: '/nl/dashboard_manual/11-z-reports-and-end-of-day-sync' },
+                { text: '12. API-integraties & webhooks',                link: '/nl/dashboard_manual/12-api-integrations-and-webhooks' },
+                { text: '13. Auditlogboek',                              link: '/nl/dashboard_manual/13-audit-log' },
+                { text: '14. AI-inzichten',                              link: '/nl/dashboard_manual/14-ai-insights' },
+                { text: '15. Licentiebeheer — UI-overzicht',             link: '/nl/dashboard_manual/15-license-management' },
+                { text: '16. Licentieoperaties',                         link: '/nl/dashboard_manual/16-license-operations' },
+                { text: '17. Beveiligingsbeleid (2FA per rol)',          link: '/nl/dashboard_manual/17-security-policy' },
+                { text: '18. Mijn Profiel',                              link: '/nl/dashboard_manual/18-my-account' },
+                { text: '19. Kassabeheer',                               link: '/nl/dashboard_manual/19-registers' },
+                { text: '20. BTW-aangiftes (Belastingdienst)',           link: '/nl/dashboard_manual/20-btw-submissions-belastingdienst' },
+                { text: '21. Belastinginspecteur',                       link: '/nl/dashboard_manual/21-tax-inspector' },
+              ],
+            },
+          ],
+          '/nl/trainer_cheatsheets/': [
+            {
+              text: 'Trainersbladen',
+              collapsed: false,
+              items: [
+                { text: 'Overzicht',                          link: '/nl/trainer_cheatsheets/' },
+                { text: '1. Kassier — dagelijkse workflow',   link: '/nl/trainer_cheatsheets/01-cashier-daily' },
+                { text: '2. Manager — Z-Rapport',             link: '/nl/trainer_cheatsheets/02-manager-z-report' },
+                { text: '3. Dashboard-overzicht',             link: '/nl/trainer_cheatsheets/03-dashboard-overview' },
+              ],
+            },
+          ],
+        },
+        footer: {
+          message: 'Josbin POS — POS-platform voor Suriname',
+          copyright: 'Interne documentatie. Niet voor verspreiding.',
+        },
+        outline: { level: [2, 3], label: 'Op deze pagina' },
+        editLink: {
+          pattern: ({ filePath }) => `vscode://file${filePath}`,
+          text: 'Open in editor',
+        },
+      },
+    },
+  },
 
   // VitePress dev server intercepts every *.html request with the SPA shell
   // (the `public/` static-fallthrough only fires during a production build).
@@ -76,9 +229,13 @@ export default defineConfig({
     '**/docker/**',
     '**/progress/**',
     '**/docs-site/node_modules/**',
+    '**/marketing/**',     // marketing/* lives outside the docs site
+    'nl/marketing/**',     // ditto for the NL mirror
     'README.md',
     'BUILD_STATUS.md',
     'CLAUDE.md',
+    'CLAUDE_WORKING_GUIDE.md',
+    'FEATURES_AND_FLOWS.md',
     'Phase1&2 Tickets',
     'Phase3&4 Tickets',
   ],
