@@ -33,6 +33,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'products.delete',
             'products.import',
             'products.sync',
+            // Sets BTW rate / btw_exempt on a product. OA-only by design —
+            // mis-classification has Belastingdienst-filing implications. SM
+            // has products.edit but is silently filtered out of these two
+            // fields by the controller's validation (see ProductController::
+            // applyBtwGate).
+            'products.set_btw',
 
             // Categories
             'categories.manage',
@@ -111,7 +117,8 @@ class RolesAndPermissionsSeeder extends Seeder
         $orgAdmin = Role::firstOrCreate(['name' => User::ROLE_ORGANISATION_ADMIN, 'guard_name' => 'web']);
         $orgAdmin->syncPermissions([
             'sales.view', 'sales.void', 'sales.void.approve', 'sales.refund',
-            'products.view', 'products.create', 'products.edit', 'products.delete', 'products.import', 'products.sync',
+            'products.view', 'products.create', 'products.edit', 'products.delete',
+            'products.import', 'products.sync', 'products.set_btw',
             'categories.manage',
             'customers.view', 'customers.create', 'customers.edit',
             'reports.daily', 'reports.monthly', 'reports.custom', 'reports.top_products',
@@ -132,11 +139,21 @@ class RolesAndPermissionsSeeder extends Seeder
             'btw.view_submissions',
         ]);
 
-        // Store Manager — manages their assigned store
+        // Store Manager — manages their assigned store.
+        //
+        // SM gets partial catalogue access (Option A):
+        //   ✅ create + edit products, manage categories — needed for day-to-day
+        //   ❌ products.set_btw  — BTW rate / exempt flag stays OA-only (filing
+        //                          impact at Belastingdienst — SM can quietly
+        //                          mis-classify and the audit-log surface is
+        //                          deeper than the Stock screen)
+        //   ❌ products.import   — bulk CSV/Excel stays OA-only (avoids cross-
+        //                          store catalogue fragmentation in chains)
+        //   ❌ products.sync     — "push catalogue to all stores" stays OA-only
         $storeManager = Role::firstOrCreate(['name' => User::ROLE_STORE_MANAGER, 'guard_name' => 'web']);
         $storeManager->syncPermissions([
             'sales.create', 'sales.view', 'sales.void', 'sales.refund', 'sales.hold', 'sales.restore',
-            'products.view', 'products.create', 'products.edit', 'products.import',
+            'products.view', 'products.create', 'products.edit',
             'categories.manage',
             'customers.view', 'customers.create', 'customers.edit',
             'reports.daily', 'reports.monthly', 'reports.custom', 'reports.top_products',

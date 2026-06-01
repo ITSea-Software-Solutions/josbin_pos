@@ -279,10 +279,12 @@ function CategoryFormModal({ cat, orgId, isNl, onClose }: {
 // Internally the form stores `btw_rate` as a string ("10", "0", "7.5", …) —
 // the dropdown decides whether to render the custom input by checking whether
 // the current value is one of the presets.
-function BtwRateField({ value, onChange, isNl }: {
+function BtwRateField({ value, onChange, isNl, disabled = false, disabledHint }: {
   value: string
   onChange: (v: string) => void
   isNl: boolean
+  disabled?: boolean
+  disabledHint?: string
 }) {
   const PRESETS = ['0', '10']
   const isCustom = !PRESETS.includes(value)
@@ -305,19 +307,26 @@ function BtwRateField({ value, onChange, isNl }: {
       <select
         value={mode === 'custom' ? '__custom__' : value}
         onChange={(e) => handleSelect(e.target.value)}
-        style={selectSt} onFocus={fi} onBlur={fo}
+        disabled={disabled}
+        title={disabled ? disabledHint : undefined}
+        style={{ ...selectSt, opacity: disabled ? 0.55 : 1, cursor: disabled ? 'not-allowed' : 'pointer' }}
+        onFocus={fi} onBlur={fo}
       >
         <option value="0">{isNl ? '0% (vrijgesteld)' : '0% (exempt)'}</option>
         <option value="10">{isNl ? '10% (standaard)' : '10% (standard)'}</option>
         <option value="__custom__">{isNl ? 'Aangepast…' : 'Custom…'}</option>
       </select>
+      {disabled && disabledHint && (
+        <p style={{ fontSize: 11, color: '#9090a0', marginTop: 4, fontStyle: 'italic' }}>{disabledHint}</p>
+      )}
       {mode === 'custom' && (
         <input
           type="number" min="0" max="100" step="0.01"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          disabled={disabled}
           placeholder={isNl ? 'bijv. 7.5' : 'e.g. 7.5'}
-          style={{ ...inputSt, marginTop: 6, fontFamily: 'monospace' }}
+          style={{ ...inputSt, marginTop: 6, fontFamily: 'monospace', opacity: disabled ? 0.55 : 1 }}
           onFocus={fi} onBlur={fo}
           autoFocus
         />
@@ -331,6 +340,13 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
 }) {
   const qc = useQueryClient()
   const [showScanner, setShowScanner] = useState(false)
+
+  // Option A: SM can save products, but BTW rate + exempt flag stay OA-only
+  // (mis-classification has Belastingdienst-filing impact). Disable the BTW
+  // fields when the actor lacks products.set_btw. Backend also strips these
+  // fields if they sneak through — this is just the UX-friendly half.
+  const actor = useDashboardAuthStore((s) => s.user)
+  const canSetBtw = actor?.role === 'super_admin' || actor?.role === 'organisation_admin'
   const [form, setForm] = useState<CreateProductPayload & { is_active?: boolean }>({
     name_nl:      product?.name_nl   ?? '',
     name_en:      product?.name_en   ?? '',
@@ -432,6 +448,10 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
               value={form.btw_rate}
               onChange={(v) => set('btw_rate', v)}
               isNl={isNl}
+              disabled={!canSetBtw}
+              disabledHint={isNl
+                ? 'Alleen Org Admin kan het BTW-tarief wijzigen — vraag uw OA.'
+                : 'Only the Org Admin can change the BTW rate — ask your OA.'}
             />
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Voorraad' : 'Stock'}</label>
@@ -442,9 +462,12 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
 
           {/* Toggles */}
           <div style={{ display: 'flex', gap: 10 }}>
-            <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
+            <label
+              title={!canSetBtw ? (isNl ? 'Alleen Org Admin kan dit wijzigen.' : 'Only the Org Admin can change this.') : undefined}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, cursor: canSetBtw ? 'pointer' : 'not-allowed', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb', opacity: canSetBtw ? 1 : 0.55 }}>
               <input type="checkbox" checked={form.btw_exempt ?? false}
                 onChange={(e) => set('btw_exempt', e.target.checked)}
+                disabled={!canSetBtw}
                 style={{ width: 15, height: 15, accentColor: '#7c3aed' }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#1c1c2e' }}>{isNl ? 'BTW-vrijgesteld' : 'BTW exempt'}</div>

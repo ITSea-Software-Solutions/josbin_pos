@@ -134,6 +134,7 @@ class ProductController extends Controller
         $this->authorize('create', Product::class);
 
         $data = $this->validateProduct($request);
+        $data = $this->applyBtwGate($request, $data, $existing = null);
 
         $product = Product::create([
             ...$data,
@@ -153,6 +154,8 @@ class ProductController extends Controller
         $this->ensureSameOrg($request, $product->organisation_id);
 
         $data = $this->validateProduct($request, $product->id);
+        $data = $this->applyBtwGate($request, $data, $product);
+
         $action = isset($data['price']) && $data['price'] !== (string) $product->price
             ? 'price_changed'
             : 'updated';
@@ -397,7 +400,11 @@ class ProductController extends Controller
      */
     public function pushCatalogue(Request $request): JsonResponse
     {
-        $this->authorize('create', Product::class); // store_manager or above
+        // Push catalogue across stores — HQ-only concern (Option A). SM has
+        // products.create but NOT products.sync, so this stays OA+SA-only.
+        // Without this gate an SM could push their own per-store edits to
+        // other stores in the same org and silently drift the catalogue.
+        $this->authorize('sync', Product::class);
 
         $orgId = $request->user()->organisation_id;
 
@@ -580,7 +587,11 @@ class ProductController extends Controller
                     ->ignore($excludeId),
             ],
             'price'       => ['required', 'numeric', 'min:0'],
-            'btw_rate'    => ['required', 'numeric', 'min:0', 'max:100'],
+            // btw_rate is 'sometimes' (not 'required') so SM saves don't break
+            // when the dashboard omits the field. The DB default (10.00) +
+            // applyBtwGate() together ensure new products always get a valid
+            // BTW rate even when the SM form doesn't send one.
+            'btw_rate'    => ['sometimes', 'numeric', 'min:0', 'max:100'],
             'btw_exempt'  => ['sometimes', 'boolean'],
             'stock_qty'           => ['sometimes', 'numeric', 'min:0'],
             'low_stock_threshold' => ['sometimes', 'numeric', 'min:0'],
@@ -595,5 +606,40 @@ class ProductController extends Controller
         if ($request->user()->organisation_id && $request->user()->organisation_id !== $orgId) {
             abort(403, 'Access denied to this resource.');
         }
+    }
+
+    /**
+     * Strip BTW fields from the payload unless the actor has products.set_btw.
+     *
+     * Store Manager + Cashier-elevated can save a product (Option A — partial
+     * catalogue access), but the BTW rate + exempt flag stay OA-only because a
+     * wrong classification has Belastingdienst-filing implications nobody
+     * wants to discover at audit time. We *silently drop* the fields rather
+     * than 403 the whole save, so the dashboard's BTW input being disabled
+     * for SMs doesn't accidentally lose the rest of the form on submit.
+     *
+     * For a brand-new product the SM saves without set_btw, the model casts
+     * fall back to: btw_rate = default 10.00 (Suriname VAT), btw_exempt =
+     * false. OA can then correct either later — that change is its own audit-
+     * log event.
+     */
+    private function applyBtwGate(Request $request, array $data, ?Product $existing): array
+    {
+        if ($request->user()->can('products.set_btw')) {
+            return $data;
+        }
+
+        // SM (or any role without set_btw) — drop the BTW fields. If editing
+        // an existing product, leave its current values untouched.
+        if ($existing) {
+            unset($data['btw_rate'], $data['btw_exempt']);
+        } else {
+            // New product without set_btw — let the DB default (10%) apply.
+            // We still allow btw_rate through if the OA had pre-filled it,
+            // but for SM the dashboard form won't even submit the field.
+            unset($data['btw_rate'], $data['btw_exempt']);
+        }
+
+        return $data;
     }
 }
