@@ -140,6 +140,14 @@ class UserController extends Controller
             'is_active' => $data['is_active'] ?? true,
         ]);
 
+        // Mirror the role enum to spatie's role table so $user->can(...) works.
+        // Without this, every policy check returns false (the user has the role
+        // string on the column but no spatie role attached → no permissions
+        // resolved → 403 on category.create, product.edit, etc.). The matching
+        // spatie role row is created by RolesAndPermissionsSeeder; we just
+        // bind the user to it here.
+        $user->assignRole($data['role']);
+
         if (isset($data['store_id'])) {
             $this->logStoreAssignment($actor, $user, null, $data['store_id']);
         }
@@ -191,7 +199,21 @@ class UserController extends Controller
         }
 
         $previousStoreId = $user->store_id;
+        $previousRole    = $user->role;
         $user->update($data);
+
+        // Keep the spatie role attached in sync with the role enum on the user
+        // row. Without syncRoles() a role change would leave the OLD spatie
+        // role bound, so $user->can() resolves the wrong perm set. Re-syncing
+        // also covers users that were created before the assignRole() fix
+        // landed — first edit binds them properly.
+        if (isset($data['role']) && $data['role'] !== $previousRole) {
+            $user->syncRoles([$data['role']]);
+        } elseif ($user->roles()->count() === 0) {
+            // Self-healing: legacy user with no spatie role at all. Bind the
+            // role enum that's already on the row so future requests work.
+            $user->assignRole($user->role);
+        }
 
         if (array_key_exists('store_id', $data) && $data['store_id'] !== $previousStoreId) {
             $this->logStoreAssignment($actor, $user, $previousStoreId, $data['store_id']);
