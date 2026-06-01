@@ -1,0 +1,18 @@
+# Production hardening override for single-Droplet deploy.
+services:
+  postgres:
+    ports: !override []
+  redis:
+    ports: !override []
+  pgbouncer:
+    ports: !override []
+  reverb:
+    # The base image has no `nc`; use curl (present in the image) so the
+    # healthcheck reflects reality. Reverb returns 404 on / which still proves
+    # the server is up, so we only check connectivity, not the status code.
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8080 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

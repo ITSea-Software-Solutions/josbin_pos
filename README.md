@@ -268,6 +268,38 @@ Full guide: see [docs/00-installation-and-setup.md](docs/00-installation-and-set
 
 ---
 
+## Server deployment (single host)
+
+The whole stack runs on one host via three compose files:
+
+| File | Purpose |
+|---|---|
+| `docker-compose.yml` | Base stack (app, nginx, postgres, redis, reverb, horizon, scheduler, pgbouncer) |
+| `docker-compose.prod.yml` | Hardening override — datastores **not** published to the internet; fixed Reverb healthcheck |
+| `docker-compose.frontends.yml` | Two nginx containers serving the built dashboard (`:8090`) and POS web (`:8091`) SPAs, proxying `/api` + `/broadcasting` to the backend |
+
+Bring it up on the server:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.frontends.yml up -d
+```
+
+The two SPAs are served from `dashboard/dist` / `frontend/dist` (built artifacts). Build-time URLs (API, POS launcher, Reverb) are environment-specific.
+
+### Deploying updates
+
+Use `scripts/deploy-server.sh` from a workstation (needs node + key-based SSH):
+
+```bash
+cp deploy.env.example deploy.env   # edit: SSH target + public URLs (one file per environment)
+./scripts/deploy-server.sh         # build SPAs → ship → pull backend → migrate → cache → restart → health-check
+./scripts/deploy-server.sh --seed  # also (re)seed roles/permissions + backfill spatie roles
+```
+
+`deploy.env` is gitignored — swap it for staging/prod (e.g. domain URLs + `https` Reverb) without touching code. The root `deploy.sh` is a separate backend-only, server-side zero-downtime updater.
+
+---
+
 ## Authentication
 
 Login via `POST /api/auth/login`:
@@ -903,3 +935,17 @@ docker compose exec app php artisan test
 - Cash drawer auto-trigger on cash/mixed payments
 - Hardware fingerprint for license binding on Android via `@capacitor/device`
 - Printer config UI in Settings with live test button
+
+
+When you want to start again
+
+# Demo stack
+docker compose -f docker-compose.demo.yml up -d
+
+# Or live stack
+docker compose up -d
+
+# Dev servers (in separate terminals)
+cd frontend && npm run dev          # POS :5173
+cd dashboard && npm run dev          # dashboard :5174
+cd docs-site && npm run dev          # docs :5180

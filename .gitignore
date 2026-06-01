@@ -65,3 +65,6 @@ coverage/
 
 # Stray SQLite file created if phpunit.xml ever falls back to sqlite
 backend/josbin_pos_demo
+
+# Per-environment deploy config (host + public URLs); not committed
+deploy.env
