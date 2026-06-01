@@ -163,8 +163,16 @@ services:
     container_name: josbin_pos_scheduler
     restart: unless-stopped
     working_dir: /var/www/html
+    # Boot-time safety net: `rates:ensure-today` runs once before the
+    # schedule loop, so a freshly-booted container never has the cashier
+    # hitting "Voltooien" 30 seconds later and getting NO_DAILY_RATE. The
+    # command is idempotent (no-op if today's rate is already locked) and
+    # internally falls back to yesterday's rate when the API is unreachable
+    # — see App\Services\DailyRateService. The same command is also on
+    # routes/console.php at :30 + :00 as defence in depth.
     command: >
-      sh -c "while true; do php artisan schedule:run --verbose --no-interaction 2>&1; sleep 60; done"
+      sh -c "php artisan rates:ensure-today 2>&1 || true;
+             while true; do php artisan schedule:run --verbose --no-interaction 2>&1; sleep 60; done"
     volumes:
       - ./backend:/var/www/html
     networks:

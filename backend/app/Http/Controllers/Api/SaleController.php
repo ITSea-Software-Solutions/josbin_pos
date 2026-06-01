@@ -9,6 +9,7 @@ use App\Models\RegisterSession;
 use App\Models\Sale;
 use App\Models\SaleItem;
 use App\Services\BtwCalculationService;
+use App\Services\DailyRateService;
 use App\Services\DiscountRuleService;
 use App\Services\ReceiptService;
 use App\Services\StockMovementService;
@@ -25,6 +26,7 @@ class SaleController extends Controller
         private readonly ReceiptService          $receipt,
         private readonly StockMovementService    $stock,
         private readonly DiscountRuleService     $discountRules,
+        private readonly DailyRateService        $dailyRate,
     ) {}
 
     // ─── Create ───────────────────────────────────────────────────────────
@@ -133,12 +135,25 @@ class SaleController extends Controller
             }
         }
 
-        // Get today's locked exchange rate
-        $rate = \App\Models\DailyRate::todayRate();
+        // Get today's locked exchange rate — self-heals via DailyRateService:
+        //   1. row already there → instant
+        //   2. row missing, API up → fetches + locks + uses
+        //   3. API down → carries yesterday's rate forward, marks fallback,
+        //      audit-logs it
+        //   4. truly empty (first-ever sale on a fresh install) → null, we
+        //      surface the actionable error below
+        $rate = $this->dailyRate->ensureTodayRate();
         if (! $rate) {
+            $vendor = config('josbin_pos.vendor');
             return response()->json([
-                'message' => 'Geen dagkoers beschikbaar. Vergrendel de wisselkoers voor vandaag.',
-                'code'    => 'NO_DAILY_RATE',
+                'message'    => 'Geen dagkoers beschikbaar voor vandaag. Vraag de Org Admin om de wisselkoers in te stellen via Dashboard → Dagkoers, of neem contact op met ' . ($vendor['name'] ?? 'Josbin') . ' support (' . ($vendor['email'] ?? '') . ').',
+                'message_en' => 'No exchange rate set for today. Ask your Org Admin to set it via Dashboard → Daily Rate, or contact ' . ($vendor['name'] ?? 'Josbin') . ' support (' . ($vendor['email'] ?? '') . ').',
+                'code'       => 'NO_DAILY_RATE',
+                'support'    => [
+                    'name'  => $vendor['name']  ?? null,
+                    'email' => $vendor['email'] ?? null,
+                    'phone' => $vendor['phone'] ?? null,
+                ],
             ], 422);
         }
 

@@ -18,6 +18,16 @@ Schedule::command('rates:lock')
     ->withoutOverlapping()
     ->onFailure(fn () => \Illuminate\Support\Facades\Log::error('rates:lock scheduled job failed'));
 
+// Safety net — every 30 min, make sure today's rate exists. Idempotent no-op
+// when the morning rates:lock already succeeded. Saves the demo / pilot
+// installs where rates:lock at 06:00 missed (container restart, API outage)
+// — cashier hits "Voltooien" and a sale would otherwise 422 NO_DAILY_RATE.
+Schedule::command('rates:ensure-today')
+    ->everyThirtyMinutes()
+    ->timezone('America/Paramaribo')
+    ->runInBackground()
+    ->withoutOverlapping();
+
 // Prune expired Sanctum tokens daily at 03:00 AST
 Schedule::command('sanctum:prune-expired --hours=24')
     ->dailyAt('03:00')
