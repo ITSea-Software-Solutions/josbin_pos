@@ -16,18 +16,47 @@ class Product extends Model implements Auditable
 
     protected $fillable = [
         'organisation_id', 'category_id', 'name_nl', 'name_en',
-        'barcode', 'price', 'btw_rate', 'btw_exempt',
-        'stock_qty', 'low_stock_threshold', 'image_path', 'is_active',
+        'barcode', 'sku', 'price', 'cost_price', 'btw_rate', 'btw_exempt',
+        'stock_qty', 'low_stock_threshold', 'image_path',
+        'brand', 'supplier', 'unit', 'description_nl', 'description_en',
+        'is_active',
     ];
 
     protected $casts = [
         'price'               => 'decimal:2',
+        'cost_price'          => 'decimal:2',
         'btw_rate'            => 'decimal:2',
         'stock_qty'           => 'decimal:3',
         'low_stock_threshold' => 'decimal:3',
         'btw_exempt'          => 'boolean',
         'is_active'           => 'boolean',
     ];
+
+    /** Valid unit codes — keep in sync with the migration CHECK constraint
+     *  and the dashboard form dropdown. */
+    public const UNITS = ['each', 'kg', 'g', 'l', 'ml', 'pak'];
+
+    /**
+     * Profit margin in SRD per unit (price - cost). Null when cost is unset.
+     * Cheap to compute; not stored to avoid drift when either field changes.
+     */
+    public function margin(): ?string
+    {
+        if ($this->cost_price === null) {
+            return null;
+        }
+        return bcsub((string) $this->price, (string) $this->cost_price, 2);
+    }
+
+    /** Margin as percent of price ("33.33" means 33.33%). Null when no cost. */
+    public function marginPct(): ?string
+    {
+        if ($this->cost_price === null || bccomp((string) $this->price, '0', 4) === 0) {
+            return null;
+        }
+        $diff = bcsub((string) $this->price, (string) $this->cost_price, 4);
+        return bcmul(bcdiv($diff, (string) $this->price, 6), '100', 2);
+    }
 
     /** True when stock is at or below the configured threshold (and threshold > 0). */
     public function isLowStock(): bool

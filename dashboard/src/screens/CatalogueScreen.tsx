@@ -7,6 +7,7 @@ import {
   getProducts, createProduct, updateProduct,
   type Category, type Product,
   type CreateCategoryPayload, type CreateProductPayload,
+  uploadProductImage,
 } from '@/api/catalogue'
 import { type Organisation } from '@/api/organisations'
 import { useDashboardAuthStore } from '@/store/authStore'
@@ -348,22 +349,49 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
   const actor = useDashboardAuthStore((s) => s.user)
   const canSetBtw = actor?.role === 'super_admin' || actor?.role === 'organisation_admin'
   const [form, setForm] = useState<CreateProductPayload & { is_active?: boolean }>({
-    name_nl:      product?.name_nl   ?? '',
-    name_en:      product?.name_en   ?? '',
-    barcode:      product?.barcode   ?? '',
-    price:        product?.price     ?? '',
-    btw_rate:     product?.btw_rate  ?? '10',
-    btw_exempt:   product?.btw_exempt ?? false,
-    stock_qty:    product?.stock_qty ?? '0',
-    category_id:  product?.category_id ?? null,
+    name_nl:        product?.name_nl   ?? '',
+    name_en:        product?.name_en   ?? '',
+    barcode:        product?.barcode   ?? '',
+    sku:            product?.sku       ?? '',
+    price:          product?.price     ?? '',
+    cost_price:     product?.cost_price ?? '',
+    btw_rate:       product?.btw_rate  ?? '10',
+    btw_exempt:     product?.btw_exempt ?? false,
+    stock_qty:      product?.stock_qty ?? '0',
+    category_id:    product?.category_id ?? null,
+    brand:          product?.brand     ?? '',
+    supplier:       product?.supplier  ?? '',
+    unit:           product?.unit      ?? 'each',
+    description_nl: product?.description_nl ?? '',
+    description_en: product?.description_en ?? '',
     organisation_id: orgId ?? undefined,
-    is_active:    product?.is_active ?? true,
+    is_active:      product?.is_active ?? true,
   })
+  // Local image preview state — separate from form because file upload is a
+  // separate request from the product save (we need a product.id first).
+  const [imageFile, setImageFile]   = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(product?.image_url ?? null)
+
+  function handleImagePick(f: File) {
+    setImageFile(f)
+    const reader = new FileReader()
+    reader.onload = (e) => setImagePreview((e.target?.result as string) ?? null)
+    reader.readAsDataURL(f)
+  }
 
   const mutation = useMutation({
-    mutationFn: () => product
-      ? updateProduct(product.id, form)
-      : createProduct(form),
+    // Save the product, THEN upload the image if the user picked a new file.
+    // Two requests because the image upload needs the product id, and we
+    // don't know it until create() returns. For edits, id is on `product`.
+    mutationFn: async () => {
+      const saved = product
+        ? await updateProduct(product.id, form)
+        : await createProduct(form)
+      if (imageFile) {
+        await uploadProductImage(saved.id, imageFile)
+      }
+      return saved
+    },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['products'] }); onClose() },
   })
 
@@ -437,13 +465,48 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
             </div>
           </div>
 
-          {/* Price + BTW */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
+          {/* SKU + Unit */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>SKU</label>
+              <input type="text" value={form.sku ?? ''} onChange={(e) => set('sku', e.target.value)}
+                placeholder={isNl ? 'bijv. MELK-1L' : 'e.g. MILK-1L'} style={{ ...inputSt, fontFamily: 'monospace' }} onFocus={fi} onBlur={fo} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Eenheid' : 'Unit'}</label>
+              <select value={form.unit ?? 'each'} onChange={(e) => set('unit', e.target.value as Product['unit'])}
+                style={selectSt} onFocus={fi} onBlur={fo}>
+                <option value="each">{isNl ? 'stuks (each)' : 'each'}</option>
+                <option value="kg">kg</option>
+                <option value="g">g</option>
+                <option value="l">{isNl ? 'liter' : 'liter'}</option>
+                <option value="ml">ml</option>
+                <option value="pak">{isNl ? 'pak (package)' : 'pak (package)'}</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Price + Cost (cost OA-only) + BTW + Stock */}
+          <div style={{ display: 'grid', gridTemplateColumns: canSetBtw ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Prijs (SRD)' : 'Price (SRD)'} *</label>
               <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)}
                 placeholder="0.00" style={inputSt} onFocus={fi} onBlur={fo} />
             </div>
+            {canSetBtw && (
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
+                  {isNl ? 'Inkoop (SRD)' : 'Cost (SRD)'}
+                </label>
+                <input type="number" min="0" step="0.01" value={form.cost_price ?? ''} onChange={(e) => set('cost_price', e.target.value)}
+                  placeholder="—" style={inputSt} onFocus={fi} onBlur={fo} />
+                {form.cost_price && form.price && parseFloat(form.price) > 0 && (
+                  <p style={{ fontSize: 11, color: '#15803d', marginTop: 4 }}>
+                    {isNl ? 'Marge' : 'Margin'}: {((parseFloat(form.price) - parseFloat(form.cost_price)) / parseFloat(form.price) * 100).toFixed(1)}%
+                  </p>
+                )}
+              </div>
+            )}
             <BtwRateField
               value={form.btw_rate}
               onChange={(v) => set('btw_rate', v)}
@@ -457,6 +520,57 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Voorraad' : 'Stock'}</label>
               <input type="number" min="0" step="0.001" value={form.stock_qty ?? '0'} onChange={(e) => set('stock_qty', e.target.value)}
                 style={inputSt} onFocus={fi} onBlur={fo} />
+            </div>
+          </div>
+
+          {/* Brand + Supplier */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Merk' : 'Brand'}</label>
+              <input type="text" value={form.brand ?? ''} onChange={(e) => set('brand', e.target.value)}
+                placeholder={isNl ? 'bijv. Frutex' : 'e.g. Frutex'} style={inputSt} onFocus={fi} onBlur={fo} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Leverancier' : 'Supplier'}</label>
+              <input type="text" value={form.supplier ?? ''} onChange={(e) => set('supplier', e.target.value)}
+                placeholder={isNl ? 'bijv. Yu Pi NV' : 'e.g. Yu Pi NV'} style={inputSt} onFocus={fi} onBlur={fo} />
+            </div>
+          </div>
+
+          {/* Image upload */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Afbeelding' : 'Image'}</label>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <label style={{ width: 96, height: 96, border: '2px dashed #d1d5db', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: '#fafbff', overflow: 'hidden', flexShrink: 0 }}>
+                {imagePreview ? (
+                  <img src={imagePreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <span style={{ fontSize: 28, color: '#d1d5db' }}>📷</span>
+                )}
+                <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImagePick(f) }} />
+              </label>
+              <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
+                {isNl ? 'JPG / PNG / WebP, max 5 MB. Klik op het vak om te uploaden.' : 'JPG / PNG / WebP, max 5 MB. Click the box to upload.'}
+                <br/>
+                {imageFile && <span style={{ color: '#15803d', fontWeight: 600 }}>{imageFile.name} ({(imageFile.size / 1024).toFixed(0)} KB)</span>}
+              </div>
+            </div>
+          </div>
+
+          {/* Description (NL + EN) */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Omschrijving (NL)' : 'Description (NL)'}</label>
+              <textarea value={form.description_nl ?? ''} onChange={(e) => set('description_nl', e.target.value)}
+                rows={3} placeholder={isNl ? 'Ingrediënten, allergenen, marketing tekst…' : 'Ingredients, allergens, marketing copy…'}
+                style={{ ...inputSt, resize: 'vertical', minHeight: 60 }} onFocus={fi} onBlur={fo} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Omschrijving (EN)' : 'Description (EN)'}</label>
+              <textarea value={form.description_en ?? ''} onChange={(e) => set('description_en', e.target.value)}
+                rows={3} placeholder={isNl ? 'In het Engels' : 'In English'}
+                style={{ ...inputSt, resize: 'vertical', minHeight: 60 }} onFocus={fi} onBlur={fo} />
             </div>
           </div>
 
@@ -516,6 +630,9 @@ export default function CatalogueScreen() {
   const isNl = i18n.language === 'nl'
   const isSuperAdmin = useDashboardAuthStore((s) => s.isSuperAdmin())
   const currentUser  = useDashboardAuthStore((s) => s.user)
+  // OA/SA see cost + BTW fields; SM sees catalogue but not these. Same gate
+  // used by the product form modal — keep them in sync if the role set changes.
+  const canSetBtw    = currentUser?.role === 'super_admin' || currentUser?.role === 'organisation_admin'
   const qc = useQueryClient()
 
   const [tab, setTab]                     = useState<Tab>('products')
@@ -695,16 +812,24 @@ export default function CatalogueScreen() {
                 <thead>
                   <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                     {[
+                      '',                                            // image thumbnail
                       isNl ? 'Product' : 'Product',
+                      'SKU',
                       isNl ? 'Categorie' : 'Category',
                       isNl ? 'Barcode' : 'Barcode',
                       isNl ? 'Prijs (SRD)' : 'Price (SRD)',
+                      // Cost column visible only to OA/SA (canSetBtw is a
+                      // close-enough proxy — same role gate as cost in the
+                      // form). Backend strips cost_price for everyone else
+                      // anyway, so even if rendered the cell would be blank.
+                      ...(canSetBtw ? [isNl ? 'Inkoop (SRD)' : 'Cost (SRD)'] : []),
                       'BTW',
                       isNl ? 'Voorraad' : 'Stock',
+                      isNl ? 'Eenheid' : 'Unit',
                       isNl ? 'Status' : 'Status',
                       isNl ? 'Acties' : 'Actions',
-                    ].map((h) => (
-                      <th key={h} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</th>
+                    ].map((h, i) => (
+                      <th key={i} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -715,11 +840,26 @@ export default function CatalogueScreen() {
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
+                      {/* Image thumbnail — placeholder square if none. 36×36
+                          keeps the row from blowing up vertically. */}
+                      <td style={{ padding: '12px 16px', width: 56 }}>
+                        {p.image_url ? (
+                          <img src={p.image_url} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover', background: '#f5f5fb', border: '1px solid #eeeef8' }} />
+                        ) : (
+                          <div style={{ width: 36, height: 36, borderRadius: 6, background: '#f5f5fb', border: '1px dashed #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d1d5db', fontSize: 14 }}>📦</div>
+                        )}
+                      </td>
                       <td style={{ padding: '12px 16px' }}>
                         <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? p.name_nl : p.name_en}</div>
                         {p.name_nl !== p.name_en && (
                           <div style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>{isNl ? p.name_en : p.name_nl}</div>
                         )}
+                        {p.brand && (
+                          <div style={{ fontSize: 11, color: '#6b7280', marginTop: 2, fontStyle: 'italic' }}>{p.brand}</div>
+                        )}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 12.5, color: '#6b7280', fontFamily: 'monospace' }}>
+                        {p.sku || <span style={{ color: '#d1d5db' }}>—</span>}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         {p.category_name ? (
@@ -732,6 +872,13 @@ export default function CatalogueScreen() {
                       <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#7c3aed' }}>
                         SRD {parseFloat(p.price).toFixed(2)}
                       </td>
+                      {canSetBtw && (
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>
+                          {p.cost_price != null
+                            ? <>SRD {parseFloat(p.cost_price).toFixed(2)}{p.margin_pct && <span style={{ fontSize: 10.5, color: '#15803d', marginLeft: 6 }}>+{parseFloat(p.margin_pct).toFixed(0)}%</span>}</>
+                            : <span style={{ color: '#d1d5db' }}>—</span>}
+                        </td>
+                      )}
                       <td style={{ padding: '12px 16px' }}>
                         {p.btw_exempt ? (
                           <span style={{ padding: '2px 8px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}>
@@ -743,6 +890,9 @@ export default function CatalogueScreen() {
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13.5, fontWeight: 600, color: parseFloat(p.stock_qty) <= 0 ? '#dc2626' : '#374151' }}>
                         {parseFloat(p.stock_qty).toFixed(0)}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#9090a0', fontFamily: 'monospace' }}>
+                        {p.unit || 'each'}
                       </td>
                       <td style={{ padding: '12px 16px' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, background: p.is_active ? '#f0fdf4' : '#f9fafb', color: p.is_active ? '#15803d' : '#9ca3af', border: `1px solid ${p.is_active ? '#bbf7d0' : '#e5e7eb'}` }}>
@@ -765,7 +915,7 @@ export default function CatalogueScreen() {
                     </tr>
                   ))}
                   {products.length === 0 && (
-                    <tr><td colSpan={8} style={{ padding: '60px 24px', textAlign: 'center' }}>
+                    <tr><td colSpan={canSetBtw ? 12 : 11} style={{ padding: '60px 24px', textAlign: 'center' }}>
                       <div style={{ fontSize: 36, marginBottom: 10 }}>📦</div>
                       <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280' }}>
                         {search ? (isNl ? 'Geen producten gevonden voor uw zoekopdracht' : 'No products match your search') : (isNl ? 'Nog geen producten' : 'No products yet')}

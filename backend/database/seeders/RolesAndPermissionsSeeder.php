@@ -39,6 +39,10 @@ class RolesAndPermissionsSeeder extends Seeder
             // fields by the controller's validation (see ProductController::
             // applyBtwGate).
             'products.set_btw',
+            // Sees cost_price + margin on the product payload. OA-only by
+            // default; sensitive business data the cashier shouldn't glance
+            // at on the till. Grantable to SM per-tenant if desired.
+            'products.view_cost',
 
             // Categories
             'categories.manage',
@@ -118,7 +122,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $orgAdmin->syncPermissions([
             'sales.view', 'sales.void', 'sales.void.approve', 'sales.refund',
             'products.view', 'products.create', 'products.edit', 'products.delete',
-            'products.import', 'products.sync', 'products.set_btw',
+            'products.import', 'products.sync', 'products.set_btw', 'products.view_cost',
             'categories.manage',
             'customers.view', 'customers.create', 'customers.edit',
             'reports.daily', 'reports.monthly', 'reports.custom', 'reports.top_products',

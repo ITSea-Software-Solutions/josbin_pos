@@ -49,4 +49,24 @@ class ProductPolicy
     {
         return $user->can('products.sync');
     }
+
+    /**
+     * Who can see cost_price + margin on the product payload.
+     *
+     * Cost = margin = sensitive business data. Cashier seeing it on the till
+     * is a leak (customer leaning over the counter sees it too). SM on small
+     * single-store Surinamese shops often IS the operational owner, but the
+     * safer default — and the one Square / Lightspeed pick — is OA-only.
+     *
+     * Add 'products.view_cost' permission to SM via the dashboard's
+     * fine-grained perm panel (when we build it) if a specific tenant wants
+     * to grant it.
+     */
+    public function viewCost(User $user): bool
+    {
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+        return $user->can('products.view_cost');
+    }
 }

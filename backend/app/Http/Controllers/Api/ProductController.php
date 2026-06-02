@@ -51,6 +51,12 @@ class ProductController extends Controller
             ->orderBy('name_nl')
             ->paginate($request->integer('per_page', 50));
 
+        // Apply per-actor formatting (cost-strip, image_url, category_name)
+        // to every row, preserving the paginator envelope.
+        $query->getCollection()->transform(
+            fn (Product $p) => $this->formatProductForUser($p, $request)
+        );
+
         return response()->json($query);
     }
 
@@ -125,7 +131,7 @@ class ProductController extends Controller
         $this->authorize('view', $product);
         $this->ensureSameOrg($request, $product->organisation_id);
 
-        return response()->json(['data' => $product->load('category')]);
+        return response()->json(['data' => $this->formatProductForUser($product->load('category'), $request)]);
     }
 
     /** POST /api/products */
@@ -135,6 +141,7 @@ class ProductController extends Controller
 
         $data = $this->validateProduct($request);
         $data = $this->applyBtwGate($request, $data, $existing = null);
+        $data = $this->applyCostGate($request, $data);
 
         $product = Product::create([
             ...$data,
@@ -144,7 +151,7 @@ class ProductController extends Controller
 
         broadcast(new ProductUpdated($product, 'created'));
 
-        return response()->json(['data' => $product->load('category')], 201);
+        return response()->json(['data' => $this->formatProductForUser($product->load('category'), $request)], 201);
     }
 
     /** PUT /api/products/{product} */
@@ -155,6 +162,7 @@ class ProductController extends Controller
 
         $data = $this->validateProduct($request, $product->id);
         $data = $this->applyBtwGate($request, $data, $product);
+        $data = $this->applyCostGate($request, $data);
 
         $action = isset($data['price']) && $data['price'] !== (string) $product->price
             ? 'price_changed'
@@ -164,7 +172,7 @@ class ProductController extends Controller
 
         broadcast(new ProductUpdated($product->fresh(), $action));
 
-        return response()->json(['data' => $product->fresh()->load('category')]);
+        return response()->json(['data' => $this->formatProductForUser($product->fresh()->load('category'), $request)]);
     }
 
     /** DELETE /api/products/{product} */
@@ -586,7 +594,18 @@ class ProductController extends Controller
                     ->where('organisation_id', $request->user()->organisation_id)
                     ->ignore($excludeId),
             ],
+            // SKU is unique per org among non-null values (partial index).
+            // Same per-org pattern as barcode.
+            'sku'         => [
+                'nullable', 'string', 'max:80',
+                Rule::unique('products', 'sku')
+                    ->where('organisation_id', $request->user()->organisation_id)
+                    ->ignore($excludeId),
+            ],
             'price'       => ['required', 'numeric', 'min:0'],
+            // Cost is OA-only. The applyCostGate() below strips it for SM
+            // even if the request includes it — silent + graceful.
+            'cost_price'  => ['nullable', 'numeric', 'min:0'],
             // btw_rate is 'sometimes' (not 'required') so SM saves don't break
             // when the dashboard omits the field. The DB default (10.00) +
             // applyBtwGate() together ensure new products always get a valid
@@ -595,9 +614,14 @@ class ProductController extends Controller
             'btw_exempt'  => ['sometimes', 'boolean'],
             'stock_qty'           => ['sometimes', 'numeric', 'min:0'],
             'low_stock_threshold' => ['sometimes', 'numeric', 'min:0'],
-            'category_id' => ['nullable', 'uuid', 'exists:categories,id'],
-            'image_path'  => ['nullable', 'string', 'max:500'],
-            'is_active'   => ['sometimes', 'boolean'],
+            'category_id'    => ['nullable', 'uuid', 'exists:categories,id'],
+            'image_path'     => ['nullable', 'string', 'max:500'],
+            'brand'          => ['nullable', 'string', 'max:120'],
+            'supplier'       => ['nullable', 'string', 'max:120'],
+            'unit'           => ['sometimes', 'string', Rule::in(\App\Models\Product::UNITS)],
+            'description_nl' => ['nullable', 'string', 'max:5000'],
+            'description_en' => ['nullable', 'string', 'max:5000'],
+            'is_active'      => ['sometimes', 'boolean'],
         ]);
     }
 
@@ -606,6 +630,47 @@ class ProductController extends Controller
         if ($request->user()->organisation_id && $request->user()->organisation_id !== $orgId) {
             abort(403, 'Access denied to this resource.');
         }
+    }
+
+    /**
+     * Strip cost_price from the payload unless the actor has
+     * products.view_cost. Same shape + reasoning as applyBtwGate (silent
+     * + graceful) — SM saves their product, cost stays whatever OA last set.
+     */
+    private function applyCostGate(Request $request, array $data): array
+    {
+        if ($request->user()->can('products.view_cost')) {
+            return $data;
+        }
+        unset($data['cost_price']);
+        return $data;
+    }
+
+    /**
+     * Shape a product for the response based on what the actor is allowed
+     * to see. Today: strips cost_price + margin when the user lacks
+     * products.view_cost. Same payload shape otherwise (relations stay).
+     */
+    private function formatProductForUser(Product $product, Request $request): array
+    {
+        $arr = $product->toArray();
+        if (! $request->user()->can('products.view_cost')) {
+            unset($arr['cost_price']);
+        } else {
+            // Inject computed margin fields for clients that show them.
+            $arr['margin']     = $product->margin();
+            $arr['margin_pct'] = $product->marginPct();
+        }
+
+        // Convenience fields the dashboard list table wants without extra
+        // joins: absolute image URL + flat category name (the relation is
+        // already eager-loaded on the model).
+        $arr['image_url']     = $product->image_path
+            ? asset('storage/' . $product->image_path)
+            : null;
+        $arr['category_name'] = $product->category?->name_nl;
+
+        return $arr;
     }
 
     /**

@@ -17,13 +17,25 @@ export interface Product {
   organisation_id: string
   category_id: string | null
   category_name?: string
+  category?: { id: string; name_nl: string; name_en: string } | null
   name_nl: string
   name_en: string
   barcode: string | null
+  sku: string | null
   price: string           // DECIMAL as string
+  cost_price?: string | null   // OA/SA only — stripped server-side for SM/cashier
+  margin?: string | null       // computed server-side when cost visible
+  margin_pct?: string | null
   btw_rate: string        // DECIMAL as string
   btw_exempt: boolean
   stock_qty: string       // DECIMAL as string
+  image_path: string | null
+  image_url?: string | null    // absolute URL — computed/storage-link
+  brand: string | null
+  supplier: string | null
+  unit: 'each' | 'kg' | 'g' | 'l' | 'ml' | 'pak'
+  description_nl: string | null
+  description_en: string | null
   is_active: boolean
   created_at: string
 }
@@ -40,11 +52,36 @@ export interface CreateProductPayload {
   name_en: string
   category_id?: string | null
   barcode?: string
+  sku?: string
   price: string
+  cost_price?: string | null
   btw_rate: string
   btw_exempt?: boolean
   stock_qty?: string
+  brand?: string | null
+  supplier?: string | null
+  unit?: 'each' | 'kg' | 'g' | 'l' | 'ml' | 'pak'
+  description_nl?: string | null
+  description_en?: string | null
+  image_path?: string | null
   organisation_id?: string   // super admin only — target org
+}
+
+/**
+ * Upload a product image. Returns the relative image_path stored on the
+ * product + an absolute image_url ready to <img src={…}>.
+ *
+ * 5 MB max, jpeg/png/webp only — backend rejects anything else.
+ */
+export async function uploadProductImage(productId: string, file: File): Promise<{ image_path: string; image_url: string }> {
+  const form = new FormData()
+  form.append('image', file)
+  // Existing endpoint returns the fields at top level (not wrapped in `data`).
+  const res = await apiClient.post<{ image_path: string; image_url: string }>(
+    `/products/${productId}/image`, form,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return res.data
 }
 
 // ─── Categories ───────────────────────────────────────────────────────────────
