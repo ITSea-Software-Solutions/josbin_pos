@@ -13,6 +13,12 @@ apiClient.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Tell the backend which language to render error messages in. Backend's
+  // SetLocale middleware reads this and switches app()->setLocale(...). Any
+  // __('errors.…') translation then comes back in the matching language —
+  // user sees Dutch errors when the UI is NL, English when EN.
+  const lang = localStorage.getItem('i18nextLng') || 'nl'
+  config.headers['Accept-Language'] = lang.startsWith('en') ? 'en' : 'nl'
   return config
 })
 

@@ -144,12 +144,17 @@ class SaleController extends Controller
         //      surface the actionable error below
         $rate = $this->dailyRate->ensureTodayRate();
         if (! $rate) {
+            // Message is locale-aware via SetLocale middleware reading the
+            // frontend's Accept-Language header (or the logged-in user's
+            // saved locale). Same key in lang/nl/errors.php + lang/en/errors.php.
             $vendor = config('josbin_pos.vendor');
             return response()->json([
-                'message'    => 'Geen dagkoers beschikbaar voor vandaag. Vraag de Org Admin om de wisselkoers in te stellen via Dashboard → Dagkoers, of neem contact op met ' . ($vendor['name'] ?? 'Josbin') . ' support (' . ($vendor['email'] ?? '') . ').',
-                'message_en' => 'No exchange rate set for today. Ask your Org Admin to set it via Dashboard → Daily Rate, or contact ' . ($vendor['name'] ?? 'Josbin') . ' support (' . ($vendor['email'] ?? '') . ').',
-                'code'       => 'NO_DAILY_RATE',
-                'support'    => [
+                'message' => __('errors.no_daily_rate', [
+                    'vendor' => $vendor['name']  ?? 'Josbin',
+                    'email'  => $vendor['email'] ?? '',
+                ]),
+                'code'    => 'NO_DAILY_RATE',
+                'support' => [
                     'name'  => $vendor['name']  ?? null,
                     'email' => $vendor['email'] ?? null,
                     'phone' => $vendor['phone'] ?? null,

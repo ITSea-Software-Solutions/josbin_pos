@@ -4,6 +4,7 @@ use App\Http\Middleware\AuthenticateViaQueryToken;
 use App\Http\Middleware\EnsureLicenseValid;
 use App\Http\Middleware\EnsureTwoFactor;
 use App\Http\Middleware\SessionTimeout;
+use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\TrackStoreActivity;
 use App\Http\Middleware\ValidateApiKey;
 use Illuminate\Foundation\Application;
@@ -20,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Localise app()->setLocale() per request so error strings rendered
+        // via __('errors.…') match the UI language. PREPEND so it runs
+        // before any other middleware that might emit a translated message.
+        $middleware->prependToGroup('api', SetLocale::class);
+
         // Sanctum token expiry check on every authenticated API request
         $middleware->appendToGroup('api', SessionTimeout::class);
 

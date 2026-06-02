@@ -12,12 +12,18 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 15_000,
 })
 
-// Inject auth token on every request
+// Inject auth token + current UI language on every request
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('josbin_pos_token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Tell the backend which language to render error messages in. Backend's
+  // SetLocale middleware reads this and switches app()->setLocale(...). Any
+  // __('errors.…') translation then comes back in the matching language —
+  // cashier sees Dutch errors when the till UI is NL, English when EN.
+  const lang = localStorage.getItem('i18nextLng') || 'nl'
+  config.headers['Accept-Language'] = lang.startsWith('en') ? 'en' : 'nl'
   return config
 })
 
