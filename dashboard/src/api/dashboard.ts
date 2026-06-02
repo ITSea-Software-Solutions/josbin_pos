@@ -6,15 +6,36 @@ export interface StoreOverview {
   store_id: string
   store_name: string
   city: string
+  address?: string | null
+  btw_number?: string | null
   organisation_id: string
   organisation_name: string
+  manager_name?: string | null
+  register_count?: number
   is_online: boolean
   last_seen_at: string | null
   today_revenue_srd: string
   today_transaction_count: number
   today_avg_basket_srd: string
   today_btw_srd: string
-  top_product_name: string | null
+  // Returned by the single-store endpoint, optional on the list endpoint:
+  delta_revenue_pct?: string | null         // "+12.5" / "-3.2" / null when no base
+  delta_transactions_pct?: string | null
+  hourly_sales_today?: Array<{ hour: number; count: number; revenue: string }>
+  daily_sales_last_7?:  Array<{ date: string; count: number; revenue: string }>
+  top_products_today?:  Array<{ name: string; qty: string; revenue: string }>
+  active_sessions?:     Array<{
+    session_id: string; register_name: string; cashier_name: string | null;
+    opened_at: string; opening_float_srd: string
+  }>
+  recent_sales?: Array<{
+    id: string; sale_number: string; cashier_name: string | null;
+    total_srd: string; payment_method: string; occurred_at: string
+  }>
+  low_stock_count?: number
+  pending_payments_count?: number
+  pending_payments_total?: string
+  top_product_name: string | null            // kept for legacy callers
   sync_status: 'synced' | 'pending' | 'failed' | 'never'
   last_z_report_date: string | null
   last_sync_at: string | null
