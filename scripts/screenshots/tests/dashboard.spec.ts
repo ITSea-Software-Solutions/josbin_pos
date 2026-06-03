@@ -722,3 +722,36 @@ test('dash ch.21 — tax inspector dashboard (skip if 2FA prompt)', async ({ pag
   await settle(page, 800)
   await shoot(page, 'dashboard_manual', '21-tax-inspector-submissions-list')
 })
+
+// ─── Chapter 2 — Store detail (the new rebuilt screen) ──────────────────────
+//
+// Captures the production-grade store-detail dashboard we shipped in
+// commit 26aa4e6 — hero / alert strip / 6 KPI tiles / hourly + 7-day charts /
+// top products + active sessions / recent sales / sync footer.
+test('dash ch.2 — store detail screen (OA, full layout)', async ({ page }) => {
+  await loginOrgAdmin(page)
+
+  // StoreCard renders as a <div role="button"> with the store name inside.
+  // Match by role + a regex that catches whatever the seed/DemoSeeder
+  // produced (De Hoop, Paramaribo, Nickerie, "Store …").
+  await navTo(page, 'Dashboard', 'Dashboard')
+  await settle(page, 1500)
+  const firstStoreCard = page.getByRole('button', { name: /De Hoop|Paramaribo|Nickerie|Store/i }).first()
+  if (await firstStoreCard.isVisible({ timeout: 4000 }).catch(() => false)) {
+    await firstStoreCard.click()
+    await settle(page, 1500)
+    await shoot(page, 'dashboard_manual', '02-store-detail-hero-kpis')
+
+    // Scroll down past the charts for the bottom half (top products,
+    // sessions, recent sales).
+    await page.evaluate(() => window.scrollBy({ top: 500, behavior: 'instant' as ScrollBehavior }))
+    await settle(page, 400)
+    await shoot(page, 'dashboard_manual', '02-store-detail-charts-tables')
+
+    await page.evaluate(() => window.scrollBy({ top: 600, behavior: 'instant' as ScrollBehavior }))
+    await settle(page, 400)
+    await shoot(page, 'dashboard_manual', '02-store-detail-recent-sales')
+  } else {
+    test.skip(true, 'No store card visible — seed demo data first.')
+  }
+})

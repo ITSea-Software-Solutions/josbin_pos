@@ -190,6 +190,44 @@ To deactivate: open the organisation → Stores tab → the store card has an *A
 
 ---
 
+## 2.5a The Store Detail screen — what HQ sees per store
+
+Clicking any store card from the **Dashboard** lands the OA / SM / SA on a single-store live dashboard — built specifically for "what's happening at this branch right now" rather than the rolled-up org view.
+
+![Store detail — hero + 6 KPI tiles + alert strip](./screenshots/02-store-detail-hero-kpis.png)
+
+**Top to bottom:**
+
+1. **Hero** — store name + initials avatar, online/offline pill (real-time via Reverb), organisation + city + address, assigned manager, BTW number, register count. When the store goes offline, the hero shows the last-seen timestamp.
+
+2. **Alert strip** *(only when something needs action)* — pending bank/mobile transfer count + total SRD (yellow), low-stock products at this store (red). When everything's healthy the strip disappears.
+
+3. **KPI strip** — 6 tiles with left-edge accent stripes:
+   - Today's revenue + ▲/▼ delta vs yesterday
+   - Transactions + delta
+   - Average basket size
+   - BTW collected
+   - Registers open right now
+   - Low-stock product count
+
+4. **Hourly bar chart + 7-day line chart** — peak-hour analysis for today, trend for the week. Useful for staffing decisions ("we always spike between 16:00 and 18:00 on Fridays — add a relief cashier").
+
+![Store detail — charts, top products, active sessions](./screenshots/02-store-detail-charts-tables.png)
+
+5. **Top 5 products today + Cashiers on shift** — side-by-side.
+   - Top products show medals (🥇🥈🥉) with quantity + revenue.
+   - Cashiers on shift list shows avatar + register name + since-when + opening float.
+
+6. **Recent sales table** — last 10 completed sales with time, sale number, cashier, payment method pill, total. Same shape as the OA's full sales list, just trimmed.
+
+7. **Sync footer** — sync status pill, last sync timestamp, last Z-report date.
+
+![Store detail — recent sales + sync footer](./screenshots/02-store-detail-recent-sales.png)
+
+The screen refreshes every 60 seconds. SaleCompleted broadcasts from the POS bump today's revenue + transaction count immediately without a refetch — when the cashier hits Voltooien, the OA viewing this screen sees the tile move within a second.
+
+---
+
 ## 2.6 A worked example: setting up Supermarkt De Hoop end to end
 
 Client: Supermarkt De Hoop NV. Two branches (Paramaribo Centrum and Nieuw Nickerie). 3 registers in Paramaribo, 1 in Nickerie. Sandra Codrington is the buyer at head office.
