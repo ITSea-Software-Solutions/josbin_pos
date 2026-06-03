@@ -164,6 +164,43 @@ export async function getDashboardZReports(params: {
   return res.data
 }
 
+// ─── Profit report (new) ───────────────────────────────────────────────────
+
+export interface ProfitReport {
+  date_from: string
+  date_to: string
+  store_id: string | null
+  revenue_srd: string
+  cost_srd: string
+  profit_srd: string
+  margin_pct: string | null
+  transactions: number
+  items_without_cost: number
+  per_store: Array<{
+    store_id: string; store_name: string; city: string;
+    revenue_srd: string; cost_srd: string; profit_srd: string;
+    margin_pct: string | null; transactions: number;
+  }>
+  top_products_by_profit: Array<{
+    name: string; qty: string; revenue_srd: string;
+    profit_srd: string; margin_pct: string | null;
+  }>
+  daily: Array<{ date: string; revenue_srd: string; profit_srd: string }>
+  loss_makers: Array<{
+    sale_id: string; sale_number: string; occurred_at: string;
+    store_name: string; revenue_srd: string; profit_srd: string;
+  }>
+}
+
+export async function getProfitReport(params: {
+  date_from: string
+  date_to: string
+  store_id?: string
+}): Promise<ProfitReport> {
+  const res = await apiClient.get<{ data: ProfitReport }>('/reports/profit', { params })
+  return res.data.data
+}
+
 export async function exportReport(
   type: 'consolidated' | 'btw',
   params: Record<string, string>,

@@ -464,4 +464,176 @@ class ReportController extends Controller
             ], $top5),
         ];
     }
+
+    // ─── Profit Report (cross-store) ──────────────────────────────────────
+    //
+    // GET /api/reports/profit?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD&store_id=…
+    //
+    // Aggregates revenue / cost / profit / margin% for the requested period:
+    //   - Top-line totals for the whole org (or single store if filtered)
+    //   - Per-store breakdown for chains
+    //   - Top 10 products by profit (NOT by revenue — different ranking)
+    //   - Per-day series for the trend chart
+    //   - Loss-makers count (sales sold below cost — accidental discount,
+    //     mispriced item, etc.)
+    //
+    // Visibility: requires products.view_cost — OA + SA + SM. Cashier +
+    // Auditor + tax_inspector + API integration get 403. Belastingdienst
+    // doesn't audit profit (that's a different agency); for our auditor
+    // role the BTW + Rekenkamer reports cover their need.
+    public function profit(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('products.view_cost'), 403);
+
+        $data = $request->validate([
+            'date_from' => ['required', 'date'],
+            'date_to'   => ['required', 'date', 'after_or_equal:date_from'],
+            'store_id'  => ['nullable', 'uuid', 'exists:stores,id'],
+        ]);
+
+        $orgId    = $request->user()->organisation_id;
+        $isSuper  = $request->user()->role === 'super_admin';
+        $dateFrom = $data['date_from'];
+        $dateTo   = $data['date_to'];
+        $storeId  = $data['store_id'] ?? null;
+
+        // Base query — completed sales in this org (SA bypass), date range,
+        // optional single-store filter. Joined to sale_items for line-level
+        // profit roll-up.
+        $base = DB::table('sale_items as si')
+            ->join('sales as s', 's.id', '=', 'si.sale_id')
+            ->join('stores as st', 'st.id', '=', 's.store_id')
+            ->whereBetween(DB::raw("DATE(s.occurred_at AT TIME ZONE 'America/Paramaribo')"), [$dateFrom, $dateTo])
+            ->where('s.status', 'completed')
+            ->when(! $isSuper, fn ($q) => $q->where('st.organisation_id', $orgId))
+            ->when($storeId,   fn ($q) => $q->where('s.store_id', $storeId));
+
+        // Top-line totals
+        $totals = (clone $base)
+            ->selectRaw('
+                COALESCE(SUM(si.line_total_srd),       0) as revenue,
+                COALESCE(SUM(si.cost_snapshot_srd * si.quantity), 0) as cost,
+                COALESCE(SUM(si.line_profit_srd),      0) as profit,
+                COUNT(DISTINCT s.id) as transactions,
+                SUM(CASE WHEN si.cost_snapshot_srd IS NULL THEN 1 ELSE 0 END) as items_without_cost
+            ')
+            ->first();
+
+        $marginPct = $totals && (float) $totals->revenue > 0
+            ? number_format(((float) $totals->profit / (float) $totals->revenue) * 100, 2, '.', '')
+            : null;
+
+        // Per-store breakdown (multi-store orgs)
+        $perStore = (clone $base)
+            ->groupBy('s.store_id', 'st.name', 'st.city')
+            ->selectRaw('
+                s.store_id, st.name as store_name, st.city,
+                COALESCE(SUM(si.line_total_srd),  0) as revenue,
+                COALESCE(SUM(si.cost_snapshot_srd * si.quantity), 0) as cost,
+                COALESCE(SUM(si.line_profit_srd), 0) as profit,
+                COUNT(DISTINCT s.id) as transactions
+            ')
+            ->orderByDesc('profit')
+            ->get()
+            ->map(fn ($r) => [
+                'store_id'      => $r->store_id,
+                'store_name'    => $r->store_name,
+                'city'          => $r->city,
+                'revenue_srd'   => number_format((float) $r->revenue, 2, '.', ''),
+                'cost_srd'      => number_format((float) $r->cost,    2, '.', ''),
+                'profit_srd'    => number_format((float) $r->profit,  2, '.', ''),
+                'margin_pct'    => (float) $r->revenue > 0
+                    ? number_format(((float) $r->profit / (float) $r->revenue) * 100, 2, '.', '')
+                    : null,
+                'transactions'  => (int) $r->transactions,
+            ]);
+
+        // Top 10 products by PROFIT (different from top by revenue —
+        // high-volume low-margin SKU drops; low-volume high-margin rises).
+        // Falls back to product_name_snapshot when product was deleted.
+        $topByProfit = (clone $base)
+            ->whereNotNull('si.cost_snapshot_srd')
+            ->groupBy('si.product_name_snapshot')
+            ->selectRaw('
+                si.product_name_snapshot as name,
+                COALESCE(SUM(si.quantity),        0) as qty,
+                COALESCE(SUM(si.line_total_srd),  0) as revenue,
+                COALESCE(SUM(si.line_profit_srd), 0) as profit
+            ')
+            ->orderByDesc('profit')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => [
+                'name'        => $r->name,
+                'qty'         => number_format((float) $r->qty, 3, '.', ''),
+                'revenue_srd' => number_format((float) $r->revenue, 2, '.', ''),
+                'profit_srd'  => number_format((float) $r->profit,  2, '.', ''),
+                'margin_pct'  => (float) $r->revenue > 0
+                    ? number_format(((float) $r->profit / (float) $r->revenue) * 100, 2, '.', '')
+                    : null,
+            ]);
+
+        // Per-day trend
+        $daily = (clone $base)
+            ->groupBy(DB::raw("DATE(s.occurred_at AT TIME ZONE 'America/Paramaribo')"))
+            ->selectRaw("
+                DATE(s.occurred_at AT TIME ZONE 'America/Paramaribo') as date,
+                COALESCE(SUM(si.line_total_srd),  0) as revenue,
+                COALESCE(SUM(si.line_profit_srd), 0) as profit
+            ")
+            ->orderBy('date')
+            ->get()
+            ->map(fn ($r) => [
+                'date'        => (string) $r->date,
+                'revenue_srd' => number_format((float) $r->revenue, 2, '.', ''),
+                'profit_srd'  => number_format((float) $r->profit,  2, '.', ''),
+            ]);
+
+        // Loss-making sales — anything where the WHOLE sale's profit is
+        // negative. Catches accidental over-discount + mispriced products.
+        $lossMakers = DB::table('sales as s')
+            ->join('sale_items as si', 'si.sale_id', '=', 's.id')
+            ->join('stores as st',     'st.id',      '=', 's.store_id')
+            ->whereBetween(DB::raw("DATE(s.occurred_at AT TIME ZONE 'America/Paramaribo')"), [$dateFrom, $dateTo])
+            ->where('s.status', 'completed')
+            ->when(! $isSuper, fn ($q) => $q->where('st.organisation_id', $orgId))
+            ->when($storeId,   fn ($q) => $q->where('s.store_id', $storeId))
+            ->whereNotNull('si.cost_snapshot_srd')
+            ->groupBy('s.id', 's.sale_number', 's.occurred_at', 'st.name')
+            ->havingRaw('SUM(si.line_profit_srd) < 0')
+            ->selectRaw('
+                s.id, s.sale_number, s.occurred_at, st.name as store_name,
+                SUM(si.line_total_srd)  as revenue,
+                SUM(si.line_profit_srd) as profit
+            ')
+            ->orderBy('profit')
+            ->limit(20)
+            ->get()
+            ->map(fn ($r) => [
+                'sale_id'     => $r->id,
+                'sale_number' => $r->sale_number,
+                'occurred_at' => $r->occurred_at,
+                'store_name'  => $r->store_name,
+                'revenue_srd' => number_format((float) $r->revenue, 2, '.', ''),
+                'profit_srd'  => number_format((float) $r->profit,  2, '.', ''),
+            ]);
+
+        return response()->json([
+            'data' => [
+                'date_from'          => $dateFrom,
+                'date_to'            => $dateTo,
+                'store_id'           => $storeId,
+                'revenue_srd'        => number_format((float) ($totals?->revenue ?? 0), 2, '.', ''),
+                'cost_srd'           => number_format((float) ($totals?->cost    ?? 0), 2, '.', ''),
+                'profit_srd'         => number_format((float) ($totals?->profit  ?? 0), 2, '.', ''),
+                'margin_pct'         => $marginPct,
+                'transactions'       => (int) ($totals?->transactions ?? 0),
+                'items_without_cost' => (int) ($totals?->items_without_cost ?? 0),
+                'per_store'          => $perStore,
+                'top_products_by_profit' => $topByProfit,
+                'daily'              => $daily,
+                'loss_makers'        => $lossMakers,
+            ],
+        ]);
+    }
 }

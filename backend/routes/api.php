@@ -301,6 +301,10 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::get('z-report/history', [ReportController::class, 'zReportHistory'])->name('z-report.history');
         Route::post('z-report/{zReport}/submit', [ReportController::class, 'submitZReport'])->name('z-report.submit');
         Route::get('btw',           [ReportController::class, 'btwReport'])->name('btw');
+        // Profit report — revenue / cost / profit / margin% with per-store +
+        // top-products-by-profit + loss-makers. Requires products.view_cost
+        // (OA + SA + SM). See ReportController::profit for the gate.
+        Route::get('profit',        [ReportController::class, 'profit'])->name('profit');
         Route::get('export',        [ReportController::class, 'export'])->name('export');
         Route::get('rekenkamer',    [RekenkamerController::class, 'export'])->name('rekenkamer');
     });

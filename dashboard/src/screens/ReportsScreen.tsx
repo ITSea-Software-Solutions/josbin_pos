@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getConsolidatedReport, getConsolidatedBtwReport, exportReport } from '@/api/dashboard'
+import { getConsolidatedReport, getConsolidatedBtwReport, getProfitReport, exportReport } from '@/api/dashboard'
 import { formatSRD } from '@/utils/currency'
 import { format, subDays, startOfMonth } from 'date-fns'
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
+import { useDashboardAuthStore } from '@/store/authStore'
 
-type ReportTab = 'consolidated' | 'btw'
+type ReportTab = 'consolidated' | 'btw' | 'profit'
 
 function today() { return format(new Date(), 'yyyy-MM-dd') }
 function monthStart() { return format(startOfMonth(new Date()), 'yyyy-MM-dd') }
@@ -65,9 +67,28 @@ export default function ReportsScreen() {
     enabled: tab === 'btw',
   })
 
-  const isLoading  = tab === 'consolidated' ? cLoading  : bLoading
-  const isFetching = tab === 'consolidated' ? cFetching : bFetching
-  const refetch    = tab === 'consolidated' ? cRefetch  : bRefetch
+  // Profit report — same date range as the other two tabs. Requires
+  // products.view_cost on the backend (OA + SA + SM). Auditor / cashier
+  // hit 403; the tab is hidden from them via the canSeeProfit gate below.
+  const {
+    data: profitReport,
+    isLoading: pLoading,
+    isFetching: pFetching,
+    refetch: pRefetch,
+  } = useQuery({
+    queryKey: ['profit-report', dateFrom, dateTo],
+    queryFn: () => getProfitReport({ date_from: dateFrom, date_to: dateTo }),
+    enabled: tab === 'profit',
+  })
+
+  const isLoading  = tab === 'consolidated' ? cLoading  : tab === 'btw' ? bLoading  : pLoading
+  const isFetching = tab === 'consolidated' ? cFetching : tab === 'btw' ? bFetching : pFetching
+  const refetch    = tab === 'consolidated' ? cRefetch  : tab === 'btw' ? bRefetch  : pRefetch
+
+  // Profit tab gated to roles with catalogue ownership (matches
+  // products.view_cost perm seeded for SM, OA, SA).
+  const actor = useDashboardAuthStore((s) => s.user)
+  const canSeeProfit = ['super_admin', 'organisation_admin', 'store_manager'].includes(actor?.role ?? '')
 
   const [exporting, setExporting] = useState(false)
 
@@ -86,6 +107,9 @@ export default function ReportsScreen() {
   const tabs = [
     { id: 'consolidated' as const, nl: 'Geconsolideerd', en: 'Consolidated' },
     { id: 'btw'          as const, nl: 'BTW-overzicht',  en: 'BTW Report'   },
+    ...(canSeeProfit
+      ? [{ id: 'profit' as const, nl: 'Winst & marge', en: 'Profit & margin' }]
+      : []),
   ]
 
   return (
@@ -443,6 +467,174 @@ export default function ReportsScreen() {
               </tbody>
             </table>
           </div>
+        </>
+      )}
+
+      {/* ── Profit & Margin Report ─────────────────────────────────────── */}
+      {tab === 'profit' && (
+        <>
+          {/* Top-line KPI cards */}
+          {!pLoading && profitReport && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14, marginBottom: 20 }}>
+              {[
+                { label: isNl ? 'Omzet'           : 'Revenue',       value: formatSRD(profitReport.revenue_srd), accent: '#7c3aed' },
+                { label: isNl ? 'Inkoopkosten'    : 'Cost of goods', value: formatSRD(profitReport.cost_srd),    accent: '#dc2626' },
+                { label: isNl ? 'Winst'           : 'Profit',        value: formatSRD(profitReport.profit_srd),  accent: '#16a34a', big: true },
+                { label: isNl ? 'Marge %'         : 'Margin %',
+                  value: profitReport.margin_pct ? `${profitReport.margin_pct}%` : '—',
+                  accent: '#0891b2' },
+                { label: isNl ? 'Transacties'     : 'Transactions',  value: profitReport.transactions.toString(), accent: '#6b7280' },
+              ].map((s) => (
+                <div key={s.label} style={{
+                  background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+                  padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: s.accent }} />
+                  <div style={{ fontSize: s.big ? 28 : 22, fontWeight: 900, color: s.accent, letterSpacing: '-0.5px' }}>{s.value}</div>
+                  <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Items-without-cost warning — shown when any line lacks a snapshot */}
+          {!pLoading && profitReport && profitReport.items_without_cost > 0 && (
+            <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 12, padding: '12px 18px', marginBottom: 20, fontSize: 13, color: '#92400e' }}>
+              ⚠️ <strong>{profitReport.items_without_cost}</strong>{' '}
+              {isNl
+                ? 'verkochte regels hebben geen inkoopkosten. Winst onderschat. Stel inkoopprijs in voor die producten in Catalogus.'
+                : 'sold lines have no cost recorded. Profit is understated. Set cost_price on those products in Catalogue.'}
+            </div>
+          )}
+
+          {/* 30-day trend chart */}
+          {!pLoading && profitReport && profitReport.daily.length > 1 && (
+            <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '18px 22px', marginBottom: 20 }}>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 10 }}>
+                {isNl ? 'Dagelijkse winst (trend)' : 'Daily profit (trend)'}
+              </h3>
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={profitReport.daily} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), 'd MMM')} fontSize={11} stroke="#9090a0" />
+                  <YAxis fontSize={11} stroke="#9090a0" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v.toString()} />
+                  <Tooltip
+                    formatter={(v: number | string, key) => [formatSRD(String(v)), key === 'revenue_srd' ? (isNl ? 'Omzet' : 'Revenue') : (isNl ? 'Winst' : 'Profit')]}
+                    labelFormatter={(d) => format(new Date(d), 'EEE d MMM yyyy')}
+                    contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
+                  />
+                  <Line type="monotone" dataKey="revenue_srd" stroke="#7c3aed" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="profit_srd"  stroke="#16a34a" strokeWidth={2.5} dot={{ r: 3 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+
+          {/* Per-store breakdown */}
+          {!pLoading && profitReport && profitReport.per_store.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? 'Per vestiging' : 'By store'}</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                    {[
+                      isNl ? 'Vestiging' : 'Store',
+                      isNl ? 'Omzet'     : 'Revenue',
+                      isNl ? 'Inkoop'    : 'Cost',
+                      isNl ? 'Winst'     : 'Profit',
+                      isNl ? 'Marge'     : 'Margin',
+                      isNl ? 'Transacties' : 'Txns',
+                    ].map((h) => (
+                      <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {profitReport.per_store.map((s, i) => (
+                    <tr key={s.store_id} style={{ borderBottom: i < profitReport.per_store.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
+                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#1c1c2e' }}>{s.store_name}<div style={{ fontSize: 11, color: '#9090a0', fontWeight: 400 }}>{s.city}</div></td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(s.revenue_srd)}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{formatSRD(s.cost_srd)}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: parseFloat(s.profit_srd) >= 0 ? '#16a34a' : '#dc2626' }}>{formatSRD(s.profit_srd)}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: parseFloat(s.margin_pct ?? '0') >= 0 ? '#16a34a' : '#dc2626', fontWeight: 700 }}>{s.margin_pct ? `${s.margin_pct}%` : '—'}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{s.transactions}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Top 10 products by PROFIT (not revenue — different ranking) */}
+          {!pLoading && profitReport && profitReport.top_products_by_profit.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? 'Top 10 producten op winst' : 'Top 10 products by profit'}</span>
+                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#9090a0' }}>{isNl ? '(andere ranking dan op omzet)' : '(different ranking than by revenue)'}</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                    {['#', isNl ? 'Product' : 'Product', isNl ? 'Aantal' : 'Qty', isNl ? 'Omzet' : 'Revenue', isNl ? 'Winst' : 'Profit', isNl ? 'Marge' : 'Margin'].map((h) => (
+                      <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {profitReport.top_products_by_profit.map((p, i) => (
+                    <tr key={i} style={{ borderBottom: i < profitReport.top_products_by_profit.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
+                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#9090a0', width: 32 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</td>
+                      <td style={{ padding: '12px 20px', fontWeight: 600, color: '#1c1c2e' }}>{p.name}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{parseFloat(p.qty).toFixed(0)}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(p.revenue_srd)}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: '#16a34a' }}>{formatSRD(p.profit_srd)}</td>
+                      <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 700, color: '#16a34a' }}>{p.margin_pct ? `${p.margin_pct}%` : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Loss-makers — sales sold below cost (over-discount, mispricing) */}
+          {!pLoading && profitReport && profitReport.loss_makers.length > 0 && (
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #fecaca', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #fee2e2', background: '#fef2f2' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>⚠️ {isNl ? 'Verlies-verkopen' : 'Loss-making sales'}</span>
+                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#9090a0' }}>{isNl ? '(verkocht onder inkoopprijs)' : '(sold below cost)'}</span>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#fafbff', borderBottom: '1px solid #eeeef8' }}>
+                    {[isNl ? 'Tijd' : 'Time', isNl ? 'Bon' : 'Sale #', isNl ? 'Vestiging' : 'Store', isNl ? 'Omzet' : 'Revenue', isNl ? 'Verlies' : 'Loss'].map((h) => (
+                      <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {profitReport.loss_makers.map((s) => (
+                    <tr key={s.sale_id} style={{ borderBottom: '1px solid #f3f3f8' }}>
+                      <td style={{ padding: '10px 20px', fontSize: 12, color: '#6b7280' }}>{format(new Date(s.occurred_at), 'd MMM HH:mm')}</td>
+                      <td style={{ padding: '10px 20px', fontFamily: 'monospace', fontSize: 12, color: '#4338ca' }}>{s.sale_number}</td>
+                      <td style={{ padding: '10px 20px' }}>{s.store_name}</td>
+                      <td style={{ padding: '10px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(s.revenue_srd)}</td>
+                      <td style={{ padding: '10px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: '#dc2626' }}>{formatSRD(s.profit_srd)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {!pLoading && profitReport && profitReport.transactions === 0 && (
+            <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '40px 20px', textAlign: 'center', color: '#9090a0' }}>
+              <div style={{ fontSize: 28, marginBottom: 8 }}>📊</div>
+              {isNl ? 'Geen verkopen in deze periode.' : 'No sales in this period.'}
+            </div>
+          )}
         </>
       )}
 

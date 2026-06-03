@@ -280,6 +280,22 @@ class SaleController extends Controller
                         ->decrement('stock_qty', (float) $item['quantity']);
                 }
 
+                // Snapshot cost at sale time — variant's effective cost (its
+                // own override, else parent's) when a variant was chosen,
+                // otherwise the product's cost. NULL when nothing is set.
+                // line_profit = line_total - (cost * qty). Both NULL if cost
+                // is unknown, so reports can SUM() without a CASE.
+                $costSnap = null;
+                if (! empty($item['variant_id'])) {
+                    $variant  = \App\Models\ProductVariant::find($item['variant_id']);
+                    $costSnap = $variant?->effectiveCost();
+                } elseif (! empty($item['product_id'])) {
+                    $costSnap = \App\Models\Product::where('id', $item['product_id'])->value('cost_price');
+                }
+                $lineProfit = $costSnap !== null
+                    ? bcsub((string) $calc['line_total'], bcmul((string) $costSnap, (string) $item['quantity'], 2), 2)
+                    : null;
+
                 SaleItem::create([
                     'sale_id'               => $sale->id,
                     'product_id'            => $item['product_id'] ?? null,
@@ -300,6 +316,8 @@ class SaleController extends Controller
                     'btw_exempt'            => $item['btw_exempt'] ?? false,
                     'btw_srd'               => $calc['btw_amount'],
                     'line_total_srd'        => $calc['line_total'],
+                    'cost_snapshot_srd'     => $costSnap,
+                    'line_profit_srd'       => $lineProfit,
                 ]);
             }
 
