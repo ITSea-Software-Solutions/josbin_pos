@@ -7,7 +7,9 @@ import {
   getProducts, createProduct, updateProduct,
   type Category, type Product,
   type CreateCategoryPayload, type CreateProductPayload,
+  type CreateVariantPayload,
   uploadProductImage,
+  getVariants, createVariant, deleteVariant,
 } from '@/api/catalogue'
 import { type Organisation } from '@/api/organisations'
 import { useDashboardAuthStore } from '@/store/authStore'
@@ -574,6 +576,9 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
             </div>
           </div>
 
+          {/* Variants — only on edit (need parent ID first) */}
+          {product && <VariantsSection productId={product.id} canSetCost={canSetBtw} isNl={isNl} />}
+
           {/* Toggles */}
           <div style={{ display: 'flex', gap: 10 }}>
             <label
@@ -1032,6 +1037,137 @@ export default function CatalogueScreen() {
           isNl={isNl}
           onClose={() => { setShowCategoryForm(false); setEditCategory(undefined) }}
         />
+      )}
+    </div>
+  )
+}
+
+
+// ─── Variants section — rendered inside the product form modal when editing ─
+// Lets the OA add / edit / delete sizes / colours / flavours under a parent
+// product. Variants are POSTed to /products/{id}/variants — independent of
+// the parent's save action.
+function VariantsSection({ productId, canSetCost, isNl }: {
+  productId: string
+  canSetCost: boolean
+  isNl: boolean
+}) {
+  const qc = useQueryClient()
+  const { data: variants = [], isLoading } = useQuery({
+    queryKey: ['variants', productId],
+    queryFn:  () => getVariants(productId),
+  })
+
+  const [draft, setDraft] = useState<CreateVariantPayload>({
+    name_nl: '', name_en: '', sku: '', price: '', stock_qty: '0',
+  })
+
+  const createMut = useMutation({
+    mutationFn: () => createVariant(productId, {
+      ...draft,
+      price: draft.price?.trim() ? draft.price : null,
+      cost_price: draft.cost_price?.toString().trim() ? draft.cost_price : null,
+    }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['variants', productId] })
+      setDraft({ name_nl: '', name_en: '', sku: '', price: '', stock_qty: '0' })
+    },
+  })
+
+  const delMut = useMutation({
+    mutationFn: (variantId: string) => deleteVariant(productId, variantId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['variants', productId] }),
+  })
+
+  return (
+    <div style={{ padding: '14px 16px', background: '#fafbff', borderRadius: 12, border: '1px solid #eeeef8' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <h4 style={{ fontSize: 13, fontWeight: 700, color: '#374151', margin: 0 }}>
+          {isNl ? 'Varianten (maten / smaken)' : 'Variants (sizes / flavors)'}
+          {variants.length > 0 && (
+            <span style={{ marginLeft: 8, fontSize: 11, fontWeight: 600, color: '#9090a0' }}>· {variants.length}</span>
+          )}
+        </h4>
+      </div>
+      <p style={{ fontSize: 11.5, color: '#9090a0', marginTop: 0, marginBottom: 10 }}>
+        {isNl
+          ? 'Bv. Bruine Bonen 500g / 1kg / 5kg — elk met eigen SKU, voorraad en optionele prijs.'
+          : 'E.g. Bruine Bonen 500g / 1kg / 5kg — each with own SKU, stock, optional price override.'}
+      </p>
+
+      {/* Existing variants list */}
+      {isLoading
+        ? <div style={{ fontSize: 12, color: '#9090a0' }}>…</div>
+        : variants.length === 0
+          ? <p style={{ fontSize: 12, color: '#9090a0', fontStyle: 'italic', margin: '8px 0' }}>{isNl ? 'Nog geen varianten — voeg er een toe hieronder.' : 'No variants yet — add one below.'}</p>
+          : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12, marginBottom: 10 }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid #eeeef8' }}>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', fontSize: 10.5, color: '#6d6d80', fontWeight: 700, textTransform: 'uppercase' }}>{isNl ? 'Naam' : 'Name'}</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'left', fontSize: 10.5, color: '#6d6d80', fontWeight: 700, textTransform: 'uppercase' }}>SKU</th>
+                  <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 10.5, color: '#6d6d80', fontWeight: 700, textTransform: 'uppercase' }}>{isNl ? 'Prijs' : 'Price'}</th>
+                  {canSetCost && <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 10.5, color: '#6d6d80', fontWeight: 700, textTransform: 'uppercase' }}>{isNl ? 'Inkoop' : 'Cost'}</th>}
+                  <th style={{ padding: '6px 8px', textAlign: 'right', fontSize: 10.5, color: '#6d6d80', fontWeight: 700, textTransform: 'uppercase' }}>{isNl ? 'Voorr.' : 'Stock'}</th>
+                  <th style={{ width: 28 }} />
+                </tr>
+              </thead>
+              <tbody>
+                {variants.map((v) => (
+                  <tr key={v.id} style={{ borderBottom: '1px solid #f3f3f8' }}>
+                    <td style={{ padding: '7px 8px', color: '#1c1c2e', fontWeight: 600 }}>{isNl ? v.name_nl : v.name_en}</td>
+                    <td style={{ padding: '7px 8px', color: '#6b7280', fontFamily: 'monospace', fontSize: 11.5 }}>{v.sku || <span style={{ color: '#d1d5db' }}>—</span>}</td>
+                    <td style={{ padding: '7px 8px', textAlign: 'right', color: '#7c3aed', fontWeight: 700 }}>
+                      SRD {parseFloat(v.effective_price).toFixed(2)}
+                      {v.price == null && <span style={{ marginLeft: 4, fontSize: 9.5, color: '#9090a0', fontStyle: 'italic' }}>{isNl ? '(erfd)' : '(inh)'}</span>}
+                    </td>
+                    {canSetCost && (
+                      <td style={{ padding: '7px 8px', textAlign: 'right', color: '#374151' }}>
+                        {v.effective_cost ? `SRD ${parseFloat(v.effective_cost).toFixed(2)}` : <span style={{ color: '#d1d5db' }}>—</span>}
+                      </td>
+                    )}
+                    <td style={{ padding: '7px 8px', textAlign: 'right', color: parseFloat(v.stock_qty) <= 0 ? '#dc2626' : '#374151' }}>
+                      {parseFloat(v.stock_qty).toFixed(0)}
+                    </td>
+                    <td style={{ padding: '7px 8px' }}>
+                      <button onClick={() => { if (confirm(isNl ? `Variant "${v.name_nl}" verwijderen?` : `Delete variant "${v.name_en}"?`)) delMut.mutate(v.id) }}
+                        title={isNl ? 'Verwijderen' : 'Delete'}
+                        style={{ background: 'transparent', border: 'none', color: '#dc2626', fontSize: 13, cursor: 'pointer' }}>×</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )
+      }
+
+      {/* Inline "add new variant" row */}
+      <div style={{ display: 'grid', gridTemplateColumns: canSetCost ? '1.4fr 1fr 1fr 0.8fr 0.8fr auto' : '1.4fr 1fr 1fr 0.8fr auto', gap: 6, alignItems: 'center' }}>
+        <input type="text" value={draft.name_nl ?? ''} onChange={(e) => setDraft({ ...draft, name_nl: e.target.value, name_en: draft.name_en || e.target.value })}
+          placeholder={isNl ? 'bijv. 1kg' : 'e.g. 1kg'}
+          style={{ ...inputSt, padding: '7px 10px', fontSize: 12 }} />
+        <input type="text" value={draft.sku ?? ''} onChange={(e) => setDraft({ ...draft, sku: e.target.value })}
+          placeholder="SKU" style={{ ...inputSt, padding: '7px 10px', fontSize: 12, fontFamily: 'monospace' }} />
+        <input type="number" step="0.01" min="0" value={draft.price ?? ''} onChange={(e) => setDraft({ ...draft, price: e.target.value })}
+          placeholder={isNl ? 'prijs (leeg = erf)' : 'price (blank = inherit)'}
+          style={{ ...inputSt, padding: '7px 10px', fontSize: 12 }} />
+        {canSetCost && (
+          <input type="number" step="0.01" min="0" value={draft.cost_price?.toString() ?? ''} onChange={(e) => setDraft({ ...draft, cost_price: e.target.value })}
+            placeholder={isNl ? 'inkoop' : 'cost'}
+            style={{ ...inputSt, padding: '7px 10px', fontSize: 12 }} />
+        )}
+        <input type="number" min="0" value={draft.stock_qty ?? '0'} onChange={(e) => setDraft({ ...draft, stock_qty: e.target.value })}
+          placeholder={isNl ? 'voorr.' : 'stock'}
+          style={{ ...inputSt, padding: '7px 10px', fontSize: 12 }} />
+        <button onClick={() => createMut.mutate()} disabled={!draft.name_nl || createMut.isPending}
+          style={{ padding: '7px 12px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: !draft.name_nl || createMut.isPending ? 0.4 : 1 }}>
+          +
+        </button>
+      </div>
+      {createMut.isError && (
+        <p style={{ fontSize: 11, color: '#dc2626', marginTop: 6 }}>
+          {(createMut.error as { response?: { data?: { message?: string } } })?.response?.data?.message ?? (isNl ? 'Fout bij opslaan' : 'Save failed')}
+        </p>
       )}
     </div>
   )

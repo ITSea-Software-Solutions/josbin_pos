@@ -84,6 +84,9 @@
       <td class="qty-col">{{ rtrim(rtrim($item['quantity'], '0'), '.') }}×</td>
       <td class="desc-col">
         {{ $item['product_name'] }}
+        @if(!empty($item['variant_name']))
+          <span class="label">— {{ $item['variant_name'] }}</span>
+        @endif
         @if(!$item['btw_exempt'] && $item['btw_rate'] > 0)
           <span class="label">({{ $item['btw_rate'] }}%)</span>
         @endif

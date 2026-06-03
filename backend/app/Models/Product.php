@@ -93,6 +93,19 @@ class Product extends Model implements Auditable
         return $this->hasMany(ProductStock::class);
     }
 
+    /** Variants of this product (size / colour / flavour). Order: sort_order. */
+    public function variants(): HasMany
+    {
+        return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
+    }
+
+    /** Convenience: true when at least one ACTIVE variant exists. POS uses
+     *  this to decide whether to open the variant picker on tap. */
+    public function hasVariants(): bool
+    {
+        return $this->variants()->where('is_active', true)->exists();
+    }
+
     /**
      * Per-store running stock for this product.
      * If $storeId is null, returns the org-wide aggregate (sum across stores)

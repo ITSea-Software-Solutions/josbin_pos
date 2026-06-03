@@ -30,9 +30,11 @@ class ReceiptService
             ->setTimezone('America/Paramaribo')
             ->format($dateFormat);
 
-        // Build item rows
+        // Build item rows — variant_name renders on its own line under the
+        // product when present (e.g. "Bruine Bonen" then "1kg" indented).
         $items = $sale->items->map(fn ($item) => [
             'product_name' => $item->product_name_snapshot,
+            'variant_name' => $item->variant_name_snapshot,
             'quantity'     => rtrim(rtrim(number_format((float) $item->quantity, 3, '.', ''), '0'), '.'),
             'unit_price'   => number_format((float) $item->unit_price_srd, 2, '.', ','),
             'line_total'   => number_format((float) $item->line_total_srd, 2, '.', ','),

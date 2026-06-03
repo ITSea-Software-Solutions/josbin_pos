@@ -78,7 +78,13 @@ class SaleController extends Controller
             'occurred_at'         => ['nullable', 'date'],
             'items'               => ['required', 'array', 'min:1'],
             'items.*.product_id'  => ['nullable', 'uuid', 'exists:products,id'],
+            // Variant chosen at the till (e.g. "Bruine Bonen — 1kg"). Optional
+            // — products with no variants leave this null. When set, the
+            // controller snapshots variant_name + decrements variant stock
+            // alongside the parent.
+            'items.*.variant_id'  => ['nullable', 'uuid', 'exists:product_variants,id'],
             'items.*.product_name'=> ['required', 'string', 'max:200'],
+            'items.*.variant_name'=> ['nullable', 'string', 'max:200'],
             'items.*.unit_price'  => ['required', 'numeric', 'min:0'],
             'items.*.quantity'    => ['required', 'numeric', 'min:0.001'],
             'items.*.btw_rate'    => ['required', 'numeric', 'min:0', 'max:100'],
@@ -262,9 +268,27 @@ class SaleController extends Controller
 
             foreach ($data['items'] as $i => $item) {
                 $calc = $cart['items'][$i];
+
+                // Decrement variant stock here (parent product stock is
+                // handled by StockMovementService::applyToSale below — that
+                // works at the per-store product_stocks table). Variant
+                // stock is org-wide on the variant row for v1; per-store
+                // variant stock is a phase-3 migration when a chain needs it.
+                if (! empty($item['variant_id'])) {
+                    \App\Models\ProductVariant::where('id', $item['variant_id'])
+                        ->lockForUpdate()
+                        ->decrement('stock_qty', (float) $item['quantity']);
+                }
+
                 SaleItem::create([
                     'sale_id'               => $sale->id,
                     'product_id'            => $item['product_id'] ?? null,
+                    // Variant attribution — set when the cashier picked a
+                    // specific size/colour/flavour. variant_name_snapshot is
+                    // independent of product_name_snapshot so the receipt
+                    // can show "Bruine Bonen" on one line and "1kg" beneath.
+                    'variant_id'            => $item['variant_id'] ?? null,
+                    'variant_name_snapshot' => $item['variant_name'] ?? null,
                     'product_name_snapshot' => $item['product_name'],
                     'unit_price_srd'        => $item['unit_price'],
                     'quantity'              => $item['quantity'],

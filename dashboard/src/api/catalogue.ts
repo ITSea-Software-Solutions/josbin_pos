@@ -73,6 +73,62 @@ export interface CreateProductPayload {
  *
  * 5 MB max, jpeg/png/webp only — backend rejects anything else.
  */
+// ─── Variants (stage 2) ─────────────────────────────────────────────────────
+
+export interface ProductVariant {
+  id: string
+  product_id: string
+  organisation_id: string
+  sku: string | null
+  barcode: string | null
+  name_nl: string
+  name_en: string
+  sort_order: number
+  price: string | null            // null = inherit parent
+  cost_price?: string | null      // OA/SA only; stripped for SM
+  effective_price: string         // computed server-side
+  effective_cost?: string | null  // OA/SA only
+  stock_qty: string
+  low_stock_threshold: string | null
+  attributes: Record<string, unknown> | null
+  is_active: boolean
+}
+
+export interface CreateVariantPayload {
+  name_nl: string
+  name_en: string
+  sku?: string | null
+  barcode?: string | null
+  sort_order?: number
+  price?: string | null
+  cost_price?: string | null
+  stock_qty?: string
+  low_stock_threshold?: string | null
+  attributes?: Record<string, unknown> | null
+  is_active?: boolean
+}
+
+export async function getVariants(productId: string): Promise<ProductVariant[]> {
+  const res = await apiClient.get<{ data: ProductVariant[] }>(`/products/${productId}/variants`)
+  return res.data.data
+}
+
+export async function createVariant(productId: string, payload: CreateVariantPayload): Promise<ProductVariant> {
+  const res = await apiClient.post<{ data: ProductVariant }>(`/products/${productId}/variants`, payload)
+  return res.data.data
+}
+
+export async function updateVariant(productId: string, variantId: string, payload: Partial<CreateVariantPayload>): Promise<ProductVariant> {
+  const res = await apiClient.put<{ data: ProductVariant }>(`/products/${productId}/variants/${variantId}`, payload)
+  return res.data.data
+}
+
+export async function deleteVariant(productId: string, variantId: string): Promise<void> {
+  await apiClient.delete(`/products/${productId}/variants/${variantId}`)
+}
+
+// ─── Image upload ───────────────────────────────────────────────────────────
+
 export async function uploadProductImage(productId: string, file: File): Promise<{ image_path: string; image_url: string }> {
   const form = new FormData()
   form.append('image', file)

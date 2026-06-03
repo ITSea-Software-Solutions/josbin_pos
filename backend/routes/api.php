@@ -195,6 +195,14 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         Route::post('{product}/image', [ProductController::class, 'uploadImage'])->name('image');
         Route::get('{product}/stock-history',  [ProductController::class, 'stockHistory'])->name('stock-history');
         Route::post('{product}/stock-adjust',  [ProductController::class, 'stockAdjust'])->name('stock-adjust');
+
+        // Variants — nested under the parent product. Auth via ProductPolicy
+        // (any user that can edit a product can manage its variants). See
+        // ProductVariantController for cost-gate + uniqueness handling.
+        Route::get(   '{product}/variants',           [\App\Http\Controllers\Api\ProductVariantController::class, 'index'])->name('variants.index');
+        Route::post(  '{product}/variants',           [\App\Http\Controllers\Api\ProductVariantController::class, 'store'])->name('variants.store');
+        Route::put(   '{product}/variants/{variant}', [\App\Http\Controllers\Api\ProductVariantController::class, 'update'])->name('variants.update');
+        Route::delete('{product}/variants/{variant}', [\App\Http\Controllers\Api\ProductVariantController::class, 'destroy'])->name('variants.destroy');
     });
 
     // Per-store price overrides
