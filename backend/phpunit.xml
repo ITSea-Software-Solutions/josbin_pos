@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
 >
     <testsuites>
@@ -18,25 +18,34 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <!--
+            force="true" is CRITICAL on every DB_* entry below.
+            Without it, OS-level env vars (set by docker-compose for the
+            demo container — DB_DATABASE=josbin_pos_demo) win over these
+            values. The test suite then connects to and wipes the demo
+            database via RefreshDatabase — destroying seeded demo data
+            every time anyone runs `php artisan test`. With force="true"
+            the test bootstrap actively overwrites $_ENV / $_SERVER and
+            Laravel's env() returns the test value.
+
+            Verified by running tests after this change:
+              \DB::connection()->getDatabaseName() === 'josbin_pos_test'
+        -->
+        <env name="APP_ENV" value="testing" force="true"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <!-- Tests run against a real Postgres database: the schema uses
-             Postgres-specific features (uuid + gen_random_uuid, pgvector,
-             pg_advisory_xact_lock, ON CONFLICT, ALTER COLUMN ... USING)
-             that SQLite cannot emulate. Use the demo container's
-             josbin_pos_test database, which has pgcrypto + vector
-             extensions pre-installed. RefreshDatabase wipes between
-             tests so cross-pollution is impossible. -->
-        <env name="DB_CONNECTION" value="pgsql"/>
-        <env name="DB_HOST" value="postgres"/>
-        <env name="DB_PORT" value="5432"/>
-        <env name="DB_DATABASE" value="josbin_pos_test"/>
-        <env name="DB_USERNAME" value="josbin_pos"/>
-        <env name="DB_PASSWORD" value="secret"/>
-        <env name="DB_URL" value=""/>
+        <!-- Dedicated josbin_pos_test database with pgcrypto + vector
+             extensions pre-installed via docker/postgres-demo/init.
+             Never touches josbin_pos_demo. -->
+        <env name="DB_CONNECTION" value="pgsql" force="true"/>
+        <env name="DB_HOST" value="postgres" force="true"/>
+        <env name="DB_PORT" value="5432" force="true"/>
+        <env name="DB_DATABASE" value="josbin_pos_test" force="true"/>
+        <env name="DB_USERNAME" value="josbin_pos" force="true"/>
+        <env name="DB_PASSWORD" value="secret" force="true"/>
+        <env name="DB_URL" value="" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
