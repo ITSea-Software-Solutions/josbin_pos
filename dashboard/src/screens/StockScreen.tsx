@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getStockMovements, adjustStock, getLowStockProducts, type LowStockProduct } from '@/api/stock'
+import { getStores } from '@/api/stores'
 import apiClient from '@/api/client'
 
 interface Product {
@@ -31,13 +32,29 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
   const [qtyChange, setQtyChange] = useState('')
   const [reason, setReason] = useState<'adjustment' | 'import' | 'initial'>('adjustment')
   const [notes, setNotes] = useState('')
+  const [storeId, setStoreId] = useState('')
   const [error, setError] = useState('')
+
+  // Stock is per-store (product_stocks pivot). Backend requires store_id on
+  // every adjust — pre-this-fix the modal omitted it and 422'd. Auto-select
+  // when the user has just one accessible store (SM-with-one-store + small
+  // single-shop OAs); otherwise show a dropdown.
+  const { data: stores = [], isLoading: storesLoading } = useQuery({
+    queryKey: ['stores'],
+    queryFn:  () => getStores(),
+  })
+
+  // Auto-select the moment stores load and we haven't picked yet.
+  if (!storeId && stores.length === 1) {
+    setStoreId(stores[0].id)
+  }
 
   const mut = useMutation({
     mutationFn: () => adjustStock(product.id, {
       qty_change: parseFloat(qtyChange),
       reason,
       notes: notes || undefined,
+      store_id: storeId,
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['catalogue'] })
@@ -60,6 +77,34 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
         <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>
           {isNl ? product.name_nl : product.name_en} — {isNl ? 'Huidige voorraad:' : 'Current stock:'} <strong>{parseFloat(product.stock_qty).toFixed(0)}</strong>
         </p>
+
+        {/* Store picker — stock is per-store (product_stocks). Auto-hidden
+            when only one accessible store; required when multiple. */}
+        {stores.length > 1 && (
+          <>
+            <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>
+              {isNl ? 'Vestiging' : 'Store'} *
+            </label>
+            <select
+              value={storeId}
+              onChange={e => setStoreId(e.target.value)}
+              style={{ width: '100%', boxSizing: 'border-box', height: 40, padding: '0 12px', borderRadius: 8, border: '1.5px solid #e5e7eb', fontSize: 14, marginBottom: 14, background: '#fff' }}
+            >
+              <option value="">{isNl ? '— Kies vestiging —' : '— Pick store —'}</option>
+              {stores.map(s => <option key={s.id} value={s.id}>{s.name} — {s.city}</option>)}
+            </select>
+          </>
+        )}
+        {stores.length === 1 && (
+          <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, padding: '6px 10px', background: '#f9fafb', borderRadius: 6 }}>
+            {isNl ? 'Vestiging:' : 'Store:'} <strong>{stores[0].name}</strong>
+          </div>
+        )}
+        {!storesLoading && stores.length === 0 && (
+          <div style={{ fontSize: 12, color: '#dc2626', marginBottom: 12, padding: '6px 10px', background: '#fef2f2', borderRadius: 6 }}>
+            {isNl ? 'Geen toegankelijke vestiging — vraag uw OA om u toe te wijzen.' : 'No store assigned — ask your OA to assign one.'}
+          </div>
+        )}
 
         <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#6b7280', marginBottom: 5 }}>
           {isNl ? 'Aanpassing (+ ontvangen, − afschrijven)' : 'Adjustment (+ receive, − write-off)'}
@@ -104,7 +149,7 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
           </button>
           <button
             onClick={() => mut.mutate()}
-            disabled={!qtyChange || isNaN(parseFloat(qtyChange)) || parseFloat(qtyChange) === 0 || mut.isPending}
+            disabled={!qtyChange || isNaN(parseFloat(qtyChange)) || parseFloat(qtyChange) === 0 || !storeId || mut.isPending}
             style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !qtyChange ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
