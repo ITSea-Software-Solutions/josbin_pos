@@ -145,8 +145,14 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Store Manager — manages their assigned store.
         //
-        // SM gets partial catalogue access (Option A):
-        //   ✅ create + edit products, manage categories — needed for day-to-day
+        // SM owns the catalogue at their store (Option A revised):
+        //   ✅ create + edit products, manage categories
+        //   ✅ products.view_cost — SM that creates a product also sets its
+        //                           cost; splitting was illogical and forced
+        //                           a broken "SM creates → call OA → OA
+        //                           fills cost" workflow. Cashier still
+        //                           never sees cost (cost stays gated on
+        //                           the till's product payload).
         //   ❌ products.set_btw  — BTW rate / exempt flag stays OA-only (filing
         //                          impact at Belastingdienst — SM can quietly
         //                          mis-classify and the audit-log surface is
@@ -157,7 +163,7 @@ class RolesAndPermissionsSeeder extends Seeder
         $storeManager = Role::firstOrCreate(['name' => User::ROLE_STORE_MANAGER, 'guard_name' => 'web']);
         $storeManager->syncPermissions([
             'sales.create', 'sales.view', 'sales.void', 'sales.refund', 'sales.hold', 'sales.restore',
-            'products.view', 'products.create', 'products.edit',
+            'products.view', 'products.create', 'products.edit', 'products.view_cost',
             'categories.manage',
             'customers.view', 'customers.create', 'customers.edit',
             'reports.daily', 'reports.monthly', 'reports.custom', 'reports.top_products',

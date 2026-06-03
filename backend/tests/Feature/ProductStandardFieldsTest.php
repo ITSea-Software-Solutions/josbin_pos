@@ -103,19 +103,23 @@ class ProductStandardFieldsTest extends TestCase
         $this->assertNotNull($data['margin_pct']);
     }
 
-    public function test_sm_create_strips_cost_price_silently(): void
+    public function test_sm_can_persist_cost_price(): void
     {
-        $resp = $this->actingAs($this->sm, 'sanctum')->postJson('/api/products', [
+        // Original policy stripped cost for SM, forcing a SM-creates-then-OA-
+        // fills-cost handoff that nobody wanted. SM now owns the catalogue
+        // record fully (including cost). BTW stays OA-only (different risk
+        // bucket — see applyBtwGate + ProductPolicy::viewCost).
+        $this->actingAs($this->sm, 'sanctum')->postJson('/api/products', [
             'name_nl' => 'A', 'name_en' => 'A',
             'price'   => '10.00',
-            'cost_price' => '5.00', // SM trying to set cost — should be dropped
+            'cost_price' => '5.00',
         ])->assertCreated();
 
         $created = Product::where('name_nl', 'A')->first();
-        $this->assertNull($created->cost_price, 'SM cannot persist cost_price.');
+        $this->assertEquals('5.00', $created->cost_price);
     }
 
-    public function test_sm_response_does_not_include_cost_price(): void
+    public function test_sm_response_includes_cost_price_and_margin(): void
     {
         Product::create([
             'organisation_id' => $this->org->id,
@@ -129,10 +133,11 @@ class ProductStandardFieldsTest extends TestCase
         $resp->assertOk();
         $rows = $resp->json('data');
         $this->assertNotEmpty($rows);
-        foreach ($rows as $row) {
-            $this->assertArrayNotHasKey('cost_price', $row, 'SM index response must not leak cost_price.');
-            $this->assertArrayNotHasKey('margin', $row);
-        }
+        $cheese = collect($rows)->firstWhere('name_nl', 'Cheese');
+        $this->assertNotNull($cheese);
+        // SM now sees cost + margin — same shape as OA.
+        $this->assertEquals('8.00', $cheese['cost_price']);
+        $this->assertEquals('7.00', $cheese['margin']);
     }
 
     public function test_oa_response_includes_cost_price_and_margin(): void

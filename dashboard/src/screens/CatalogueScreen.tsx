@@ -344,12 +344,19 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
   const qc = useQueryClient()
   const [showScanner, setShowScanner] = useState(false)
 
-  // Option A: SM can save products, but BTW rate + exempt flag stay OA-only
-  // (mis-classification has Belastingdienst-filing impact). Disable the BTW
-  // fields when the actor lacks products.set_btw. Backend also strips these
-  // fields if they sneak through — this is just the UX-friendly half.
+  // Option A (revised): SM owns the catalogue at their store, INCLUDING cost.
+  // Splitting cost from the rest of the product was illogical — forced an
+  // SM-creates-then-OA-fills-cost handoff that nobody wanted. Cashier still
+  // never sees cost (gated on the till's product payload).
+  //
+  // BTW rate + exempt flag STAY OA-only — mis-classification has
+  // Belastingdienst-filing implications nobody wants to discover at audit
+  // time. Two separate gates from here on:
+  //   canSetBtw   → OA + SA only        (Belastingdienst risk)
+  //   canViewCost → OA + SA + SM        (catalogue ownership)
   const actor = useDashboardAuthStore((s) => s.user)
-  const canSetBtw = actor?.role === 'super_admin' || actor?.role === 'organisation_admin'
+  const canSetBtw   = actor?.role === 'super_admin' || actor?.role === 'organisation_admin'
+  const canViewCost = canSetBtw || actor?.role === 'store_manager'
   const [form, setForm] = useState<CreateProductPayload & { is_active?: boolean }>({
     name_nl:        product?.name_nl   ?? '',
     name_en:        product?.name_en   ?? '',
@@ -489,13 +496,13 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
           </div>
 
           {/* Price + Cost (cost OA-only) + BTW + Stock */}
-          <div style={{ display: 'grid', gridTemplateColumns: canSetBtw ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: canViewCost ? '1fr 1fr 1fr 1fr' : '1fr 1fr 1fr', gap: 12 }}>
             <div>
               <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>{isNl ? 'Prijs (SRD)' : 'Price (SRD)'} *</label>
               <input type="number" min="0" step="0.01" value={form.price} onChange={(e) => set('price', e.target.value)}
                 placeholder="0.00" style={inputSt} onFocus={fi} onBlur={fo} />
             </div>
-            {canSetBtw && (
+            {canViewCost && (
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
                   {isNl ? 'Inkoop (SRD)' : 'Cost (SRD)'}
@@ -577,7 +584,7 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
           </div>
 
           {/* Variants — only on edit (need parent ID first) */}
-          {product && <VariantsSection productId={product.id} canSetCost={canSetBtw} isNl={isNl} />}
+          {product && <VariantsSection productId={product.id} canSetCost={canViewCost} isNl={isNl} />}
 
           {/* Toggles */}
           <div style={{ display: 'flex', gap: 10 }}>
@@ -635,9 +642,13 @@ export default function CatalogueScreen() {
   const isNl = i18n.language === 'nl'
   const isSuperAdmin = useDashboardAuthStore((s) => s.isSuperAdmin())
   const currentUser  = useDashboardAuthStore((s) => s.user)
-  // OA/SA see cost + BTW fields; SM sees catalogue but not these. Same gate
-  // used by the product form modal — keep them in sync if the role set changes.
+  // Two gates (see the longer note inside ProductFormModal):
+  //   canSetBtw   → OA + SA only        (Belastingdienst risk)
+  //   canViewCost → OA + SA + SM        (catalogue ownership — SM that
+  //                                       creates a product also sets cost)
+  // Cashier is excluded from both; cost is stripped server-side too.
   const canSetBtw    = currentUser?.role === 'super_admin' || currentUser?.role === 'organisation_admin'
+  const canViewCost  = canSetBtw || currentUser?.role === 'store_manager'
   const qc = useQueryClient()
 
   const [tab, setTab]                     = useState<Tab>('products')
@@ -823,11 +834,11 @@ export default function CatalogueScreen() {
                       isNl ? 'Categorie' : 'Category',
                       isNl ? 'Barcode' : 'Barcode',
                       isNl ? 'Prijs (SRD)' : 'Price (SRD)',
-                      // Cost column visible only to OA/SA (canSetBtw is a
-                      // close-enough proxy — same role gate as cost in the
-                      // form). Backend strips cost_price for everyone else
-                      // anyway, so even if rendered the cell would be blank.
-                      ...(canSetBtw ? [isNl ? 'Inkoop (SRD)' : 'Cost (SRD)'] : []),
+                      // Cost column visible to OA + SA + SM (catalogue
+                      // ownership). Backend strips cost_price for cashier +
+                      // any role without products.view_cost, so even if
+                      // rendered the cell would be blank for them.
+                      ...(canViewCost ? [isNl ? 'Inkoop (SRD)' : 'Cost (SRD)'] : []),
                       'BTW',
                       isNl ? 'Voorraad' : 'Stock',
                       isNl ? 'Eenheid' : 'Unit',
@@ -877,7 +888,7 @@ export default function CatalogueScreen() {
                       <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#7c3aed' }}>
                         SRD {parseFloat(p.price).toFixed(2)}
                       </td>
-                      {canSetBtw && (
+                      {canViewCost && (
                         <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>
                           {p.cost_price != null
                             ? <>SRD {parseFloat(p.cost_price).toFixed(2)}{p.margin_pct && <span style={{ fontSize: 10.5, color: '#15803d', marginLeft: 6 }}>+{parseFloat(p.margin_pct).toFixed(0)}%</span>}</>
@@ -920,7 +931,7 @@ export default function CatalogueScreen() {
                     </tr>
                   ))}
                   {products.length === 0 && (
-                    <tr><td colSpan={canSetBtw ? 12 : 11} style={{ padding: '60px 24px', textAlign: 'center' }}>
+                    <tr><td colSpan={canViewCost ? 12 : 11} style={{ padding: '60px 24px', textAlign: 'center' }}>
                       <div style={{ fontSize: 36, marginBottom: 10 }}>📦</div>
                       <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280' }}>
                         {search ? (isNl ? 'Geen producten gevonden voor uw zoekopdracht' : 'No products match your search') : (isNl ? 'Nog geen producten' : 'No products yet')}

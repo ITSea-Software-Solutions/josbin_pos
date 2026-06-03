@@ -121,22 +121,24 @@ class ProductVariantTest extends TestCase
         $this->assertEquals('3.00', $variant->effectiveCost());
     }
 
-    public function test_sm_cannot_persist_cost_on_variant(): void
+    public function test_sm_can_persist_cost_on_variant(): void
     {
+        // SM owns the catalogue including cost (revised Option A). Variant
+        // mirrors product behaviour exactly.
         $this->actingAs($this->sm, 'sanctum')
             ->postJson("/api/products/{$this->parent->id}/variants", [
                 'name_nl' => '1kg', 'name_en' => '1kg',
                 'price' => '9.50',
-                'cost_price' => '6.00', // SM trying to set cost
+                'cost_price' => '6.00',
                 'stock_qty' => 50,
             ])
             ->assertCreated();
 
         $created = ProductVariant::where('name_nl', '1kg')->first();
-        $this->assertNull($created->cost_price, 'SM cannot set cost on variant.');
+        $this->assertEquals('6.00', $created->cost_price);
     }
 
-    public function test_sm_response_excludes_cost(): void
+    public function test_sm_response_includes_cost(): void
     {
         ProductVariant::create([
             'organisation_id' => $this->org->id,
@@ -150,8 +152,8 @@ class ProductVariantTest extends TestCase
             ->getJson("/api/products/{$this->parent->id}/variants");
 
         $row = $resp->json('data.0');
-        $this->assertArrayNotHasKey('cost_price', $row);
-        $this->assertArrayNotHasKey('effective_cost', $row);
+        $this->assertEquals('6.00', $row['cost_price']);
+        $this->assertEquals('6.00', $row['effective_cost']);
     }
 
     public function test_variant_sku_unique_per_org(): void
