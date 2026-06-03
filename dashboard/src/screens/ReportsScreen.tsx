@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getConsolidatedReport, getConsolidatedBtwReport, getProfitReport, exportReport } from '@/api/dashboard'
+import { getStores } from '@/api/stores'
 import { formatSRD } from '@/utils/currency'
 import { format, subDays, startOfMonth } from 'date-fns'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -45,14 +46,27 @@ export default function ReportsScreen() {
   const [dateFrom, setDateFrom] = useState(monthStart())
   const [dateTo, setDateTo] = useState(today())
 
+  // Store filter (optional drill-down). Empty = whole org (default).
+  // SM with single store sees the filter pre-selected and read-only-ish
+  // (only their store appears in the list). Foreign IDs are silently
+  // ignored on the backend so user can't escape their org by guessing UUIDs.
+  const [storeId, setStoreId] = useState('')
+  const { data: stores = [] } = useQuery({ queryKey: ['stores'], queryFn: () => getStores() })
+  if (!storeId && stores.length === 1) {
+    setStoreId(stores[0].id)
+  }
+
   const {
     data: consolidated,
     isLoading: cLoading,
     isFetching: cFetching,
     refetch: cRefetch,
   } = useQuery({
-    queryKey: ['consolidated-report', dateFrom, dateTo],
-    queryFn: () => getConsolidatedReport({ date_from: dateFrom, date_to: dateTo }),
+    queryKey: ['consolidated-report', dateFrom, dateTo, storeId],
+    queryFn: () => getConsolidatedReport({
+      date_from: dateFrom, date_to: dateTo,
+      ...(storeId ? { store_id: storeId } : {}),
+    }),
     enabled: tab === 'consolidated',
   })
 
@@ -62,22 +76,28 @@ export default function ReportsScreen() {
     isFetching: bFetching,
     refetch: bRefetch,
   } = useQuery({
-    queryKey: ['btw-report', dateFrom, dateTo],
-    queryFn: () => getConsolidatedBtwReport({ date_from: dateFrom, date_to: dateTo }),
+    queryKey: ['btw-report', dateFrom, dateTo, storeId],
+    queryFn: () => getConsolidatedBtwReport({
+      date_from: dateFrom, date_to: dateTo,
+      ...(storeId ? { store_id: storeId } : {}),
+    }),
     enabled: tab === 'btw',
   })
 
-  // Profit report — same date range as the other two tabs. Requires
-  // products.view_cost on the backend (OA + SA + SM). Auditor / cashier
-  // hit 403; the tab is hidden from them via the canSeeProfit gate below.
+  // Profit report — same date range + store filter as the other two tabs.
+  // Requires products.view_cost on the backend (OA + SA + SM). Auditor /
+  // cashier hit 403; the tab is hidden from them via the canSeeProfit gate.
   const {
     data: profitReport,
     isLoading: pLoading,
     isFetching: pFetching,
     refetch: pRefetch,
   } = useQuery({
-    queryKey: ['profit-report', dateFrom, dateTo],
-    queryFn: () => getProfitReport({ date_from: dateFrom, date_to: dateTo }),
+    queryKey: ['profit-report', dateFrom, dateTo, storeId],
+    queryFn: () => getProfitReport({
+      date_from: dateFrom, date_to: dateTo,
+      ...(storeId ? { store_id: storeId } : {}),
+    }),
     enabled: tab === 'profit',
   })
 
@@ -97,7 +117,10 @@ export default function ReportsScreen() {
     try {
       await exportReport(
         tab === 'btw' ? 'btw' : 'consolidated',
-        { date_from: dateFrom, date_to: dateTo, locale: i18n.language },
+        {
+          date_from: dateFrom, date_to: dateTo, locale: i18n.language,
+          ...(storeId ? { store_id: storeId } : {}),
+        },
       )
     } finally {
       setExporting(false)
@@ -187,6 +210,28 @@ export default function ReportsScreen() {
             }}
           />
         </div>
+
+        {/* Store drill-down — applies to all three tabs.
+            Hidden when org has zero/one store (auto-selected). */}
+        {stores.length > 1 && (
+          <div>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+              {isNl ? 'Vestiging' : 'Store'}
+            </label>
+            <select
+              value={storeId}
+              onChange={(e) => setStoreId(e.target.value)}
+              style={{
+                padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0ed',
+                fontSize: 13, color: '#1c1c2e', outline: 'none', minWidth: 200, background: '#fff',
+              }}
+              title={isNl ? 'Beperk rapporten tot één vestiging' : 'Limit reports to one store'}
+            >
+              <option value="">{isNl ? 'Alle vestigingen' : 'All stores'}</option>
+              {stores.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.city}</option>)}
+            </select>
+          </div>
+        )}
 
         {/* Quick range pills */}
         <div style={{ display: 'flex', gap: 6, alignSelf: 'flex-end' }}>

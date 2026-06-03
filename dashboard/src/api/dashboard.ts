@@ -139,6 +139,7 @@ export async function getConsolidatedReport(params: {
   date_from: string
   date_to: string
   org_id?: string
+  store_id?: string
 }): Promise<ConsolidatedReport> {
   const res = await apiClient.get<ConsolidatedReport>('/dashboard/reports/consolidated', { params })
   return res.data
@@ -148,6 +149,7 @@ export async function getConsolidatedBtwReport(params: {
   date_from: string
   date_to: string
   org_id?: string
+  store_id?: string
 }): Promise<ConsolidatedBtwReport> {
   const res = await apiClient.get<ConsolidatedBtwReport>('/dashboard/reports/btw', { params })
   return res.data

@@ -144,13 +144,15 @@ class DashboardController extends Controller
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'org_id'    => ['nullable', 'uuid'],
+            'store_id'  => ['nullable', 'uuid'],
         ]);
 
-        $from   = $request->input('date_from');
-        $to     = $request->input('date_to');
-        $orgId  = $request->input('org_id');
+        $from    = $request->input('date_from');
+        $to      = $request->input('date_to');
+        $orgId   = $request->input('org_id');
+        $storeId = $request->input('store_id');
 
-        // Resolve which org IDs to aggregate
+        // Resolve which store IDs to aggregate
         if ($user->isSuperAdmin()) {
             $orgQuery = Organisation::query()->where('is_active', true);
             if ($orgId) $orgQuery->where('id', $orgId);
@@ -160,6 +162,13 @@ class DashboardController extends Controller
             $storeIds = Store::where('organisation_id', $user->organisation_id)
                 ->where('is_active', true)
                 ->pluck('id');
+        }
+
+        // Optional drill-down: filter to single store, but only if it belongs
+        // to the in-scope set. Silently ignore foreign store_id to prevent
+        // cross-tenant snooping via guessed UUIDs.
+        if ($storeId && $storeIds->contains($storeId)) {
+            $storeIds = collect([$storeId]);
         }
 
         // One aggregation query across all stores
@@ -253,11 +262,13 @@ class DashboardController extends Controller
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'org_id'    => ['nullable', 'uuid'],
+            'store_id'  => ['nullable', 'uuid'],
         ]);
 
-        $from  = $request->input('date_from');
-        $to    = $request->input('date_to');
-        $orgId = $request->input('org_id');
+        $from    = $request->input('date_from');
+        $to      = $request->input('date_to');
+        $orgId   = $request->input('org_id');
+        $storeId = $request->input('store_id');
 
         if ($user->isSuperAdmin()) {
             $orgQuery = Organisation::query()->where('is_active', true);
@@ -268,6 +279,10 @@ class DashboardController extends Controller
             $storeIds = Store::where('organisation_id', $user->organisation_id)
                 ->where('is_active', true)
                 ->pluck('id');
+        }
+
+        if ($storeId && $storeIds->contains($storeId)) {
+            $storeIds = collect([$storeId]);
         }
 
         $breakdown = DB::table('sale_items')
@@ -587,13 +602,15 @@ class DashboardController extends Controller
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'org_id'    => ['nullable', 'uuid'],
+            'store_id'  => ['nullable', 'uuid'],
             'locale'    => ['nullable', 'in:nl,en'],
         ]);
 
         // Reuse the same data-gathering logic as consolidatedReport()
-        $from  = $request->input('date_from');
-        $to    = $request->input('date_to');
-        $orgId = $request->input('org_id');
+        $from    = $request->input('date_from');
+        $to      = $request->input('date_to');
+        $orgId   = $request->input('org_id');
+        $storeId = $request->input('store_id');
 
         if ($user->isSuperAdmin()) {
             $orgQuery = Organisation::query()->where('is_active', true);
@@ -603,6 +620,10 @@ class DashboardController extends Controller
         } else {
             $storeIds = Store::where('organisation_id', $user->organisation_id)
                 ->where('is_active', true)->pluck('id');
+        }
+
+        if ($storeId && $storeIds->contains($storeId)) {
+            $storeIds = collect([$storeId]);
         }
 
         $totals = Sale::query()
@@ -686,12 +707,14 @@ class DashboardController extends Controller
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'org_id'    => ['nullable', 'uuid'],
+            'store_id'  => ['nullable', 'uuid'],
             'locale'    => ['nullable', 'in:nl,en'],
         ]);
 
-        $from  = $request->input('date_from');
-        $to    = $request->input('date_to');
-        $orgId = $request->input('org_id');
+        $from    = $request->input('date_from');
+        $to      = $request->input('date_to');
+        $orgId   = $request->input('org_id');
+        $storeId = $request->input('store_id');
 
         if ($user->isSuperAdmin()) {
             $orgQuery = Organisation::query()->where('is_active', true);
@@ -701,6 +724,10 @@ class DashboardController extends Controller
         } else {
             $storeIds = Store::where('organisation_id', $user->organisation_id)
                 ->where('is_active', true)->pluck('id');
+        }
+
+        if ($storeId && $storeIds->contains($storeId)) {
+            $storeIds = collect([$storeId]);
         }
 
         $breakdown = DB::table('sale_items')

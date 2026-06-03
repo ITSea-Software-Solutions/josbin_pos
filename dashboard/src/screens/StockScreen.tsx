@@ -240,17 +240,31 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
   const [adjustProduct, setAdjustProduct] = useState<Product | null>(null)
   const [historyProduct, setHistoryProduct] = useState<Product | null>(null)
 
+  // Store filter — controls which store's stock + low-stock list we show.
+  // Empty = org-wide aggregate (default). Auto-selects when only one store
+  // is accessible (SM with one store + single-shop OAs).
+  const [filterStoreId, setFilterStoreId] = useState('')
+  const { data: stores = [] } = useQuery({ queryKey: ['stores'], queryFn: () => getStores() })
+  if (!filterStoreId && stores.length === 1) {
+    setFilterStoreId(stores[0].id)
+  }
+
   const { data: allData, isLoading: allLoading } = useQuery({
-    queryKey: ['catalogue', search, page],
-    queryFn: () => apiClient.get('/products', { params: { search: search || undefined, per_page: 30, page, active_only: false } })
-      .then(r => r.data as { data: Product[]; current_page: number; last_page: number; total: number }),
+    queryKey: ['catalogue', search, page, filterStoreId],
+    queryFn: () => apiClient.get('/products', {
+      params: {
+        search: search || undefined,
+        per_page: 30, page, active_only: false,
+        ...(filterStoreId ? { store_id: filterStoreId } : {}),
+      },
+    }).then(r => r.data as { data: Product[]; current_page: number; last_page: number; total: number }),
     placeholderData: (prev) => prev,
     enabled: activeTab === 'all',
   })
 
   const { data: lowStockData = [], isLoading: lowLoading } = useQuery({
-    queryKey: ['low-stock'],
-    queryFn: () => getLowStockProducts(),
+    queryKey: ['low-stock', filterStoreId],
+    queryFn: () => getLowStockProducts(filterStoreId ? { store_id: filterStoreId } : undefined),
     // Always fetch — we need the count for the alert banner shown on the
     // "all" tab too. The payload is small (capped at 50 by default).
     enabled: true,
@@ -350,17 +364,33 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
         </div>
       )}
 
-      {/* Search (all tab only) */}
-      {activeTab === 'all' && (
-        <div style={{ marginBottom: 16 }}>
+      {/* Store filter + search */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+        {stores.length > 1 && (
+          <select
+            value={filterStoreId}
+            onChange={(e) => { setFilterStoreId(e.target.value); setPage(1) }}
+            style={{ height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, background: '#fff', minWidth: 200 }}
+            title={isNl ? 'Voorraad filteren op vestiging' : 'Filter stock by store'}
+          >
+            <option value="">{isNl ? 'Alle vestigingen (totaal)' : 'All stores (org-wide)'}</option>
+            {stores.map((s) => <option key={s.id} value={s.id}>{s.name} — {s.city}</option>)}
+          </select>
+        )}
+        {activeTab === 'all' && (
           <input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
             placeholder={isNl ? 'Zoek op naam of streepjescode…' : 'Search by name or barcode…'}
-            style={{ width: '100%', maxWidth: 380, height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, boxSizing: 'border-box' }}
+            style={{ flex: 1, maxWidth: 380, height: 38, padding: '0 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, boxSizing: 'border-box' }}
           />
-        </div>
-      )}
+        )}
+        {filterStoreId && stores.length > 1 && (
+          <span style={{ fontSize: 12, color: '#7c3aed', fontWeight: 600 }}>
+            ↳ {isNl ? 'voorraad per vestiging' : 'per-store stock'}
+          </span>
+        )}
+      </div>
 
       {/* Table */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
