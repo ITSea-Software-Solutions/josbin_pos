@@ -18,4 +18,26 @@
 
 return [
     'no_daily_rate' => 'Geen dagkoers beschikbaar voor vandaag. Vraag de Org Admin om de wisselkoers in te stellen via Dashboard → Dagkoers, of neem contact op met :vendor support (:email).',
+
+    // User management
+    'self_delete_blocked' => 'U kunt uw eigen account niet verwijderen.',
+
+    // Password / account
+    'wrong_current_password' => 'Het huidige wachtwoord is onjuist.',
+    'password_changed'       => 'Wachtwoord gewijzigd. Andere apparaten zijn uitgelogd.',
+
+    // Register + Z-Report
+    'register_already_closed_today' => 'Deze kassa is vandaag al gesloten. Vraag uw manager om heropening.',
+    'register_day_already_closed'   => 'De kas voor vandaag is al gesloten.',
+    'z_report_already_sent'         => 'Dit Z-rapport is al verzonden naar het hoofdkantoor.',
+
+    // Sales — void / refund flow
+    'void_only_completed'           => 'Alleen voltooide verkopen kunnen worden geannuleerd.',
+    'void_requires_second_approval' => 'Annuleringsverzoek geregistreerd. Wachten op tweede goedkeuring.',
+    'second_approver_must_differ'   => 'De tweede goedkeuring moet door een andere gebruiker worden gegeven.',
+    'refund_only_completed'         => 'Alleen voltooide verkopen kunnen worden terugbetaald.',
+    'receipt_emailed'               => 'Kassabon verstuurd naar :email.',
+
+    // Licence / organisation
+    'no_active_licence_for_stores'  => 'Geen actieve licentie voor deze organisatie. Vraag de Super Admin om een licentie uit te geven voordat u vestigingen aanmaakt.',
 ];

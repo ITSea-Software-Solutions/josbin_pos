@@ -149,7 +149,7 @@ class OrganisationController extends Controller
 
         if (! $activeLicense) {
             return response()->json([
-                'message' => 'Geen actieve licentie voor deze organisatie. Vraag de Super Admin om een licentie uit te geven voordat u vestigingen aanmaakt. / No active licence for this organisation. Ask the Super Admin to issue a licence before creating stores.',
+                'message' => __('errors.no_active_licence_for_stores'),
                 'code'    => 'LICENSE_REQUIRED',
             ], 422);
         }

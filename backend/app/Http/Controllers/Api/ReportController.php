@@ -162,7 +162,7 @@ class ReportController extends Controller
             ->first();
         if ($existing) {
             return response()->json([
-                'message'  => 'De kas voor vandaag is al gesloten.',
+                'message'  => __('errors.register_day_already_closed'),
                 'code'     => 'ALREADY_CLOSED',
                 'z_report' => $existing,
             ], 409);
@@ -211,7 +211,7 @@ class ReportController extends Controller
 
         if ($zReport->sync_status === 'sent') {
             return response()->json([
-                'message' => 'Dit Z-rapport is al verzonden naar het hoofdkantoor.',
+                'message' => __('errors.z_report_already_sent'),
                 'code'    => 'ALREADY_SENT',
                 'data'    => $zReport,
             ], 409);

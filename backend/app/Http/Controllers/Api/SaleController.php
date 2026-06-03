@@ -347,7 +347,7 @@ class SaleController extends Controller
         $this->authorize('void', $sale);
 
         if (! $sale->isCompleted()) {
-            return response()->json(['message' => 'Alleen voltooide verkopen kunnen worden geannuleerd.'], 422);
+            return response()->json(['message' => __('errors.void_only_completed')], 422);
         }
 
         $data = $request->validate([
@@ -367,7 +367,7 @@ class SaleController extends Controller
             ]);
 
             return response()->json([
-                'message' => 'Annuleringsverzoek geregistreerd. Wachten op tweede goedkeuring.',
+                'message' => __('errors.void_requires_second_approval'),
                 'code'    => 'VOID_PENDING_APPROVAL',
                 'data'    => $sale,
             ]);
@@ -377,7 +377,7 @@ class SaleController extends Controller
         // given by a DIFFERENT user than the one who requested it.
         if ($needsSecondApproval && $sale->voided_by === $request->user()->id) {
             return response()->json([
-                'message' => 'De tweede goedkeuring moet door een andere gebruiker worden gegeven.',
+                'message' => __('errors.second_approver_must_differ'),
                 'code'    => 'VOID_SAME_APPROVER',
             ], 422);
         }
@@ -515,7 +515,7 @@ class SaleController extends Controller
         $this->authorize('refund', $sale);
 
         if (! $sale->isCompleted()) {
-            return response()->json(['message' => 'Alleen voltooide verkopen kunnen worden terugbetaald.'], 422);
+            return response()->json(['message' => __('errors.refund_only_completed')], 422);
         }
 
         $data = $request->validate([
@@ -622,7 +622,7 @@ class SaleController extends Controller
 
         $this->receipt->sendEmail($sale, $data['email'], $data['locale'] ?? 'nl');
 
-        return response()->json(['message' => 'Kassabon verstuurd naar ' . $data['email']]);
+        return response()->json(['message' => __('errors.receipt_emailed', ['email' => $data['email']])]);
     }
 
     /**

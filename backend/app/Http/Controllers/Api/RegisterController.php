@@ -178,7 +178,7 @@ class RegisterController extends Controller
 
             if ($closedToday) {
                 return response()->json([
-                    'message' => 'Deze kassa is vandaag al gesloten. Vraag uw beheerder om heropening. (This register was already closed today. Ask your manager to re-open it.)',
+                    'message' => __('errors.register_already_closed_today'),
                     'code'    => 'REGISTER_CLOSED_FOR_DAY',
                     'closed_today' => [
                         'session_id'   => $closedToday->id,

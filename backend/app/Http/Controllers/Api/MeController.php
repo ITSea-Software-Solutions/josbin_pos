@@ -164,8 +164,8 @@ class MeController extends Controller
 
         if (! Hash::check($data['current_password'], $user->password)) {
             return response()->json([
-                'message' => 'Het huidige wachtwoord is onjuist.',
-                'errors'  => ['current_password' => ['Het huidige wachtwoord is onjuist.']],
+                'message' => __('errors.wrong_current_password'),
+                'errors'  => ['current_password' => [__('errors.wrong_current_password')]],
             ], 422);
         }
 
@@ -176,7 +176,7 @@ class MeController extends Controller
         $user->tokens()->when($currentTokenId, fn ($q) => $q->where('id', '!=', $currentTokenId))->delete();
 
         return response()->json([
-            'message' => 'Wachtwoord gewijzigd. Andere apparaten zijn uitgelogd.',
+            'message' => __('errors.password_changed'),
         ]);
     }
 

@@ -264,7 +264,7 @@ class UserController extends Controller
 
         // Prevent self-deletion
         if ($user->id === $request->user()->id) {
-            return response()->json(['message' => 'Je kunt je eigen account niet verwijderen.'], 422);
+            return response()->json(['message' => __('errors.self_delete_blocked')], 422);
         }
 
         $user->update(['is_active' => false]);
