@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
 import { useDashboardAuthStore } from '@/store/authStore'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useToast } from '@/components/shared/Toast'
 import {
   getOrganisations, getOrganisation, createOrganisation, updateOrganisation,
   getOrgStores, createStore,
@@ -77,14 +79,28 @@ function OrgRow({
   onEdit: (o: Organisation) => void
 }) {
   const qc = useQueryClient()
+  const toast = useToast()
   const [pushState, setPushState] = useState<'idle' | 'sending' | 'done' | 'error'>('idle')
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const typeCfg = TYPE_CFG[org.type] ?? TYPE_CFG.retail
   const tierCfg = TIER_CFG[org.subscription_tier ?? 'starter'] ?? TIER_CFG.starter
 
   const toggleStatus = useMutation({
     mutationFn: () => updateOrganisation(org.id, { is_active: !org.is_active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['organisations'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['organisations'] })
+      setShowConfirm(false)
+      toast.success(
+        org.is_active
+          ? (isNl ? 'Organisatie gedeactiveerd' : 'Organisation deactivated')
+          : (isNl ? 'Organisatie geactiveerd'   : 'Organisation activated'),
+      )
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Bewerking mislukt: ${msg}` : `Operation failed: ${msg}`)
+    },
   })
 
   async function handlePush() {
@@ -185,12 +201,7 @@ function OrgRow({
           </button>
           {/* Activate / Deactivate */}
           <button
-            onClick={() => {
-              const msg = org.is_active
-                ? (isNl ? `Organisatie "${org.name}" deactiveren?` : `Deactivate "${org.name}"?`)
-                : (isNl ? `Organisatie "${org.name}" activeren?` : `Activate "${org.name}"?`)
-              if (confirm(msg)) toggleStatus.mutate()
-            }}
+            onClick={() => setShowConfirm(true)}
             disabled={toggleStatus.isPending}
             title={org.is_active ? (isNl ? 'Deactiveren' : 'Deactivate') : (isNl ? 'Activeren' : 'Activate')}
             style={{
@@ -203,6 +214,32 @@ function OrgRow({
             {org.is_active ? (isNl ? 'Deactiveren' : 'Deactivate') : (isNl ? 'Activeren' : 'Activate')}
           </button>
         </div>
+
+        {/* Styled confirm replaces window.confirm() — surfaces what
+            happens (stores stop accepting sales, users stay locked out). */}
+        <ConfirmDialog
+          isOpen={showConfirm}
+          loading={toggleStatus.isPending}
+          tone={org.is_active ? 'danger' : 'default'}
+          title={
+            org.is_active
+              ? (isNl ? `${org.name} deactiveren?` : `Deactivate ${org.name}?`)
+              : (isNl ? `${org.name} activeren?`   : `Activate ${org.name}?`)
+          }
+          message={
+            org.is_active
+              ? (isNl
+                  ? `Alle gebruikers van ${org.name} kunnen niet meer inloggen. POS-terminals stoppen met verkopen tot heractivatie.`
+                  : `Every user in ${org.name} will be unable to sign in. POS terminals stop accepting sales until reactivated.`)
+              : (isNl
+                  ? `${org.name} en al hun vestigingen zijn weer beschikbaar. Bestaande wachtwoorden blijven werken.`
+                  : `${org.name} and all its stores become available again. Existing passwords remain valid.`)
+          }
+          confirmLabel={org.is_active ? (isNl ? 'Deactiveer' : 'Deactivate') : (isNl ? 'Activeer' : 'Activate')}
+          cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+          onCancel={() => setShowConfirm(false)}
+          onConfirm={() => toggleStatus.mutate()}
+        />
       </td>
     </tr>
   )

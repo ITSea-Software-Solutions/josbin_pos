@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react'
 import { useDashboardAuthStore } from '@/store/authStore'
 import { useTranslation } from 'react-i18next'
 import { DemoBanner } from '@/components/shared/DemoBanner'
+import { ToastProvider } from '@/components/shared/Toast'
 
 const LoginScreen      = lazy(() => import('@/screens/LoginScreen'))
 const DashboardLayout  = lazy(() => import('@/screens/DashboardLayout'))
@@ -28,13 +29,13 @@ export default function App() {
   const needs2fa = twoFactor.type === 'challenge' || twoFactor.type === 'setup'
 
   return (
-    <>
+    <ToastProvider>
       <DemoBanner />
       <Suspense fallback={<Loading />}>
         {needs2fa         ? <TwoFactorScreen />   :
          authed           ? <DashboardLayout />   :
                             <LoginScreen />}
       </Suspense>
-    </>
+    </ToastProvider>
   )
 }

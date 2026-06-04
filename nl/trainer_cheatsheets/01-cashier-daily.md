@@ -37,6 +37,18 @@
 🔍 **Barcodescanner:** USB-scanners typen in het actieve veld. Houd de focus op het POS-scherm — geen speciale toets.
 ⌨️ **Touchscreen?** Schakel het toetsenbord op het scherm in vanuit de bovenbalk.
 
+### ⚡ Sneltoetsen (sneller dan de muis)
+
+| Toets | Actie |
+|-------|-------|
+| **F2** | Huidige bon vasthouden (parkeert de winkelwagen) |
+| **F9** | Opent het betaalscherm — alleen als er items in de winkelwagen zitten |
+| **F4** | Start een nieuwe verkoop nadat er net een is afgerond |
+| **F12** | Schakel het toetsenbord op het scherm aan/uit |
+| **Esc** | Sluit het betaal-, bon- of toetsenbordvenster |
+
+Sneltoetsen worden overgeslagen terwijl je typt in een zoekvak of numpad, dus ze verstoren je invoer nooit.
+
 ---
 
 ## 🌙 Einde dienst — Kassa sluiten

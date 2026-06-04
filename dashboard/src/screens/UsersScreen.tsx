@@ -5,6 +5,8 @@ import { getUsers, createUser, updateUser, type User, type CreateUserPayload } f
 import { getOrganisations, getOrgStores, type Organisation, type Store } from '@/api/organisations'
 import { getTwoFactorPolicy, updateTwoFactorPolicy } from '@/api/securityPolicy'
 import { useDashboardAuthStore } from '@/store/authStore'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useToast } from '@/components/shared/Toast'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -825,6 +827,10 @@ export default function UsersScreen() {
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
   const [createdUser, setCreatedUser] = useState<{ user: User; password: string } | null>(null)
+  // Replaces the browser confirm() — keeps the user pinned in the modal
+  // while the mutation runs, with consistent styling + Escape support.
+  const [statusTarget, setStatusTarget] = useState<User | null>(null)
+  const toast = useToast()
 
   const { data: users, isLoading } = useQuery({ queryKey: ['users'], queryFn: getUsers })
   const { data: orgs = [] } = useQuery({ queryKey: ['organisations'], queryFn: getOrganisations })
@@ -846,7 +852,19 @@ export default function UsersScreen() {
 
   const toggleStatus = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => updateUser(id, { is_active: active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['users'] })
+      setStatusTarget(null)
+      toast.success(
+        vars.active
+          ? (isNl ? 'Gebruiker geactiveerd' : 'User activated')
+          : (isNl ? 'Gebruiker gedeactiveerd' : 'User deactivated'),
+      )
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Kon status niet wijzigen: ${msg}` : `Could not change status: ${msg}`)
+    },
   })
 
   return (
@@ -1073,12 +1091,7 @@ export default function UsersScreen() {
                         {isNl ? 'Bewerken' : 'Edit'}
                       </button>
                       <button
-                        onClick={() => {
-                          const msg = user.is_active
-                            ? (isNl ? `Gebruiker "${user.name}" deactiveren?` : `Deactivate "${user.name}"?`)
-                            : (isNl ? `Gebruiker "${user.name}" activeren?` : `Activate "${user.name}"?`)
-                          if (confirm(msg)) toggleStatus.mutate({ id: user.id, active: !user.is_active })
-                        }}
+                        onClick={() => setStatusTarget(user)}
                         style={{
                           padding: '5px 10px', borderRadius: 8, border: '1px solid', fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap',
                           ...(user.is_active
@@ -1130,6 +1143,36 @@ export default function UsersScreen() {
           onClose={() => setEditTarget(null)}
         />
       )}
+
+      {/* Styled confirm replaces window.confirm() — Escape closes,
+          mutation pin keeps dialog open while update is in flight. */}
+      <ConfirmDialog
+        isOpen={statusTarget !== null}
+        loading={toggleStatus.isPending}
+        tone={statusTarget?.is_active ? 'danger' : 'default'}
+        title={
+          statusTarget?.is_active
+            ? (isNl ? 'Gebruiker deactiveren?' : 'Deactivate user?')
+            : (isNl ? 'Gebruiker activeren?' : 'Activate user?')
+        }
+        message={
+          statusTarget?.is_active
+            ? (isNl
+                ? `${statusTarget?.name} kan vanaf nu niet meer inloggen op het Dashboard of de POS.`
+                : `${statusTarget?.name} will no longer be able to sign in to the Dashboard or POS.`)
+            : (isNl
+                ? `${statusTarget?.name} krijgt opnieuw toegang met hun bestaande wachtwoord.`
+                : `${statusTarget?.name} will regain access using their existing password.`)
+        }
+        confirmLabel={
+          statusTarget?.is_active
+            ? (isNl ? 'Deactiveer' : 'Deactivate')
+            : (isNl ? 'Activeer'   : 'Activate')
+        }
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setStatusTarget(null)}
+        onConfirm={() => statusTarget && toggleStatus.mutate({ id: statusTarget.id, active: !statusTarget.is_active })}
+      />
     </div>
   )
 }

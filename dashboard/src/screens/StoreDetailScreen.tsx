@@ -26,7 +26,15 @@ import { useDashboardAuthStore } from '@/store/authStore'
  * Reverb live updates: SaleCompleted → bump today's KPIs + prepend
  * to recent sales; StoreStatusChanged → flip online pill.
  */
-export default function StoreDetailScreen({ storeId }: { storeId: string }) {
+interface Props {
+  storeId: string
+  /** Optional — when set, a "← Back" button appears in the header.
+   *  Mirrors the pattern from BtwSubmissionDetailScreen so the layout
+   *  doesn't have to round-trip through the sidebar (which loses scroll). */
+  onBack?: () => void
+}
+
+export default function StoreDetailScreen({ storeId, onBack }: Props) {
   const { i18n } = useTranslation()
   const qc = useQueryClient()
   const user = useDashboardAuthStore((s) => s.user)
@@ -78,6 +86,30 @@ export default function StoreDetailScreen({ storeId }: { storeId: string }) {
 
   return (
     <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
+
+      {/* Back link — only when a parent passed onBack (e.g. Overview).
+          Mirrors BtwSubmissionDetailScreen so the user can return without
+          losing scroll position via a sidebar reload. */}
+      {onBack && (
+        <button
+          onClick={onBack}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            marginBottom: 14,
+            padding: '6px 12px', borderRadius: 8,
+            border: '1px solid #e5e7eb', background: '#fff',
+            color: '#4338ca', fontSize: 12.5, fontWeight: 600,
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = '#f5f3ff')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = '#fff')}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          {isNl ? 'Terug naar overzicht' : 'Back to overview'}
+        </button>
+      )}
 
       {/* ══ HERO ═════════════════════════════════════════════════════════════ */}
       <div style={{

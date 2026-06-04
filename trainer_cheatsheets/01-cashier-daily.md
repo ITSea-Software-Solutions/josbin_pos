@@ -37,6 +37,18 @@
 🔍 **Barcode scanner:** USB scanners type into focused field. Keep focus on POS screen — no special key.
 ⌨️ **Touchscreen?** Toggle on-screen keyboard from the top bar.
 
+### ⚡ Keyboard shortcuts (faster than the mouse)
+
+| Key | Action |
+|-----|--------|
+| **F2** | Hold the active bill (parks the cart) |
+| **F9** | Open the payment screen — only when cart has items |
+| **F4** | Start a new sale after one just completed |
+| **F12** | Toggle the on-screen keyboard |
+| **Esc** | Close the payment / receipt / keyboard popup |
+
+Shortcuts are skipped while typing in a search box or numpad, so they never fight your input.
+
 ---
 
 ## 🌙 End of shift — Close register / Einde dienst

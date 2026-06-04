@@ -5,6 +5,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useRegisterStore } from '@/store/registerStore'
 import { LicenseBanner } from '@/components/shared/LicenseBanner'
 import { DemoBanner } from '@/components/shared/DemoBanner'
+import { ToastProvider } from '@/components/shared/Toast'
 
 const LoginScreen       = lazy(() => import('@/screens/LoginScreen'))
 const StoreSelectScreen = lazy(() => import('@/screens/StoreSelectScreen'))
@@ -30,7 +31,7 @@ export default function App() {
   const hasRegister  = session !== null && session.status === 'open'
 
   return (
-    <>
+    <ToastProvider>
       <DemoBanner />
       <LicenseBanner />
       <Suspense fallback={<Loading />}>
@@ -39,6 +40,6 @@ export default function App() {
         {authed && storeId && !hasRegister  && <OpenRegisterGate />}
         {authed && storeId && hasRegister   && <POSScreen />}
       </Suspense>
-    </>
+    </ToastProvider>
   )
 }

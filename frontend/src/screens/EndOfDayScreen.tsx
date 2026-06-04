@@ -5,6 +5,7 @@ import { getDailyReport, closeZReport, getZReportHistory, submitZReport } from '
 import type { ZReportRecord } from '@/api/reports'
 import apiClient from '@/api/client'
 import Modal from '@/components/shared/Modal'
+import { useToast } from '@/components/shared/Toast'
 import { useDateFormatter } from '@/utils/date'
 
 interface EndOfDayScreenProps {
@@ -15,6 +16,8 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
   const { t, i18n } = useTranslation()
   const qc = useQueryClient()
   const fmtDate = useDateFormatter()
+  const toast = useToast()
+  const isNl = i18n.language === 'nl'
 
   const [actualCash, setActualCash] = useState('')
   const [discrepancyNote, setDiscrepancyNote] = useState('')
@@ -36,8 +39,17 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
       a.download = `josbin_pos_${storeId}_${fd}_${td}.josbin_pos`
       a.click()
       URL.revokeObjectURL(url)
-    } catch {
-      // TODO: show error toast
+      toast.success(isNl
+        ? `USB-export voor ${fd} klaar — bestand gedownload`
+        : `USB export for ${fd} ready — file downloaded`)
+    } catch (e: unknown) {
+      // This was silently swallowed before — a compliance hole, since
+      // USB export is the Layer-4 sync fallback. Manager thought file
+      // was saved; nothing happened. Always surface failures.
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl
+        ? `USB-export mislukt voor ${fd}: ${msg}`
+        : `USB export failed for ${fd}: ${msg}`)
     } finally {
       setExportingDate(null)
     }

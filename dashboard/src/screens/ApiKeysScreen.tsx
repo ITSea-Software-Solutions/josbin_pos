@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useToast } from '@/components/shared/Toast'
 
 interface ApiKey {
   id: string
@@ -89,6 +91,7 @@ export default function ApiKeysScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const qc = useQueryClient()
+  const toast = useToast()
 
   const [showCreate, setShowCreate] = useState(false)
   const [newKey, setNewKey] = useState<string | null>(null)
@@ -108,6 +111,12 @@ export default function ApiKeysScreen() {
   })
   const [rotatedSecret, setRotatedSecret] = useState<string | null>(null)
 
+  // Styled confirms replace window.confirm() for the two destructive
+  // actions on this screen — revoke (hard, irreversible) and rotate
+  // (immediate cutover that breaks the integrator until they redeploy).
+  const [revokeTarget, setRevokeTarget] = useState<ApiKey | null>(null)
+  const [confirmRotate, setConfirmRotate] = useState(false)
+
   const { data: keys, isLoading } = useQuery({
     queryKey: ['api-keys'],
     queryFn: getApiKeys,
@@ -125,7 +134,15 @@ export default function ApiKeysScreen() {
 
   const revoke = useMutation({
     mutationFn: revokeApiKey,
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['api-keys'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['api-keys'] })
+      setRevokeTarget(null)
+      toast.success(isNl ? 'API-sleutel ingetrokken' : 'API key revoked')
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Intrekken mislukt: ${msg}` : `Revoke failed: ${msg}`)
+    },
   })
 
   const update = useMutation({
@@ -138,7 +155,17 @@ export default function ApiKeysScreen() {
 
   const rotate = useMutation({
     mutationFn: () => rotateWebhookSecret(editTarget!.id),
-    onSuccess: (result) => setRotatedSecret(result.webhook_secret),
+    onSuccess: (result) => {
+      setRotatedSecret(result.webhook_secret)
+      setConfirmRotate(false)
+      toast.success(isNl
+        ? 'Geheim geroteerd — kopieer het nu, het wordt niet opnieuw getoond.'
+        : 'Secret rotated — copy it now, it will not be shown again.')
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Roteren mislukt: ${msg}` : `Rotate failed: ${msg}`)
+    },
   })
 
   function toggleEvent(event: string) {
@@ -496,13 +523,7 @@ export default function ApiKeysScreen() {
                 ) : (
                   <button
                     type="button"
-                    onClick={() => {
-                      if (confirm(isNl
-                        ? 'Het oude geheim stopt onmiddellijk met werken. Doorgaan?'
-                        : 'The old secret stops working immediately. Continue?')) {
-                        rotate.mutate()
-                      }
-                    }}
+                    onClick={() => setConfirmRotate(true)}
                     disabled={rotate.isPending}
                     style={{
                       padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 700,
@@ -657,11 +678,7 @@ export default function ApiKeysScreen() {
                           {isNl ? 'Webhook bewerken' : 'Edit webhook'}
                         </button>
                         <button
-                          onClick={() => {
-                            if (confirm(isNl ? 'Weet je zeker dat je deze sleutel wilt intrekken?' : 'Revoke this API key?')) {
-                              revoke.mutate(key.id)
-                            }
-                          }}
+                          onClick={() => setRevokeTarget(key)}
                           style={{
                             padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
                             background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca',
@@ -701,6 +718,40 @@ export default function ApiKeysScreen() {
           </div>
         )}
       </div>
+
+      {/* Styled destructive confirms — Escape-closes, surfaces real
+          impact, and pins the dialog while the mutation is in flight. */}
+      <ConfirmDialog
+        isOpen={revokeTarget !== null}
+        loading={revoke.isPending}
+        tone="danger"
+        title={isNl ? 'API-sleutel intrekken?' : 'Revoke API key?'}
+        message={
+          isNl
+            ? `${revokeTarget?.pos_system ?? 'Deze sleutel'} kan vanaf nu geen verkopen of webhooks meer versturen. Deze actie is permanent.`
+            : `${revokeTarget?.pos_system ?? 'This key'} will be unable to push sales or receive webhooks. This action is permanent.`
+        }
+        confirmLabel={isNl ? 'Trek in' : 'Revoke'}
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setRevokeTarget(null)}
+        onConfirm={() => revokeTarget && revoke.mutate(revokeTarget.id)}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmRotate}
+        loading={rotate.isPending}
+        tone="warning"
+        title={isNl ? 'Webhook-geheim roteren?' : 'Rotate webhook secret?'}
+        message={
+          isNl
+            ? 'Het oude geheim stopt onmiddellijk met werken. De integrator moet het nieuwe geheim direct overnemen.'
+            : 'The old secret stops working immediately. The integrator must adopt the new secret right away.'
+        }
+        confirmLabel={isNl ? 'Roteer' : 'Rotate'}
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setConfirmRotate(false)}
+        onConfirm={() => rotate.mutate()}
+      />
     </div>
   )
 }

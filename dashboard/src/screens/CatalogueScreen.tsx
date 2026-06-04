@@ -14,6 +14,8 @@ import {
 import { type Organisation } from '@/api/organisations'
 import { useDashboardAuthStore } from '@/store/authStore'
 import apiClient from '@/api/client'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useToast } from '@/components/shared/Toast'
 
 /**
  * Push-catalogue button: broadcasts a `catalogue.refresh` event over
@@ -659,6 +661,11 @@ export default function CatalogueScreen() {
   const [editCategory, setEditCategory]   = useState<Category | undefined>()
   const [showProductForm, setShowProductForm]   = useState(false)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
+  // Replaces window.confirm for product (de)activation. Category toggle +
+  // variant delete are smaller-impact and still use confirm() for now —
+  // can sweep in a follow-up.
+  const [productToggle, setProductToggle] = useState<Product | null>(null)
+  const toast = useToast()
 
   // For non-super-admins, the org is their own
   const effectiveOrgId = isSuperAdmin ? (selectedOrgId || null) : (currentUser?.organisation_id ?? null)
@@ -687,7 +694,19 @@ export default function CatalogueScreen() {
 
   const toggleProductStatus = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => updateProduct(id, { is_active: active }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['products'] })
+      setProductToggle(null)
+      toast.success(
+        vars.active
+          ? (isNl ? 'Product geactiveerd' : 'Product activated')
+          : (isNl ? 'Product gedeactiveerd' : 'Product deactivated'),
+      )
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Kon product niet bijwerken: ${msg}` : `Could not update product: ${msg}`)
+    },
   })
 
   const toggleCategoryStatus = useMutation({
@@ -922,7 +941,7 @@ export default function CatalogueScreen() {
                             style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid #e0e0ed', background: '#f8f7ff', color: '#6d28d9', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>
                             {isNl ? 'Bewerken' : 'Edit'}
                           </button>
-                          <button onClick={() => { if (confirm(isNl ? `"${p.name_nl}" ${p.is_active ? 'deactiveren' : 'activeren'}?` : `${p.is_active ? 'Deactivate' : 'Activate'} "${p.name_en}"?`)) toggleProductStatus.mutate({ id: p.id, active: !p.is_active }) }}
+                          <button onClick={() => setProductToggle(p)}
                             style={{ padding: '4px 10px', borderRadius: 7, border: '1px solid', fontSize: 11, fontWeight: 600, cursor: 'pointer', ...(p.is_active ? { background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' } : { background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' }) }}>
                             {p.is_active ? (isNl ? 'Deact.' : 'Deact.') : (isNl ? 'Act.' : 'Act.')}
                           </button>
@@ -1049,6 +1068,32 @@ export default function CatalogueScreen() {
           onClose={() => { setShowCategoryForm(false); setEditCategory(undefined) }}
         />
       )}
+
+      {/* Styled confirm — surfaces real consequence of deactivating
+          a product (POS hides it but historical reports remain intact). */}
+      <ConfirmDialog
+        isOpen={productToggle !== null}
+        loading={toggleProductStatus.isPending}
+        tone={productToggle?.is_active ? 'danger' : 'default'}
+        title={
+          productToggle?.is_active
+            ? (isNl ? 'Product deactiveren?' : 'Deactivate product?')
+            : (isNl ? 'Product activeren?'   : 'Activate product?')
+        }
+        message={
+          productToggle?.is_active
+            ? (isNl
+                ? `${productToggle?.name_nl} wordt verborgen op de POS. Historische verkopen en rapporten blijven beschikbaar.`
+                : `${productToggle?.name_en} will be hidden on the POS. Past sales and reports stay intact.`)
+            : (isNl
+                ? `${productToggle?.name_nl} wordt opnieuw zichtbaar op alle POS-terminals.`
+                : `${productToggle?.name_en} becomes visible again on every POS terminal.`)
+        }
+        confirmLabel={productToggle?.is_active ? (isNl ? 'Deactiveer' : 'Deactivate') : (isNl ? 'Activeer' : 'Activate')}
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setProductToggle(null)}
+        onConfirm={() => productToggle && toggleProductStatus.mutate({ id: productToggle.id, active: !productToggle.is_active })}
+      />
     </div>
   )
 }
