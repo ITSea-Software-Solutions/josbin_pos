@@ -39,6 +39,11 @@ return [
     'exchangerate_api' => [
         'key'        => env('EXCHANGERATE_API_KEY'),
         'markup_pct' => env('EXCHANGERATE_MARKUP_PCT', '0.00'),
+        // Static USD→SRD fallback used when there's no real API key yet and
+        // no prior rate to carry forward (fresh install / demo). Last resort
+        // before the "no rate" error — keeps the POS sellable out of the box.
+        // Set to null to force a hard error instead (strict production).
+        'static_rate' => env('EXCHANGERATE_STATIC_RATE', '37.50'),
     ],
 
     // OpenAI — used for fraud detection narrative + weekly AI summary

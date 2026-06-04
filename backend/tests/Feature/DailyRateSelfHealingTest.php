@@ -116,8 +116,10 @@ class DailyRateSelfHealingTest extends TestCase
 
     public function test_returns_null_when_no_rate_and_no_api_key_and_no_previous(): void
     {
-        // Cold start: no key, no previous row, API not reachable.
+        // Cold start: no key, no previous row, API not reachable, AND no
+        // static fallback configured → the only path that still 422s.
         config(['services.exchangerate_api.key' => null]);
+        config(['services.exchangerate_api.static_rate' => null]);
 
         $result = $this->service->ensureTodayRate();
 
@@ -125,6 +127,40 @@ class DailyRateSelfHealingTest extends TestCase
         $this->assertDatabaseMissing('daily_rates', [
             'date' => today()->toDateString(),
         ]);
+    }
+
+    public function test_uses_static_rate_when_configured_and_no_other_source(): void
+    {
+        // Fresh install, no API key, no previous rate, but a static fallback
+        // is configured → POS stays sellable instead of 422-ing.
+        config(['services.exchangerate_api.key' => null]);
+        config(['services.exchangerate_api.static_rate' => '37.50']);
+
+        $result = $this->service->ensureTodayRate();
+
+        $this->assertNotNull($result, 'Static fallback should keep the POS sellable.');
+        $this->assertEquals(0, bccomp('37.50', $result->usd_to_srd, 4));
+        $this->assertEquals('manual', $result->source);
+        $this->assertDatabaseHas('daily_rates', ['date' => today()->toDateString()]);
+        // And it must be audit-logged as a static fallback (Rekenkamer trail).
+        $this->assertDatabaseHas('audit_logs', ['event' => 'rate.static_fallback_applied']);
+    }
+
+    public function test_previous_rate_preferred_over_static_fallback(): void
+    {
+        // Carry-forward (real last-known rate) beats a hardcoded static one.
+        DailyRate::create([
+            'date'       => today()->subDay()->toDateString(),
+            'usd_to_srd' => '38.10', 'raw_rate' => '38.10',
+            'markup_pct' => '0.00', 'source' => 'manual', 'locked_at' => now()->subDay(),
+        ]);
+        config(['services.exchangerate_api.key' => null]);
+        config(['services.exchangerate_api.static_rate' => '37.50']);
+
+        $result = $this->service->ensureTodayRate();
+
+        $this->assertEquals(0, bccomp('38.10', $result->usd_to_srd, 4),
+            'Yesterday\'s real rate must win over the static default.');
     }
 
     public function test_falls_back_to_previous_when_api_key_missing(): void

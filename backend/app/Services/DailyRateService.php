@@ -58,9 +58,54 @@ class DailyRateService
             return $fallback;
         }
 
-        // Layer 4 — truly empty. Caller (SaleController) translates this to a
+        // Layer 4 — static configured rate (fresh install / no API key yet).
+        // Keeps the POS sellable out of the box; set static_rate=null to opt
+        // out and force the hard error instead.
+        $static = $this->tryStaticFallback($today);
+        if ($static) {
+            return $static;
+        }
+
+        // Layer 5 — truly empty. Caller (SaleController) translates this to a
         // human-readable error pointing at Settings → Daily Rate + vendor support.
         return null;
+    }
+
+    /**
+     * Last-resort static rate from config (services.exchangerate_api.static_rate).
+     * Used only when there's no API key and no previous rate to carry forward —
+     * i.e. a brand-new install. Locked as source='manual' and audit-logged so
+     * the OA/Rekenkamer can see it was a configured default, not a market rate.
+     */
+    private function tryStaticFallback(string $today): ?DailyRate
+    {
+        $static = config('services.exchangerate_api.static_rate');
+        if ($static === null || $static === '' || (float) $static <= 0) {
+            return null;
+        }
+        $static = (string) $static;
+
+        $rate = DailyRate::updateOrCreate(
+            ['date' => $today],
+            [
+                'usd_to_srd'   => $static,
+                'raw_rate'     => $static,
+                'markup_pct'   => '0.00',
+                'source'       => 'manual',
+                'locked_at'    => now(),
+                'api_response' => [
+                    'kind'   => 'static_configured',
+                    'reason' => 'No API key and no previous rate — using configured static_rate',
+                ],
+            ]
+        );
+
+        Cache::put("daily_rate:{$today}", $static, 86400);
+        $this->auditRateEvent('rate.static_fallback_applied', $rate, [
+            'reason' => 'No API key and no previous rate — used configured static_rate',
+        ]);
+
+        return $rate;
     }
 
     /**
