@@ -70,7 +70,12 @@ class DailyRateService
     private function tryFetchFromApi(string $today): ?DailyRate
     {
         $apiKey = config('services.exchangerate_api.key');
-        if (! $apiKey) {
+        // Treat an unset OR shipped-placeholder key as "no key" so we skip a
+        // doomed 5s HTTP call (the API answers 403 invalid-key) and fall
+        // straight through to carry-forward. A real install replaces this in
+        // the server .env: EXCHANGERATE_API_KEY=<real key>.
+        $placeholders = ['your_api_key_here', 'your_api_key', 'changeme', 'replace_me'];
+        if (! $apiKey || in_array($apiKey, $placeholders, true)) {
             return null;
         }
 
