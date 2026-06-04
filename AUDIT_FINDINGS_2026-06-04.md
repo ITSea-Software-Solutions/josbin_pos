@@ -16,11 +16,13 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 
 ## 🔴 P0 — fix before next demo (silent loss / compliance breach)
 
+> **Batch 1 shipped 2026-06-04** — P0-1, P0-2, P0-3, P1-P1 all resolved. See commit + G-020 in CLAUDE_WORKING_GUIDE. Oversell policy is now per-org configurable (`organisations.block_oversell`, default OFF = allow + track negative). Tests: `OversellPolicyTest` + updated `SaleStoreTest`.
+
 | # | Area | Finding | Effort |
 |---|------|---------|--------|
-| **P0-1** | sales | **Stock decrement runs in a queued job AFTER commit** (`SaleController.php:335`). If the queue is down or the job fails, the sale is recorded but stock is never decremented. Two concurrent sales of the last unit both succeed → oversell. **Fix:** move `StockMovementService::recordSale` inside the same `DB::transaction` block. | M |
-| **P0-2** | sales | **`max(0.0, …)` silent clamp on oversell** (`StockMovementService.php:71`). Audit ledger goes mathematically inconsistent (Σ qty_change ≠ current stock) and no exception is raised. Cashier and Z-Report show success while customer leaves with a phantom item. **Fix:** throw `InsufficientStockException`, abort the sale txn; never silently clamp. | S |
-| **P0-3** | sales | **Variant stock can go negative** (`SaleController.php:277-281`). `lockForUpdate()->first()` then `decrement()` doesn't use the locked snapshot; no DB CHECK on `product_variants.stock_qty >= 0`. **Fix:** add CHECK constraints on `product_variants.stock_qty` and `product_stocks.stock_qty`; explicit guarded update inside the lock. | M |
+| ✅ **P0-1** | sales | **DONE.** Stock decrement was in a queued job after commit → queue outage = oversell. Moved `StockMovementService::recordSale` inside the sale `DB::transaction`. | M |
+| ✅ **P0-2** | sales | **DONE.** `max(0.0,…)` clamp removed — `qty_after` is now the honest running balance (can go negative), ledger stays consistent. Strict mode (`block_oversell=true`) throws `InsufficientStockException` (422) and rolls the sale back. | S |
+| ✅ **P0-3** | sales | **DONE.** Variant `->lockForUpdate()->decrement()` (a no-op lock) replaced with `SELECT … FOR UPDATE` + guarded `update()`, respecting the org oversell policy. No DB CHECK — default policy allows negative by design. | M |
 | **P0-4** | compliance | **BTW submission hash chain is org-global** (`BtwSubmissionService.php:125`). One org's filing creates a hash link in another org's sequence — verify-chain breaks unpredictably and `prev_hash` proves nothing. **Fix:** scope `getLastHash` to `organisation_id`, order by `id` not `submitted_at`. | S |
 | **P0-5** | security | **`?token=` query auth accepts full 12h wildcard tokens** (`AuthenticateViaQueryToken.php:26-42`). Token ends up in webserver access logs / browser history / Referer headers; full account takeover if anyone reads logs. Receipt-PDF links are shared by email. **Fix:** issue short-lived `receipt:{sale_id}` ability tokens; reject `*` in this middleware. | M |
 | **P0-6** | security | **Cross-tenant PII leak via guessed `customer_id`** (`SaleController.php:45,433`). Validation is `exists:customers,id` with no org scope; a cashier in Org A can attach a Customer UUID from Org B to a sale, then receipt decrypts and prints that customer's WBP-S-protected name/phone/email. **Fix:** `Rule::exists('customers','id')->where('organisation_id', $orgId)`. | S |
@@ -58,7 +60,7 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 ### Performance (the 200ms budget at scale)
 | # | Finding | Effort |
 |---|---------|--------|
-| P1-P1 | **`stockForStore()` N+1 on POS startup.** `$this->storeStocks()->where(...)->first()` re-queries DB per product. At 5000 products × 10 terminals starting = 50k extra queries on `/api/products/pos`. **Fix:** use the loaded collection — `$this->storeStocks->firstWhere('store_id', $storeId)` (no `()`). 5-line change. | S |
+| ✅ P1-P1 | **DONE.** `stockForStore()` / `lowStockThresholdForStore()` / `priceForStore()` now read the eager-loaded collection via `relationLoaded()` guard; `pos()` eager-loads `storeOverrides` too. POS startup no longer fires a query per product. | S |
 | P1-P2 | **`/api/products/pos` returns ALL active products unpaginated** with every storeStocks row eager-loaded. At 50 stores × 10k SKUs = 500k product_stocks rows pulled into PHP per terminal startup. OOM risk. **Fix:** constrain eager-load to requesting `store_id`; paginate 500 + incremental `updated_since` sync. | M |
 | P1-P3 | **`whereDate('occurred_at', ...)` defeats `(store_id, occurred_at)` index** in dashboard summary, store detail, every report. At 1M+ rows the planner switches to seq scan. **Fix:** sweep `whereDate` → `whereBetween($from, $toEndOfDay)`. 10–100× perf gain on reports. | M |
 | P1-P4 | **`storeDetail` runs 9 sequential queries** every 60 seconds × N dashboards. Several use function-wrapped TZ casts → cannot use index. **Fix:** add expression index `(store_id, DATE(occurred_at AT TIME ZONE 'America/Paramaribo'))` OR rewrite as `BETWEEN`. | M |

@@ -29,6 +29,9 @@ return [
     'refund_only_completed'         => 'Only completed sales can be refunded.',
     'receipt_emailed'               => 'Receipt emailed to :email.',
 
+    // Sales — inventory (strict mode only; default policy allows oversell)
+    'insufficient_stock'            => 'Insufficient stock for ":product". Only :available left. Adjust stock via Dashboard → Stock, or lower the quantity.',
+
     // Licence / organisation
     'no_active_licence_for_stores'  => 'No active licence for this organisation. Ask the Super Admin to issue one before creating stores.',
 ];

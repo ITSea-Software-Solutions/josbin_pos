@@ -207,7 +207,14 @@ class SaleController extends Controller
             saleDiscountPct: $manualCartDiscountPct,
         );
 
-        $sale = DB::transaction(function () use ($data, $cart, $rate, $request) {
+        // Oversell policy is per-organisation (default OFF = allow + track
+        // negative). Resolve it once so both the variant guard and the
+        // product-stock ledger below enforce the same rule.
+        $blockOversell = (bool) \App\Models\Organisation::query()
+            ->where('id', $request->user()->organisation_id)
+            ->value('block_oversell');
+
+        $sale = DB::transaction(function () use ($data, $cart, $rate, $request, $blockOversell) {
             // Payment amounts — cash tendered, card paid, and change due.
             $cashTendered = isset($data['cash_tendered']) ? (string) $data['cash_tendered'] : null;
             $cardAmount   = isset($data['card_amount'])   ? (string) $data['card_amount']   : null;
@@ -270,14 +277,35 @@ class SaleController extends Controller
                 $calc = $cart['items'][$i];
 
                 // Decrement variant stock here (parent product stock is
-                // handled by StockMovementService::applyToSale below — that
+                // handled by StockMovementService::recordSale below — that
                 // works at the per-store product_stocks table). Variant
                 // stock is org-wide on the variant row for v1; per-store
                 // variant stock is a phase-3 migration when a chain needs it.
+                //
+                // Lock the row with SELECT … FOR UPDATE, then write the new
+                // value explicitly. The previous `->lockForUpdate()->decrement()`
+                // never actually locked — FOR UPDATE is only honoured on a
+                // SELECT, so the decrement UPDATE ran lock-free and two
+                // concurrent sales of the last unit could both succeed and
+                // drive stock negative. We reuse the locked row for the cost
+                // snapshot below so there's no second fetch.
+                $variant = null;
                 if (! empty($item['variant_id'])) {
-                    \App\Models\ProductVariant::where('id', $item['variant_id'])
+                    $variant = \App\Models\ProductVariant::where('id', $item['variant_id'])
                         ->lockForUpdate()
-                        ->decrement('stock_qty', (float) $item['quantity']);
+                        ->first();
+                    if ($variant) {
+                        $newVariantQty = bcsub((string) $variant->stock_qty, (string) $item['quantity'], 3);
+                        if ($blockOversell && bccomp($newVariantQty, '0', 3) < 0) {
+                            throw new \App\Exceptions\InsufficientStockException(
+                                productName: trim(($item['product_name'] ?? '').' '.($item['variant_name'] ?? ''))
+                                    ?: ($variant->name_nl ?? (string) $variant->id),
+                                available: (float) $variant->stock_qty,
+                                requested: (float) $item['quantity'],
+                            );
+                        }
+                        $variant->update(['stock_qty' => $newVariantQty]);
+                    }
                 }
 
                 // Snapshot cost at sale time — variant's effective cost (its
@@ -286,9 +314,8 @@ class SaleController extends Controller
                 // line_profit = line_total - (cost * qty). Both NULL if cost
                 // is unknown, so reports can SUM() without a CASE.
                 $costSnap = null;
-                if (! empty($item['variant_id'])) {
-                    $variant  = \App\Models\ProductVariant::find($item['variant_id']);
-                    $costSnap = $variant?->effectiveCost();
+                if ($variant) {
+                    $costSnap = $variant->effectiveCost();
                 } elseif (! empty($item['product_id'])) {
                     $costSnap = \App\Models\Product::where('id', $item['product_id'])->value('cost_price');
                 }
@@ -328,11 +355,17 @@ class SaleController extends Controller
                     ->increment('total_spend_srd', (float) $cart['total']);
             }
 
+            // Decrement per-store product stock + write the movement ledger
+            // INSIDE this transaction. Previously this was an async queued job
+            // dispatched after commit — if the queue was down or the job failed
+            // (3 tries then just logged), the sale committed but stock was never
+            // decremented → real oversell. Now a strict-mode oversell throws
+            // here and rolls the entire sale back; a queue outage can no longer
+            // desync sale and stock.
+            $this->stock->recordSale($sale, $request->user()->id, $blockOversell);
+
             return $sale;
         });
-
-        // Deduct stock for each sold item — runs in its own queued job to keep POST fast
-        \App\Jobs\RecordStockMovements::dispatch($sale->id, $request->user()->id, 'sale');
 
         // Broadcast to dashboard and POS terminals (queued — does not block response)
         broadcast(new SaleCompletedEvent($sale->load('store')))->toOthers();

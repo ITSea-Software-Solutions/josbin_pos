@@ -255,6 +255,21 @@ PHPUnit: `LicenseStoreCreationGateTest` covers all four cases (4 tests, 13 asser
 **Fix:** `(int) floor(now()->startOfDay()->diffInDays($lic->valid_until, false))`.
 **Lesson:** Any time we show a "days" number, cast to int. Don't trust the library to do it.
 
+#### G-020 (2026-06-04) Stock decrement ran in an async job AFTER the sale committed
+**Symptom:** Audit found that `SaleController::store` committed the sale, then dispatched `RecordStockMovements` onto the queue. If the queue was down or the job exhausted its 3 retries (then just `Log::error`'d), the sale was on record but stock was never decremented → real oversell. Worse: `StockMovementService::record` did `max(0.0, stock + delta)` which silently clamped oversells to zero, so the movement ledger became mathematically inconsistent (Σ qty_change ≠ qty_after) with no error raised.
+**Fix:**
+- Moved `recordSale()` INSIDE the sale `DB::transaction`. A queue outage can no longer desync sale and stock; a rejected oversell now rolls the whole sale back.
+- Removed the `max(0.0, …)` clamp. `qty_after = stock + delta` (can go negative) so the ledger stays honest and a negative surfaces a wrong count.
+- New per-org policy `organisations.block_oversell` (default **false** = allow + track negative; **true** = throw `InsufficientStockException` (422) and roll back). Toggle in Organisations → edit. Chosen over a hard DB CHECK because the default must allow negative; a CHECK would break it.
+- Fixed the variant decrement: `->lockForUpdate()->decrement()` never actually locked (FOR UPDATE is ignored on an UPDATE; only honoured on SELECT). Replaced with `SELECT … FOR UPDATE` then explicit guarded `update()`, reusing the locked row for the cost snapshot.
+**Tests:** `OversellPolicyTest` (3) + rewritten `SaleStoreTest::test_sale_decrements_per_store_stock` (asserts in-transaction decrement + ledger row, `Bus::assertNotDispatched` for the 'sale' reason — void/refund still async).
+**Lesson:** Money/stock mutations belong in the same transaction as the thing that causes them. "Dispatch it async to keep the response fast" is a correctness trap for anything that must agree with the committed row. And `->lockForUpdate()->decrement()` is a no-op lock — always SELECT FOR UPDATE then UPDATE.
+
+#### G-021 (2026-06-04) Time-bomb test: hardcoded month went red when the clock rolled
+**Symptom:** `BtwSubmissionTest::test_inspector_dashboard_returns_platform_scope` started failing ("array is not empty") with zero code changes to that feature — purely because the system date rolled from May into June 2026. The test filed a `2026-05-20` submission but `inspector-dashboard`'s `top_orgs_month` windows to `startOfMonth()→now` (June), so the May row fell outside the window.
+**Fix:** Anchor the test's sale + submission to `Carbon::now('America/Paramaribo')->startOfMonth()` instead of a hardcoded date.
+**Lesson:** Any test that asserts on a "this month / today / last N days" aggregation must build its fixtures relative to `now()`, never a hardcoded calendar date. Hardcoded dates in time-windowed tests are latent failures that detonate on a future run with no warning.
+
 ### UI / cross-surface
 
 #### G-010 (2026-05-26) Feature added to one screen, missing from every other

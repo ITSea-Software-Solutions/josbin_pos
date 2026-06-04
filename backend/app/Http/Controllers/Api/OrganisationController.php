@@ -53,6 +53,7 @@ class OrganisationController extends Controller
             'btw_number'        => ['nullable', 'string', 'max:50'],
             'locale'            => ['required', Rule::in(['nl', 'en'])],
             'is_government'     => ['sometimes', 'boolean'],
+            'block_oversell'    => ['sometimes', 'boolean'],
             'subscription_tier' => ['required', Rule::in(['starter', 'professional', 'enterprise'])],
         ]);
 
@@ -88,6 +89,7 @@ class OrganisationController extends Controller
             'btw_number'        => ['nullable', 'string', 'max:50'],
             'locale'            => ['sometimes', Rule::in(['nl', 'en'])],
             'is_government'     => ['sometimes', 'boolean'],
+            'block_oversell'    => ['sometimes', 'boolean'],
             'subscription_tier' => ['sometimes', Rule::in(['starter', 'professional', 'enterprise'])],
             'is_active'         => ['sometimes', 'boolean'],
         ]);

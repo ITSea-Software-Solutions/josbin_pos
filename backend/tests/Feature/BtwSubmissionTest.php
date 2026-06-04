@@ -380,11 +380,17 @@ class BtwSubmissionTest extends TestCase
 
     public function test_inspector_dashboard_returns_platform_scope(): void
     {
-        // File some submissions across both orgs to exercise the aggregation
-        $when = Carbon::parse('2026-05-20', 'America/Paramaribo')->setTime(12, 0);
+        // `top_orgs_month` windows to the CURRENT calendar month (startOfMonth →
+        // now), so anchor the test sale + submission to this month rather than a
+        // hardcoded date — otherwise the test silently goes red once the clock
+        // rolls past the hardcoded month.
+        $periodDay = Carbon::now('America/Paramaribo')->startOfMonth();
+        $when      = $periodDay->copy()->setTime(9, 0);
         $this->makeSale($this->storeA, $this->cashierA, '110.00', '10.00', $when);
         $this->actingAs($this->oaA, 'sanctum')->postJson('/api/btw-submissions', [
-            'period_type' => 'daily', 'period_start' => '2026-05-20', 'period_end' => '2026-05-20',
+            'period_type'  => 'daily',
+            'period_start' => $periodDay->toDateString(),
+            'period_end'   => $periodDay->toDateString(),
         ])->assertCreated();
 
         $resp = $this->actingAs($this->inspector, 'sanctum')->getJson('/api/btw-submissions/inspector-dashboard');

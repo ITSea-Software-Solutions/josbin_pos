@@ -117,7 +117,8 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | CAT-08 | 📡 Push catalogue to POS (WebSocket broadcast) | ✅ | OA | `ProductController::push` → Reverb | `dashboard_manual/04 §4.8` |
 | CAT-09 | Product image upload (JPEG/PNG/WebP, 2 MB max) | ✅ | OA | `ProductController::uploadImage` | `dashboard_manual/04 §4.6` |
 | CAT-10 | Per-store stock via `product_stocks` table | ✅ | OA, SM | `StockMovementService`, `product_stocks` migration | `dashboard_manual/08` |
-| CAT-11 | Stock movement ledger (append-only, decremented on sale) | ✅ | All (auto) | `RecordStockMovements` queued job | `dashboard_manual/08 §8.3` |
+| CAT-11 | Stock movement ledger (append-only, decremented in the sale transaction) | ✅ | All (auto) | `StockMovementService::recordSale` (in-txn for sales; `RecordStockMovements` job still used for void/refund) | `dashboard_manual/08 §8.3` |
+| CAT-11b | Oversell policy per org (`block_oversell`, default OFF = allow + track negative) | ✅ | OA, SA | `organisations.block_oversell`, `InsufficientStockException`, Organisations → edit toggle | G-020 |
 | CAT-12 | Stock-history endpoint per product | ✅ | OA, SM | `ProductController::stockHistory` | `dashboard_manual/08 §8.4` |
 | CAT-13 | Low-stock threshold (`low_stock_threshold` per product) | ✅ | OA | `ProductController::store/update` | `dashboard_manual/08 §8.7` |
 | CAT-14 | Low-stock alert badge on dashboard | ✅ | OA, SM | `ProductsTable.tsx` | `dashboard_manual/08 §8.7` |

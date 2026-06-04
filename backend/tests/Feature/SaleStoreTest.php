@@ -314,7 +314,7 @@ class SaleStoreTest extends TestCase
         $response->assertStatus(401);
     }
 
-    // ─── Stock decrement via RecordStockMovements job ────────────────────────
+    // ─── Stock decrement happens IN the sale transaction ─────────────────────
 
     public function test_sale_decrements_per_store_stock(): void
     {
@@ -346,19 +346,25 @@ class SaleStoreTest extends TestCase
 
         $response->assertStatus(201);
 
-        // The controller dispatches RecordStockMovements onto the queue. Bus
-        // is faked, so we assert the dispatch happened then invoke the service
-        // synchronously — same code path the queue worker would take.
-        $sale = Sale::first();
-        Bus::assertDispatched(\App\Jobs\RecordStockMovements::class);
-
-        app(\App\Services\StockMovementService::class)->recordSale($sale, $this->cashier->id);
+        // Stock is now decremented INSIDE the sale transaction — no queued job,
+        // no manual replay. A queue outage can no longer leave a committed sale
+        // with un-decremented stock. The 'sale' reason is NOT dispatched async
+        // anymore (void/refund still are).
+        Bus::assertNotDispatched(\App\Jobs\RecordStockMovements::class);
 
         $after = ProductStock::where('product_id', $this->cola->id)
             ->where('store_id', $this->store->id)
             ->firstOrFail();
 
-        // Started at 50.000, sold 2 → 48.000
+        // Started at 50.000, sold 2 → 48.000 (no double-count)
         $this->assertSame('48.000', (string) $after->stock_qty);
+
+        // The movement ledger row was written too, in the same transaction.
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $this->cola->id,
+            'store_id'   => $this->store->id,
+            'reason'     => 'sale',
+            'qty_change' => '-2.000',
+        ]);
     }
 }

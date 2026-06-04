@@ -15,12 +15,13 @@ class Organisation extends Model implements Auditable
 
     protected $fillable = [
         'name', 'type', 'btw_number', 'currency', 'locale',
-        'is_government', 'subscription_tier', 'is_active',
+        'is_government', 'block_oversell', 'subscription_tier', 'is_active',
     ];
 
     protected $casts = [
-        'is_government' => 'boolean',
-        'is_active'     => 'boolean',
+        'is_government'  => 'boolean',
+        'block_oversell' => 'boolean',
+        'is_active'      => 'boolean',
     ];
 
     public function stores(): HasMany

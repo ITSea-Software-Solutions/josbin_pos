@@ -8,6 +8,7 @@ export interface Organisation {
   currency: 'SRD'
   locale: 'nl' | 'en'
   is_government: boolean
+  block_oversell: boolean
   subscription_tier: string
   is_active: boolean
   store_count: number
@@ -72,7 +73,7 @@ export async function createOrganisation(payload: CreateOrgPayload): Promise<Org
 
 export async function updateOrganisation(
   id: string,
-  payload: Partial<CreateOrgPayload> & { is_active?: boolean; allow_impersonation?: boolean },
+  payload: Partial<CreateOrgPayload> & { is_active?: boolean; allow_impersonation?: boolean; block_oversell?: boolean },
 ): Promise<Organisation> {
   const res = await apiClient.put<{ data: Organisation }>(`/organisations/${id}`, payload)
   return res.data.data

@@ -113,11 +113,20 @@ class Product extends Model implements Auditable
      */
     public function stockForStore(?string $storeId): string
     {
+        // Prefer the eager-loaded collection when present (POS grid loads
+        // `storeStocks` for every product). Calling the relation *builder*
+        // — $this->storeStocks()->… — re-queries the DB once per product,
+        // which on a 5,000-SKU POS startup is 5,000 extra queries. Reading
+        // the already-hydrated collection costs nothing.
         if (! $storeId) {
-            return (string) $this->storeStocks()->sum('stock_qty');
+            return (string) ($this->relationLoaded('storeStocks')
+                ? $this->storeStocks->sum('stock_qty')
+                : $this->storeStocks()->sum('stock_qty'));
         }
 
-        $row = $this->storeStocks()->where('store_id', $storeId)->first();
+        $row = $this->relationLoaded('storeStocks')
+            ? $this->storeStocks->firstWhere('store_id', $storeId)
+            : $this->storeStocks()->where('store_id', $storeId)->first();
 
         // No row yet means the store hasn't seen movement — fall back to the
         // catalogue default. StockMovementService will create the row on first sale.
@@ -131,7 +140,9 @@ class Product extends Model implements Auditable
             return (string) $this->low_stock_threshold;
         }
 
-        $row = $this->storeStocks()->where('store_id', $storeId)->first();
+        $row = $this->relationLoaded('storeStocks')
+            ? $this->storeStocks->firstWhere('store_id', $storeId)
+            : $this->storeStocks()->where('store_id', $storeId)->first();
 
         return (string) ($row?->low_stock_threshold ?? $this->low_stock_threshold ?? 0);
     }
@@ -154,9 +165,11 @@ class Product extends Model implements Auditable
             return (string) $this->price;
         }
 
-        $override = $this->storeOverrides()
-            ->where('store_id', $storeId)
-            ->first();
+        // Same N+1 guard as stockForStore — use the eager-loaded collection
+        // when the caller (POS grid) has loaded `storeOverrides`.
+        $override = $this->relationLoaded('storeOverrides')
+            ? $this->storeOverrides->firstWhere('store_id', $storeId)
+            : $this->storeOverrides()->where('store_id', $storeId)->first();
 
         return (string) ($override?->price_override ?? $this->price);
     }

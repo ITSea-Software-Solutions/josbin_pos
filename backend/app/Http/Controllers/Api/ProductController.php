@@ -70,7 +70,10 @@ class ProductController extends Controller
         $products = Product::query()
             ->where('organisation_id', $request->user()->organisation_id)
             ->where('is_active', true)
-            ->with(['category:id,name_nl,name_en,icon,color', 'storeStocks'])
+            // Eager-load both per-store relations so priceForStore() and
+            // stockForStore() read the hydrated collections instead of
+            // firing a query per product (5,000-SKU startup = 5,000 queries).
+            ->with(['category:id,name_nl,name_en,icon,color', 'storeStocks', 'storeOverrides'])
             ->orderBy('name_nl')
             ->get()
             ->map(function (Product $p) use ($storeId) {

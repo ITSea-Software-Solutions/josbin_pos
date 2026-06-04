@@ -589,13 +589,14 @@ function AddStoreModal({ orgId, isNl, onClose, onCreated }: {
 // ─── OrgEditModal ─────────────────────────────────────────────────────────────
 function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean; onClose: () => void }) {
   const qc = useQueryClient()
-  const [form, setForm] = useState<Partial<CreateOrgPayload> & { is_active?: boolean }>({
+  const [form, setForm] = useState<Partial<CreateOrgPayload> & { is_active?: boolean; block_oversell?: boolean }>({
     name: org.name,
     type: org.type,
     btw_number: org.btw_number,
     locale: org.locale,
     subscription_tier: (org.subscription_tier as 'starter' | 'professional' | 'enterprise') ?? 'starter',
     is_government: org.is_government,
+    block_oversell: org.block_oversell,
     is_active: org.is_active,
   })
 
@@ -690,6 +691,13 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
                 field: 'is_government' as const,
                 title: isNl ? 'Overheidsinstelling' : 'Government organisation',
                 desc: isNl ? 'Verplicht 2FA, Rekenkamer-export, aparte database.' : 'Mandatory 2FA, Rekenkamer export, isolated database.',
+              },
+              {
+                field: 'block_oversell' as const,
+                title: isNl ? 'Verkoop blokkeren bij onvoldoende voorraad' : 'Block sales when out of stock',
+                desc: isNl
+                  ? 'Aan: een verkoop die de voorraad onder nul brengt wordt geweigerd. Uit (standaard): verkoop gaat door, voorraad mag negatief worden om foute tellingen zichtbaar te maken.'
+                  : 'On: a sale that would drive stock below zero is rejected. Off (default): the sale completes and stock may go negative to surface wrong counts.',
               },
             ].map(({ field, title, desc }) => (
               <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>

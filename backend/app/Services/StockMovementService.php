@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\InsufficientStockException;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Models\StockMovement;
@@ -28,13 +29,20 @@ class StockMovementService
      * Atomically adjust stock_qty and record the movement.
      *
      * @param Product     $product
-     * @param float       $qtyChange  Signed delta — negative to deduct
-     * @param string      $reason     One of StockMovement::REASONS
-     * @param string      $storeId    UUID of the store where the movement occurred
-     * @param Sale|null   $sale       Associated sale (if applicable)
-     * @param string|null $userId     UUID of the acting user (null = system)
-     * @param string|null $notes      Required for 'adjustment' reason
+     * @param float       $qtyChange       Signed delta — negative to deduct
+     * @param string      $reason          One of StockMovement::REASONS
+     * @param string      $storeId         UUID of the store where the movement occurred
+     * @param Sale|null   $sale            Associated sale (if applicable)
+     * @param string|null $userId          UUID of the acting user (null = system)
+     * @param string|null $notes           Required for 'adjustment' reason
+     * @param bool        $blockOnNegative When true, a resulting stock < 0 throws
+     *                                     InsufficientStockException (strict mode).
+     *                                     When false (default org policy), stock is
+     *                                     allowed to go negative so the ledger stays
+     *                                     honest (Σ qty_change == qty_after).
      * @return StockMovement
+     *
+     * @throws InsufficientStockException
      */
     public function record(
         Product $product,
@@ -44,8 +52,9 @@ class StockMovementService
         ?Sale $sale = null,
         ?string $userId = null,
         ?string $notes = null,
+        bool $blockOnNegative = false,
     ): StockMovement {
-        return DB::transaction(function () use ($product, $qtyChange, $reason, $storeId, $sale, $userId, $notes) {
+        return DB::transaction(function () use ($product, $qtyChange, $reason, $storeId, $sale, $userId, $notes, $blockOnNegative) {
             // Per-store stock is the source of truth. Lock the matching row
             // for this (product, store) pair to prevent two concurrent sales
             // at the same store from overselling. Sales at *different* stores
@@ -68,7 +77,23 @@ class StockMovementService
                 $stock = \App\Models\ProductStock::where('id', $stock->id)->lockForUpdate()->first();
             }
 
-            $qtyAfter = max(0.0, (float) $stock->stock_qty + $qtyChange);
+            // Honest running balance. We do NOT clamp to zero — clamping made
+            // qty_after disagree with qty_change and broke the ledger invariant
+            // (Σ qty_change must equal qty_after). A negative value truthfully
+            // says "we sold more than we had on record" and surfaces a wrong
+            // count to the manager.
+            $qtyAfter = bcadd((string) $stock->stock_qty, (string) $qtyChange, 3);
+
+            // Strict inventory (org opted in): a deduction that would go below
+            // zero is rejected, rolling back the whole sale transaction.
+            if ($blockOnNegative && bccomp($qtyAfter, '0', 3) < 0) {
+                throw new InsufficientStockException(
+                    productName: $product->name_nl ?? $product->name_en ?? (string) $product->id,
+                    available: (float) $stock->stock_qty,
+                    requested: abs($qtyChange),
+                );
+            }
+
             $stock->update(['stock_qty' => $qtyAfter]);
 
             return StockMovement::create([
@@ -88,18 +113,31 @@ class StockMovementService
 
     /**
      * Record movements for all items in a sale (reason: 'sale').
-     * Called after a sale is successfully stored.
+     *
+     * Must run inside the sale's DB::transaction so that a rejected oversell
+     * (strict mode) rolls the whole sale back, and so a queue outage can never
+     * leave a committed sale with un-decremented stock.
+     *
+     * @param bool $blockOnNegative Strict inventory — reject sales that would
+     *                              drive any line's stock below zero.
+     *
+     * @throws InsufficientStockException
      */
-    public function recordSale(Sale $sale, ?string $userId = null): void
+    public function recordSale(Sale $sale, ?string $userId = null, bool $blockOnNegative = false): void
     {
         $sale->loadMissing('items');
+
+        // Batch-load every product once instead of Product::find() per line —
+        // keeps the row-lock window short while we hold the sale transaction.
+        $productIds = $sale->items->pluck('product_id')->filter()->unique();
+        $products   = Product::whereIn('id', $productIds)->get()->keyBy('id');
 
         foreach ($sale->items as $item) {
             if (! $item->product_id) {
                 continue; // deleted product snapshot — no stock to track
             }
 
-            $product = Product::find($item->product_id);
+            $product = $products->get($item->product_id);
             if (! $product) {
                 continue;
             }
@@ -111,6 +149,7 @@ class StockMovementService
                 storeId: $sale->store_id,
                 sale: $sale,
                 userId: $userId,
+                blockOnNegative: $blockOnNegative,
             );
         }
     }

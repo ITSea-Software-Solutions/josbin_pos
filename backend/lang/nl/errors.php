@@ -38,6 +38,9 @@ return [
     'refund_only_completed'         => 'Alleen voltooide verkopen kunnen worden terugbetaald.',
     'receipt_emailed'               => 'Kassabon verstuurd naar :email.',
 
+    // Sales — inventory (strict mode only; default policy allows oversell)
+    'insufficient_stock'            => 'Onvoldoende voorraad voor ":product". Nog :available op voorraad. Pas de voorraad aan via Dashboard → Voorraad, of verlaag het aantal.',
+
     // Licence / organisation
     'no_active_licence_for_stores'  => 'Geen actieve licentie voor deze organisatie. Vraag de Super Admin om een licentie uit te geven voordat u vestigingen aanmaakt.',
 ];
