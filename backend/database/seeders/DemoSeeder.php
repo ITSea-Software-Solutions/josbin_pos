@@ -8,6 +8,7 @@ use App\Models\DiscountRule;
 use App\Models\HeldBill;
 use App\Models\Organisation;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Register;
 use App\Models\RegisterSession;
 use App\Models\Sale;
@@ -57,10 +58,15 @@ class DemoSeeder extends Seeder
 
         $this->ensureOrgAdmin($stores->first()->organisation_id);
         $this->ensureTodaysExchangeRate();
+        // Backfill cost prices first — the profit/margin report (and the
+        // cost snapshot stamped on each seeded sale item) is meaningless
+        // without them, and a fresh import leaves cost_price null.
+        $this->ensureProductCosts();
 
         foreach ($stores as $store) {
             $this->command->info("Seeding demo data for store: {$store->name}");
             $this->seedRegisters($store);
+            $this->seedProductStocks($store);
             $this->seedCustomers($store->organisation_id);
             $this->seedDiscountRules($store);
             $this->seedApiIntegrations($store);
@@ -112,6 +118,28 @@ class DemoSeeder extends Seeder
         );
     }
 
+    /**
+     * Backfill a believable cost_price on every product that lacks one.
+     * Cost is a deterministic 55–72% of the sale price (derived from a hash
+     * of the product id, so re-runs are stable and a handful of products
+     * land near-margin to make the "loss-makers" / low-margin views realistic).
+     * Never overwrites a cost an admin already set.
+     */
+    private function ensureProductCosts(): void
+    {
+        $count = 0;
+        Product::whereNull('cost_price')->where('price', '>', 0)->chunkById(200, function ($products) use (&$count) {
+            foreach ($products as $p) {
+                // 55–72% margin band, stable per product id.
+                $pct  = 55 + (hexdec(substr(md5($p->id), 0, 2)) % 18); // 55..72
+                $cost = bcdiv(bcmul((string) $p->price, (string) $pct, 4), '100', 2);
+                $p->forceFill(['cost_price' => $cost])->saveQuietly();
+                $count++;
+            }
+        });
+        $this->command->info("  cost_price backfilled on {$count} products");
+    }
+
     // ── Registers + today's open session ─────────────────────────────────────
 
     private function seedRegisters(Store $store): void
@@ -120,6 +148,33 @@ class DemoSeeder extends Seeder
             Register::firstOrCreate(
                 ['store_id' => $store->id, 'number' => $i],
                 ['name' => "Kassa $i", 'is_active' => true],
+            );
+        }
+    }
+
+    /**
+     * Per-store stock rows so the Stock screen + store filter show real
+     * numbers (not the catalogue fallback). A few products per store are
+     * deliberately seeded at/below threshold so the low-stock alert and the
+     * red badges have something to display.
+     */
+    private function seedProductStocks(Store $store): void
+    {
+        $products = Product::where('organisation_id', $store->organisation_id)
+            ->where('is_active', true)
+            ->get();
+
+        $i = 0;
+        foreach ($products as $p) {
+            $i++;
+            // Every ~9th product is low/out of stock for the alert demo.
+            $low       = ($i % 9 === 0);
+            $threshold = 10;
+            $qty       = $low ? random_int(0, 8) : random_int(25, 220);
+
+            ProductStock::firstOrCreate(
+                ['product_id' => $p->id, 'store_id' => $store->id],
+                ['stock_qty' => $qty, 'low_stock_threshold' => $threshold],
             );
         }
     }
@@ -242,13 +297,23 @@ class DemoSeeder extends Seeder
             $btwTotal  = '0.00';
 
             for ($i = 0; $i < $saleCount; $i++) {
+                // Most sales land in trading hours (08–19). Every ~4th sale
+                // is pushed into the late-evening AST window (21:00–23:45) so
+                // the BTW/daily reports have transactions that fall on the
+                // wrong calendar day under UTC — the exact case the AST
+                // timezone fix corrects. These are the rows to eyeball when
+                // validating that a 23:30 AST sale counts on its own day.
+                $hour = ($i % 4 === 3)
+                    ? random_int(21, 23)   // late-evening boundary sales
+                    : random_int(8, 19);   // normal trading hours
+
                 $sale = $this->createSale(
                     store:    $store,
                     cashier:  $cashier,
                     session:  $session,
                     products: $products,
                     customer: $customers->random(),
-                    occurredAt: $date->copy()->setTime(random_int(8, 19), random_int(0, 59)),
+                    occurredAt: $date->copy()->setTime($hour, random_int(0, 59)),
                 );
                 if ($sale->payment_method === 'cash') {
                     $cashTotal = bcadd($cashTotal, (string) $sale->total_srd, 2);
@@ -335,6 +400,8 @@ class DemoSeeder extends Seeder
                 'discount_srd' => '0.00',
                 '_product_id' => $product->id,
                 '_name'       => $product->name_nl ?? $product->name_en,
+                // Snapshot the cost at "sale" time, mirroring SaleController.
+                '_cost'       => $product->cost_price !== null ? (string) $product->cost_price : null,
             ];
         }
 
@@ -366,6 +433,14 @@ class DemoSeeder extends Seeder
 
             foreach ($cartItems as $i => $item) {
                 $calc = $cart['items'][$i];
+
+                // line_profit = line_total - (cost * qty). NULL when cost
+                // unknown, so the profit report can SUM() without a CASE —
+                // identical shape to SaleController.
+                $lineProfit = $item['_cost'] !== null
+                    ? bcsub((string) $calc['line_total'], bcmul((string) $item['_cost'], (string) $item['quantity'], 2), 2)
+                    : null;
+
                 SaleItem::create([
                     'sale_id'               => $sale->id,
                     'product_id'            => $item['_product_id'],
@@ -378,14 +453,29 @@ class DemoSeeder extends Seeder
                     'btw_exempt'            => $item['btw_exempt'],
                     'btw_srd'               => $calc['btw_amount'],
                     'line_total_srd'        => $calc['line_total'],
+                    'cost_snapshot_srd'     => $item['_cost'],
+                    'line_profit_srd'       => $lineProfit,
                 ]);
+
+                // Decrement the per-store stock row (created by
+                // seedProductStocks) so the Stock screen reflects this sale,
+                // and record the movement against the resulting balance.
+                $stock = ProductStock::where('product_id', $item['_product_id'])
+                    ->where('store_id', $store->id)
+                    ->first();
+                $qtyAfter = $stock
+                    ? (float) $stock->stock_qty - (float) $item['quantity']
+                    : -(float) $item['quantity'];
+                if ($stock) {
+                    $stock->update(['stock_qty' => $qtyAfter]);
+                }
 
                 StockMovement::create([
                     'product_id'      => $item['_product_id'],
                     'store_id'        => $store->id,
                     'organisation_id' => $store->organisation_id,
                     'qty_change'      => -(float) $item['quantity'],
-                    'qty_after'       => max(0, (float) Product::find($item['_product_id'])->stock_qty - (float) $item['quantity']),
+                    'qty_after'       => $qtyAfter,
                     'reason'          => 'sale',
                     'sale_id'         => $sale->id,
                     'user_id'         => $cashier->id,
