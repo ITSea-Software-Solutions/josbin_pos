@@ -60,24 +60,40 @@ class BtwSubmissionService
         $sales = $query->orderBy('occurred_at')->get(['id', 'total_srd', 'btw_srd']);
 
         $totalSales  = '0.00';
-        $btwExempt   = '0.00';
         $totalBtw    = '0.00';
         $saleIds     = [];
 
         foreach ($sales as $sale) {
             $totalSales = bcadd($totalSales, (string) $sale->total_srd, 2);
             $totalBtw   = bcadd($totalBtw,   (string) $sale->btw_srd,   2);
-
-            // BTW=0 on a sale means it was entirely exempt (basisvoedsel /
-            // medicijnen). Otherwise it has at least some taxable component.
-            if (bccomp((string) $sale->btw_srd, '0', 2) === 0) {
-                $btwExempt = bcadd($btwExempt, (string) $sale->total_srd, 2);
-            }
-
-            $saleIds[] = $sale->id;
+            $saleIds[]  = $sale->id;
         }
 
+        // Exempt revenue must come from the LINE ITEMS, not a sale-level
+        // proxy. The old heuristic — "btw_srd == 0 ⇒ the whole sale is
+        // exempt" — misclassified every MIXED basket: a sale with one exempt
+        // line (rice) and one taxable line (cola) has btw_srd > 0, so its
+        // exempt portion was silently counted as taxable. Belastingdienst
+        // needs the exempt split (basisvoedsel / medicijnen) reported
+        // separately, so sum the genuinely-exempt lines directly. This also
+        // matches how the consolidated BTW report already groups by
+        // sale_items.btw_exempt.
+        $btwExempt = '0.00';
+        if (! empty($saleIds)) {
+            $exemptRaw = DB::table('sale_items')
+                ->whereIn('sale_id', $saleIds)
+                ->where('btw_exempt', true)
+                ->sum('line_total_srd');
+            $btwExempt = bcadd((string) ($exemptRaw ?? '0'), '0', 2);
+        }
+
+        // Taxable = everything that isn't exempt. Clamp at 0 so a rounding
+        // wobble (exempt items summing a cent above the sale totals on a
+        // discounted basket) can never produce a negative taxable figure.
         $btwTaxable = bcsub($totalSales, $btwExempt, 2);
+        if (bccomp($btwTaxable, '0', 2) < 0) {
+            $btwTaxable = '0.00';
+        }
 
         return [
             'sales_count'      => count($saleIds),
@@ -116,14 +132,29 @@ class BtwSubmissionService
 
     /**
      * Compute the prev_hash → current_hash for the audit chain. Same shape
-     * as audit_logs hash chain (sha256 of canonical JSON).
+     * as the audit_logs hash chain (sha256 of canonical JSON).
+     *
+     * The chain is PER-ORGANISATION. A taxpayer's filings must form one
+     * continuous, self-contained chain — if `prev` were the last submission
+     * across ALL orgs, org B filing a return would become a link in org A's
+     * sequence, so `verify-chain` for a single taxpayer would break the
+     * moment another org filed, and `prev_hash` would prove nothing about
+     * that taxpayer's continuity.
+     *
+     * Ordered by `submitted_at` (with `created_at` as a tiebreaker) since the
+     * UUID PK is not monotonic. Two filings by the SAME org in the same
+     * millisecond is not a real scenario — one OA files one return at a time
+     * — so the global same-millisecond race the audit flagged is gone once
+     * the chain is org-scoped.
      *
      * @return array{prev_hash:?string,current_hash:string}
      */
-    public function hashChain(array $canonicalRow): array
+    public function hashChain(string $organisationId, array $canonicalRow): array
     {
         $prev = BtwSubmission::query()
+            ->where('organisation_id', $organisationId)
             ->orderByDesc('submitted_at')
+            ->orderByDesc('created_at')
             ->value('current_hash');
 
         $payload = json_encode($canonicalRow, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

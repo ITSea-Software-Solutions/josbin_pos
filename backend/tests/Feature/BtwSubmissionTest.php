@@ -98,7 +98,7 @@ class BtwSubmissionTest extends TestCase
 
     private function makeSale(Store $store, User $cashier, string $total, string $btw, Carbon $when): Sale
     {
-        return Sale::create([
+        $sale = Sale::create([
             'store_id'      => $store->id,
             'cashier_id'    => $cashier->id,
             'sale_number'   => Sale::nextNumber($store->id),
@@ -111,6 +111,25 @@ class BtwSubmissionTest extends TestCase
             'source'        => 'pos',
             'occurred_at'   => $when,
         ]);
+
+        // The BTW exempt split is computed from sale_items.btw_exempt, so a
+        // realistic fixture must carry a line item. These test sales are
+        // single-rate, so one line mirroring the sale's totals is exact:
+        // btw == 0 ⇒ the line is exempt (basisvoedsel / medicijnen).
+        SaleItem::create([
+            'sale_id'               => $sale->id,
+            'product_name_snapshot' => 'Test item',
+            'unit_price_srd'        => $total,
+            'quantity'              => 1,
+            'discount_srd'          => '0.00',
+            'discount_pct'          => '0.00',
+            'btw_rate'              => bccomp($btw, '0', 2) === 0 ? '0' : '10',
+            'btw_exempt'            => bccomp($btw, '0', 2) === 0,
+            'btw_srd'               => $btw,
+            'line_total_srd'        => $total,
+        ]);
+
+        return $sale;
     }
 
     public function test_oa_can_preview_a_daily_submission(): void

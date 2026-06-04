@@ -265,6 +265,20 @@ PHPUnit: `LicenseStoreCreationGateTest` covers all four cases (4 tests, 13 asser
 **Tests:** `OversellPolicyTest` (3) + rewritten `SaleStoreTest::test_sale_decrements_per_store_stock` (asserts in-transaction decrement + ledger row, `Bus::assertNotDispatched` for the 'sale' reason — void/refund still async).
 **Lesson:** Money/stock mutations belong in the same transaction as the thing that causes them. "Dispatch it async to keep the response fast" is a correctness trap for anything that must agree with the committed row. And `->lockForUpdate()->decrement()` is a no-op lock — always SELECT FOR UPDATE then UPDATE.
 
+#### G-023 (2026-06-04) Audit hash chain never actually verified — create vs verify serialised differently
+**Symptom:** Added the first end-to-end `verifyChain()` test after a login + BTW filing — it failed immediately ("Hash mismatch at row ID 4"). The SHA-256 audit chain, sold as Rekenkamer-grade tamper evidence, had **never been verified by a test** and did not actually verify.
+**Cause:** `AuditLog::booted()` computed each row's hash from `created_at->toIso8601String()` (a Carbon in AST, e.g. `2026-06-04T10:00:00-03:00`), but `AuditHashService::verifyChain()` re-hashed using the **raw DB timestamp string** read back via `DB::table()` (format + offset depend on the session TZ). Same instant, different bytes → different hash. `new_values` had the same latent risk (array re-encode vs the cast's stored JSON, vulnerable to a future Laravel flag change).
+**Fix:** Normalise inside `AuditHashService::computeHash` so BOTH callers agree regardless of representation:
+- `created_at` → `Carbon::parse(...)->getTimestamp()` (Unix epoch second — no format/TZ ambiguity).
+- `new_values` → decode-then-re-encode with fixed `JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE`.
+**Test:** `ComplianceIntegrityTest::test_audit_chain_stays_valid_through_login_and_btw_submit`.
+**Lesson:** A hash/signature/chain is only real if a test actually *verifies* it round-trip. Any value that is hashed at write time and re-hashed at read time MUST be reduced to a canonical, representation-independent form first — epoch seconds for time, decode→re-encode for JSON. "We compute a SHA-256" is not the same as "it verifies."
+
+#### G-022 (2026-06-04) BTW reports relied on the Postgres container's TZ env, not app config
+**Symptom:** Audit flagged `whereDate('occurred_at', …)` as classifying 21:00–23:59 AST sales into the next day (UTC session). On inspection the demo Postgres session was *already* `America/Paramaribo` — but only because `docker-compose.yml` sets `TZ=America/Paramaribo` on the container. A managed cloud Postgres (the documented SaaS path) ignores that and defaults to UTC, so BTW period boundaries would silently shift by 3h there.
+**Fix:** Pinned `'timezone' => env('DB_TIMEZONE', 'America/Paramaribo')` in the `pgsql` connection config — makes the AST requirement explicit and infra-independent.
+**Lesson:** A correctness property that holds "because the container happens to set an env var" is a latent bug for any other deployment. Encode timezone, locale, and currency assumptions in app config, not infra.
+
 #### G-021 (2026-06-04) Time-bomb test: hardcoded month went red when the clock rolled
 **Symptom:** `BtwSubmissionTest::test_inspector_dashboard_returns_platform_scope` started failing ("array is not empty") with zero code changes to that feature — purely because the system date rolled from May into June 2026. The test filed a `2026-05-20` submission but `inspector-dashboard`'s `top_orgs_month` windows to `startOfMonth()→now` (June), so the May row fell outside the window.
 **Fix:** Anchor the test's sale + submission to `Carbon::now('America/Paramaribo')->startOfMonth()` instead of a hardcoded date.

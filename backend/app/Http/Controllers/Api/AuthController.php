@@ -62,18 +62,18 @@ class AuthController extends Controller
         // Audit successful logins so security reviews / Rekenkamer audits
         // have a complete trail. The user.last_login_at column tells you
         // "did they log in?" — this row tells you "from where, when, how often".
-        \DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $user->id,
             'organisation_id' => $user->organisation_id,
             'event'           => 'auth.login_success',
             'auditable_type'  => 'user',
             'auditable_id'    => $user->id,
             'old_values'      => null,
-            'new_values'      => json_encode([
+            'new_values'      => [
                 'role'        => $user->role,
                 'device_name' => $request->input('device_name', 'web'),
                 'user_agent'  => substr((string) $request->userAgent(), 0, 200),
-            ]),
+            ],
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);

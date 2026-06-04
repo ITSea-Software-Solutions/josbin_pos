@@ -426,7 +426,7 @@ class BtwSubmissionController extends Controller
                 'submitted_by'    => $user->id,
                 'reference'       => $reference,
             ];
-            $hash = $this->service->hashChain($canonical);
+            $hash = $this->service->hashChain($canonical['organisation_id'], $canonical);
 
             $submission = BtwSubmission::create([
                 'organisation_id' => $orgId,
@@ -449,20 +449,20 @@ class BtwSubmissionController extends Controller
                 'current_hash'    => $hash['current_hash'],
             ]);
 
-            \DB::table('audit_logs')->insert([
+            \App\Models\AuditLog::create([
                 'user_id'         => $user->id,
                 'organisation_id' => $orgId,
                 'event'           => 'btw.submitted',
                 'auditable_type'  => 'btw_submission',
                 'auditable_id'    => $submission->id,
                 'old_values'      => null,
-                'new_values'      => json_encode([
+                'new_values'      => [
                     'reference'    => $reference,
                     'period'       => "{$start->toDateString()}→{$end->toDateString()}",
                     'period_type'  => $data['period_type'],
                     'total_sales'  => $totals['total_sales_srd'],
                     'total_btw'    => $totals['total_btw_srd'],
-                ]),
+                ],
                 'ip_address'      => request()->ip(),
                 'created_at'      => now(),
             ]);
@@ -506,14 +506,14 @@ class BtwSubmissionController extends Controller
             'inspector_note' => $request->input('inspector_note'),
         ]);
 
-        \DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $request->user()->id,
             'organisation_id' => $btwSubmission->organisation_id,
             'event'           => 'btw.accepted',
             'auditable_type'  => 'btw_submission',
             'auditable_id'    => $btwSubmission->id,
-            'old_values'      => json_encode(['status' => BtwSubmission::STATUS_FILED]),
-            'new_values'      => json_encode(['status' => BtwSubmission::STATUS_ACCEPTED, 'note' => $request->input('inspector_note')]),
+            'old_values'      => ['status' => BtwSubmission::STATUS_FILED],
+            'new_values'      => ['status' => BtwSubmission::STATUS_ACCEPTED, 'note' => $request->input('inspector_note')],
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);
@@ -537,14 +537,14 @@ class BtwSubmissionController extends Controller
             'inspector_note' => $data['inspector_note'],
         ]);
 
-        \DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $request->user()->id,
             'organisation_id' => $btwSubmission->organisation_id,
             'event'           => 'btw.disputed',
             'auditable_type'  => 'btw_submission',
             'auditable_id'    => $btwSubmission->id,
-            'old_values'      => json_encode(['status' => BtwSubmission::STATUS_FILED]),
-            'new_values'      => json_encode(['status' => BtwSubmission::STATUS_DISPUTED, 'note' => $data['inspector_note']]),
+            'old_values'      => ['status' => BtwSubmission::STATUS_FILED],
+            'new_values'      => ['status' => BtwSubmission::STATUS_DISPUTED, 'note' => $data['inspector_note']],
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);
@@ -604,7 +604,7 @@ class BtwSubmissionController extends Controller
                 'reference'       => $reference,
                 'supersedes'      => $btwSubmission->reference,
             ];
-            $hash = $this->service->hashChain($canonical);
+            $hash = $this->service->hashChain($canonical['organisation_id'], $canonical);
 
             // 2. Mark the old filing superseded BEFORE inserting the new one,
             //    because the (org, period_type, period_start, period_end)
@@ -655,19 +655,19 @@ class BtwSubmissionController extends Controller
                 'current_hash'    => $hash['current_hash'],
             ]);
 
-            \DB::table('audit_logs')->insert([
+            \App\Models\AuditLog::create([
                 'user_id'         => $request->user()->id,
                 'organisation_id' => $btwSubmission->organisation_id,
                 'event'           => 'btw.superseded',
                 'auditable_type'  => 'btw_submission',
                 'auditable_id'    => $btwSubmission->id,
-                'old_values'      => json_encode(['status' => $btwSubmission->getOriginal('status')]),
-                'new_values'      => json_encode([
+                'old_values'      => ['status' => $btwSubmission->getOriginal('status')],
+                'new_values'      => [
                     'status'             => BtwSubmission::STATUS_SUPERSEDED,
                     'replacement_ref'    => $reference,
                     'replacement_id'     => $newSubmission->id,
                     'submitter_note'     => $note,
-                ]),
+                ],
                 'ip_address'      => $request->ip(),
                 'created_at'      => now(),
             ]);

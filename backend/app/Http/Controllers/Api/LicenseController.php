@@ -107,18 +107,18 @@ class LicenseController extends Controller
         ]);
 
         // Log the renewal request to audit trail
-        DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $user->id,
             'organisation_id' => $license->organisation_id,
             'event'           => 'license_renewal_requested',
             'auditable_type'  => 'license',
             'auditable_id'    => $license->id,
-            'old_values'      => json_encode(['renewal_status' => $license->renewal_status]),
-            'new_values'      => json_encode([
+            'old_values'      => ['renewal_status' => $license->renewal_status],
+            'new_values'      => [
                 'renewal_status' => 'renewal_pending',
                 'notes'          => $request->input('notes'),
                 'requested_by'   => $user->name,
-            ]),
+            ],
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);
@@ -244,14 +244,14 @@ class LicenseController extends Controller
 
     private function auditLicense(\App\Models\User $user, string $licenseId, string $orgId, string $event, array $payload): void
     {
-        DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $user->id,
             'organisation_id' => $orgId,
             'event'           => $event,
             'auditable_type'  => 'license',
             'auditable_id'    => $licenseId,
             'old_values'      => null,
-            'new_values'      => $payload ? json_encode($payload) : null,
+            'new_values'      => $payload ?: null,
             'ip_address'      => request()->ip(),
             'created_at'      => now(),
         ]);

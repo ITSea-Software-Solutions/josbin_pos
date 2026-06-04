@@ -232,14 +232,14 @@ class UserController extends Controller
      */
     private function logStoreAssignment(User $actor, User $target, ?string $from, ?string $to): void
     {
-        \DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $actor->id,
             'organisation_id' => $target->organisation_id,
             'event'           => 'user.store_assigned',
             'auditable_type'  => 'user',
             'auditable_id'    => $target->id,
-            'old_values'      => json_encode(['store_id' => $from]),
-            'new_values'      => json_encode(['store_id' => $to]),
+            'old_values'      => ['store_id' => $from],
+            'new_values'      => ['store_id' => $to],
             'ip_address'      => request()->ip(),
             'created_at'      => now(),
         ]);

@@ -266,14 +266,14 @@ class MeController extends Controller
 
         $token->delete();
 
-        \DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $user->id,
             'organisation_id' => $user->organisation_id,
             'event'           => 'session.revoked_self',
             'auditable_type'  => 'personal_access_token',
             'auditable_id'    => (string) $tokenId,
             'old_values'      => null,
-            'new_values'      => json_encode(['name' => $token->name]),
+            'new_values'      => ['name' => $token->name],
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);

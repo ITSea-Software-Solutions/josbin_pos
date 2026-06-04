@@ -16,20 +16,21 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 
 ## 🔴 P0 — fix before next demo (silent loss / compliance breach)
 
-> **Batch 1 shipped 2026-06-04** — P0-1, P0-2, P0-3, P1-P1 all resolved. See commit + G-020 in CLAUDE_WORKING_GUIDE. Oversell policy is now per-org configurable (`organisations.block_oversell`, default OFF = allow + track negative). Tests: `OversellPolicyTest` + updated `SaleStoreTest`.
+> **Batch 1 shipped 2026-06-04** — P0-1, P0-2, P0-3, P1-P1 resolved (oversell class + N+1). G-020. Tests: `OversellPolicyTest`.
+> **Batch 2 shipped 2026-06-04** — P0-4, P0-9, P0-10, P1-C1 resolved (compliance correctness). G-022 (AST config), G-023 (hash chain never verified — now fixed). Tests: `ComplianceIntegrityTest`. **Remaining P0:** P0-5/6 (token+PII security), P0-7/8 (WBP-S erasure + Customer auditing).
 
 | # | Area | Finding | Effort |
 |---|------|---------|--------|
 | ✅ **P0-1** | sales | **DONE.** Stock decrement was in a queued job after commit → queue outage = oversell. Moved `StockMovementService::recordSale` inside the sale `DB::transaction`. | M |
 | ✅ **P0-2** | sales | **DONE.** `max(0.0,…)` clamp removed — `qty_after` is now the honest running balance (can go negative), ledger stays consistent. Strict mode (`block_oversell=true`) throws `InsufficientStockException` (422) and rolls the sale back. | S |
 | ✅ **P0-3** | sales | **DONE.** Variant `->lockForUpdate()->decrement()` (a no-op lock) replaced with `SELECT … FOR UPDATE` + guarded `update()`, respecting the org oversell policy. No DB CHECK — default policy allows negative by design. | M |
-| **P0-4** | compliance | **BTW submission hash chain is org-global** (`BtwSubmissionService.php:125`). One org's filing creates a hash link in another org's sequence — verify-chain breaks unpredictably and `prev_hash` proves nothing. **Fix:** scope `getLastHash` to `organisation_id`, order by `id` not `submitted_at`. | S |
+| ✅ **P0-4** | compliance | **DONE.** `hashChain` now scopes the previous-hash lookup to `organisation_id` (ordered by `submitted_at`+`created_at`; UUID PK isn't monotonic). Each taxpayer's chain is self-contained. Test: `ComplianceIntegrityTest::test_btw_hash_chain_is_per_organisation`. | S |
 | **P0-5** | security | **`?token=` query auth accepts full 12h wildcard tokens** (`AuthenticateViaQueryToken.php:26-42`). Token ends up in webserver access logs / browser history / Referer headers; full account takeover if anyone reads logs. Receipt-PDF links are shared by email. **Fix:** issue short-lived `receipt:{sale_id}` ability tokens; reject `*` in this middleware. | M |
 | **P0-6** | security | **Cross-tenant PII leak via guessed `customer_id`** (`SaleController.php:45,433`). Validation is `exists:customers,id` with no org scope; a cashier in Org A can attach a Customer UUID from Org B to a sale, then receipt decrypts and prints that customer's WBP-S-protected name/phone/email. **Fix:** `Rule::exists('customers','id')->where('organisation_id', $orgId)`. | S |
 | **P0-7** | compliance | **WBP-S "right to erasure" is unimplemented** for `Customer`. No DELETE/redact endpoint. **Fix:** add `DELETE /customers/{id}` that nulls encrypted PII + hash columns and writes `customer.redacted` to audit log; keep the row + counters so reports stay intact. | M |
 | **P0-8** | compliance | **`Customer` model is not Auditable** despite carrying every encrypted PII field. WBP-S § access-log requirement says PII reads/writes must be traceable; today they aren't. **Fix:** `implements Auditable` + `use Auditable` on Customer; explicit `accessed` event on `CustomerController::show`. | S |
-| **P0-9** | compliance | **`whereDate` uses session TZ (UTC)**, not AST (`ReportController.php:267`). Sales rung 21:00–23:59 AST on the last day of a BTW period silently fall into the next day. Monthly BTW totals leak/lose end-of-day revenue. **Fix:** either `DATE(occurred_at AT TIME ZONE 'America/Paramaribo')` or set `'timezone' => 'America/Paramaribo'` in config/database.php. Same TZ bug throughout reports. | M |
-| **P0-10** | compliance | **Audit hash chain bypassed by `DB::table('audit_logs')->insert()`** in 8+ places (BtwSubmissionController, AuthController, UserController, SaleController, LicenseController, DailyRateService, MeController). Each raw insert writes NULL `row_hash`; verify-chain treats them as gaps so genuine tampering looks like normal gaps. **Fix:** replace all with `AuditLog::create(...)`; add a Postgres trigger that rejects inserts with NULL `row_hash`. | M |
+| ✅ **P0-9** | compliance | **DONE.** Pinned `'timezone' => env('DB_TIMEZONE', 'America/Paramaribo')` in the pgsql connection so every `whereDate`/`DATE()` truncates in AST regardless of the host/container/managed-DB TZ (was relying implicitly on the compose `TZ` env — broken on managed cloud Postgres). See G-022. | M |
+| ✅ **P0-10** | compliance | **DONE.** All 11 raw `DB::table('audit_logs')->insert()` calls converted to `AuditLog::create(...)` so the `creating` hook chains them. **Bonus:** the first chain-verify test revealed the chain *never actually verified* (create vs verify serialised `created_at`/`new_values` differently) — fixed `computeHash` to canonicalise both. See G-023. | M |
 
 **P0 total: ~3 days of focused work.** Demo-blocking.
 
@@ -80,7 +81,7 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 ### Compliance
 | # | Finding | Effort |
 |---|---------|--------|
-| P1-C1 | **BTW exempt-vs-taxable split inferred from `sale.btw_srd == 0`** (`BtwSubmissionService.php:73`). Mixed basket misclassifies entire sale as taxable. **Fix:** aggregate from `sale_items` where `btw_exempt = true`. | S |
+| ✅ P1-C1 | **DONE.** Exempt revenue now summed from `sale_items.btw_exempt = true`, not the sale-level `btw_srd == 0` proxy. A mixed basket reports only its exempt line as exempt. Test: `ComplianceIntegrityTest::test_mixed_basket_reports_only_exempt_line_as_exempt`. | S |
 | P1-C2 | **`btw_submissions.status` is updated in-place; hash never recomputed.** Tamper-evidence claim in manual ch 20 is overstated. **Fix:** either insert "event" rows (append-only history) or recompute hash on every status change + add a `status_history` JSONB column. | M |
 | P1-C3 | **Voided sales are not immutable.** Plain `$sale->update(...)` works post-void; only the OwenIt audit_log captures it. **Fix:** model `updating` hook that throws on `getOriginal('status') === 'voided'`; PG trigger as belt-and-braces. | S |
 | P1-C4 | **Audit-log OA scoping filters by `WHERE user_id IN (org_users)`, not `audit_logs.organisation_id`.** System events with `user_id=NULL` are invisible to OA; SA actions on the org's data are also hidden. **Fix:** filter on `audit_logs.organisation_id = ?` (OR `user_id IN (...)` for legacy nulls). | S |

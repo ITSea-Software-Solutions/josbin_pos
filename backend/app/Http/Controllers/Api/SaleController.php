@@ -740,20 +740,20 @@ class SaleController extends Controller
             'payment_confirmed_by' => $request->user()->id,
         ]);
 
-        \DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => $request->user()->id,
             'organisation_id' => $sale->store->organisation_id,
             'event'           => 'sale.payment_confirmed',
             'auditable_type'  => 'sale',
             'auditable_id'    => $sale->id,
-            'old_values'      => json_encode(['payment_confirmed_at' => null]),
-            'new_values'      => json_encode([
+            'old_values'      => ['payment_confirmed_at' => null],
+            'new_values'      => [
                 'payment_confirmed_at' => now()->toIso8601String(),
                 'method'    => $sale->payment_method,
                 'provider'  => $sale->payment_provider,
                 'reference' => $sale->payment_reference,
                 'note'      => $note,
-            ]),
+            ],
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);

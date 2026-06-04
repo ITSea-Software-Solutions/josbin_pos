@@ -97,6 +97,18 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+
+            // Pin the connection session timezone to AST. Every date-windowed
+            // query — `whereDate('occurred_at', …)`, `DATE(occurred_at)`,
+            // EXTRACT, BTW period boundaries — converts the stored timestamptz
+            // to this zone before truncating. Without it, the session falls
+            // back to the server's TZ (UTC on most managed/cloud Postgres, e.g.
+            // the SaaS path), and a sale rung 21:00–23:59 AST on the last day
+            // of a BTW period would silently land in the next day's filing.
+            // The Docker container sets TZ=America/Paramaribo too, but that's an
+            // implicit infra dependency — this makes the requirement explicit
+            // and survives a managed Postgres that ignores the container env.
+            'timezone' => env('DB_TIMEZONE', 'America/Paramaribo'),
         ],
 
         'sqlsrv' => [

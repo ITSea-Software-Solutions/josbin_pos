@@ -166,18 +166,18 @@ class DailyRateService
      */
     private function auditRateEvent(string $event, DailyRate $rate, array $extra = []): void
     {
-        DB::table('audit_logs')->insert([
+        \App\Models\AuditLog::create([
             'user_id'         => null, // system event — no user attribution
             'organisation_id' => null, // platform-wide rate
             'event'           => $event,
             'auditable_type'  => 'daily_rate',
             'auditable_id'    => $rate->id,
             'old_values'      => null,
-            'new_values'      => json_encode(array_merge([
+            'new_values'      => array_merge([
                 'date'       => $rate->date->toDateString(),
                 'usd_to_srd' => $rate->usd_to_srd,
                 'source'     => $rate->source,
-            ], $extra), JSON_THROW_ON_ERROR),
+            ], $extra),
             'ip_address'      => request()->ip(),
             'created_at'      => now(),
         ]);

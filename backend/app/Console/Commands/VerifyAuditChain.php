@@ -54,15 +54,17 @@ class VerifyAuditChain extends Command
                 $this->line("  <fg=red>✗ BROKEN</> — {$result['message']}");
                 $this->line("  <fg=red>  Broken at row ID: {$result['broken_at_id']}</>");
 
-                // Log the integrity failure to the system audit trail
-                DB::table('audit_logs')->insert([
+                // Log the integrity failure to the system audit trail.
+                // Goes through the model so this row itself joins the chain
+                // (a raw insert would add yet another NULL-hash gap).
+                \App\Models\AuditLog::create([
                     'user_id'         => null,
                     'organisation_id' => $orgId,
                     'event'           => 'audit_chain_integrity_failure',
                     'auditable_type'  => 'audit_log',
                     'auditable_id'    => $result['broken_at_id'],
                     'old_values'      => null,
-                    'new_values'      => json_encode($result),
+                    'new_values'      => $result,
                     'ip_address'      => '127.0.0.1',
                     'created_at'      => now(),
                 ]);
