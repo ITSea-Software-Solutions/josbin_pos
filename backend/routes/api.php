@@ -223,8 +223,12 @@ Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
         // {sale} routes or Laravel binds "pending-payments" as a sale id.
         Route::get('pending-payments',        [SaleController::class, 'pendingPaymentsQueue'])->name('pending-payments');
         Route::get('{sale}',              [SaleController::class, 'show'])->name('show');
-        Route::post('{sale}/void',        [SaleController::class, 'void'])->name('void');
-        Route::post('{sale}/refund',      [SaleController::class, 'refund'])->name('refund');
+        // Void + refund are money-reversing and high-impact — a compromised
+        // cashier token could otherwise loop through the day's takings before
+        // anyone notices. Cap at 20/min per token (the global api limiter is
+        // 240/min, far too loose for these two).
+        Route::post('{sale}/void',        [SaleController::class, 'void'])->middleware('throttle:20,1')->name('void');
+        Route::post('{sale}/refund',      [SaleController::class, 'refund'])->middleware('throttle:20,1')->name('refund');
         Route::get('{sale}/receipt/pdf',  [SaleController::class, 'receiptPdf'])->name('receipt.pdf');
         Route::post('{sale}/receipt/email',[SaleController::class, 'receiptEmail'])->name('receipt.email');
         Route::post('{sale}/confirm-payment', [SaleController::class, 'confirmPayment'])->name('confirm-payment');

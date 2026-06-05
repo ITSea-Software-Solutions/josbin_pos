@@ -82,7 +82,10 @@ class StoreController extends Controller
         $this->authorize('update', $store);
 
         $request->validate([
-            'logo' => ['required', 'image', 'mimes:png,jpg,jpeg,svg', 'max:2048'],
+            // SVG deliberately excluded: it can carry inline <script> /
+            // <foreignObject> payloads and is served same-origin from
+            // /storage → stored XSS. Raster formats only.
+            'logo' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
         ]);
 
         // Remove old logo if it exists

@@ -1,0 +1,154 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\ApiIntegration;
+use App\Models\Category;
+use App\Models\DailyRate;
+use App\Models\Customer;
+use App\Models\Organisation;
+use App\Models\Product;
+use App\Models\Register;
+use App\Models\RegisterSession;
+use App\Models\Store;
+use App\Models\User;
+use Database\Seeders\RolesAndPermissionsSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+/**
+ * Security-hardening regressions (audit batch 3):
+ *   - P0-6  customer_id from another org is rejected on sale create
+ *   - P1-S1 webhook_secret encrypted at rest, decrypts transparently
+ */
+class SecurityHardeningTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private Organisation $orgA;
+    private Organisation $orgB;
+    private Store $storeA;
+    private User $cashierA;
+    private Customer $customerB;
+    private Product $productA;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->seed(RolesAndPermissionsSeeder::class);
+
+        $this->orgA = Organisation::create([
+            'name' => 'Org A', 'type' => 'retail', 'btw_number' => 'SR-A',
+            'currency' => 'SRD', 'locale' => 'nl', 'is_government' => false,
+            'subscription_tier' => 'standard', 'is_active' => true,
+        ]);
+        $this->orgB = Organisation::create([
+            'name' => 'Org B', 'type' => 'retail', 'btw_number' => 'SR-B',
+            'currency' => 'SRD', 'locale' => 'nl', 'is_government' => false,
+            'subscription_tier' => 'standard', 'is_active' => true,
+        ]);
+
+        $this->storeA = Store::create([
+            'organisation_id' => $this->orgA->id, 'name' => 'A-Main',
+            'city' => 'Paramaribo', 'default_btw_rate' => 10,
+            'is_active' => true, 'pos_type' => 'native',
+        ]);
+
+        DailyRate::firstOrCreate(
+            ['date' => Carbon::now('America/Paramaribo')->toDateString()],
+            ['usd_to_srd' => '37.50', 'raw_rate' => '37.50', 'markup_pct' => 0, 'source' => 'manual', 'locked_at' => now()],
+        );
+
+        $this->cashierA = User::create([
+            'name' => 'Cashier A', 'email' => 'ca@a.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $this->orgA->id, 'store_id' => $this->storeA->id,
+            'role' => User::ROLE_CASHIER, 'locale' => 'nl', 'is_active' => true,
+        ]);
+        $this->cashierA->assignRole(User::ROLE_CASHIER);
+
+        // A customer that belongs to Org B — must NOT be attachable by Org A.
+        $this->customerB = Customer::create([
+            'organisation_id' => $this->orgB->id,
+            'name' => 'Geheim Klant B', 'phone' => '+597000000', 'email' => 'b@b.sr',
+        ]);
+
+        $cat = Category::create([
+            'organisation_id' => $this->orgA->id, 'name_nl' => 'Cat', 'name_en' => 'Cat', 'is_active' => true,
+        ]);
+        $this->productA = Product::create([
+            'organisation_id' => $this->orgA->id, 'category_id' => $cat->id,
+            'name_nl' => 'Brood', 'name_en' => 'Bread', 'price' => '10.00',
+            'btw_rate' => '10.00', 'btw_exempt' => false, 'stock_qty' => 100, 'is_active' => true,
+        ]);
+
+        $register = Register::create(['store_id' => $this->storeA->id, 'number' => 1, 'name' => 'K1', 'is_active' => true]);
+        RegisterSession::create([
+            'register_id' => $register->id, 'store_id' => $this->storeA->id,
+            'cashier_id' => $this->cashierA->id, 'opening_float_srd' => 0, 'opened_at' => now(),
+        ]);
+    }
+
+    private function salePayload(?string $customerId): array
+    {
+        return [
+            'store_id'       => $this->storeA->id,
+            'customer_id'    => $customerId,
+            'payment_method' => 'cash',
+            'cash_tendered'  => '11.00',
+            'items'          => [[
+                'product_id'   => $this->productA->id,
+                'product_name' => 'Brood',
+                'unit_price'   => '10.00',
+                'quantity'     => '1',
+                'btw_rate'     => '10.00',
+                'btw_exempt'   => false,
+            ]],
+        ];
+    }
+
+    public function test_cannot_attach_customer_from_another_org(): void
+    {
+        $resp = $this->actingAs($this->cashierA, 'sanctum')
+            ->postJson('/api/sales', $this->salePayload($this->customerB->id));
+
+        $resp->assertStatus(422);
+        $resp->assertJsonValidationErrors('customer_id');
+        // And no sale leaked through.
+        $this->assertDatabaseCount('sales', 0);
+    }
+
+    public function test_can_attach_customer_from_own_org(): void
+    {
+        $ownCustomer = Customer::create([
+            'organisation_id' => $this->orgA->id, 'name' => 'Klant A', 'phone' => '+597111',
+        ]);
+
+        $this->actingAs($this->cashierA, 'sanctum')
+            ->postJson('/api/sales', $this->salePayload($ownCustomer->id))
+            ->assertStatus(201);
+    }
+
+    public function test_webhook_secret_is_encrypted_at_rest(): void
+    {
+        $integration = ApiIntegration::create([
+            'store_id'    => $this->storeA->id,
+            'pos_system'  => 'TestPOS',
+            'api_key_hash'=> hash('sha256', 'k'),
+            'webhook_url' => 'https://example.test/hook',
+            'webhook_events' => ['sale.created'],
+            'webhook_secret' => 'plain-secret-value-123',
+            'is_active'   => true,
+        ]);
+
+        // Raw column is ciphertext, not the plaintext.
+        $raw = DB::table('api_integrations')->where('id', $integration->id)->value('webhook_secret');
+        $this->assertNotEquals('plain-secret-value-123', $raw);
+        // But it decrypts back to the original (used for HMAC signing).
+        $this->assertEquals('plain-secret-value-123', Crypt::decryptString($raw));
+        // And the model accessor returns the plaintext transparently.
+        $this->assertEquals('plain-secret-value-123', $integration->fresh()->webhook_secret);
+    }
+}

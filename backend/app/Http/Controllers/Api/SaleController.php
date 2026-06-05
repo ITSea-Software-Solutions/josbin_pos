@@ -42,7 +42,7 @@ class SaleController extends Controller
 
         $data = $request->validate([
             'store_id'            => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
-            'customer_id'         => ['nullable', 'uuid', 'exists:customers,id'],
+            'customer_id'         => ['nullable', 'uuid', new \App\Rules\CustomerBelongsToOrg],
             'payment_method'      => ['required', Rule::in(\App\Models\Sale::PAYMENT_METHODS)],
             'cash_tendered'       => ['nullable', 'numeric', 'min:0'],
             'card_amount'         => ['nullable', 'numeric', 'min:0'],
@@ -463,7 +463,7 @@ class SaleController extends Controller
         $data = $request->validate([
             'store_id'   => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'label'      => ['nullable', 'string', 'max:100'],
-            'customer_id'=> ['nullable', 'uuid', 'exists:customers,id'],
+            'customer_id'=> ['nullable', 'uuid', new \App\Rules\CustomerBelongsToOrg],
             'cart_data'  => ['required', 'array'],
             'total_srd'  => ['required', 'numeric', 'min:0'],
         ]);

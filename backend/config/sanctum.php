@@ -47,7 +47,13 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Backstop only. Every token AuthController issues already carries an
+    // explicit expires_at (≤12h), and a token is invalid once the EARLIER of
+    // (global, per-token) passes — so short-lived tokens (e.g. receipt links)
+    // still expire on their own schedule. This 12h cap just guarantees a
+    // future token accidentally created without an explicit expiry can never
+    // live forever.
+    'expiration' => env('SANCTUM_EXPIRATION', 720),
 
     /*
     |--------------------------------------------------------------------------

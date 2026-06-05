@@ -21,6 +21,12 @@ class ApiIntegration extends Model
         'settings'       => 'array',
         'is_active'      => 'boolean',
         'last_ping_at'   => 'datetime',
+        // Encrypted at rest — a DB read / backup theft would otherwise expose
+        // every integrator's HMAC signing secret, enabling forged webhook
+        // deliveries. Transparently decrypts on access (DispatchWebhook signs
+        // with it). Existing plaintext rows migrated by
+        // 2026_06_05_000001_encrypt_webhook_secrets.
+        'webhook_secret' => 'encrypted',
     ];
 
     // Never expose secrets in API responses
