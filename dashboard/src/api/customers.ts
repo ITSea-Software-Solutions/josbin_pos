@@ -28,3 +28,14 @@ export async function updateCustomer(id: string, payload: { name?: string; phone
   const res = await apiClient.put<{ data: Customer }>(`/customers/${id}`, payload)
   return res.data.data
 }
+
+/**
+ * WBP-S right-to-erasure. Redacts the customer's personal data on the server
+ * (name tombstoned, phone/email/id_number + search hashes nulled) while
+ * keeping the row + spend/visit counters so sales history stays intact.
+ * OA + Super Admin only (403 otherwise).
+ */
+export async function redactCustomer(id: string): Promise<{ message: string }> {
+  const res = await apiClient.delete<{ message: string }>(`/customers/${id}`)
+  return res.data
+}

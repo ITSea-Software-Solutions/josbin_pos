@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getCustomers, updateCustomer, type Customer } from '@/api/customers'
+import { getCustomers, updateCustomer, redactCustomer, type Customer } from '@/api/customers'
+import { useDashboardAuthStore } from '@/store/authStore'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useToast } from '@/components/shared/Toast'
 
 function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: boolean; onClose: () => void }) {
   const qc = useQueryClient()
@@ -54,14 +57,34 @@ function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: bool
 export default function CustomersScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
+  const qc = useQueryClient()
+  const toast = useToast()
+  // WBP-S erasure is OA + SA only (mirrors CustomerPolicy::delete server-side).
+  const canRedact = ['organisation_admin', 'super_admin'].includes(
+    useDashboardAuthStore((s) => s.user?.role) ?? '',
+  )
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [editCustomer, setEditCustomer] = useState<Customer | null>(null)
+  const [redactTarget, setRedactTarget] = useState<Customer | null>(null)
 
   const { data, isLoading } = useQuery({
     queryKey: ['customers', search, page],
     queryFn: () => getCustomers({ search: search || undefined, per_page: 30, page }),
     placeholderData: (prev) => prev,
+  })
+
+  const redactMut = useMutation({
+    mutationFn: (id: string) => redactCustomer(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['customers'] })
+      setRedactTarget(null)
+      toast.success(isNl ? 'Persoonsgegevens gewist' : 'Personal data erased')
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Wissen mislukt: ${msg}` : `Erasure failed: ${msg}`)
+    },
   })
 
   const customers = data?.data ?? []
@@ -154,12 +177,23 @@ export default function CustomersScreen() {
                   {new Date(c.created_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
                 <td style={{ padding: '12px 16px' }}>
-                  <button
-                    onClick={() => setEditCustomer(c)}
-                    style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#374151' }}
-                  >
-                    {isNl ? 'Bewerken' : 'Edit'}
-                  </button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button
+                      onClick={() => setEditCustomer(c)}
+                      style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#374151' }}
+                    >
+                      {isNl ? 'Bewerken' : 'Edit'}
+                    </button>
+                    {canRedact && (
+                      <button
+                        onClick={() => setRedactTarget(c)}
+                        title={isNl ? 'Persoonsgegevens wissen (WBP-S)' : 'Erase personal data (WBP-S)'}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#dc2626' }}
+                      >
+                        {isNl ? 'Wissen' : 'Erase'}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -183,6 +217,23 @@ export default function CustomersScreen() {
       </div>
 
       {editCustomer && <EditModal customer={editCustomer} isNl={isNl} onClose={() => setEditCustomer(null)} />}
+
+      {/* WBP-S erasure confirm — irreversible, so spell out the consequence. */}
+      <ConfirmDialog
+        isOpen={redactTarget !== null}
+        loading={redactMut.isPending}
+        tone="danger"
+        title={isNl ? 'Persoonsgegevens wissen?' : 'Erase personal data?'}
+        message={
+          isNl
+            ? `Naam, telefoon, e-mail en ID van ${redactTarget?.name ?? 'deze klant'} worden permanent gewist (WBP-S recht op vergetelheid). De verkoophistorie en totalen blijven bewaard. Dit kan niet ongedaan worden gemaakt.`
+            : `Name, phone, email and ID for ${redactTarget?.name ?? 'this customer'} will be permanently erased (WBP-S right to erasure). Sales history and totals are kept. This cannot be undone.`
+        }
+        confirmLabel={isNl ? 'Definitief wissen' : 'Erase permanently'}
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setRedactTarget(null)}
+        onConfirm={() => redactTarget && redactMut.mutate(redactTarget.id)}
+      />
     </div>
   )
 }
