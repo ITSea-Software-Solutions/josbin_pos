@@ -363,11 +363,14 @@ class SaleController extends Controller
                 ]);
             }
 
-            // Update customer spend if attached
+            // Update customer spend if attached. Pass the bcmath STRING (not a
+            // float cast) so Postgres does exact DECIMAL arithmetic — every
+            // other money value is DECIMAL/bcmath, and a float cast here made
+            // the lifetime-spend column drift from SUM(sales.total_srd). (D2)
             if ($sale->customer_id) {
                 \App\Models\Customer::where('id', $sale->customer_id)->increment('visit_count');
                 \App\Models\Customer::where('id', $sale->customer_id)
-                    ->increment('total_spend_srd', (float) $cart['total']);
+                    ->increment('total_spend_srd', $cart['total']);
             }
 
             // Decrement per-store product stock + write the movement ledger
