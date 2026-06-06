@@ -1,11 +1,40 @@
-import { Suspense, lazy } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useRegisterStore } from '@/store/registerStore'
+import { getMyStores } from '@/api/stores'
 import { LicenseBanner } from '@/components/shared/LicenseBanner'
 import { DemoBanner } from '@/components/shared/DemoBanner'
 import { ToastProvider } from '@/components/shared/Toast'
+
+/**
+ * Self-heal a stale persisted store selection. If the store_id saved in
+ * localStorage isn't one the CURRENT user can access (left over from a prior
+ * session, a reassignment, or a deactivated store), drop it + any register
+ * session so StoreSelectScreen re-runs. Without this a sale would be sent with
+ * a foreign store_id and rejected with "store does not belong to your
+ * organisation".
+ */
+function usePersistedStoreGuard(authed: boolean) {
+  const storeId = useSettingsStore((s) => s.storeId)
+  const setStoreId = useSettingsStore((s) => s.setStoreId)
+  const clearSession = useRegisterStore((s) => s.clearSession)
+
+  const { data: stores } = useQuery({
+    queryKey: ['my-stores'],
+    queryFn: getMyStores,
+    enabled: authed && !!storeId,
+  })
+
+  useEffect(() => {
+    if (authed && storeId && stores && !stores.some((s) => s.id === storeId)) {
+      setStoreId(null)
+      clearSession()
+    }
+  }, [authed, storeId, stores, setStoreId, clearSession])
+}
 
 const LoginScreen       = lazy(() => import('@/screens/LoginScreen'))
 const StoreSelectScreen = lazy(() => import('@/screens/StoreSelectScreen'))
@@ -29,6 +58,9 @@ export default function App() {
 
   const authed       = token !== null && (!expiresAt || new Date(expiresAt) >= new Date())
   const hasRegister  = session !== null && session.status === 'open'
+
+  // Drop a persisted store the current user can't actually access.
+  usePersistedStoreGuard(authed)
 
   return (
     <ToastProvider>
