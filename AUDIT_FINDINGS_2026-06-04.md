@@ -17,7 +17,8 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 ## 🔴 P0 — fix before next demo (silent loss / compliance breach)
 
 > **Batch 1 shipped 2026-06-04** — P0-1, P0-2, P0-3, P1-P1 resolved (oversell class + N+1). G-020. Tests: `OversellPolicyTest`.
-> **Batch 2 shipped 2026-06-04** — P0-4, P0-9, P0-10, P1-C1 resolved (compliance correctness). G-022 (AST config), G-023 (hash chain never verified — now fixed). Tests: `ComplianceIntegrityTest`. **Remaining P0:** P0-5/6 (token+PII security), P0-7/8 (WBP-S erasure + Customer auditing).
+> **Batch 2 shipped 2026-06-04** — P0-4, P0-9, P0-10, P1-C1 resolved (compliance correctness). G-022 (AST config), G-023 (hash chain never verified — now fixed). Tests: `ComplianceIntegrityTest`.
+> **Batch 3 shipped 2026-06-05** — P0-6 + P1-S1…S7 resolved (security pass). Customer org-scope rule, webhook-secret encryption (col widened to text), svg-upload XSS, sanctum expiry backstop, void/refund throttle, 2FA middleware mounted, reset-2fa step-up, per-IP login throttle. Tests: `SecurityHardeningTest` (8). **Remaining P0:** P0-5 (receipt token scoping — its own pass), P0-7/8 (WBP-S erasure + Customer auditing = Batch 4).
 
 | # | Area | Finding | Effort |
 |---|------|---------|--------|
@@ -26,7 +27,7 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 | ✅ **P0-3** | sales | **DONE.** Variant `->lockForUpdate()->decrement()` (a no-op lock) replaced with `SELECT … FOR UPDATE` + guarded `update()`, respecting the org oversell policy. No DB CHECK — default policy allows negative by design. | M |
 | ✅ **P0-4** | compliance | **DONE.** `hashChain` now scopes the previous-hash lookup to `organisation_id` (ordered by `submitted_at`+`created_at`; UUID PK isn't monotonic). Each taxpayer's chain is self-contained. Test: `ComplianceIntegrityTest::test_btw_hash_chain_is_per_organisation`. | S |
 | **P0-5** | security | **`?token=` query auth accepts full 12h wildcard tokens** (`AuthenticateViaQueryToken.php:26-42`). Token ends up in webserver access logs / browser history / Referer headers; full account takeover if anyone reads logs. Receipt-PDF links are shared by email. **Fix:** issue short-lived `receipt:{sale_id}` ability tokens; reject `*` in this middleware. | M |
-| **P0-6** | security | **Cross-tenant PII leak via guessed `customer_id`** (`SaleController.php:45,433`). Validation is `exists:customers,id` with no org scope; a cashier in Org A can attach a Customer UUID from Org B to a sale, then receipt decrypts and prints that customer's WBP-S-protected name/phone/email. **Fix:** `Rule::exists('customers','id')->where('organisation_id', $orgId)`. | S |
+| ✅ **P0-6** | security | **DONE.** New `CustomerBelongsToOrg` rule (mirrors `StoreBelongsToOrg`) on `customer_id` at sale create + hold. Foreign-org customer UUIDs now 422. Test: `SecurityHardeningTest::test_cannot_attach_customer_from_another_org`. | S |
 | **P0-7** | compliance | **WBP-S "right to erasure" is unimplemented** for `Customer`. No DELETE/redact endpoint. **Fix:** add `DELETE /customers/{id}` that nulls encrypted PII + hash columns and writes `customer.redacted` to audit log; keep the row + counters so reports stay intact. | M |
 | **P0-8** | compliance | **`Customer` model is not Auditable** despite carrying every encrypted PII field. WBP-S § access-log requirement says PII reads/writes must be traceable; today they aren't. **Fix:** `implements Auditable` + `use Auditable` on Customer; explicit `accessed` event on `CustomerController::show`. | S |
 | ✅ **P0-9** | compliance | **DONE.** Pinned `'timezone' => env('DB_TIMEZONE', 'America/Paramaribo')` in the pgsql connection so every `whereDate`/`DATE()` truncates in AST regardless of the host/container/managed-DB TZ (was relying implicitly on the compose `TZ` env — broken on managed cloud Postgres). See G-022. | M |
@@ -38,16 +39,16 @@ Effort: **S** ≤ 1 hr · **M** half day · **L** 1–2 days · **XL** 3+ days.
 
 ## 🟠 P1 — fix this sprint (exploitable, scale-breaking, or daily-friction)
 
-### Security
+### Security — ✅ all resolved in Batch 3 (2026-06-05), tests in `SecurityHardeningTest`
 | # | Finding | Effort |
 |---|---------|--------|
-| P1-S1 | **`webhook_secret` stored plaintext** (`ApiIntegration.php`). DB read / backup theft discloses every integrator's HMAC secret → forged webhooks. **Fix:** `'webhook_secret' => 'encrypted'` cast. | S |
-| P1-S2 | **SVG logo upload XSS** (`StoreController.php:85`). SVG carries inline JS; served same-origin → stored XSS in any dashboard surface rendering the logo. **Fix:** drop `svg` from mime allow-list or sanitize via `enshrined/svg-sanitize`. | S |
-| P1-S3 | **`reset2fa` requires no step-up** (`UserController.php:287`). Hijacked OA session can clear 2FA on every SM/cashier in the org via one API call. No audit row, no email. **Fix:** require `current_password`, write audit_log, send email; block against roles in `TWO_FACTOR_ALWAYS_ROLES`. | S |
-| P1-S4 | **`sanctum.expiration = null`** is a footgun. Any future `createToken('foo', ['*'])` without explicit `expiresAt` lives forever. **Fix:** set `SANCTUM_EXPIRATION=720` (12h) as backstop. | S |
-| P1-S5 | **Void/refund have no per-endpoint throttle.** Compromised cashier can void/refund the entire day in a tight loop. **Fix:** `throttle:10,1` on `void`+`refund` routes; trip `DetectSaleAnomaly` inline when count > N/min. | S |
-| P1-S6 | **Login throttle only counts FAILED attempts and rotates with IP+email key.** Attacker rotating IPs defeats it; "progressive delays" promised in spec aren't implemented. **Fix:** secondary per-IP limiter; `usleep(2^attempts)` for first 8 attempts. | S |
-| P1-S7 | **`EnsureTwoFactor` middleware exists but is never applied** to any protected route. 2FA enforces at login, but a stolen Sanctum token after that bypasses the `2fa_verified` ability check. **Fix:** wrap the authenticated route group in `['auth:sanctum', 'two_factor', 'session.timeout']`. | S |
+| ✅ P1-S1 | **DONE.** `webhook_secret` `'encrypted'` cast + migration encrypting existing rows; column widened varchar(64)→text for ciphertext. | S |
+| ✅ P1-S2 | **DONE.** Dropped `svg` from receipt-logo mime allow-list → png/jpg/webp only. | S |
+| ✅ P1-S3 | **DONE.** `reset-2fa` requires actor's `current_password`, blocks mandatory-2FA roles (super_admin/tax_inspector/govt), writes `user.two_factor_reset` audit row. (Email notify = future, endpoint not yet UI-wired.) | S |
+| ✅ P1-S4 | **DONE.** `sanctum.expiration` = `env('SANCTUM_EXPIRATION', 720)` backstop; per-token expiries still win (earlier of the two). | S |
+| ✅ P1-S5 | **DONE.** `throttle:20,1` on `sales.void` + `sales.refund`. | S |
+| ✅ P1-S6 | **DONE.** Login throttle now returns two limits: per-email+IP (5/5min) AND per-IP (20/5min). Message → `errors.too_many_login_attempts`. (Progressive usleep not added — per-IP cap covers the spray case.) | S |
+| ✅ P1-S7 | **DONE.** `two_factor` (EnsureTwoFactor) mounted on the authenticated group. Verified safe: 2FA challenge/setup routes are outside the group; non-2FA users pass through; live OA smoke = 200. | S |
 
 ### Data integrity
 | # | Finding | Effort |
