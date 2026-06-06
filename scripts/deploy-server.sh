@@ -40,13 +40,19 @@ command -v node >/dev/null || fail "node not found — needed to build the SPAs"
 "${SSH[@]}" true 2>/dev/null || fail "cannot SSH to $SSH_TARGET (key-based access required)"
 
 # ── 1. Build SPAs locally with env-specific URLs ──────────────────────────────
-export VITE_API_URL VITE_POS_URL VITE_REVERB_HOST VITE_REVERB_PORT VITE_REVERB_SCHEME VITE_REVERB_APP_KEY
+export VITE_API_URL VITE_POS_URL VITE_REVERB_HOST VITE_REVERB_PORT VITE_REVERB_SCHEME VITE_REVERB_APP_KEY VITE_DOCS_URL
 
 log "Building dashboard SPA"
 ( cd dashboard && npm ci --silent && npx vite build ) || fail "dashboard build failed"
 
 log "Building POS web SPA"
 ( cd frontend && npm ci --silent && npx vite build --config vite.config.ts ) || fail "POS web build failed"
+
+log "Building docs site (manual + flow diagrams)"
+( cd docs-site && npm ci --silent && npm run build ) || fail "docs build failed"
+# Fold the standalone diagram pages into the same web root so they are served
+# at /flows.html and /architecture.html alongside the VitePress manual.
+cp docs/flows.html docs/architecture.html docs-site/.vitepress/dist/ || fail "docs asset copy failed"
 
 # ── 2. Push code: backend via git pull on the server, dist via rsync ──────────
 log "Pulling backend code on server (branch: $GIT_BRANCH)"
@@ -56,6 +62,7 @@ log "Pulling backend code on server (branch: $GIT_BRANCH)"
 log "Shipping built SPAs"
 rsync -az --delete -e "ssh -o BatchMode=yes" dashboard/dist/ "$SSH_TARGET:$REMOTE_DIR/dashboard/dist/"
 rsync -az --delete -e "ssh -o BatchMode=yes" frontend/dist/  "$SSH_TARGET:$REMOTE_DIR/frontend/dist/"
+rsync -az --delete -e "ssh -o BatchMode=yes" docs-site/.vitepress/dist/ "$SSH_TARGET:$REMOTE_DIR/docs-site/.vitepress/dist/"
 
 # ── 3. Backend: composer, migrate, (seed), cache ──────────────────────────────
 log "Composer install (production)"
@@ -78,11 +85,13 @@ log "Rebuilding caches"
 log "Restarting queue (Horizon), Reverb, and frontend containers"
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE exec -T app php artisan horizon:terminate || true"
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE restart reverb dashboard-web pos-web"
+# docs-web may be new on first deploy — `up -d` creates it, no-op afterwards.
+"${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE up -d docs-web"
 
 # ── 5. Health checks ──────────────────────────────────────────────────────────
 log "Health checks"
 host="${SSH_TARGET#*@}"
-for url in "http://$host:$APP_PORT/api/health" "http://$host:8090/" "http://$host:8091/"; do
+for url in "http://$host:$APP_PORT/api/health" "http://$host:8090/" "http://$host:8091/" "http://$host:8095/" "http://$host:8095/user_manual/" "http://$host:8095/flows.html"; do
     code=$("${SSH[@]}" "curl -s -o /dev/null -w '%{http_code}' --max-time 10 '$url'" || echo 000)
     [ "$code" = "200" ] && log "OK  $url" || warn "HTTP $code  $url"
 done

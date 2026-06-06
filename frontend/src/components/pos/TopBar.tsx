@@ -9,6 +9,7 @@ import { getDailyReport } from '@/api/reports'
 import CustomerModal from './CustomerModal'
 import HeldBillsPanel from './HeldBillsPanel'
 import CloseRegisterModal from '@/screens/CloseRegisterModal'
+import HelpButton from '@/components/shared/HelpButton'
 
 interface TopBarProps {
   storeId: string
@@ -159,6 +160,9 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
           >
             📋 {t('pos.openBills')}
           </button>
+
+          {/* Context-aware help for the current screen */}
+          <HelpButton topic={activeScreen} />
 
           {/* On-screen keyboard toggle */}
           <button

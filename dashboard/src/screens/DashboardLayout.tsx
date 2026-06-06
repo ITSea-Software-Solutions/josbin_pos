@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
+import HelpButton from '@/components/shared/HelpButton'
 
 const DashboardOverview   = lazy(() => import('@/screens/DashboardOverview'))
 const StoreDetailScreen   = lazy(() => import('@/screens/StoreDetailScreen'))
@@ -557,6 +558,12 @@ export default function DashboardLayout() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* Context-aware help for the current screen */}
+            <HelpButton topic={
+              screen === 'btw-submission-detail' ? 'btw-submissions'
+              : screen === 'store' ? 'overview'
+              : screen
+            } />
             {/* Live dot */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#ecfdf5', padding: '5px 12px', borderRadius: 20, border: '1px solid #bbf7d0' }}>
               <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', display: 'inline-block', boxShadow: '0 0 0 2px rgba(34,197,94,0.3)', animation: 'pulse 2s infinite' }} />

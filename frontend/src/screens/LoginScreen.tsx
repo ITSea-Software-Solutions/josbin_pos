@@ -576,15 +576,26 @@ export default function LoginScreen() {
 
         </div>
 
-        {/* Below-card version tag */}
+        {/* Below-card help links + version tag */}
         <div style={{
-          position: 'absolute',
-          bottom: 20,
-          fontSize: 11,
-          color: 'rgba(148,163,184,0.3)',
-          letterSpacing: '0.3px',
+          position: 'absolute', bottom: 16,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
         }}>
-          Josbin POS v1.0 &nbsp;·&nbsp; © 2026
+          <div style={{ display: 'flex', gap: 16 }}>
+            <a href={`${(import.meta.env.VITE_DOCS_URL ?? 'http://142.93.88.143:8095').replace(/\/$/, '')}/user_manual/`}
+              target="_blank" rel="noreferrer"
+              style={{ fontSize: 11.5, color: 'rgba(148,163,184,0.75)', textDecoration: 'none', fontWeight: 600 }}>
+              {isNl ? '📘 Handleiding' : '📘 User manual'}
+            </a>
+            <a href={`${(import.meta.env.VITE_DOCS_URL ?? 'http://142.93.88.143:8095').replace(/\/$/, '')}/flows.html`}
+              target="_blank" rel="noreferrer"
+              style={{ fontSize: 11.5, color: 'rgba(148,163,184,0.75)', textDecoration: 'none', fontWeight: 600 }}>
+              {isNl ? '🗺️ Hoe het werkt' : '🗺️ How it works'}
+            </a>
+          </div>
+          <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.3)', letterSpacing: '0.3px' }}>
+            Josbin POS v1.0 &nbsp;·&nbsp; © 2026
+          </div>
         </div>
       </div>
     </div>

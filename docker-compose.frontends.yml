@@ -29,3 +29,19 @@ services:
       - josbin_pos_internal
     depends_on:
       - nginx
+
+  # Static docs: VitePress manual (user_manual / dashboard_manual / dev docs)
+  # plus flows.html + architecture.html. Served at :8095. The in-app Help
+  # drawer's "Open full guide" links and the login-screen doc links point here
+  # (VITE_DOCS_URL). Pure static — no backend proxy.
+  docs-web:
+    image: nginx:1.25-alpine
+    container_name: josbin_docs_web
+    restart: unless-stopped
+    ports:
+      - "8095:80"
+    volumes:
+      - ./docs-site/.vitepress/dist:/usr/share/nginx/html:ro
+      - ./docker/frontends/docs.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - josbin_pos_internal
