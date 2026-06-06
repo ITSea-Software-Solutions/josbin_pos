@@ -17,6 +17,10 @@ return [
     'wrong_current_password' => 'Current password is incorrect.',
     'password_changed'       => 'Password changed. Other devices have been signed out.',
 
+    // Auth / 2FA
+    'too_many_login_attempts' => 'Too many login attempts. Please try again in a few minutes.',
+    'cannot_reset_mandatory_2fa' => 'Two-factor authentication is mandatory for this account and cannot be reset.',
+
     // Register + Z-Report
     'register_already_closed_today' => 'This register was already closed today. Ask your manager to re-open it.',
     'register_day_already_closed'   => "Today's register is already closed.",

@@ -76,7 +76,13 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->name('auth.')->group(functi
 });
 
 // ── Authenticated (Sanctum) ───────────────────────────────────────────────
-Route::middleware(['auth:sanctum', 'session.timeout'])->group(function () {
+// `two_factor` enforces the post-2FA ability on every request for users whose
+// role mandates it (super_admin, tax_inspector, government) — closing the gap
+// where a stolen *full* token could otherwise skip the 2FA gate after login.
+// Safe to mount here: the 2FA challenge (public) and setup/confirm (separate
+// auth:sanctum group above) live OUTSIDE this group, so the completion flow
+// can't deadlock. Non-2FA users pass straight through (requires2FA() === false).
+Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(function () {
 
     // Self-service: personal stats + profile + password change.
     // Strictly scoped to $request->user() — see MeController for the rule.

@@ -26,6 +26,10 @@ return [
     'wrong_current_password' => 'Het huidige wachtwoord is onjuist.',
     'password_changed'       => 'Wachtwoord gewijzigd. Andere apparaten zijn uitgelogd.',
 
+    // Auth / 2FA
+    'too_many_login_attempts' => 'Te veel inlogpogingen. Probeer het over enkele minuten opnieuw.',
+    'cannot_reset_mandatory_2fa' => 'Tweefactorauthenticatie is verplicht voor dit account en kan niet worden gereset.',
+
     // Register + Z-Report
     'register_already_closed_today' => 'Deze kassa is vandaag al gesloten. Vraag uw manager om heropening.',
     'register_day_already_closed'   => 'De kas voor vandaag is al gesloten.',

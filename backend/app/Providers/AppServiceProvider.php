@@ -28,14 +28,24 @@ class AppServiceProvider extends ServiceProvider
 
     private function configureRateLimiting(): void
     {
-        // Login: 5 attempts per 5 minutes per email+IP combo
+        // Login throttle — TWO dimensions so neither attack shape gets through:
+        //   1. per email+IP  (5 / 5min)  — targeted brute force of one account
+        //   2. per IP only   (20 / 5min) — one host spraying many usernames
+        // Returning an array applies BOTH; the request is blocked if either trips.
         RateLimiter::for('login', function (Request $request) {
-            return Limit::perMinutes(5, 5)
-                ->by(strtolower((string) $request->input('email')) . '|' . $request->ip())
-                ->response(fn () => response()->json([
-                    'message' => 'Te veel inlogpogingen. Probeer het over enkele minuten opnieuw.',
-                    'code'    => 'RATE_LIMITED',
-                ], 429));
+            $tooMany = fn () => response()->json([
+                'message' => __('errors.too_many_login_attempts'),
+                'code'    => 'RATE_LIMITED',
+            ], 429);
+
+            return [
+                Limit::perMinutes(5, 5)
+                    ->by(strtolower((string) $request->input('email')) . '|' . $request->ip())
+                    ->response($tooMany),
+                Limit::perMinutes(5, 20)
+                    ->by('ip|' . $request->ip())
+                    ->response($tooMany),
+            ];
         });
 
         // General API: 240 req/min per authenticated user or IP

@@ -288,6 +288,28 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
+        $actor = $request->user();
+
+        // Step-up: the actor must re-confirm their OWN password. Without this,
+        // a hijacked OA session could strip 2FA off every user in the org with
+        // a single unauthenticated-feeling click — no re-auth, no trace.
+        $request->validate(['current_password' => ['required', 'string']]);
+        if (! \Illuminate\Support\Facades\Hash::check($request->input('current_password'), $actor->password)) {
+            return response()->json([
+                'message' => __('errors.wrong_current_password'),
+                'code'    => 'WRONG_PASSWORD',
+            ], 422);
+        }
+
+        // Never strip 2FA from accounts where it's mandatory by policy
+        // (super_admin, tax_inspector, government users) — it's non-bypassable.
+        if (in_array($user->role, User::TWO_FACTOR_ALWAYS_ROLES, true) || $user->isGovernmentUser()) {
+            return response()->json([
+                'message' => __('errors.cannot_reset_mandatory_2fa'),
+                'code'    => 'MANDATORY_2FA',
+            ], 403);
+        }
+
         $user->forceFill([
             'two_factor_secret'         => null,
             'two_factor_recovery_codes' => null,
@@ -296,6 +318,19 @@ class UserController extends Controller
 
         // Force re-login so 2FA re-setup is required
         $user->tokens()->delete();
+
+        // Audit trail — who reset whose 2FA, for the Rekenkamer export.
+        \App\Models\AuditLog::create([
+            'user_id'         => $actor->id,
+            'organisation_id' => $actor->organisation_id,
+            'event'           => 'user.two_factor_reset',
+            'auditable_type'  => \App\Models\User::class,
+            'auditable_id'    => $user->id,
+            'old_values'      => null,
+            'new_values'      => ['target_user' => $user->email, 'reset_by' => $actor->email],
+            'ip_address'      => $request->ip(),
+            'created_at'      => now(),
+        ]);
 
         return response()->json(['message' => 'Two-factor authentication reset.']);
     }

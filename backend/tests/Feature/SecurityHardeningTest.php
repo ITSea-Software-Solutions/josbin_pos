@@ -131,6 +131,122 @@ class SecurityHardeningTest extends TestCase
             ->assertStatus(201);
     }
 
+    // ─── P1-S7: 2FA middleware actually enforced on requests ────────────────
+
+    public function test_super_admin_token_without_2fa_verified_is_blocked(): void
+    {
+        $sa = User::create([
+            'name' => 'SA', 'email' => 'sa@x.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $this->orgA->id, 'role' => User::ROLE_SUPER_ADMIN,
+            'locale' => 'nl', 'is_active' => true,
+        ]);
+        $sa->assignRole(User::ROLE_SUPER_ADMIN);
+
+        $url = '/api/products/pos?store_id=' . $this->storeA->id;
+
+        // Full wildcard token, but NO literal 2fa_verified ability — this is
+        // exactly the gap P1-S7 closes: a stolen full token that skipped the
+        // 2FA challenge must NOT be honoured. The middleware rejects before the
+        // controller runs.
+        $token = $sa->createToken('t', ['*'])->plainTextToken;
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson($url)
+            ->assertStatus(403)
+            ->assertJsonPath('code', 'TWO_FACTOR_REQUIRED');
+
+        // The positive path — a 2fa_verified SA token clearing the middleware
+        // and reaching a controller — is proven by
+        // test_reset2fa_blocks_mandatory_2fa_roles (which reaches the
+        // reset-2fa controller's MANDATORY_2FA branch with exactly such a token).
+    }
+
+    public function test_non_2fa_user_passes_through_middleware(): void
+    {
+        // Cashier in a non-government org doesn't require 2FA → never blocked.
+        $token = $this->cashierA->createToken('t', ['*'])->plainTextToken;
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->getJson('/api/products/pos?store_id=' . $this->storeA->id)
+            ->assertOk();
+    }
+
+    // ─── P1-S3: reset-2fa step-up + mandatory-role block ────────────────────
+
+    public function test_reset2fa_requires_actor_password(): void
+    {
+        [$oa, $target] = $this->makeOaAndCashier();
+
+        // No password → 422 validation.
+        $this->actingAs($oa, 'sanctum')
+            ->postJson("/api/users/{$target->id}/reset-2fa", [])
+            ->assertStatus(422);
+
+        // Wrong password → 422 WRONG_PASSWORD.
+        $this->actingAs($oa, 'sanctum')
+            ->postJson("/api/users/{$target->id}/reset-2fa", ['current_password' => 'nope'])
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'WRONG_PASSWORD');
+    }
+
+    public function test_reset2fa_blocks_mandatory_2fa_roles(): void
+    {
+        // Actor must be able to authorize('update') the target, so use a
+        // super_admin actor (who can manage anyone) resetting another SA.
+        $actor = User::create([
+            'name' => 'SA-actor', 'email' => 'sa-actor@x.sr', 'password' => bcrypt('SApw1234'),
+            'organisation_id' => $this->orgA->id, 'role' => User::ROLE_SUPER_ADMIN,
+            'locale' => 'nl', 'is_active' => true,
+        ]);
+        $actor->assignRole(User::ROLE_SUPER_ADMIN);
+
+        $target = User::create([
+            'name' => 'SA-target', 'email' => 'sa-target@x.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $this->orgA->id, 'role' => User::ROLE_SUPER_ADMIN,
+            'locale' => 'nl', 'is_active' => true,
+        ]);
+        $target->assignRole(User::ROLE_SUPER_ADMIN);
+
+        // Real token WITH 2fa_verified so the SA actor clears the 2FA gate.
+        $token = $actor->createToken('t', ['*', '2fa_verified'])->plainTextToken;
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson("/api/users/{$target->id}/reset-2fa", ['current_password' => 'SApw1234'])
+            ->assertStatus(403)
+            ->assertJsonPath('code', 'MANDATORY_2FA');
+    }
+
+    public function test_reset2fa_succeeds_with_password_and_audits(): void
+    {
+        [$oa, $target] = $this->makeOaAndCashier();
+
+        $this->actingAs($oa, 'sanctum')
+            ->postJson("/api/users/{$target->id}/reset-2fa", ['current_password' => 'OApw1234'])
+            ->assertOk();
+
+        $this->assertDatabaseHas('audit_logs', [
+            'event'        => 'user.two_factor_reset',
+            'auditable_id' => $target->id,
+        ]);
+    }
+
+    /** @return array{0: User, 1: User} OA actor + a cashier target in org A. */
+    private function makeOaAndCashier(): array
+    {
+        $oa = User::create([
+            'name' => 'OA', 'email' => 'oa-sec@x.sr', 'password' => bcrypt('OApw1234'),
+            'organisation_id' => $this->orgA->id, 'role' => User::ROLE_ORGANISATION_ADMIN,
+            'locale' => 'nl', 'is_active' => true,
+        ]);
+        $oa->assignRole(User::ROLE_ORGANISATION_ADMIN);
+
+        $target = User::create([
+            'name' => 'Target', 'email' => 'target@x.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $this->orgA->id, 'store_id' => $this->storeA->id,
+            'role' => User::ROLE_CASHIER, 'locale' => 'nl', 'is_active' => true,
+        ]);
+        $target->assignRole(User::ROLE_CASHIER);
+
+        return [$oa, $target];
+    }
+
     public function test_webhook_secret_is_encrypted_at_rest(): void
     {
         $integration = ApiIntegration::create([
