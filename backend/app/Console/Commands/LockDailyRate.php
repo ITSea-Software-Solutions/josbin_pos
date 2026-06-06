@@ -67,7 +67,8 @@ class LockDailyRate extends Command
             $markup    = bcmul($rawRate, bcdiv($markupPct, '100', 6), 6);
             $finalRate = bcadd($rawRate, $markup, 4);
 
-            DailyRate::updateOrCreate(
+            // Authorised scheduled lock — may re-lock an existing row under --force.
+            DailyRate::withoutLockGuard(fn () => DailyRate::updateOrCreate(
                 ['date' => $today],
                 [
                     'usd_to_srd'   => $finalRate,
@@ -77,7 +78,7 @@ class LockDailyRate extends Command
                     'locked_at'    => now(),
                     'api_response' => $data,
                 ]
-            );
+            ));
 
             // Cache for 24h so API controllers skip DB lookups
             Cache::put('daily_rate:' . $today, $finalRate, 86400);
@@ -107,7 +108,7 @@ class LockDailyRate extends Command
             return;
         }
 
-        DailyRate::updateOrCreate(
+        DailyRate::withoutLockGuard(fn () => DailyRate::updateOrCreate(
             ['date' => $today],
             [
                 'usd_to_srd'   => $prev->usd_to_srd,
@@ -117,7 +118,7 @@ class LockDailyRate extends Command
                 'locked_at'    => now(),
                 'api_response' => ['fallback_from' => $yesterday],
             ]
-        );
+        ));
 
         Cache::put('daily_rate:' . $today, $prev->usd_to_srd, 86400);
 

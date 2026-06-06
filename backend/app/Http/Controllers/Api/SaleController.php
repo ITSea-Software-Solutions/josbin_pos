@@ -207,6 +207,21 @@ class SaleController extends Controller
             saleDiscountPct: $manualCartDiscountPct,
         );
 
+        // Compliance (C6): a BTW-charging receipt must carry the
+        // organisation's Belastingdienst registration number. If this basket
+        // charges BTW but the org has none on file, refuse — issuing a
+        // BTW receipt without a registration number is non-compliant. Sales
+        // with no BTW (fully exempt baskets) are unaffected.
+        if (bccomp((string) $cart['btw_total'], '0', 2) > 0) {
+            $org = \App\Models\Store::find($data['store_id'])?->organisation;
+            if ($org && blank($org->btw_number)) {
+                return response()->json([
+                    'message' => __('errors.missing_btw_number'),
+                    'code'    => 'MISSING_BTW_NUMBER',
+                ], 422);
+            }
+        }
+
         // Oversell policy is per-organisation (default OFF = allow + track
         // negative). Resolve it once so both the variant guard and the
         // product-stock ledger below enforce the same rule.

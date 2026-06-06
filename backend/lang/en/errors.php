@@ -33,6 +33,7 @@ return [
     'refund_only_completed'         => 'Only completed sales can be refunded.',
     'receipt_emailed'               => 'Receipt emailed to :email.',
     'customer_redacted'             => 'Customer personal data has been erased. The record is kept for sales history but no longer contains identifiable information.',
+    'missing_btw_number'            => 'This organisation has no BTW registration number on file, so a BTW receipt cannot be issued. Ask your Org Admin to set it in Dashboard → Organisation.',
 
     // Sales — inventory (strict mode only; default policy allows oversell)
     'insufficient_stock'            => 'Insufficient stock for ":product". Only :available left. Adjust stock via Dashboard → Stock, or lower the quantity.',

@@ -42,6 +42,7 @@ return [
     'refund_only_completed'         => 'Alleen voltooide verkopen kunnen worden terugbetaald.',
     'receipt_emailed'               => 'Kassabon verstuurd naar :email.',
     'customer_redacted'             => 'Persoonsgegevens van de klant zijn gewist. Het record blijft bewaard voor de verkoophistorie maar bevat geen identificeerbare gegevens meer.',
+    'missing_btw_number'            => 'Deze organisatie heeft geen BTW-nummer geregistreerd, dus er kan geen BTW-bon worden uitgegeven. Vraag de Org Admin om het in te stellen via Dashboard → Organisatie.',
 
     // Sales — inventory (strict mode only; default policy allows oversell)
     'insufficient_stock'            => 'Onvoldoende voorraad voor ":product". Nog :available op voorraad. Pas de voorraad aan via Dashboard → Voorraad, of verlaag het aantal.',

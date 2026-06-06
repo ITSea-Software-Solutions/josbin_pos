@@ -200,4 +200,95 @@ class ComplianceIntegrityTest extends TestCase
         $this->assertTrue($result['valid'], 'Audit chain broken: ' . ($result['message'] ?? ''));
         $this->assertGreaterThanOrEqual(2, $result['checked']);
     }
+
+    // ── P1-C5: locked daily-rate immutability ─────────────────────────────────
+
+    public function test_locked_daily_rate_cannot_be_overwritten_except_via_override(): void
+    {
+        $rate = \App\Models\DailyRate::create([
+            'date' => '2026-02-15', 'usd_to_srd' => '37.5000', 'raw_rate' => '37.5000',
+            'markup_pct' => '0.00', 'source' => 'api', 'locked_at' => Carbon::now(),
+        ]);
+
+        // A plain programmatic overwrite of a locked rate is refused.
+        try {
+            $rate->update(['usd_to_srd' => '99.0000']);
+            $this->fail('Expected the locked-rate guard to throw.');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('locked', strtolower($e->getMessage()));
+        }
+        $this->assertSame('37.5000', \App\Models\DailyRate::find($rate->id)->usd_to_srd);
+
+        // The authorised override path succeeds.
+        \App\Models\DailyRate::withoutLockGuard(fn () => $rate->update(['usd_to_srd' => '40.0000']));
+        $this->assertSame('40.0000', \App\Models\DailyRate::find($rate->id)->usd_to_srd);
+    }
+
+    // ── P1-C6: BTW receipt requires a registration number ─────────────────────
+
+    public function test_btw_sale_blocked_when_org_has_no_btw_number(): void
+    {
+        $org = Organisation::create([
+            'name' => 'No-Number Shop', 'type' => 'retail', 'btw_number' => null,
+            'currency' => 'SRD', 'locale' => 'nl', 'is_government' => false,
+            'subscription_tier' => 'standard', 'is_active' => true,
+        ]);
+        $store = Store::create([
+            'organisation_id' => $org->id, 'name' => 'NN Main', 'city' => 'Paramaribo',
+            'default_btw_rate' => 10, 'is_active' => true, 'pos_type' => 'native',
+        ]);
+        $cashier = User::create([
+            'name' => 'NN Cashier', 'email' => 'nn@compliance.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $org->id, 'store_id' => $store->id,
+            'role' => User::ROLE_CASHIER, 'locale' => 'nl', 'is_active' => true,
+        ]);
+        $cashier->assignRole(User::ROLE_CASHIER);
+
+        $payload = [
+            'store_id' => $store->id, 'payment_method' => 'cash', 'cash_tendered' => '11.00',
+            'items' => [[
+                'product_name' => 'Cola', 'unit_price' => '10.00', 'quantity' => '1',
+                'btw_rate' => '10.00', 'btw_exempt' => false,
+            ]],
+        ];
+
+        // BTW basket + no number on file → refused.
+        $this->actingAs($cashier, 'sanctum')->postJson('/api/sales', $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'MISSING_BTW_NUMBER');
+
+        // Set the number → the same sale now completes.
+        $org->update(['btw_number' => 'BTW-SR-NN']);
+        $this->actingAs($cashier, 'sanctum')->postJson('/api/sales', $payload)
+            ->assertStatus(201);
+    }
+
+    public function test_fully_exempt_sale_allowed_without_btw_number(): void
+    {
+        $org = Organisation::create([
+            'name' => 'Exempt Shop', 'type' => 'retail', 'btw_number' => null,
+            'currency' => 'SRD', 'locale' => 'nl', 'is_government' => false,
+            'subscription_tier' => 'standard', 'is_active' => true,
+        ]);
+        $store = Store::create([
+            'organisation_id' => $org->id, 'name' => 'EX Main', 'city' => 'Paramaribo',
+            'default_btw_rate' => 10, 'is_active' => true, 'pos_type' => 'native',
+        ]);
+        $cashier = User::create([
+            'name' => 'EX Cashier', 'email' => 'ex@compliance.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $org->id, 'store_id' => $store->id,
+            'role' => User::ROLE_CASHIER, 'locale' => 'nl', 'is_active' => true,
+        ]);
+        $cashier->assignRole(User::ROLE_CASHIER);
+
+        // A fully BTW-exempt basket (rice/medicine) charges no BTW, so the
+        // registration-number rule does not apply — sale must complete.
+        $this->actingAs($cashier, 'sanctum')->postJson('/api/sales', [
+            'store_id' => $store->id, 'payment_method' => 'cash', 'cash_tendered' => '10.00',
+            'items' => [[
+                'product_name' => 'Rijst', 'unit_price' => '10.00', 'quantity' => '1',
+                'btw_rate' => '0', 'btw_exempt' => true,
+            ]],
+        ])->assertStatus(201);
+    }
 }

@@ -33,14 +33,26 @@ class AuditLogController extends Controller
             ->with('user:id,name,email,role')
             ->orderByDesc('created_at');
 
-        // Scope by organisation unless super admin
+        // Scope by organisation unless super admin.
+        //
+        // Match on the row's organisation_id OR the acting user belonging to
+        // this org. The user_id fan-out alone (the previous behaviour) hid two
+        // legitimate classes of event from the OA:
+        //   1. System events with user_id = null but the org tagged
+        //      (e.g. customer.redacted, BTW filings) — now visible.
+        //   2. Super-Admin actions performed ON this org's data (user_id is the
+        //      SA, not an org user, but organisation_id is the org) — now visible.
+        // The OR keeps everything the old filter showed (e.g. Product edits,
+        // which carry the org user's id but no organisation_id of their own).
         if (! $actor->isSuperAdmin()) {
-            // Only show audit entries whose user belongs to this org
             $orgUserIds = User::where('organisation_id', $actor->organisation_id)
                 ->pluck('id')
                 ->map(fn ($id) => (string) $id);
 
-            $query->whereIn('user_id', $orgUserIds);
+            $query->where(function ($q) use ($actor, $orgUserIds) {
+                $q->where('organisation_id', $actor->organisation_id)
+                  ->orWhereIn('user_id', $orgUserIds);
+            });
         }
 
         // Filters

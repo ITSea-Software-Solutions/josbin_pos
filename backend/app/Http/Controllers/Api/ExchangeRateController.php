@@ -43,7 +43,10 @@ class ExchangeRateController extends Controller
         ]);
 
         $today = today()->toDateString();
-        $rate  = DailyRate::updateOrCreate(
+        // Authorised manual override — deliberately allowed to overwrite an
+        // already-locked rate (this is the human escape hatch the lock guard
+        // points users toward).
+        $rate = DailyRate::withoutLockGuard(fn () => DailyRate::updateOrCreate(
             ['date' => $today],
             [
                 'usd_to_srd'  => number_format($data['rate_srd'], 4, '.', ''),
@@ -53,7 +56,7 @@ class ExchangeRateController extends Controller
                 'locked_by'   => $request->user()->id,
                 'locked_at'   => now(),
             ]
-        );
+        ));
 
         Cache::put('daily_rate:' . $today, $rate->usd_to_srd, 86400);
 
