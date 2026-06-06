@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Josbin POS — System Flows (Onboarding → BTW filing)</title>
+<style>
+  :root{
+    --bg:#0f0f1a; --panel:#1a1a2a; --panel-soft:#15151f; --border:#2a2a3d;
+    --text:#f1f5f9; --muted:#94a3b8; --accent:#7c3aed; --accent2:#4f46e5;
+    --green:#16a34a; --amber:#fbbf24; --red:#ef4444; --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; font-size:15px;
+  }
+  header.hero{
+    padding:38px 28px 26px; border-bottom:1px solid var(--border);
+    background:radial-gradient(1200px 300px at 20% -40%, rgba(124,58,237,.22), transparent),var(--panel);
+  }
+  header.hero h1{margin:0 0 6px; font-size:28px; letter-spacing:-.5px}
+  header.hero p{margin:0; color:var(--muted); max-width:820px}
+  .badge{display:inline-block; font-size:11px; font-weight:700; letter-spacing:.5px;
+    text-transform:uppercase; color:#c4b5fd; background:rgba(124,58,237,.16);
+    border:1px solid rgba(124,58,237,.4); border-radius:20px; padding:3px 11px; margin-bottom:14px}
+  main{max-width:1060px; margin:0 auto; padding:8px 22px 80px}
+  nav.toc{
+    position:sticky; top:0; z-index:5; background:rgba(15,15,26,.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border); padding:12px 0; margin-bottom:8px;
+    display:flex; flex-wrap:wrap; gap:6px;
+  }
+  nav.toc a{font-size:12.5px; color:var(--muted); text-decoration:none; padding:5px 10px;
+    border:1px solid var(--border); border-radius:20px; white-space:nowrap}
+  nav.toc a:hover{color:var(--text); border-color:var(--accent); background:rgba(124,58,237,.12)}
+  section{margin:34px 0 10px; scroll-margin-top:64px}
+  h2{font-size:21px; margin:0 0 4px; padding-top:8px}
+  h2 .num{color:var(--accent); font-weight:800; margin-right:8px}
+  h3{font-size:15px; color:#c4b5fd; margin:22px 0 6px; text-transform:uppercase; letter-spacing:.4px}
+  .lead{color:var(--muted); margin:2px 0 14px; max-width:880px}
+  .mermaid{background:var(--panel-soft); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px; margin:14px 0 6px; overflow-x:auto; text-align:center}
+  .mermaid svg{max-width:100% !important; height:auto !important}
+  .note{background:var(--panel); border:1px solid var(--border); border-left:3px solid var(--accent);
+    border-radius:8px; padding:12px 16px; margin:12px 0; font-size:14px; color:#dbe2ea}
+  .note b{color:#fff}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:14px 0}
+  .card{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px}
+  .card h4{margin:0 0 4px; font-size:14px}
+  .card p{margin:0; font-size:13px; color:var(--muted)}
+  table{border-collapse:collapse; width:100%; margin:12px 0; font-size:13.5px}
+  th,td{border:1px solid var(--border); padding:8px 11px; text-align:left; vertical-align:top}
+  th{background:var(--panel); color:#c4b5fd; font-size:12px; text-transform:uppercase; letter-spacing:.4px}
+  td b{color:#fff}
+  .legend{display:flex; flex-wrap:wrap; gap:14px; margin:10px 0}
+  .legend span{display:inline-flex; align-items:center; gap:7px; font-size:13px; color:var(--muted)}
+  .dot{width:13px; height:13px; border-radius:4px; display:inline-block}
+  footer{color:var(--muted); font-size:12.5px; border-top:1px solid var(--border); margin-top:50px; padding-top:18px}
+  code{background:#0c0c16; border:1px solid var(--border); border-radius:5px; padding:1px 6px; font-size:12.5px; color:#c4b5fd}
+  a.up{color:var(--muted); font-size:12px; text-decoration:none; float:right}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="badge">Josbin POS · Suriname</div>
+  <h1>System Flows — from onboarding to BTW filing</h1>
+  <p>A plain-language map of how Josbin POS works end to end: setting up an organisation, ringing a sale,
+  closing the day, syncing to head office, and generating &amp; submitting BTW (Surinaamse VAT) reports to
+  the Belastingdienst tax inspector. Built for new customers, staff, and reviewers — read top to bottom,
+  or jump to a section.</p>
+</header>
+
+<main>
+
+<nav class="toc">
+  <a href="#glossary">Glossary</a>
+  <a href="#big-picture">1 · Big picture</a>
+  <a href="#actors">2 · Actors &amp; layers</a>
+  <a href="#onboarding">3 · Onboarding</a>
+  <a href="#sale">4 · A sale at the till</a>
+  <a href="#eod">5 · End of day (Z-Report)</a>
+  <a href="#sync">6 · Offline sync</a>
+  <a href="#reporting">7 · Reporting</a>
+  <a href="#btw">8 · BTW filing → Tax Inspector</a>
+  <a href="#compliance">9 · Compliance backbone</a>
+</nav>
+
+<div class="note">
+  <b>How to read these diagrams.</b> Boxes are steps or screens. Diamonds are decisions.
+  Arrows show what happens next. Dotted arrows are background / automatic actions (sync, audit, AI).
+  Colours group who or what is responsible:
+  <div class="legend" style="margin-top:8px">
+    <span><span class="dot" style="background:#7c3aed"></span> Person / action</span>
+    <span><span class="dot" style="background:#1e3a8a"></span> POS terminal</span>
+    <span><span class="dot" style="background:#065f46"></span> Server / automatic</span>
+    <span><span class="dot" style="background:#92400e"></span> Tax / compliance</span>
+  </div>
+</div>
+
+<!-- ───────────────────────── GLOSSARY ───────────────────────── -->
+<section id="glossary">
+  <h2><span class="num">§</span>Suriname terms used here <a class="up" href="#">↑ top</a></h2>
+  <table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td><b>BTW</b></td><td>Belasting over de Toegevoegde Waarde — Suriname VAT (currently 10%). Configurable per product; basic foods &amp; medicine can be BTW-exempt.</td></tr>
+    <tr><td><b>Belastingdienst</b></td><td>Suriname Tax Authority — receives BTW filings. Represented in Josbin by the <b>Tax Inspector</b> role.</td></tr>
+    <tr><td><b>Rekenkamer</b></td><td>Court of Audit — for government accountability. Josbin produces a signed, tamper-evident audit export for it.</td></tr>
+    <tr><td><b>WBP-S</b></td><td>Wet Bescherming Persoonsgegevens Suriname — the personal-data protection law. Drives PII encryption + the customer "right to erasure".</td></tr>
+    <tr><td><b>SRD</b></td><td>Surinamese Dollar — all money is stored as exact decimals (never floating point).</td></tr>
+    <tr><td><b>AST</b></td><td>America/Paramaribo time (UTC−3) — every timestamp and every report day-boundary uses it.</td></tr>
+    <tr><td><b>Z-Report</b></td><td>End-of-day register close (cash reconciliation + day totals). <b>X-Report</b> is a mid-day snapshot that does not close the register.</td></tr>
+  </table>
+</section>
+
+<!-- ───────────────────────── 1 · BIG PICTURE ───────────────────────── -->
+<section id="big-picture">
+  <h2><span class="num">1</span>The big picture — one organisation, end to end <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">Four phases take a brand-new supermarket or shop from zero to filing its VAT.
+  Everything below is just a zoom-in on one of these four boxes.</p>
+  <div class="mermaid">
+flowchart TD
+  subgraph P1["① Onboarding &amp; setup"]
+    direction TB
+    a1["Super Admin creates the Organisation<br/>(name, type, BTW number, language, default BTW%)"]
+    a1 --> a2["Creates Store(s) + issues a Licence"]
+    a2 --> a3["Creates the Org Admin<br/>(welcome email sent)"]
+    a3 --> a4["Org Admin imports the product catalogue<br/>(CSV / Excel) &amp; creates Store Managers"]
+    a4 --> a5["Store Manager creates Cashiers<br/>&amp; installs the POS app on each till"]
+  end
+  subgraph P2["② Daily selling"]
+    direction TB
+    b1["Cashier signs in, picks the store,<br/>opens the register"] --> b2["Rings sales all day<br/>(BTW auto-calculated, stock goes down)"]
+  end
+  subgraph P3["③ End of day"]
+    direction TB
+    c1["Z-Report: count cash, reconcile,<br/>close the register"] --> c2["Day's data syncs to Head Office"]
+  end
+  subgraph P4["④ Reporting &amp; tax"]
+    direction TB
+    d1["Dashboard: live overview, consolidated,<br/>profit &amp; BTW reports"] --> d2["Org Admin generates a BTW filing<br/>(Belastingdienst format)"]
+    d2 --> d3["Submits it · Tax Inspector reviews<br/>(accept / dispute)"]
+  end
+  P1 --> P2 --> P3 --> P4
+  P4 -. "next period" .-> P2
+  </div>
+  <div class="note">Phase ① happens once per customer. Phases ②–③ repeat every day. Phase ④ repeats every BTW period (daily / monthly, depending on the business).</div>
+</section>
+
+<!-- ───────────────────────── 2 · ACTORS ───────────────────────── -->
+<section id="actors">
+  <h2><span class="num">2</span>Who uses what — actors &amp; the three layers <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">Josbin is three connected products. Each role only touches what its job needs — access is
+  denied by default and enforced on the server, not just hidden in the screen.</p>
+  <div class="mermaid">
+flowchart LR
+  SA["Super Admin<br/>(Josbin — the vendor)"]:::p
+  OA["Organisation Admin<br/>(head office)"]:::p
+  SM["Store Manager"]:::p
+  CA["Cashier"]:::p
+  AU["Auditor<br/>(read-only)"]:::p
+  TI["Tax Inspector<br/>(Belastingdienst · 2FA)"]:::tax
+  API["API Integration<br/>(3rd-party POS)"]:::p
+
+  POS["💳 Layer 1 — Store POS<br/>(desktop app on each till)"]:::pos
+  DASH["📊 Layer 2 — Super Admin Dashboard<br/>(web, cloud)"]:::srv
+  INT["🔌 Layer 3 — Open Integration API<br/>(REST + webhooks)"]:::srv
+
+  CA --> POS
+  SM --> POS
+  SM --> DASH
+  OA --> DASH
+  SA --> DASH
+  AU --> DASH
+  TI --> DASH
+  API --> INT
+  POS -. "sync" .-> DASH
+  INT -. "sales in" .-> DASH
+
+  classDef p fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef pos fill:#1e3a8a,stroke:#3b82f6,color:#f1f5f9;
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  classDef tax fill:#92400e,stroke:#fbbf24,color:#fff;
+  </div>
+  <div class="grid">
+    <div class="card"><h4>Super Admin</h4><p>Josbin (the vendor). Manages every organisation, licences, catalogue pushes.</p></div>
+    <div class="card"><h4>Organisation Admin</h4><p>One customer's head office. Catalogue, users, reports, BTW filings.</p></div>
+    <div class="card"><h4>Store Manager</h4><p>Their store(s). Registers, stock, store reports, Z-Reports.</p></div>
+    <div class="card"><h4>Cashier</h4><p>The till only. Ring sales, take payment, print receipts.</p></div>
+    <div class="card"><h4>Auditor</h4><p>Read-only across the org — for internal compliance.</p></div>
+    <div class="card"><h4>Tax Inspector</h4><p>Belastingdienst. Cross-organisation, read-only, BTW filings only. 2FA mandatory.</p></div>
+    <div class="card"><h4>API Integration</h4><p>Machine account so a third-party POS can push sales in.</p></div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 3 · ONBOARDING ───────────────────────── -->
+<section id="onboarding">
+  <h2><span class="num">3</span>Onboarding a new customer <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">From the vendor creating the account to the first till going live. The chain of
+  responsibility (Super Admin → Org Admin → Store Manager → Cashier) means each level only sets up the
+  level below it.</p>
+  <div class="mermaid">
+flowchart TD
+  s1["Super Admin creates Organisation<br/>name · type (retail/govt/wholesale) · BTW number · language · default BTW%"]:::p
+  s1 --> s2["Super Admin creates Store(s)<br/>address · city · receipt header/footer"]:::p
+  s2 --> s3["Super Admin issues a Licence<br/>store + terminal limits, expiry"]:::srv
+  s3 --> s4["Super Admin creates the Org Admin account<br/>→ welcome email"]:::p
+  s4 --> s5{"Org Admin signs in"}:::p
+  s5 --> s6["Imports product catalogue<br/>CSV / Excel — names (NL/EN), price, BTW%, BTW-exempt, cost"]:::p
+  s5 --> s7["Creates Store Manager accounts<br/>each tied to one store"]:::p
+  s7 --> s8["Store Manager creates Cashier accounts"]:::p
+  s8 --> s9["Store Manager installs the POS app on each till<br/>(licence checked, terminal registered)"]:::pos
+  s6 --> s10
+  s9 --> s10["🏪 Store goes live — ready to sell"]:::srv
+
+  classDef p fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef pos fill:#1e3a8a,stroke:#3b82f6,color:#f1f5f9;
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  </div>
+  <div class="note"><b>Catalogue is centralised.</b> One master product list lives at the organisation; every
+  store uses it. A store in a higher-cost region (e.g. Nickerie) can have optional per-store price overrides.
+  Updates push to all tills in seconds over the live WebSocket connection.</div>
+</section>
+
+<!-- ───────────────────────── 4 · SALE ───────────────────────── -->
+<section id="sale">
+  <h2><span class="num">4</span>A sale at the till <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">What happens from a cashier signing in to a printed receipt. The money maths is the
+  important part: <b>discounts are applied first, then BTW is extracted</b> — the order Suriname law requires.</p>
+  <div class="mermaid">
+flowchart TD
+  l1["Cashier signs in<br/>(2FA for government accounts)"]:::p --> l2{"Store already chosen?"}:::pos
+  l2 -- "no" --> l3["Pick store<br/>(auto-picked if only one)"]:::pos
+  l2 -- "yes" --> l4
+  l3 --> l4{"Register open?"}:::pos
+  l4 -- "no" --> l5["Open register<br/>(opening cash float)"]:::pos
+  l4 -- "yes" --> l6
+  l5 --> l6["Add products<br/>tap grid / scan barcode / search"]:::pos
+  l6 --> l7["Optional: line &amp; basket discounts,<br/>attach / add customer"]:::pos
+  l7 --> l8["BTW engine: discount first → extract BTW per line<br/>(exempt lines charge 0)"]:::srv
+  l8 --> l9{"Payment method"}:::pos
+  l9 --> pm["Cash · Card/PIN · Mixed<br/>Bank / Mobile transfer · Foreign cash · QR"]:::pos
+  pm --> l10["Lock today's USD→SRD rate<br/>(self-healing — see note)"]:::srv
+  l10 --> l11["💾 One database transaction:<br/>save sale + items · snapshot cost &amp; profit · reduce stock"]:::srv
+  l11 --> l12["Receipt: thermal print (ESC/POS) and/or bilingual email"]:::pos
+  l11 -. "background" .-> bg1["Live dashboard update · fraud/anomaly AI check · queued for sync"]:::srv
+
+  classDef p fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef pos fill:#1e3a8a,stroke:#3b82f6,color:#f1f5f9;
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  </div>
+  <div class="grid">
+    <div class="card"><h4>Exchange rate is never missing</h4><p>The day's rate self-heals in order: already locked → fetch from the rate API → carry forward yesterday's → a configured static fallback. The locked rate is stamped on every sale for audit.</p></div>
+    <div class="card"><h4>Stock can't silently oversell</h4><p>Stock is reduced inside the same transaction as the sale (never a flaky background job). Default policy allows honest negative stock to surface bad counts; a store can switch to strict "block oversell".</p></div>
+    <div class="card"><h4>Profit captured at sale time</h4><p>Cost and profit are snapshotted onto each line as it sells, so profit reports stay correct even if the product's cost changes later.</p></div>
+  </div>
+</section>
+
+<!-- ───────────────────────── 5 · END OF DAY ───────────────────────── -->
+<section id="eod">
+  <h2><span class="num">5</span>End of day — Z-Report &amp; cash reconciliation <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">Closing the register produces the formal end-of-day document and forces a sync attempt.</p>
+  <div class="mermaid">
+flowchart TD
+  z1["Manager / cashier opens End of Day"]:::p --> z2["X-Report (optional)<br/>mid-day snapshot — does NOT close"]:::pos
+  z1 --> z3["Z-Report: review totals<br/>sales · BTW · payment-method breakdown · top 5 products"]:::pos
+  z3 --> z4["Count the cash drawer"]:::p
+  z4 --> z5{"Counted = expected?"}:::pos
+  z5 -- "no" --> z6["Discrepancy shown in red<br/>note is mandatory → logged in audit trail"]:::tax
+  z5 -- "yes" --> z7
+  z6 --> z7["Close register · Z-Report finalised"]:::srv
+  z7 --> z8["Print Z-Report (formal doc) / export PDF"]:::pos
+  z7 --> z9["Forced sync attempt to Head Office"]:::srv
+  z9 -. "see §6" .-> z10["Dashboard: 7-day history,<br/>sync status, re-submit if needed"]:::srv
+
+  classDef p fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef pos fill:#1e3a8a,stroke:#3b82f6,color:#f1f5f9;
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  classDef tax fill:#92400e,stroke:#fbbf24,color:#fff;
+  </div>
+</section>
+
+<!-- ───────────────────────── 6 · SYNC ───────────────────────── -->
+<section id="sync">
+  <h2><span class="num">6</span>Five-layer offline resilience <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">Internet is reliable in Paramaribo but intermittent in the interior. Selling never depends
+  on it — the data finds its way to head office through whichever layer is available.</p>
+  <div class="mermaid">
+flowchart TD
+  start(["A sale is completed"]):::pos --> q["Added to the local outbox queue"]:::srv
+  q --> net{"Internet available?"}:::srv
+  net -- "yes" --> L1["① Real-time sync<br/>uploaded within seconds"]:::ok
+  net -- "no" --> L2["② Auto-retry<br/>1m → 5m → 15m → 30m · yellow 'N pending' badge"]:::warn
+  L2 --> L3["③ Z-Report forced retry<br/>deliberate attempt at day close"]:::warn
+  L3 --> stillDown{"Still offline?"}:::srv
+  stillDown -- "yes" --> L4["④ USB export<br/>AES-256 .josbin_pos file → WhatsApp/email → uploaded at HQ"]:::warn
+  stillDown -- "no" --> L5
+  L4 --> L5["⑤ Catch-up sync<br/>on reconnect, all queued days upload in order<br/>(marked 'synced late' in the audit trail)"]:::ok
+  L1 --> done(["Head Office dashboard up to date"]):::ok
+  L5 --> done
+  note1["4G USB dongle (Digicel / Telesur) is a backup link —<br/>used only for the tiny sync payload, not for selling"]:::warn
+  net -. "fallback link" .- note1
+
+  classDef pos fill:#1e3a8a,stroke:#3b82f6,color:#f1f5f9;
+  classDef srv fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef ok fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  classDef warn fill:#78350f,stroke:#fbbf24,color:#fff;
+  </div>
+</section>
+
+<!-- ───────────────────────── 7 · REPORTING ───────────────────────── -->
+<section id="reporting">
+  <h2><span class="num">7</span>Reporting — store, network, profit <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">Every completed sale feeds the reports. Store staff see their store; head office sees the
+  whole network. All reports honour the AST day-boundary and export to PDF/CSV.</p>
+  <div class="mermaid">
+flowchart LR
+  sales[("Sales + sale items<br/>(SRD, BTW, cost, AST time)")]:::srv
+  sales --> r1["Store reports (POS)<br/>daily · monthly · custom · top products"]:::pos
+  sales --> r2["Dashboard — Consolidated<br/>cross-store revenue, BTW, payment mix"]:::dash
+  sales --> r3["Dashboard — Profit &amp; margin<br/>revenue − cost, by store, loss-makers"]:::dash
+  sales --> r4["Dashboard — BTW report<br/>Belastingdienst format, taxable vs exempt"]:::tax
+  sales --> r5["Rekenkamer audit export<br/>signed PDF + CSV, full history"]:::tax
+  r1 --> ex["Export PDF / CSV<br/>(SRD, NL or EN headers)"]:::srv
+  r2 --> ex
+  r3 --> ex
+  r4 --> btw["→ feeds the BTW filing (§8)"]:::tax
+
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  classDef pos fill:#1e3a8a,stroke:#3b82f6,color:#f1f5f9;
+  classDef dash fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef tax fill:#92400e,stroke:#fbbf24,color:#fff;
+  </div>
+  <div class="note">A store filter lets an Org Admin drill any of the consolidated, BTW and profit reports
+  down to a single branch, or view the whole organisation at once.</div>
+</section>
+
+<!-- ───────────────────────── 8 · BTW ───────────────────────── -->
+<section id="btw">
+  <h2><span class="num">8</span>BTW report → submission → Tax Inspector <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">The headline compliance journey. The Org Admin generates a VAT filing for a period; it is
+  locked with a tamper-evident hash chain and submitted to the Belastingdienst; the Tax Inspector reviews
+  and accepts or disputes it.</p>
+
+  <h3>8a · Generating &amp; submitting a filing</h3>
+  <div class="mermaid">
+flowchart TD
+  g1["Org Admin opens BTW Submissions<br/>picks a period (daily / monthly / custom)"]:::p
+  g1 --> g2["System aggregates from sale items in that AST window<br/>taxable total · exempt total · BTW due · per store"]:::srv
+  g2 --> g3["Creates a BTW Submission record<br/>+ SHA-256 hash linked to the org's previous filing (a chain)"]:::tax
+  g3 --> g4["Org Admin reviews the figures<br/>(Belastingdienst format) &amp; exports PDF"]:::p
+  g4 --> g5["Submit to Belastingdienst"]:::tax
+  g5 --> g6["Appears on the Tax Inspector's dashboard"]:::tax
+
+  classDef p fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  classDef tax fill:#92400e,stroke:#fbbf24,color:#fff;
+  </div>
+
+  <h3>8b · The life of a filing (status)</h3>
+  <div class="mermaid">
+stateDiagram-v2
+  [*] --> Draft: Org Admin generates
+  Draft --> Submitted: submit to Belastingdienst
+  Submitted --> Accepted: inspector accepts
+  Submitted --> Disputed: inspector disputes (with a note)
+  Disputed --> Superseded: Org Admin corrects &amp; refiles
+  Superseded --> Submitted: new filing links to the original
+  Accepted --> [*]
+  note right of Accepted
+    Filed. Immutable.
+    Counts toward the org's
+    Belastingdienst record.
+  end note
+  note right of Superseded
+    Original is kept (never deleted)
+    so the audit history stays intact.
+  end note
+  </div>
+
+  <h3>8c · Who does what, in order</h3>
+  <div class="mermaid">
+sequenceDiagram
+  autonumber
+  actor OA as Org Admin
+  participant SYS as Josbin server
+  actor TI as Tax Inspector (Belastingdienst)
+  OA->>SYS: Generate BTW filing for period
+  SYS->>SYS: Aggregate sale items (AST window),<br/>split taxable vs exempt
+  SYS->>SYS: Hash-chain the filing to the org's last one
+  OA->>SYS: Submit to Belastingdienst
+  SYS-->>TI: Filing appears (cross-org, read-only, 2FA)
+  TI->>SYS: Review figures + source breakdown
+  alt Figures correct
+    TI->>SYS: Accept
+    SYS-->>OA: Marked Accepted (filed)
+  else Problem found
+    TI->>SYS: Dispute + note
+    SYS-->>OA: Marked Disputed
+    OA->>SYS: Correct &amp; supersede (refile)
+    SYS-->>TI: New filing (links to original)
+  end
+  </div>
+  <div class="note"><b>Why the hash chain matters.</b> Each filing carries a SHA-256 fingerprint of itself
+  plus the previous filing's fingerprint, <b>per organisation</b>. Change any historical figure and the
+  chain breaks — so the Belastingdienst and Rekenkamer can trust the record hasn't been altered after the
+  fact. Day boundaries use AST, so a 23:30 sale counts on the correct day, not the next one.</div>
+</section>
+
+<!-- ───────────────────────── 9 · COMPLIANCE ───────────────────────── -->
+<section id="compliance">
+  <h2><span class="num">9</span>The compliance backbone (always on) <a class="up" href="#">↑ top</a></h2>
+  <p class="lead">These protections run underneath every flow above — they are not a separate screen, they
+  are how the system behaves on every write.</p>
+  <div class="mermaid">
+flowchart TD
+  act["Any meaningful action<br/>(sale, void, refund, login, rate lock, user change, BTW filing)"]:::p
+  act --> aud["Append-only audit log<br/>SHA-256 hash chain · tamper-evident · per organisation"]:::tax
+  act --> pii{"Touches customer PII?"}:::srv
+  pii -- "yes" --> enc["Encrypted at rest (WBP-S)<br/>name · phone · email · ID"]:::srv
+  enc --> erase["Right to erasure<br/>redact PII, keep totals for reports"]:::srv
+  act --> rate["Daily rate is locked &amp; immutable<br/>(only a manual override can change it)"]:::srv
+  aud --> rk["→ Rekenkamer export (signed)"]:::tax
+  aud --> verify["audit:verify proves the chain is intact"]:::tax
+
+  classDef p fill:#312e81,stroke:#7c3aed,color:#f1f5f9;
+  classDef srv fill:#065f46,stroke:#16a34a,color:#f1f5f9;
+  classDef tax fill:#92400e,stroke:#fbbf24,color:#fff;
+  </div>
+  <div class="grid">
+    <div class="card"><h4>Immutable audit trail</h4><p>Every action is hash-chained and append-only. No user can edit or delete a row without breaking the chain.</p></div>
+    <div class="card"><h4>PII encryption (WBP-S)</h4><p>Customer personal data is encrypted field-by-field. A customer can be erased on request while sales history stays intact.</p></div>
+    <div class="card"><h4>Code &amp; licence protection</h4><p>PHP is IonCube-encoded, the desktop app is code-signed, and a licence (hardware-bound) is checked on start and every 24h.</p></div>
+  </div>
+</section>
+
+<footer>
+  Josbin POS — System Flows · prepared for new customers, staff &amp; reviewers.
+  Diagrams are authored in <b>Mermaid</b>; the same source lives in <code>docs/FLOWS.md</code>
+  (renders on GitHub) and can be exported to SVG/PNG at <code>mermaid.live</code>.
+  All money in SRD · all times in AST (America/Paramaribo) · BTW per Belastingdienst Suriname.
+</footer>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    securityLevel: 'loose',
+    themeVariables: {
+      darkMode: true,
+      background: '#15151f',
+      primaryColor: '#312e81',
+      primaryTextColor: '#f1f5f9',
+      primaryBorderColor: '#7c3aed',
+      lineColor: '#7c3aed',
+      secondaryColor: '#1e1b4b',
+      tertiaryColor: '#0f0f1a',
+      textColor: '#f1f5f9',
+      mainBkg: '#312e81',
+      secondaryBkg: '#1e1b4b',
+      tertiaryBkg: '#0f0f1a',
+    },
+    flowchart: { curve: 'basis', htmlLabels: true, padding: 16, useMaxWidth: true },
+    sequence: { actorMargin: 60, messageMargin: 34, mirrorActors: false, useMaxWidth: true },
+    state: { useMaxWidth: true },
+  });
+</script>
+</body>
+</html>
