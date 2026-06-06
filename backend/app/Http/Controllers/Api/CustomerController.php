@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -72,6 +73,10 @@ class CustomerController extends Controller
             'id_number'       => $data['id_number'] ?? null,
         ]);
 
+        // WBP-S: PII writes must be traceable. Record which fields were set
+        // (keys only — never the plaintext) in the hash-chained audit_logs.
+        $this->auditPii('customer.created', $customer, array_keys($data));
+
         return response()->json(['data' => $this->safePayload($customer)], 201);
     }
 
@@ -82,6 +87,9 @@ class CustomerController extends Controller
     {
         $this->authorize('view', $customer);
         $this->ensureSameOrg($request, $customer->organisation_id);
+
+        // WBP-S access-log: every individual PII read is traceable (who, when).
+        $this->auditPii('customer.accessed', $customer);
 
         return response()->json(['data' => $this->safePayload($customer)]);
     }
@@ -103,7 +111,48 @@ class CustomerController extends Controller
 
         $customer->update($data);
 
+        // Record which PII fields were edited (keys only, no plaintext).
+        $this->auditPii('customer.updated', $customer, array_keys($data));
+
         return response()->json(['data' => $this->safePayload($customer->fresh())]);
+    }
+
+    /**
+     * DELETE /api/customers/{customer}
+     *
+     * WBP-S "right to erasure / rectification". Redacts all personal data
+     * (name tombstoned, phone/email/id_number + search hashes nulled) but
+     * KEEPS the row and its aggregate counters so historical sales (which FK
+     * to customer_id) and reports stay intact. Writes a customer.redacted
+     * row to the hash-chained audit log. OA + Super Admin only.
+     */
+    public function destroy(Request $request, Customer $customer): JsonResponse
+    {
+        $this->authorize('delete', $customer);
+        $this->ensureSameOrg($request, $customer->organisation_id);
+
+        // name is NOT NULL → tombstone it (encrypted via the mutator) so reads
+        // still decrypt; the recomputed name_hash is then nulled below so the
+        // tombstone isn't searchable.
+        $customer->name = '[verwijderd — WBP-S]';
+        $customer->saveQuietly();
+
+        // Null the remaining (nullable) PII + search hashes via a raw update so
+        // the encryption mutators aren't invoked on null. Counters untouched.
+        Customer::where('id', $customer->id)->update([
+            'phone'      => null,
+            'email'      => null,
+            'id_number'  => null,
+            'name_hash'  => null,
+            'phone_hash' => null,
+            'is_active'  => false,
+        ]);
+
+        $this->auditPii('customer.redacted', $customer);
+
+        return response()->json([
+            'message' => __('errors.customer_redacted'),
+        ]);
     }
 
     /**
@@ -231,5 +280,26 @@ class CustomerController extends Controller
         if ($request->user()->organisation_id && $request->user()->organisation_id !== $orgId) {
             abort(403);
         }
+    }
+
+    /**
+     * Write a WBP-S PII event to the hash-chained audit_logs table.
+     * Stores only the affected field NAMES (never plaintext values), the
+     * actor, org, customer id, IP and timestamp — enough for the Rekenkamer
+     * trace requirement without re-exposing the data the encryption protects.
+     */
+    private function auditPii(string $event, Customer $customer, array $fields = []): void
+    {
+        AuditLog::create([
+            'user_id'         => request()->user()?->id,
+            'organisation_id' => $customer->organisation_id,
+            'event'           => $event,
+            'auditable_type'  => 'customer',
+            'auditable_id'    => $customer->id,
+            'old_values'      => null,
+            'new_values'      => $fields ? ['fields' => array_values($fields)] : null,
+            'ip_address'      => request()->ip(),
+            'created_at'      => now(),
+        ]);
     }
 }

@@ -41,6 +41,7 @@ return [
     'second_approver_must_differ'   => 'De tweede goedkeuring moet door een andere gebruiker worden gegeven.',
     'refund_only_completed'         => 'Alleen voltooide verkopen kunnen worden terugbetaald.',
     'receipt_emailed'               => 'Kassabon verstuurd naar :email.',
+    'customer_redacted'             => 'Persoonsgegevens van de klant zijn gewist. Het record blijft bewaard voor de verkoophistorie maar bevat geen identificeerbare gegevens meer.',
 
     // Sales — inventory (strict mode only; default policy allows oversell)
     'insufficient_stock'            => 'Onvoldoende voorraad voor ":product". Nog :available op voorraad. Pas de voorraad aan via Dashboard → Voorraad, of verlaag het aantal.',

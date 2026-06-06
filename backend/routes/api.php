@@ -263,6 +263,8 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::post('import',    [CustomerController::class, 'import'])->name('import');
         Route::get('{customer}', [CustomerController::class, 'show'])->name('show');
         Route::put('{customer}', [CustomerController::class, 'update'])->name('update');
+        // WBP-S right-to-erasure — redacts PII, keeps the row. OA + SA only.
+        Route::delete('{customer}', [CustomerController::class, 'destroy'])->name('destroy');
     });
 
     // Exchange rates (SPOS-207)

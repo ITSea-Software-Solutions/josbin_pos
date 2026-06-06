@@ -33,4 +33,15 @@ class CustomerPolicy
         return $user->can('customers.edit')
             && ($user->organisation_id === null || $user->organisation_id === $customer->organisation_id);
     }
+
+    /**
+     * WBP-S erasure (redaction) is a data-controller action — restricted to
+     * Organisation Admin (Super Admin passes via before()). Cashiers and
+     * store managers cannot redact PII.
+     */
+    public function delete(User $user, Customer $customer): bool
+    {
+        return $user->role === User::ROLE_ORGANISATION_ADMIN
+            && $user->organisation_id === $customer->organisation_id;
+    }
 }
