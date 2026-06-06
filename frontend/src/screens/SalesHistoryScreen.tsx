@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getSales, voidSale, getReceiptPdfUrl } from '@/api/sales'
+import { getSales, voidSale, openReceiptPdf } from '@/api/sales'
 import { useAuthStore } from '@/store/authStore'
+import { useToast } from '@/components/shared/Toast'
 import RefundModal from '@/components/pos/RefundModal'
 import type { Sale } from '@/types/models'
 
@@ -86,6 +87,7 @@ interface Props { storeId: string }
 export default function SalesHistoryScreen({ storeId }: Props) {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
+  const toast = useToast()
 
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState(() => new Date().toISOString().slice(0, 10))
@@ -219,16 +221,22 @@ export default function SalesHistoryScreen({ storeId }: Props) {
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {/* Reprint PDF */}
-                        <a
-                          href={getReceiptPdfUrl(sale.id, i18n.language)}
-                          target="_blank"
-                          rel="noreferrer"
+                        {/* Reprint PDF — fetched over the authenticated XHR
+                            (Bearer header) and opened as a blob, so no token
+                            ever appears in the URL (P0-5). */}
+                        <button
+                          onClick={async () => {
+                            try {
+                              await openReceiptPdf(sale.id, i18n.language)
+                            } catch {
+                              toast.error(isNl ? 'Kon bon niet openen' : 'Could not open receipt')
+                            }
+                          }}
                           title={isNl ? 'Bon afdrukken' : 'Print receipt'}
-                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: 14 }}
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 14 }}
                         >
                           🖨
-                        </a>
+                        </button>
                         {/* Void — only for completed sales */}
                         {sale.status === 'completed' && (
                           <button

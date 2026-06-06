@@ -112,10 +112,31 @@ export async function sendReceiptEmail(saleId: string, locale: string): Promise<
   await apiClient.post(`/sales/${saleId}/receipt/email`, { locale })
 }
 
-export function getReceiptPdfUrl(saleId: string, locale: string, cashTendered?: number, change?: number): string {
-  const token = localStorage.getItem('josbin_pos_token') ?? ''
-  const params = new URLSearchParams({ locale })
-  if (cashTendered !== undefined) params.set('cash_tendered', String(cashTendered))
-  if (change !== undefined) params.set('change', String(change))
-  return `${import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'}/sales/${saleId}/receipt/pdf?${params}&token=${token}`
+/**
+ * Open a sale's receipt PDF in a new tab WITHOUT putting a token in the URL.
+ *
+ * Previously this returned a `?token=<session token>` URL — which leaked the
+ * full token into browser history, server logs, and Referer headers (P0-5).
+ * Instead we fetch the PDF over the authenticated XHR (Bearer header) as a
+ * blob and open the local blob URL. A blank tab is opened synchronously inside
+ * the click handler first, so the pop-up blocker doesn't swallow it.
+ */
+export async function openReceiptPdf(
+  saleId: string, locale: string, cashTendered?: number, change?: number,
+): Promise<void> {
+  const win = window.open('', '_blank')
+  try {
+    const params: Record<string, string> = { locale }
+    if (cashTendered !== undefined) params.cash_tendered = String(cashTendered)
+    if (change !== undefined) params.change = String(change)
+
+    const res = await apiClient.get(`/sales/${saleId}/receipt/pdf`, { params, responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    if (win) win.location.href = url
+    else window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch (e) {
+    if (win) win.close()
+    throw e
+  }
 }

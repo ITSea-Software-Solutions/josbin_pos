@@ -131,6 +131,41 @@ class SecurityHardeningTest extends TestCase
             ->assertStatus(201);
     }
 
+    public function test_receipt_pdf_refuses_broad_token_in_query_string(): void
+    {
+        // Build a sale directly so no actingAs/Bearer auth state lingers and
+        // the ?token= path is exercised in true isolation.
+        $sale = \App\Models\Sale::create([
+            'store_id' => $this->storeA->id, 'cashier_id' => $this->cashierA->id,
+            'sale_number' => 'TST-RCPT-1',
+            'subtotal_srd' => '9.09', 'discount_srd' => '0.00',
+            'btw_srd' => '0.91', 'total_srd' => '10.00',
+            'payment_method' => 'cash', 'cash_received_srd' => '10.00', 'change_srd' => '0.00',
+            'status' => 'completed', 'source' => 'pos',
+            'exchange_rate_used' => '37.50', 'occurred_at' => now(),
+        ]);
+        \App\Models\SaleItem::create([
+            'sale_id' => $sale->id, 'product_id' => $this->productA->id,
+            'product_name_snapshot' => 'Brood', 'unit_price_srd' => '10.00',
+            'quantity' => '1', 'discount_srd' => '0.00', 'discount_pct' => '0.00',
+            'btw_rate' => '10.00', 'btw_exempt' => false,
+            'btw_srd' => '0.91', 'line_total_srd' => '10.00',
+        ]);
+
+        // A full/wildcard token in the URL query string is refused — it would
+        // otherwise leak into access logs, history and Referer headers. With no
+        // valid auth, authorize('view') rejects → 403.
+        $broad = $this->cashierA->createToken('session', ['*'])->plainTextToken;
+        $this->getJson("/api/sales/{$sale->id}/receipt/pdf?token={$broad}")
+            ->assertStatus(403);
+
+        // The SAME token via the Authorization header still works (it doesn't
+        // travel in the URL) — the in-app PDF view depends on this.
+        $this->withHeader('Authorization', "Bearer {$broad}")
+            ->get("/api/sales/{$sale->id}/receipt/pdf")
+            ->assertOk();
+    }
+
     // ─── P1-S7: 2FA middleware actually enforced on requests ────────────────
 
     public function test_super_admin_token_without_2fa_verified_is_blocked(): void
