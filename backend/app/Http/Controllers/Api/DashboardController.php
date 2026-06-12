@@ -7,6 +7,7 @@ use App\Models\Organisation;
 use App\Models\Sale;
 use App\Models\Store;
 use App\Models\ZReport;
+use App\Support\AstDates;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -40,7 +41,8 @@ class DashboardController extends Controller
         // Aggregate today's sales per store using a single efficient query
         $storeTodaySales = Sale::query()
             ->whereIn('store_id', $orgs->flatMap(fn ($o) => $o->stores->pluck('id')))
-            ->whereDate('occurred_at', $today)
+            ->where('occurred_at', '>=', AstDates::dayStart($today))
+            ->where('occurred_at', '<', AstDates::dayAfter($today))
             ->where('status', 'completed')
             ->select(
                 'store_id',
@@ -175,8 +177,8 @@ class DashboardController extends Controller
         $totals = Sale::query()
             ->whereIn('store_id', $storeIds)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->selectRaw('
                 COUNT(*) as transaction_count,
                 SUM(total_srd) as total_sales,
@@ -193,8 +195,8 @@ class DashboardController extends Controller
         $perStore = Sale::query()
             ->whereIn('store_id', $storeIds)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->select('store_id',
                 DB::raw('COUNT(*) as transaction_count'),
                 DB::raw('SUM(total_srd) as total_sales'),
@@ -218,8 +220,8 @@ class DashboardController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereIn('sales.store_id', $storeIds)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $from)
-            ->whereDate('sales.occurred_at', '<=', $to)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
             ->groupBy('sale_items.product_name_snapshot')
             ->select([
                 'sale_items.product_name_snapshot as name',
@@ -289,8 +291,8 @@ class DashboardController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereIn('sales.store_id', $storeIds)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $from)
-            ->whereDate('sales.occurred_at', '<=', $to)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
             ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
             ->select([
                 'sale_items.btw_rate',
@@ -396,7 +398,8 @@ class DashboardController extends Controller
         // ─── Hourly sales today (chart data) ────────────────────────────────
         $hourly = DB::table('sales')
             ->where('store_id', $store->id)
-            ->whereDate('occurred_at', $today)
+            ->where('occurred_at', '>=', AstDates::dayStart($today))
+            ->where('occurred_at', '<', AstDates::dayAfter($today))
             ->where('status', 'completed')
             ->selectRaw("EXTRACT(HOUR FROM occurred_at AT TIME ZONE 'America/Paramaribo')::int as hour,
                          COUNT(*) as count, COALESCE(SUM(total_srd),0)::numeric(12,2) as revenue")
@@ -434,7 +437,8 @@ class DashboardController extends Controller
         $topProducts = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->where('sales.store_id', $store->id)
-            ->whereDate('sales.occurred_at', $today)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($today))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($today))
             ->where('sales.status', 'completed')
             ->selectRaw('sale_items.product_name_snapshot as name,
                          SUM(sale_items.quantity) as qty,
@@ -629,8 +633,8 @@ class DashboardController extends Controller
         $totals = Sale::query()
             ->whereIn('store_id', $storeIds)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->selectRaw('
                 COUNT(*) as transaction_count,
                 SUM(total_srd) as total_sales,
@@ -646,8 +650,8 @@ class DashboardController extends Controller
         $perStore = Sale::query()
             ->whereIn('store_id', $storeIds)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->select('store_id',
                 DB::raw('COUNT(*) as transaction_count'),
                 DB::raw('SUM(total_srd) as total_sales'),
@@ -734,8 +738,8 @@ class DashboardController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->whereIn('sales.store_id', $storeIds)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $from)
-            ->whereDate('sales.occurred_at', '<=', $to)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
             ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
             ->select([
                 'sale_items.btw_rate',

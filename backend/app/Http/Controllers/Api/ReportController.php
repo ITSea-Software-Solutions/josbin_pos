@@ -6,6 +6,7 @@ use App\Events\ZReportSubmitted;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\ZReport;
+use App\Support\AstDates;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,8 +98,8 @@ class ReportController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.store_id', $storeId)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $dateFrom)
-            ->whereDate('sales.occurred_at', '<=', $dateTo)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($dateFrom))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($dateTo))
             ->groupBy('sale_items.product_name_snapshot')
             ->select([
                 'sale_items.product_name_snapshot as product_name',
@@ -264,8 +265,8 @@ class ReportController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.store_id', $storeId)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $dateFrom)
-            ->whereDate('sales.occurred_at', '<=', $dateTo)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($dateFrom))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($dateTo))
             ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
             ->select([
                 'sale_items.btw_rate',
@@ -340,8 +341,8 @@ class ReportController extends Controller
         $sales = Sale::query()
             ->where('store_id', $storeId)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->selectRaw('
                 COUNT(*) as transaction_count,
                 SUM(total_srd) as total_sales,
@@ -365,8 +366,8 @@ class ReportController extends Controller
         $bankBreakdown = Sale::query()
             ->where('store_id', $storeId)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->whereIn('payment_method', ['card', 'mixed', 'bank_transfer', 'mobile_transfer', 'qr_payment'])
             ->selectRaw('
                 payment_method,
@@ -390,8 +391,8 @@ class ReportController extends Controller
 
         $voidCount = Sale::where('store_id', $storeId)
             ->where('status', 'voided')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->count();
 
         // BTW breakdown
@@ -399,8 +400,8 @@ class ReportController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.store_id', $storeId)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $from)
-            ->whereDate('sales.occurred_at', '<=', $to)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
             ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
             ->select([
                 'sale_items.btw_rate',
@@ -416,8 +417,8 @@ class ReportController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.store_id', $storeId)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $from)
-            ->whereDate('sales.occurred_at', '<=', $to)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
             ->groupBy('sale_items.product_name_snapshot')
             ->select([
                 'sale_items.product_name_snapshot as name',
@@ -503,7 +504,8 @@ class ReportController extends Controller
         $base = DB::table('sale_items as si')
             ->join('sales as s', 's.id', '=', 'si.sale_id')
             ->join('stores as st', 'st.id', '=', 's.store_id')
-            ->whereBetween(DB::raw("DATE(s.occurred_at AT TIME ZONE 'America/Paramaribo')"), [$dateFrom, $dateTo])
+            ->where('s.occurred_at', '>=', AstDates::dayStart($dateFrom))
+            ->where('s.occurred_at', '<', AstDates::dayAfter($dateTo))
             ->where('s.status', 'completed')
             ->when(! $isSuper, fn ($q) => $q->where('st.organisation_id', $orgId))
             ->when($storeId,   fn ($q) => $q->where('s.store_id', $storeId));
@@ -594,7 +596,8 @@ class ReportController extends Controller
         $lossMakers = DB::table('sales as s')
             ->join('sale_items as si', 'si.sale_id', '=', 's.id')
             ->join('stores as st',     'st.id',      '=', 's.store_id')
-            ->whereBetween(DB::raw("DATE(s.occurred_at AT TIME ZONE 'America/Paramaribo')"), [$dateFrom, $dateTo])
+            ->where('s.occurred_at', '>=', AstDates::dayStart($dateFrom))
+            ->where('s.occurred_at', '<', AstDates::dayAfter($dateTo))
             ->where('s.status', 'completed')
             ->when(! $isSuper, fn ($q) => $q->where('st.organisation_id', $orgId))
             ->when($storeId,   fn ($q) => $q->where('s.store_id', $storeId))

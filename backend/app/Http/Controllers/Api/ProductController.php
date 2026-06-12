@@ -73,7 +73,19 @@ class ProductController extends Controller
             // Eager-load both per-store relations so priceForStore() and
             // stockForStore() read the hydrated collections instead of
             // firing a query per product (5,000-SKU startup = 5,000 queries).
-            ->with(['category:id,name_nl,name_en,icon,color', 'storeStocks', 'storeOverrides'])
+            //
+            // PERF: when a store is selected (the normal POS case) constrain the
+            // eager-load to THAT store's rows only — otherwise a chain with N
+            // stores hydrates N rows of stock + overrides per product just to
+            // discard all but one. priceForStore()/stockForStore() do
+            // firstWhere('store_id', …) on the collection, so a single-store
+            // collection still resolves correctly. When no store is given we
+            // keep the full load — stockForStore(null) sums across stores.
+            ->with([
+                'category:id,name_nl,name_en,icon,color',
+                'storeStocks'    => fn ($q) => $storeId ? $q->where('store_id', $storeId) : $q,
+                'storeOverrides' => fn ($q) => $storeId ? $q->where('store_id', $storeId) : $q,
+            ])
             ->orderBy('name_nl')
             ->get()
             ->map(function (Product $p) use ($storeId) {

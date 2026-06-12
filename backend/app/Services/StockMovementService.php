@@ -173,6 +173,12 @@ class StockMovementService
     {
         $sale->loadMissing('items');
 
+        // PERF: batch-load every product once (mirrors recordSale) instead of a
+        // Product::find() per line — keeps the lock window short and avoids N
+        // round-trips when a large basket is voided/refunded.
+        $productIds = $sale->items->whereNull('variant_id')->pluck('product_id')->filter()->unique();
+        $products   = Product::whereIn('id', $productIds)->get()->keyBy('id');
+
         foreach ($sale->items as $item) {
             // For refunds the qty is stored as negative in the refund sale — restore absolute value
             $qtyToRestore = abs((float) $item->quantity);
@@ -191,7 +197,7 @@ class StockMovementService
                 continue;
             }
 
-            $product = Product::find($item->product_id);
+            $product = $products->get($item->product_id);
             if (! $product) {
                 continue;
             }

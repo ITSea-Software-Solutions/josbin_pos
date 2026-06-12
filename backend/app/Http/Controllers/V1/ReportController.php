@@ -5,6 +5,7 @@ namespace App\Http\Controllers\V1;
 use App\Http\Controllers\Controller;
 use App\Models\ApiIntegration;
 use App\Models\Sale;
+use App\Support\AstDates;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,8 +50,8 @@ class ReportController extends Controller
         $sales = Sale::query()
             ->where('store_id', $storeId)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->with('items:id,sale_id,product_name_snapshot,unit_price_srd,quantity,btw_rate,btw_srd,line_total_srd')
             ->orderBy('occurred_at')
             ->paginate($request->integer('per_page', 50));
@@ -80,8 +81,8 @@ class ReportController extends Controller
         $totals = Sale::query()
             ->where('store_id', $storeId)
             ->where('status', 'completed')
-            ->whereDate('occurred_at', '>=', $from)
-            ->whereDate('occurred_at', '<=', $to)
+            ->where('occurred_at', '>=', AstDates::dayStart($from))
+            ->where('occurred_at', '<', AstDates::dayAfter($to))
             ->selectRaw('
                 COUNT(*) as transaction_count,
                 SUM(total_srd) as total_sales,
@@ -95,8 +96,8 @@ class ReportController extends Controller
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.store_id', $storeId)
             ->where('sales.status', 'completed')
-            ->whereDate('sales.occurred_at', '>=', $from)
-            ->whereDate('sales.occurred_at', '<=', $to)
+            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
             ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
             ->select([
                 'sale_items.btw_rate',
