@@ -50,9 +50,10 @@ class EnsureLicenseValid
 
         $status = $this->license->getStatus();
 
-        // Always attach status header for frontend banner display
-        $response = $next($request);
-
+        // Enforce the lock BEFORE the request runs — otherwise the controller
+        // already executed (a sale committed, stock decremented) and the 402 is
+        // cosmetic. The whole point of soft-lock is "no new sales", so it must
+        // short-circuit ahead of $next, not after.
         if (in_array($status, ['hard_lock', 'invalid', 'not_found'], true)) {
             // Hard lock — block all except exempt data export routes
             if (! $this->matchesPatterns($request, self::HARD_LOCK_EXEMPT_PATTERNS)) {
@@ -74,6 +75,8 @@ class EnsureLicenseValid
                 ], 402);
             }
         }
+
+        $response = $next($request);
 
         // Add status header to all passing responses so frontend can show banners
         if (method_exists($response, 'header')) {
