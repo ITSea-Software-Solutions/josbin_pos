@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useCartStore } from '@/store/cartStore'
 import { getHeldBills, restoreHeldBill } from '@/api/sales'
 import type { HeldBill } from '@/types/models'
@@ -15,7 +17,12 @@ export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPa
   const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const restoreCart = useCartStore((s) => s.restoreCart)
+  const cartItemCount = useCartStore((s) => s.items.length)
   const qc = useQueryClient()
+
+  // When the current cart is non-empty, restoring a held bill replaces it —
+  // confirm first so in-progress items aren't silently lost.
+  const [pendingBillId, setPendingBillId] = useState<string | null>(null)
 
   const { data: bills = [], isLoading } = useQuery({
     queryKey: ['held-bills', storeId],
@@ -31,6 +38,14 @@ export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPa
       onClose()
     },
   })
+
+  function requestRestore(billId: string) {
+    if (cartItemCount > 0) {
+      setPendingBillId(billId)
+    } else {
+      restoreMutation.mutate(billId)
+    }
+  }
 
   function formatTime(iso: string) {
     return new Date(iso).toLocaleTimeString(isNl ? 'nl-SR' : 'en-SR', {
@@ -58,7 +73,7 @@ export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPa
             return (
               <button
                 key={bill.id}
-                onClick={() => restoreMutation.mutate(bill.id)}
+                onClick={() => requestRestore(bill.id)}
                 disabled={restoreMutation.isPending}
                 style={{
                   display: 'flex',
@@ -94,6 +109,15 @@ export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPa
           })}
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={pendingBillId !== null}
+        title={t('pos.restoreConfirm.title')}
+        message={t('pos.restoreConfirm.body', { count: cartItemCount })}
+        confirmLabel={t('pos.openBills')}
+        onConfirm={() => { if (pendingBillId) restoreMutation.mutate(pendingBillId); setPendingBillId(null) }}
+        onCancel={() => setPendingBillId(null)}
+      />
     </Modal>
   )
 }

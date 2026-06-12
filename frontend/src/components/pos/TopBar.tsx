@@ -10,6 +10,7 @@ import CustomerModal from './CustomerModal'
 import HeldBillsPanel from './HeldBillsPanel'
 import CloseRegisterModal from '@/screens/CloseRegisterModal'
 import HelpButton from '@/components/shared/HelpButton'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 
 interface TopBarProps {
   storeId: string
@@ -26,12 +27,24 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
   const clearStoreId = useSettingsStore((s) => s.setStoreId)
 
   const customer = useCartStore((s) => s.customer)
+  const cartItemCount = useCartStore((s) => s.items.length)
 
   const session = useRegisterStore((s) => s.session)
 
   const [customerOpen, setCustomerOpen]         = useState(false)
   const [heldBillsOpen, setHeldBillsOpen]       = useState(false)
   const [closeRegisterOpen, setCloseRegisterOpen] = useState(false)
+  // Guard logout / store-switch when the cart still has unsold items.
+  const [pendingExit, setPendingExit]           = useState<'logout' | 'switch' | null>(null)
+
+  function requestLogout() {
+    if (cartItemCount > 0) setPendingExit('logout')
+    else logout()
+  }
+  function requestSwitchStore() {
+    if (cartItemCount > 0) setPendingExit('switch')
+    else clearStoreId(null)
+  }
 
   const { data: todaySummary } = useQuery({
     queryKey: ['today-summary', storeId],
@@ -225,7 +238,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
               {user?.name}
             </span>
             <button
-              onClick={() => { clearStoreId(null) }}
+              onClick={requestSwitchStore}
               title={i18n.language === 'nl' ? 'Vestiging wisselen' : 'Switch store'}
               style={{
                 height: 28, padding: '0 8px',
@@ -237,7 +250,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
               ⇄
             </button>
             <button
-              onClick={logout}
+              onClick={requestLogout}
               style={{
                 height: 28, padding: '0 10px',
                 background: 'none', border: '1px solid var(--border-color)',
@@ -254,6 +267,20 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
       <CustomerModal isOpen={customerOpen} onClose={() => setCustomerOpen(false)} />
       <HeldBillsPanel isOpen={heldBillsOpen} onClose={() => setHeldBillsOpen(false)} storeId={storeId} />
       {closeRegisterOpen && <CloseRegisterModal onClose={() => setCloseRegisterOpen(false)} />}
+
+      <ConfirmDialog
+        isOpen={pendingExit !== null}
+        title={pendingExit === 'switch' ? t('pos.exitGuard.switchTitle') : t('pos.exitGuard.logoutTitle')}
+        message={t('pos.exitGuard.body', { count: cartItemCount })}
+        confirmLabel={pendingExit === 'switch' ? (i18n.language === 'nl' ? 'Wisselen' : 'Switch') : t('auth.logout')}
+        onConfirm={() => {
+          const action = pendingExit
+          setPendingExit(null)
+          if (action === 'switch') clearStoreId(null)
+          else if (action === 'logout') logout()
+        }}
+        onCancel={() => setPendingExit(null)}
+      />
     </>
   )
 }

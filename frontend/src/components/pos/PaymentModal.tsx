@@ -147,8 +147,10 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     },
   })
 
-  function buildPayload(method: PaymentMethod): CreateSalePayload {
-    const isCardSide = method === 'card' || method === 'mixed'
+  function buildPayload(method: PaymentMethod, skipRecon = false): CreateSalePayload {
+    // skipRecon = the "Skip & complete" button: still a card sale, but send
+    // NONE of the reconciliation fields even if the cashier started typing.
+    const isCardSide = (method === 'card' || method === 'mixed') && !skipRecon
     const isTransfer = method === 'bank_transfer' || method === 'mobile_transfer'
     const transferProviderForMethod = method === 'bank_transfer'
       ? effectiveTransferProvider
@@ -189,8 +191,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     }
   }
 
-  function handleComplete(method: PaymentMethod) {
-    saleMutation.mutate(buildPayload(method))
+  function handleComplete(method: PaymentMethod, skipRecon = false) {
+    saleMutation.mutate(buildPayload(method, skipRecon))
   }
 
   function numpadPress(val: string) {
@@ -382,7 +384,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               details" sends whatever is filled. */}
           <div style={{ display: 'flex', gap: 8 }}>
             <button
-              onClick={() => handleComplete('card')}
+              onClick={() => handleComplete('card', true)}
               disabled={isProcessing}
               style={{
                 flex: 1, height: 'var(--touch-target-xl)',

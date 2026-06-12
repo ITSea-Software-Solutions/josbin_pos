@@ -5,6 +5,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useLowStockSet } from '@/hooks/useLowStockSet'
 import DiscountModal from './DiscountModal'
 import LineItemEditModal from './LineItemEditModal'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import type { CartItem } from '@/types/models'
 
 interface CartPanelProps {
@@ -24,9 +25,12 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
   const setSaleDiscount = useCartStore((s) => s.setSaleDiscount)
   const clearSaleDiscount = useCartStore((s) => s.clearSaleDiscount)
   const updateQuantity = useCartStore((s) => s.updateQuantity)
+  const removeItem = useCartStore((s) => s.removeItem)
+  const clearCart = useCartStore((s) => s.clearCart)
 
   const [saleDiscountOpen, setSaleDiscountOpen] = useState(false)
   const [editItem, setEditItem] = useState<CartItem | null>(null)
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
 
   const isEmpty = items.length === 0
 
@@ -53,9 +57,23 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
           {t('pos.cart.title')}
         </span>
         {!isEmpty && (
-          <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-            {items.length} {isNl ? 'artikel' : 'item'}{items.length !== 1 ? 's' : ''}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+              {items.length} {isNl ? 'artikel' : 'item'}{items.length !== 1 ? 's' : ''}
+            </span>
+            <button
+              onClick={() => setClearConfirmOpen(true)}
+              title={t('pos.cart.clear')}
+              data-testid="btn-clear-cart"
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                color: 'var(--color-error)', fontSize: 'var(--font-size-sm)',
+                fontWeight: 600, padding: 0, display: 'flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              🗑 {t('pos.cart.clear')}
+            </button>
+          </div>
         )}
       </div>
 
@@ -80,6 +98,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
                 isLowStock={lowStockIds?.has(item.product.id) ?? false}
                 onEdit={() => setEditItem(item)}
                 onQtyChange={(qty) => updateQuantity(item.product.id, qty)}
+                onRemove={() => removeItem(item.product.id)}
               />
             ))}
           </div>
@@ -193,6 +212,15 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
           item={editItem}
         />
       )}
+
+      <ConfirmDialog
+        isOpen={clearConfirmOpen}
+        title={t('pos.cart.clearTitle')}
+        message={t('pos.cart.clearBody', { count: items.length })}
+        confirmLabel={t('pos.cart.clear')}
+        onConfirm={() => { clearCart(); setClearConfirmOpen(false) }}
+        onCancel={() => setClearConfirmOpen(false)}
+      />
     </div>
   )
 }
@@ -225,13 +253,14 @@ function TotalsRow({
 }
 
 function CartLineItem({
-  item, isNl, isLowStock, onEdit, onQtyChange,
+  item, isNl, isLowStock, onEdit, onQtyChange, onRemove,
 }: {
   item: CartItem
   isNl: boolean
   isLowStock: boolean
   onEdit: () => void
   onQtyChange: (qty: number) => void
+  onRemove: () => void
 }) {
   const { t } = useTranslation()
   const name = isNl ? item.product.name_nl : item.product.name_en
@@ -328,6 +357,21 @@ function CartLineItem({
           </div>
         )}
       </div>
+
+      {/* Remove line — direct delete, no need to decrement qty to zero */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onRemove() }}
+        title={t('pos.cart.removeItem')}
+        aria-label={t('pos.cart.removeItem')}
+        style={{
+          flexShrink: 0, width: 26, height: 26, borderRadius: 4,
+          border: '1px solid var(--border-color)', background: 'var(--bg-elevated)',
+          color: 'var(--color-error)', cursor: 'pointer', fontSize: 14, lineHeight: 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+      >
+        ✕
+      </button>
     </div>
   )
 }

@@ -108,8 +108,10 @@ export async function getSale(saleId: string): Promise<Sale> {
   return data.data
 }
 
-export async function sendReceiptEmail(saleId: string, locale: string): Promise<void> {
-  await apiClient.post(`/sales/${saleId}/receipt/email`, { locale })
+export async function sendReceiptEmail(saleId: string, email: string, locale: string): Promise<void> {
+  // The backend requires `email` (POST /sales/{id}/receipt/email validates
+  // ['required','email']) — omitting it always 422'd, so the button never sent.
+  await apiClient.post(`/sales/${saleId}/receipt/email`, { email, locale })
 }
 
 /**

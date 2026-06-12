@@ -55,7 +55,7 @@ export default function ReceiptModal({
   })
 
   const emailMutation = useMutation({
-    mutationFn: () => sendReceiptEmail(saleId, i18n.language),
+    mutationFn: () => sendReceiptEmail(saleId, emailInput.trim(), i18n.language === 'nl' ? 'nl' : 'en'),
     onSuccess: () => setEmailStatus('ok'),
     onError:   () => setEmailStatus('error'),
   })
@@ -187,15 +187,15 @@ export default function ReceiptModal({
     }
   }
 
-  async function handleEmail() {
-    if (emailInput) {
-      // If custom email entered, use it via a different endpoint
-      setEmailStatus('sending')
-      emailMutation.mutate()
-    } else {
-      setEmailStatus('sending')
-      emailMutation.mutate()
+  function handleEmail() {
+    // Require a syntactically valid address — the backend rejects anything else
+    // with a 422, and sending to an empty field is the bug this replaces.
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim())) {
+      setEmailStatus('error')
+      return
     }
+    setEmailStatus('sending')
+    emailMutation.mutate()
   }
 
   const statusIcon = { idle: '🖨', printing: '⏳', ok: '✓', error: '✗' }
@@ -299,7 +299,7 @@ export default function ReceiptModal({
                 type="email"
                 placeholder={t('pos.receipt.emailPlaceholder')}
                 value={emailInput}
-                onChange={(e) => setEmailInput(e.target.value)}
+                onChange={(e) => { setEmailInput(e.target.value); if (emailStatus === 'error') setEmailStatus('idle') }}
                 style={{
                   flex: 1, height: 'var(--touch-target)',
                   borderRadius: 'var(--border-radius)',
@@ -311,7 +311,7 @@ export default function ReceiptModal({
               />
               <button
                 onClick={handleEmail}
-                disabled={emailStatus === 'sending'}
+                disabled={emailStatus === 'sending' || !emailInput.trim()}
                 style={{
                   height: 'var(--touch-target)', padding: '0 16px',
                   borderRadius: 'var(--border-radius)',

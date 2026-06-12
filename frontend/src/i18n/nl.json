@@ -46,7 +46,10 @@
       "btw": "BTW",
       "total": "Totaal",
       "removeItem": "Artikel verwijderen",
-      "editItem": "Artikel bewerken"
+      "editItem": "Artikel bewerken",
+      "clear": "Leegmaken",
+      "clearTitle": "Winkelwagen leegmaken?",
+      "clearBody": "Alle {{count}} artikelen worden verwijderd. Dit kan niet ongedaan worden gemaakt."
     },
     "holdBill": "Bon bewaren",
     "openBills": "Bewaarde bonnen",
@@ -169,6 +172,15 @@
       "lowMany": "Lage voorraad: nog {{count}}",
       "out": "Niet op voorraad — overleg met manager?",
       "outShort": "Niet op voorraad"
+    },
+    "restoreConfirm": {
+      "title": "Huidige winkelwagen vervangen?",
+      "body": "Je hebt nog {{count}} artikel(en) in de winkelwagen. Die gaan verloren als je deze bewaarde bon laadt."
+    },
+    "exitGuard": {
+      "logoutTitle": "Uitloggen met openstaande bon?",
+      "switchTitle": "Vestiging wisselen met openstaande bon?",
+      "body": "Er staan nog {{count}} artikel(en) in de winkelwagen die niet zijn afgerekend. Die gaan verloren."
     }
   },
   "reports": {

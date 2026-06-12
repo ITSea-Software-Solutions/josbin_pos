@@ -46,7 +46,10 @@
       "btw": "VAT",
       "total": "Total",
       "removeItem": "Remove item",
-      "editItem": "Edit item"
+      "editItem": "Edit item",
+      "clear": "Clear",
+      "clearTitle": "Clear cart?",
+      "clearBody": "All {{count}} items will be removed. This cannot be undone."
     },
     "holdBill": "Hold Bill",
     "openBills": "Open Bills",
@@ -169,6 +172,15 @@
       "lowMany": "Low stock: {{count}} left",
       "out": "Out of stock — confirm with manager?",
       "outShort": "Out of stock"
+    },
+    "restoreConfirm": {
+      "title": "Replace current cart?",
+      "body": "You still have {{count}} item(s) in the cart. They will be lost if you load this held bill."
+    },
+    "exitGuard": {
+      "logoutTitle": "Log out with an open sale?",
+      "switchTitle": "Switch store with an open sale?",
+      "body": "There are still {{count}} unsold item(s) in the cart. They will be lost."
     }
   },
   "reports": {
