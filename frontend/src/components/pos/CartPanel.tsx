@@ -172,6 +172,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
               }}
             >
               {t('pos.holdBill')}
+              <span style={{ opacity: 0.55, fontSize: 11, marginLeft: 6, fontWeight: 700 }}>F2</span>
             </button>
             <button
               onClick={onCheckout}
@@ -188,7 +189,9 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
                 letterSpacing: '0.3px',
               }}
             >
-              {t('pos.payment.title')} →
+              {t('pos.payment.title')}
+              <span style={{ opacity: 0.7, fontSize: 11, margin: '0 6px', fontWeight: 700 }}>F9</span>
+              →
             </button>
           </div>
         </div>
