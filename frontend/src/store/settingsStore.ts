@@ -11,6 +11,10 @@ interface SettingsState {
   onScreenKeyboard: boolean
   defaultBtwRate: string
   printer: PrinterConfig
+  /** Fire the print path automatically when the receipt modal opens after a
+   *  sale (industry-standard POS behaviour). Thermal prints silently; the
+   *  browser fallback opens the print dialog. */
+  autoPrintReceipt: boolean
 
   setStoreId: (storeId: string | null) => void
   setProductDisplay: (display: ProductDisplay) => void
@@ -18,6 +22,7 @@ interface SettingsState {
   setOnScreenKeyboard: (enabled: boolean) => void
   setDefaultBtwRate: (rate: string) => void
   setPrinter: (config: PrinterConfig) => void
+  setAutoPrintReceipt: (enabled: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -35,6 +40,7 @@ export const useSettingsStore = create<SettingsState>()(
         printerName: '',
         drawerPin: 1,
       },
+      autoPrintReceipt: false,
 
       setStoreId: (storeId) => set({ storeId: storeId ?? null }),
       setProductDisplay: (productDisplay) => set({ productDisplay }),
@@ -42,6 +48,7 @@ export const useSettingsStore = create<SettingsState>()(
       setOnScreenKeyboard: (onScreenKeyboard) => set({ onScreenKeyboard }),
       setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),
       setPrinter: (printer) => set({ printer }),
+      setAutoPrintReceipt: (autoPrintReceipt) => set({ autoPrintReceipt }),
     }),
     { name: 'josbin_pos-settings' }
   )

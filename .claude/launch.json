@@ -4,8 +4,23 @@
     {
       "name": "docs-static",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8099", "--directory", "docs"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8099",
+        "--directory",
+        "docs"
+      ],
       "port": 8099
+    },
+    {
+      "name": "pos-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "cd frontend && VITE_API_URL=/api VITE_DEV_PROXY_TARGET=http://142.93.88.143:8080 npx vite --port 5180 --strictPort"
+      ],
+      "port": 5180
     }
   ]
 }

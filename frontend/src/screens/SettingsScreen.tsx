@@ -16,6 +16,7 @@ export default function SettingsScreen() {
     onScreenKeyboard, setOnScreenKeyboard,
     defaultBtwRate, setDefaultBtwRate,
     printer, setPrinter,
+    autoPrintReceipt, setAutoPrintReceipt,
   } = useSettingsStore()
 
   const platform = detectPlatform()
@@ -216,6 +217,35 @@ export default function SettingsScreen() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Auto-print after each sale (works with or without a thermal
+              printer — without one, the OS print dialog opens instead). */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                {t('settings.printer.autoPrint')}
+              </span>
+              <button
+                onClick={() => { setAutoPrintReceipt(!autoPrintReceipt); handleSave() }}
+                data-testid="toggle-auto-print"
+                style={{
+                  width: 52, height: 28, borderRadius: 14,
+                  background: autoPrintReceipt ? 'var(--color-primary)' : 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 3, left: autoPrintReceipt ? 25 : 3,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: '#fff', transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
+              {t('settings.printer.autoPrintHelp')}
+            </p>
           </div>
 
           {/* Network settings */}

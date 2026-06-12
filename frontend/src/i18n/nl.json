@@ -146,7 +146,7 @@
       "printed": "Afgedrukt!",
       "printError": "Afdrukfout — probeer PDF",
       "emailPlaceholder": "E-mailadres (optioneel)",
-      "noPrinterConfigured": "Geen printer geconfigureerd — gebruik PDF of e-mail"
+      "noPrinterConfigured": "Tip: stel een thermische printer in via Instellingen → Printer voor afdrukken met één tik en automatisch openen van de kassalade."
     },
     "discount": {
       "title": "Korting toevoegen",
@@ -290,7 +290,9 @@
       "drawerOpened": "Kassalade geopend!",
       "drawerError": "Fout — controleer verbinding",
       "helpElectron": "Netwerk (TCP): sluit de printer aan op het LAN en voer het IP-adres in. Aanbevolen voor EPSON TM-T20 met Ethernet.\nUSB: kies de printer zoals die staat in Windows Apparaten.",
-      "helpAndroid": "Netwerk (TCP): voer het IP-adres van de printer in. Aanbevolen.\nUSB: vereist de @anuradev/capacitor-printer plugin (zie README)."
+      "helpAndroid": "Netwerk (TCP): voer het IP-adres van de printer in. Aanbevolen.\nUSB: vereist de @anuradev/capacitor-printer plugin (zie README).",
+      "autoPrint": "Bon automatisch afdrukken na elke verkoop",
+      "autoPrintHelp": "Thermische printers drukken stil af; zonder printer opent na elke verkoop het afdrukvenster."
     },
     "system": {
       "title": "Systeem",

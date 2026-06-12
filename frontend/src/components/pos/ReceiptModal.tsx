@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
 import { getSale, sendReceiptEmail } from '@/api/sales'
 import { buildReceiptBytes } from '@/lib/escpos'
-import { printEscPos, detectPlatform } from '@/lib/hardware'
+import { printEscPos } from '@/lib/hardware'
 import { useSettingsStore } from '@/store/settingsStore'
 import apiClient from '@/api/client'
 import type { Store } from '@/types/models'
@@ -24,8 +24,12 @@ export default function ReceiptModal({
   const { t, i18n } = useTranslation()
   const printer       = useSettingsStore((s) => s.printer)
   const storeId       = useSettingsStore((s) => s.storeId)
-  const platform      = detectPlatform()
-  const canPrint      = printer.type !== 'none'
+  const autoPrint     = useSettingsStore((s) => s.autoPrintReceipt)
+  // Thermal (ESC/POS) configured → print silently through it. Otherwise the
+  // Print button falls back to the OS print dialog (receipt PDF in a hidden
+  // iframe) — works with any printer installed on the machine.
+  const hasThermal    = printer.type !== 'none'
+  
 
   const [printStatus, setPrintStatus]   = useState<'idle' | 'printing' | 'ok' | 'error'>('idle')
   const [pdfStatus, setPdfStatus]       = useState<'idle' | 'loading' | 'error'>('idle')
@@ -37,7 +41,7 @@ export default function ReceiptModal({
   const { data: sale } = useQuery({
     queryKey: ['sale', saleId],
     queryFn: () => getSale(saleId),
-    enabled: isOpen && canPrint,
+    enabled: isOpen && hasThermal,
   })
 
   // Fetch store details for receipt header/footer
@@ -47,7 +51,7 @@ export default function ReceiptModal({
       const { data } = await apiClient.get(`/stores/${storeId}`)
       return data.data
     },
-    enabled: isOpen && canPrint && !!storeId,
+    enabled: isOpen && hasThermal && !!storeId,
   })
 
   const emailMutation = useMutation({
@@ -56,7 +60,7 @@ export default function ReceiptModal({
     onError:   () => setEmailStatus('error'),
   })
 
-  async function handleEscPosPrint() {
+  const handleEscPosPrint = useCallback(async () => {
     if (!sale || !store) return
     setPrintStatus('printing')
     try {
@@ -100,7 +104,68 @@ export default function ReceiptModal({
     } catch {
       setPrintStatus('error')
     }
-  }
+  }, [sale, store, printer, cashTendered, change, i18n.language])
+
+  /**
+   * Browser-print fallback — no thermal printer configured. Loads the receipt
+   * PDF into a hidden iframe and calls print(), which opens the OS print
+   * dialog. Works with ANY printer installed on the machine (including
+   * thermal printers via their Windows driver) — the same flow web-based POS
+   * like Loyverse/Square use when no receipt printer is paired.
+   */
+  const printViaBrowser = useCallback(async () => {
+    setPrintStatus('printing')
+    try {
+      const params = new URLSearchParams({ locale: i18n.language })
+      if (cashTendered > 0) params.set('cash_tendered', String(cashTendered))
+      if (change > 0) params.set('change', String(change))
+      const res = await apiClient.get(`/sales/${saleId}/receipt/pdf?${params}`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+
+      const iframe = document.createElement('iframe')
+      iframe.style.position = 'fixed'
+      iframe.style.right = '0'
+      iframe.style.bottom = '0'
+      iframe.style.width = '0'
+      iframe.style.height = '0'
+      iframe.style.border = '0'
+      iframe.src = url
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow?.focus()
+          iframe.contentWindow?.print()
+          setPrintStatus('ok')
+        } catch {
+          // Cross-origin/viewer edge case — fall back to opening the PDF.
+          window.open(url, '_blank')
+          setPrintStatus('idle')
+        }
+      }
+      document.body.appendChild(iframe)
+      // Keep the iframe alive long enough for the print dialog + spooling,
+      // then clean up. (Removing it immediately cancels the print job.)
+      setTimeout(() => { iframe.remove(); URL.revokeObjectURL(url) }, 60_000)
+    } catch {
+      setPrintStatus('error')
+    }
+  }, [saleId, cashTendered, change, i18n.language])
+
+  // Auto-print when the modal opens after a sale (Settings → Printer toggle).
+  // Fires once per sale: thermal waits for the sale+store queries it needs;
+  // the browser path fires immediately.
+  const autoPrintedFor = useRef<string | null>(null)
+  useEffect(() => {
+    if (!isOpen || !autoPrint || autoPrintedFor.current === saleId) return
+    if (hasThermal) {
+      if (sale && store) {
+        autoPrintedFor.current = saleId
+        handleEscPosPrint()
+      }
+    } else {
+      autoPrintedFor.current = saleId
+      printViaBrowser()
+    }
+  }, [isOpen, autoPrint, saleId, hasThermal, sale, store, handleEscPosPrint, printViaBrowser])
 
   async function openPdf() {
     setPdfStatus('loading')
@@ -161,32 +226,32 @@ export default function ReceiptModal({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
 
-          {/* ESC/POS thermal print — shown when a printer is configured */}
-          {canPrint && (
-            <button
-              onClick={handleEscPosPrint}
-              disabled={printStatus === 'printing' || !sale}
-              data-testid="btn-print-escpos"
-              style={{
-                height: 'var(--touch-target)',
-                borderRadius: 'var(--border-radius)',
-                border: `1px solid ${printStatus === 'ok' ? 'var(--color-success)' : printStatus === 'error' ? 'var(--color-error)' : 'var(--border-color)'}`,
-                background: 'var(--bg-elevated)',
-                color: statusColor[printStatus],
-                cursor: printStatus === 'printing' ? 'wait' : 'pointer',
-                fontWeight: 600,
-                fontSize: 'var(--font-size-sm)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-            >
-              {statusIcon[printStatus]} {
-                printStatus === 'printing' ? t('pos.receipt.printing') :
-                printStatus === 'ok'       ? t('pos.receipt.printed') :
-                printStatus === 'error'    ? t('pos.receipt.printError') :
-                t('pos.receipt.printThermal')
-              }
-            </button>
-          )}
+          {/* Print — ALWAYS available. Thermal (silent ESC/POS) when a printer
+              is configured in Settings → Printer; otherwise the OS print
+              dialog with the receipt PDF (any installed printer works). */}
+          <button
+            onClick={hasThermal ? handleEscPosPrint : printViaBrowser}
+            disabled={printStatus === 'printing' || (hasThermal && !sale)}
+            data-testid="btn-print-escpos"
+            style={{
+              height: 'var(--touch-target)',
+              borderRadius: 'var(--border-radius)',
+              border: `1px solid ${printStatus === 'ok' ? 'var(--color-success)' : printStatus === 'error' ? 'var(--color-error)' : 'var(--border-color)'}`,
+              background: 'var(--bg-elevated)',
+              color: statusColor[printStatus],
+              cursor: printStatus === 'printing' ? 'wait' : 'pointer',
+              fontWeight: 600,
+              fontSize: 'var(--font-size-sm)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            }}
+          >
+            {statusIcon[printStatus]} {
+              printStatus === 'printing' ? t('pos.receipt.printing') :
+              printStatus === 'ok'       ? t('pos.receipt.printed') :
+              printStatus === 'error'    ? t('pos.receipt.printError') :
+              hasThermal ? t('pos.receipt.printThermal') : t('pos.receipt.print')
+            }
+          </button>
 
           {/* PDF fallback — always shown */}
           <button
@@ -281,8 +346,8 @@ export default function ReceiptModal({
           </button>
         </div>
 
-        {/* Platform info */}
-        {platform !== 'electron' && printer.type === 'none' && (
+        {/* Setup tip — only when no thermal printer is configured */}
+        {!hasThermal && (
           <div style={{ fontSize: 11, color: 'var(--text-muted)', textAlign: 'center' }}>
             {t('pos.receipt.noPrinterConfigured')}
           </div>
