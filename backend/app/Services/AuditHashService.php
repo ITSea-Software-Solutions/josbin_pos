@@ -79,17 +79,74 @@ class AuditHashService
             return (string) $value; // not JSON — hash the literal
         }
 
+        // Defensively un-nest double-encoded payloads. Historically some call
+        // sites pre-`json_encode`d the array before handing it to the
+        // 'array'-cast `new_values` column, so Eloquent encoded it a SECOND
+        // time and the DB held a JSON *string* ("{\"k\":...}") rather than a
+        // JSON *object*. Decode until we reach the underlying structure so the
+        // canonical form is identical whether the row was written by the old
+        // (double-encoding) or new (single-encoding) path.
+        while (is_string($decoded)) {
+            $inner = json_decode($decoded, true);
+            if ($inner === null && json_last_error() !== JSON_ERROR_NONE) {
+                break; // genuine string payload — keep it
+            }
+            $decoded = $inner;
+        }
+
+        // Single canonical form for both insert and verify: no slash/unicode
+        // escaping so the byte sequence is representation-independent.
         return json_encode($decoded, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Seal an already-inserted audit_logs row into its organisation's chain.
+     *
+     * Used for rows written OUTSIDE our AuditLog model — chiefly the OwenIt
+     * model-audits (Product/User/Customer/… created/updated events), which land
+     * in audit_logs with a NULL row_hash and (until now) were silently skipped
+     * by the verifier. The Audited listener calls this immediately after OwenIt
+     * persists, attributing the row to the auditable's organisation and linking
+     * it onto that chain. No-op if the row is already hashed.
+     */
+    public function sealRow(int $id, ?string $organisationId): void
+    {
+        $row = DB::table('audit_logs')->where('id', $id)->first();
+        if (! $row || $row->row_hash !== null) {
+            return;
+        }
+
+        $prev = $this->getLastHash($organisationId);
+        $hash = $this->computeHash([
+            'organisation_id' => $organisationId ?? '',
+            'event'           => $row->event ?? '',
+            'auditable_type'  => $row->auditable_type ?? '',
+            'auditable_id'    => $row->auditable_id ?? '',
+            'new_values'      => $row->new_values,
+            'created_at'      => $row->created_at,
+        ], $prev);
+
+        DB::table('audit_logs')->where('id', $id)->update([
+            'organisation_id'   => $organisationId,
+            'previous_row_hash' => $prev,
+            'row_hash'          => $hash,
+        ]);
     }
 
     /**
      * Get the most recent row_hash for the given organisation.
      * Returns null if no rows exist yet (genesis block).
      */
-    public function getLastHash(string $organisationId): ?string
+    public function getLastHash(?string $organisationId): ?string
     {
         return DB::table('audit_logs')
-            ->where('organisation_id', $organisationId)
+            // NULL organisation_id is the platform/system partition — it has
+            // its own chain. `where(col, null)` becomes `= NULL` (never true),
+            // so the null case MUST use whereNull or the platform chain silently
+            // never links (every row hashes as a genesis block).
+            ->where(fn ($q) => $organisationId === null
+                ? $q->whereNull('organisation_id')
+                : $q->where('organisation_id', $organisationId))
             ->whereNotNull('row_hash')
             ->orderByDesc('id')
             ->value('row_hash');
@@ -100,11 +157,16 @@ class AuditHashService
      *
      * Returns: ['valid' => bool, 'checked' => int, 'broken_at_id' => int|null]
      */
-    public function verifyChain(string $organisationId): array
+    public function verifyChain(?string $organisationId): array
     {
+        // EVERY row in the partition is checked — including any with a NULL
+        // row_hash. A NULL-hash row is unverifiable (it never joined the chain)
+        // and is treated as a break, so the verifier can never report "intact"
+        // while part of the log is silently unprotected (the vacuous-pass risk).
         $rows = DB::table('audit_logs')
-            ->where('organisation_id', $organisationId)
-            ->whereNotNull('row_hash')
+            ->where(fn ($q) => $organisationId === null
+                ? $q->whereNull('organisation_id')
+                : $q->where('organisation_id', $organisationId))
             ->orderBy('id')
             ->select([
                 'id', 'organisation_id', 'event', 'auditable_type',
@@ -117,6 +179,15 @@ class AuditHashService
         $prevHash = null;
 
         foreach ($rows as $row) {
+            if ($row->row_hash === null) {
+                return [
+                    'valid'        => false,
+                    'checked'      => $count,
+                    'broken_at_id' => $row->id,
+                    'message'      => "Unverifiable row ID {$row->id} (event '{$row->event}') has no hash — it never joined the chain. Run audit:rebaseline to seal it, then investigate why it was written hash-less.",
+                ];
+            }
+
             $expected = $this->computeHash((array) $row, $prevHash);
 
             if ($row->row_hash !== $expected) {

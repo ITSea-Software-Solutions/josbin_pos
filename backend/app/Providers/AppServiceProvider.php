@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Services\AuditHashService;
 use App\Services\LicenseService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use OwenIt\Auditing\Events\Audited;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +27,25 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        // Hash-chain OwenIt model-audits (Product/User/Customer/… created &
+        // updated events). OwenIt writes them to audit_logs through its own
+        // model — i.e. WITHOUT our AuditLog `creating` hook — so they used to
+        // land with a NULL row_hash and were silently skipped by the verifier.
+        // Seal each one into its organisation's chain the moment it is written.
+        Event::listen(Audited::class, function (Audited $event): void {
+            if (! $event->audit || $event->audit->getKey() === null) {
+                return;
+            }
+            // Attribute the audit to the auditable's organisation when it has
+            // one (Product/User/Customer/Store/Variant all do); otherwise it
+            // joins the platform partition.
+            $orgId = $event->model->getAttribute('organisation_id');
+            app(AuditHashService::class)->sealRow(
+                (int) $event->audit->getKey(),
+                is_string($orgId) ? $orgId : null,
+            );
+        });
     }
 
     private function configureRateLimiting(): void

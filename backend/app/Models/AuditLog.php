@@ -53,21 +53,35 @@ class AuditLog extends Model
 
             $hasher = app(AuditHashService::class);
 
-            // Resolve cast values back to strings for hashing (consistent serialisation)
+            // Hash the SAME representation the verifier will read back from the
+            // DB column. computeHash() runs new_values through canonicalJson(),
+            // so we must hand it the value in the exact form it is stored —
+            // otherwise insert-time and verify-time hashes diverge and the
+            // chain breaks (see gotcha: double-encoded register.* / *_logout rows).
+            //
+            // Two failure modes this guards against:
+            //   1. A caller pre-encodes the payload (json_encode($props)) and
+            //      assigns the STRING to an 'array'-cast attribute. Eloquent then
+            //      json_encodes it a SECOND time on save, so the DB holds a
+            //      double-encoded JSON string. We normalise that here.
+            //   2. JSON flag mismatch (escaped vs JSON_UNESCAPED_SLASHES/UNICODE)
+            //      between insert and verify. canonicalJson() pins one form.
             $row = [
                 'organisation_id' => $log->organisation_id ?? '',
                 'event'           => $log->event ?? '',
                 'auditable_type'  => $log->auditable_type ?? '',
                 'auditable_id'    => $log->auditable_id ?? '',
-                'new_values'      => is_array($log->new_values)
-                    ? json_encode($log->new_values)
-                    : ($log->getRawOriginal('new_values') ?? ''),
+                // Pass the array/value straight through. computeHash()
+                // canonicalises it identically on both insert and verify.
+                'new_values'      => $log->new_values,
                 'created_at'      => $log->created_at->toIso8601String(),
             ];
 
-            $prevHash = $log->organisation_id
-                ? $hasher->getLastHash($log->organisation_id)
-                : null;
+            // getLastHash is null-org-safe (whereNull) so the platform/system
+            // partition (organisation_id NULL — rate locks, licence events,
+            // chain-rebaseline markers) is a real linked chain, not a pile of
+            // independent genesis blocks.
+            $prevHash = $hasher->getLastHash($log->organisation_id);
 
             $log->previous_row_hash = $prevHash;
             $log->row_hash          = $hasher->computeHash($row, $prevHash);

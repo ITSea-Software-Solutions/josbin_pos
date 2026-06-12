@@ -593,7 +593,11 @@ class RegisterController extends Controller
             'auditable_type'  => class_basename($subject),
             'auditable_id'    => $subject->id,
             'old_values'      => null,
-            'new_values'      => $properties ? json_encode($properties) : null,
+            // Pass the array straight through. The 'array' cast on new_values
+            // serialises it once; pre-`json_encode`ing here would double-encode
+            // the column and desync the audit hash chain (insert hashes empty,
+            // verify hashes the decoded payload → register.* rows break).
+            'new_values'      => $properties ?: null,
             'ip_address'      => request()->ip(),
             'created_at'      => now(),
         ]);

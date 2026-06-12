@@ -40,8 +40,11 @@ class RebaselineAuditChain extends Command
 
         // Distinct chain owners — verifyChain() works per organisation_id, so
         // we rebaseline the same partitions (NULL = platform/system rows).
+        // Include EVERY partition (incl. NULL) regardless of whether its rows
+        // already have hashes, so rows written hash-less (legacy + OwenIt
+        // model-audits before the chaining listener existed) get sealed too.
         $orgIds = $this->option('all')
-            ? DB::table('audit_logs')->whereNotNull('row_hash')->distinct()->pluck('organisation_id')->all()
+            ? DB::table('audit_logs')->distinct()->pluck('organisation_id')->all()
             : [$this->option('org')];
 
         if (! $this->option('confirm')) {
@@ -52,7 +55,6 @@ class RebaselineAuditChain extends Command
         foreach ($orgIds as $orgId) {
             $rows = DB::table('audit_logs')
                 ->where(fn ($q) => $orgId === null ? $q->whereNull('organisation_id') : $q->where('organisation_id', $orgId))
-                ->whereNotNull('row_hash')
                 ->orderBy('id')
                 ->get(['id', 'organisation_id', 'event', 'auditable_type', 'auditable_id', 'new_values', 'created_at']);
 

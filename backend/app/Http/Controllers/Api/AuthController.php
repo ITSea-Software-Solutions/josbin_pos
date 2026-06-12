@@ -404,7 +404,9 @@ class AuthController extends Controller
                 'auditable_type'  => 'user',
                 'auditable_id'    => $user->id,
                 'old_values'      => null,
-                'new_values'      => json_encode(['reason' => 'govt single-device enforcement', 'ip' => $request->ip()]),
+                // Plain array — the 'array' cast encodes it once. Pre-encoding
+                // double-encodes the column and breaks the audit hash chain.
+                'new_values'      => ['reason' => 'govt single-device enforcement', 'ip' => $request->ip()],
                 'ip_address'      => $request->ip(),
                 'created_at'      => now(),
             ]);
@@ -465,12 +467,14 @@ class AuthController extends Controller
                     'auditable_type'  => 'user',
                     'auditable_id'    => $user->id,
                     'old_values'      => null,
-                    'new_values'      => json_encode([
+                    // Plain array — the 'array' cast encodes it once. Pre-encoding
+                    // double-encodes the column and breaks the audit hash chain.
+                    'new_values'      => [
                         'ip'          => $ip,
                         'country'     => $geo['country'] ?? 'Unknown',
                         'country_code'=> $countryCode,
                         'city'        => $geo['city'] ?? 'Unknown',
-                    ]),
+                    ],
                     'ip_address'      => $ip,
                     'created_at'      => now(),
                 ]);

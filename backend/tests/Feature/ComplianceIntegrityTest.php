@@ -201,6 +201,61 @@ class ComplianceIntegrityTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $result['checked']);
     }
 
+    /**
+     * Regression: register-lifecycle audit rows used to pre-`json_encode` their
+     * properties before handing them to the 'array'-cast new_values column,
+     * which double-encoded the column and desynced the SHA-256 chain (the
+     * creating hook hashed an empty new_values, the verifier hashed the decoded
+     * payload). EVERY register.opened/closed row broke audit:verify.
+     *
+     * A register name containing a "/" or non-ASCII character is the worst
+     * case because the JSON slash/unicode-escaping flags also differed between
+     * insert and verify. This exercises both at once.
+     */
+    public function test_register_lifecycle_audit_rows_keep_the_chain_valid(): void
+    {
+        $hasher = app(AuditHashService::class);
+
+        $register = \App\Models\Register::create([
+            'store_id' => $this->storeA->id,
+            'name'     => 'Kassá 1/2 — Nickerie', // non-ASCII + slash + em dash
+            'number'   => 1,
+            'is_active' => true,
+        ]);
+
+        $cashier = User::create([
+            'name' => 'Reg Cashier', 'email' => 'reg@compliance.sr', 'password' => bcrypt('pw'),
+            'organisation_id' => $this->orgA->id, 'store_id' => $this->storeA->id,
+            'role' => User::ROLE_CASHIER, 'locale' => 'nl', 'is_active' => true,
+        ]);
+        $cashier->assignRole(User::ROLE_CASHIER);
+
+        // Open with a numeric opening_float (855) — the exact prompt scenario.
+        $open = $this->actingAs($cashier, 'sanctum')
+            ->postJson("/api/registers/{$register->id}/open", ['opening_float' => 855]);
+        $open->assertCreated();
+
+        // Close it (writes a register.closed audit row with decimal cash fields).
+        $sessionId = $open->json('data.id');
+        $this->actingAs($cashier, 'sanctum')
+            ->postJson("/api/registers/sessions/{$sessionId}/close", ['closing_cash_counted' => 855])
+            ->assertOk();
+
+        // The audit chain for this org must verify clean — the register.opened
+        // and register.closed rows must recompute to their stored row_hash.
+        $result = $hasher->verifyChain($this->orgA->id);
+        $this->assertTrue(
+            $result['valid'],
+            'Register-lifecycle audit rows broke the chain: ' . ($result['message'] ?? '')
+        );
+
+        // Sanity: the register.opened row really is in the chain we just verified.
+        $this->assertDatabaseHas('audit_logs', [
+            'organisation_id' => $this->orgA->id,
+            'event'           => 'register.opened',
+        ]);
+    }
+
     // ── P1-C5: locked daily-rate immutability ─────────────────────────────────
 
     public function test_locked_daily_rate_cannot_be_overwritten_except_via_override(): void

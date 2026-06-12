@@ -32,6 +32,17 @@ class User extends Authenticatable implements Auditable
         'passkey_credential',
     ];
 
+    /**
+     * Never write these into the audit log's new_values. $hidden only hides
+     * from JSON — OwenIt audits the raw attributes, which would otherwise
+     * persist the bcrypt password hash + 2FA secrets into audit_logs (a WBP-S
+     * data-minimisation problem and needless secret exposure).
+     */
+    protected $auditExclude = [
+        'password', 'remember_token',
+        'two_factor_secret', 'two_factor_recovery_codes', 'passkey_credential',
+    ];
+
     protected function casts(): array
     {
         return [

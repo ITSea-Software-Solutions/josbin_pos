@@ -35,14 +35,21 @@ class VerifyAuditChain extends Command
             return self::FAILURE;
         }
 
+        // Include EVERY partition, including the platform/system partition
+        // (organisation_id IS NULL — rate locks, licence + chain events). The
+        // old whereNotNull skipped it entirely, so platform rows were never
+        // verified — a verifier that passes while part of the log is unchecked
+        // is worse than no verifier (the vacuous-pass risk).
         $orgIds = $this->option('all')
-            ? DB::table('audit_logs')->whereNotNull('organisation_id')->distinct()->pluck('organisation_id')
+            ? DB::table('audit_logs')->distinct()->pluck('organisation_id')
             : collect([$this->option('org')]);
 
         $allValid = true;
 
         foreach ($orgIds as $orgId) {
-            $orgName = DB::table('organisations')->where('id', $orgId)->value('name') ?? $orgId;
+            $orgName = $orgId === null
+                ? 'PLATFORM (system events)'
+                : (DB::table('organisations')->where('id', $orgId)->value('name') ?? $orgId);
             $this->info("Verifying chain for: {$orgName}");
 
             $result = $this->hasher->verifyChain($orgId);

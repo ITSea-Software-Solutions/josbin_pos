@@ -533,6 +533,9 @@ class ProductController extends Controller
     public function storeOverrides(Request $request, \App\Models\Store $store): JsonResponse
     {
         abort_unless($request->user()->isAtLeastManager(), 403);
+        // SEC: {store} is route-model-bound by UUID with no org scope — a
+        // manager could otherwise pass another organisation's store id.
+        $this->ensureSameOrg($request, $store->organisation_id);
 
         $overrides = StoreProductOverride::where('store_id', $store->id)
             ->with('product:id,name_nl,name_en,barcode,price')
@@ -556,9 +559,12 @@ class ProductController extends Controller
     public function upsertOverride(Request $request, \App\Models\Store $store): JsonResponse
     {
         abort_unless($request->user()->isAtLeastManager(), 403);
+        $this->ensureSameOrg($request, $store->organisation_id);
 
         $data = $request->validate([
-            'product_id'     => ['required', 'uuid', 'exists:products,id'],
+            // Scope the product to the store's organisation so a foreign
+            // product id can't be attached (mirrors CustomerBelongsToOrg).
+            'product_id'     => ['required', 'uuid', \Illuminate\Validation\Rule::exists('products', 'id')->where('organisation_id', $store->organisation_id)],
             'price_override' => ['required', 'numeric', 'min:0'],
         ]);
 
@@ -573,9 +579,10 @@ class ProductController extends Controller
     /**
      * DELETE /api/stores/{store}/price-overrides/{product}
      */
-    public function deleteOverride(\App\Models\Store $store, Product $product): JsonResponse
+    public function deleteOverride(Request $request, \App\Models\Store $store, Product $product): JsonResponse
     {
-        abort_unless(request()->user()->isAtLeastManager(), 403);
+        abort_unless($request->user()->isAtLeastManager(), 403);
+        $this->ensureSameOrg($request, $store->organisation_id);
 
         StoreProductOverride::where('store_id', $store->id)
             ->where('product_id', $product->id)

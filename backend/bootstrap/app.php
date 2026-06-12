@@ -21,6 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Apply the 'api' RateLimiter (240/min per user/IP, defined in
+        // AppServiceProvider) to the whole api group. Laravel only wires the
+        // limiter into the group when throttleApi() is called — without this
+        // the limiter is dead config and only login + void/refund are throttled
+        // (SEC-1). Per-route limiters (login, void/refund) still stack on top.
+        $middleware->throttleApi('api');
+
         // Localise app()->setLocale() per request so error strings rendered
         // via __('errors.…') match the UI language. PREPEND so it runs
         // before any other middleware that might emit a translated message.
