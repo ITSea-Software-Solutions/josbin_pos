@@ -137,6 +137,17 @@ class StockMovementService
                 continue; // deleted product snapshot — no stock to track
             }
 
+            // CR-1: variant lines own their stock on the variant row, which the
+            // sale write (SaleController::store) already decremented. The parent
+            // product_stocks must NOT also move, or the one physical unit is
+            // counted twice. Variant stock is org-wide in v1 (see ProductVariant
+            // / migration 2026_06_03_010001) — it has no per-store product_stocks
+            // row to touch. Skip it here; recordVoidOrRefund restores it the same
+            // asymmetric way.
+            if ($item->variant_id) {
+                continue;
+            }
+
             $product = $products->get($item->product_id);
             if (! $product) {
                 continue;
@@ -163,6 +174,19 @@ class StockMovementService
         $sale->loadMissing('items');
 
         foreach ($sale->items as $item) {
+            // For refunds the qty is stored as negative in the refund sale — restore absolute value
+            $qtyToRestore = abs((float) $item->quantity);
+
+            // CR-1 (mirror of recordSale): variant lines restore to the variant
+            // row, never to the parent product_stocks — the parent was never
+            // decremented for this unit. For void this reads variant_id off the
+            // original sale item; for refund the refund sale carries it forward
+            // (SaleController::refund snapshots variant_id onto the refund line).
+            if ($item->variant_id) {
+                $this->restoreVariantStock($item->variant_id, $qtyToRestore);
+                continue;
+            }
+
             if (! $item->product_id) {
                 continue;
             }
@@ -171,9 +195,6 @@ class StockMovementService
             if (! $product) {
                 continue;
             }
-
-            // For refunds the qty is stored as negative in the refund sale — restore absolute value
-            $qtyToRestore = abs((float) $item->quantity);
 
             $this->record(
                 product: $product,
@@ -184,5 +205,30 @@ class StockMovementService
                 userId: $userId,
             );
         }
+    }
+
+    /**
+     * Restore stock to a variant row (void / refund of a variant line).
+     *
+     * Symmetric with the decrement in SaleController::store — locks the row,
+     * adds back the quantity with bcmath (variant stock is org-wide in v1, so
+     * there is no per-store dimension and no StockMovement ledger entry, exactly
+     * as on the decrement side). No-op if the variant was since deleted.
+     */
+    private function restoreVariantStock(string $variantId, float $qtyToRestore): void
+    {
+        DB::transaction(function () use ($variantId, $qtyToRestore) {
+            $variant = \App\Models\ProductVariant::where('id', $variantId)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $variant) {
+                return;
+            }
+
+            $variant->update([
+                'stock_qty' => bcadd((string) $variant->stock_qty, (string) $qtyToRestore, 3),
+            ]);
+        });
     }
 }

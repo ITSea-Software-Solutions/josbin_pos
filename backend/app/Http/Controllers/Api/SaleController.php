@@ -614,6 +614,11 @@ class SaleController extends Controller
                 $refundItems[] = [
                     'original_item_id'      => $original->id,
                     'product_id'            => $original->product_id,
+                    // Carry variant attribution onto the refund line so stock
+                    // restoration routes back to the variant row (CR-1) and the
+                    // refund receipt shows the same size/flavour as the original.
+                    'variant_id'            => $original->variant_id,
+                    'variant_name_snapshot' => $original->variant_name_snapshot,
                     'product_name_snapshot' => $original->product_name_snapshot,
                     'unit_price_srd'        => (string) $original->unit_price_srd,
                     'quantity'              => '-' . $refundItem['quantity'],
