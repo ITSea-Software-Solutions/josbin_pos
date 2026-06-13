@@ -181,6 +181,18 @@
       "logoutTitle": "Uitloggen met openstaande bon?",
       "switchTitle": "Vestiging wisselen met openstaande bon?",
       "body": "Er staan nog {{count}} artikel(en) in de winkelwagen die niet zijn afgerekend. Die gaan verloren."
+    },
+    "cashMovement": {
+      "title": "Kas in / uit",
+      "short": "Kas",
+      "payIn": "Kas in",
+      "payOut": "Kas uit",
+      "amount": "Bedrag",
+      "reason": "Reden",
+      "reasonPlaceholder": "Bijv. leverancier betaald, wisselgeld bijgevuld",
+      "record": "Vastleggen",
+      "recorded": "Kasmutatie vastgelegd",
+      "newExpected": "Nieuw verwacht in kassa"
     }
   },
   "reports": {

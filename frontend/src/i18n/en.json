@@ -181,6 +181,18 @@
       "logoutTitle": "Log out with an open sale?",
       "switchTitle": "Switch store with an open sale?",
       "body": "There are still {{count}} unsold item(s) in the cart. They will be lost."
+    },
+    "cashMovement": {
+      "title": "Cash in / out",
+      "short": "Cash",
+      "payIn": "Pay in",
+      "payOut": "Pay out",
+      "amount": "Amount",
+      "reason": "Reason",
+      "reasonPlaceholder": "E.g. supplier paid, change top-up",
+      "record": "Record",
+      "recorded": "Cash movement recorded",
+      "newExpected": "New expected in drawer"
     }
   },
   "reports": {

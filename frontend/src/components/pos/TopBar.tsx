@@ -8,6 +8,7 @@ import { useRegisterStore } from '@/store/registerStore'
 import { getDailyReport } from '@/api/reports'
 import CustomerModal from './CustomerModal'
 import HeldBillsPanel from './HeldBillsPanel'
+import CashMovementModal from './CashMovementModal'
 import CloseRegisterModal from '@/screens/CloseRegisterModal'
 import HelpButton from '@/components/shared/HelpButton'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -34,6 +35,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
   const [customerOpen, setCustomerOpen]         = useState(false)
   const [heldBillsOpen, setHeldBillsOpen]       = useState(false)
   const [closeRegisterOpen, setCloseRegisterOpen] = useState(false)
+  const [cashMovementOpen, setCashMovementOpen] = useState(false)
   // Guard logout / store-switch when the cart still has unsold items.
   const [pendingExit, setPendingExit]           = useState<'logout' | 'switch' | null>(null)
 
@@ -174,6 +176,24 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
             📋 {t('pos.openBills')}
           </button>
 
+          {/* Cash in/out — only while a register session is open */}
+          {session && (
+            <button
+              onClick={() => setCashMovementOpen(true)}
+              title={t('pos.cashMovement.title')}
+              style={{
+                height: 34, padding: '0 12px',
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--border-radius)',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer', fontSize: 'var(--font-size-sm)',
+              }}
+            >
+              💵 {t('pos.cashMovement.short')}
+            </button>
+          )}
+
           {/* Context-aware help for the current screen */}
           <HelpButton topic={activeScreen} />
 
@@ -266,6 +286,13 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
 
       <CustomerModal isOpen={customerOpen} onClose={() => setCustomerOpen(false)} />
       <HeldBillsPanel isOpen={heldBillsOpen} onClose={() => setHeldBillsOpen(false)} storeId={storeId} />
+      {session && (
+        <CashMovementModal
+          isOpen={cashMovementOpen}
+          onClose={() => setCashMovementOpen(false)}
+          sessionId={session.id}
+        />
+      )}
       {closeRegisterOpen && <CloseRegisterModal onClose={() => setCloseRegisterOpen(false)} />}
 
       <ConfirmDialog

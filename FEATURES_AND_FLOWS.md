@@ -155,6 +155,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | POS-13g | QR webhook endpoint stub (HMAC-ready, feature-flagged off) | 🟡 | PSP partners | `QrPaymentWebhookController` + `qr_webhooks_enabled` config | task #79; activates once a Surinamese PSP integrates |
 | POS-14 | ESC/POS thermal receipt print | ✅ | Cashier | `lib/escpos.ts`, `lib/hardware.ts` | `user_manual/06 §6.2` |
 | POS-15 | Cash drawer pulse on cash sale | ✅ | Cashier | `lib/escpos.ts::openCashDrawer` | README §printer-cash-drawer |
+| POS-15a | Manual cash in/out (pay-in / pay-out) during shift → adjusts Z-Report expected cash | ✅ | Cashier, SM | `CashMovementModal.tsx` → `RegisterController::recordCashMovement` + `CashMovement` model | migration 2026_06_12_000001 |
 | POS-16 | PDF receipt download | ✅ | Cashier, SM | `SaleController::receiptPdf` | `user_manual/06 §6.4` |
 | POS-17 | Email receipt (bilingual HTML) | ✅ | Cashier | `SaleController::emailReceipt` | `user_manual/06 §6.5` |
 | POS-18 | Hold bill / restore later | ✅ | Cashier | `SaleController::hold/held` + Activity API pre-render | `user_manual/09` |

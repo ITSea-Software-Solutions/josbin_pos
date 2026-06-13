@@ -23,6 +23,7 @@ return [
 
     // Register + Z-Report
     'register_already_closed_today' => 'This register was already closed today. Ask your manager to re-open it.',
+    'register_already_closed'       => 'This register session is already closed.',
     'register_day_already_closed'   => "Today's register is already closed.",
     'z_report_already_sent'         => 'This Z-report has already been sent to headquarters.',
 

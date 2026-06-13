@@ -267,6 +267,65 @@ class RegisterController extends Controller
         return response()->json(['data' => $this->formatSession($session->fresh()->load('cashier:id,name'))]);
     }
 
+    // ─── Cash drawer: manual pay-in / pay-out ─────────────────────────────
+
+    /**
+     * POST /api/registers/sessions/{session}/cash-movements
+     *
+     * Records a manual drawer movement on an OPEN session:
+     *   direction 'in'  — cash added (change top-up, owner float)
+     *   direction 'out' — cash removed (supplier paid from till, etc.)
+     *
+     * These adjust the session's expected cash so the Z-Report reconciliation
+     * accounts for money that entered/left the drawer outside of sales.
+     */
+    public function recordCashMovement(Request $request, RegisterSession $session): JsonResponse
+    {
+        $user = $request->user();
+
+        // Only the cashier on this session (or a manager) can move its cash.
+        abort_unless(
+            $session->cashier_id === $user->id || $user->isAtLeastManager(),
+            403
+        );
+
+        abort_if($session->isClosed(), 409, __('errors.register_already_closed'));
+
+        $data = $request->validate([
+            'direction' => ['required', \Illuminate\Validation\Rule::in([\App\Models\CashMovement::DIR_IN, \App\Models\CashMovement::DIR_OUT])],
+            'amount'    => ['required', 'numeric', 'gt:0'],
+            'reason'    => ['required', 'string', 'min:2', 'max:255'],
+        ]);
+
+        $movement = \App\Models\CashMovement::create([
+            'register_session_id' => $session->id,
+            'store_id'            => $session->store_id,
+            'user_id'             => $user->id,
+            'direction'           => $data['direction'],
+            'amount'              => number_format((float) $data['amount'], 2, '.', ''),
+            'reason'              => $data['reason'],
+            'created_at'          => now(),
+        ]);
+
+        $this->logRegisterActivity($user, $session, 'register.cash_movement', [
+            'direction' => $movement->direction,
+            'amount'    => (string) $movement->amount,
+            'reason'    => $movement->reason,
+        ]);
+
+        return response()->json([
+            'data' => [
+                'id'        => $movement->id,
+                'direction' => $movement->direction,
+                'amount'    => number_format((float) $movement->amount, 2, '.', ''),
+                'reason'    => $movement->reason,
+                'created_at'=> $movement->created_at?->toIso8601String(),
+                // Echo the running expected cash so the UI can update immediately.
+                'expected_cash' => number_format((float) $this->computeExpectedCash($session), 2, '.', ''),
+            ],
+        ], 201);
+    }
+
     // ─── Manager: reopen register for next shift ──────────────────────────
 
     /**
@@ -485,7 +544,23 @@ class RegisterController extends Controller
         $openingFloat = (string) $session->opening_float;
         $cashIn       = (string) ($agg->cash_in  ?? 0);
         $cashOut      = (string) ($agg->cash_out ?? 0);
-        $expectedLive = bcadd($openingFloat, bcsub($cashIn, $cashOut, 2), 2);
+
+        // Manual drawer movements (pay-in / pay-out) split out so the Z-Report
+        // shows them as their own line, then folded into expected cash.
+        $movements = \App\Models\CashMovement::where('register_session_id', $session->id)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN direction = 'in'  THEN amount END), 0) as pay_in,
+                COALESCE(SUM(CASE WHEN direction = 'out' THEN amount END), 0) as pay_out
+            ")
+            ->first();
+        $payIn  = (string) ($movements->pay_in  ?? 0);
+        $payOut = (string) ($movements->pay_out ?? 0);
+
+        $expectedLive = bcadd(
+            bcadd($openingFloat, bcsub($cashIn, $cashOut, 2), 2),
+            bcsub($payIn, $payOut, 2),
+            2,
+        );
         // Use the persisted expected_cash after close (snapshot at close-time);
         // before close, compute live so the cashier sees the running expected.
         $expectedCash = $session->expected_cash !== null
@@ -515,6 +590,8 @@ class RegisterController extends Controller
                     'opening_float' => $fmt($openingFloat),
                     'cash_in'       => $fmt($cashIn),
                     'cash_out'      => $fmt($cashOut),
+                    'pay_in'        => $fmt($payIn),   // manual drawer top-ups
+                    'pay_out'       => $fmt($payOut),  // manual payouts from till
                     'expected'      => $fmt($expectedLive),
                 ],
                 'opening_float'        => $fmt($openingFloat),
@@ -541,11 +618,29 @@ class RegisterController extends Controller
             ')
             ->first();
 
+        $salesNet = bcsub((string) ($row->cash_in ?? 0), (string) ($row->cash_out ?? 0), 2);
+
         return bcadd(
-            (string) $session->opening_float,
-            bcsub((string) ($row->cash_in ?? 0), (string) ($row->cash_out ?? 0), 2),
+            bcadd((string) $session->opening_float, $salesNet, 2),
+            $this->manualCashNet($session),
             2,
         );
+    }
+
+    /**
+     * Net of manual drawer movements for a session: SUM(pay-in) − SUM(pay-out).
+     * A positive result means the cashier added more than they removed.
+     */
+    private function manualCashNet(RegisterSession $session): string
+    {
+        $row = \App\Models\CashMovement::where('register_session_id', $session->id)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN direction = 'in'  THEN amount END), 0) as pay_in,
+                COALESCE(SUM(CASE WHEN direction = 'out' THEN amount END), 0) as pay_out
+            ")
+            ->first();
+
+        return bcsub((string) ($row->pay_in ?? 0), (string) ($row->pay_out ?? 0), 2);
     }
 
     // ─── Manager: list all sessions for a store today ─────────────────────

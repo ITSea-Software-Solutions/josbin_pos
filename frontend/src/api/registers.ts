@@ -88,6 +88,28 @@ export async function closeRegister(sessionId: string, closingCashCounted: numbe
   return res.data.data
 }
 
+export interface CashMovementResult {
+  id: string
+  direction: 'in' | 'out'
+  amount: string
+  reason: string
+  created_at: string
+  expected_cash: string
+}
+
+export async function recordCashMovement(
+  sessionId: string,
+  direction: 'in' | 'out',
+  amount: number,
+  reason: string,
+): Promise<CashMovementResult> {
+  const res = await apiClient.post<{ data: CashMovementResult }>(
+    `/registers/sessions/${sessionId}/cash-movements`,
+    { direction, amount, reason },
+  )
+  return res.data.data
+}
+
 export async function requestReopen(sessionId: string, reason: string): Promise<RegisterSession> {
   const res = await apiClient.post<{ data: RegisterSession }>(`/registers/sessions/${sessionId}/request-reopen`, { reopen_reason: reason })
   return res.data.data

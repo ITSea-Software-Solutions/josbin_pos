@@ -245,6 +245,7 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::get('my-session',                              [RegisterController::class, 'mySession'])->name('my-session');
         Route::get('sessions',                                [RegisterController::class, 'sessions'])->name('sessions');
         Route::post('sessions/{session}/close',               [RegisterController::class, 'close'])->name('close');
+        Route::post('sessions/{session}/cash-movements',      [RegisterController::class, 'recordCashMovement'])->name('cash-movement');
         Route::post('sessions/{session}/request-reopen',      [RegisterController::class, 'requestReopen'])->name('request-reopen');
         Route::post('sessions/{session}/approve-reopen',      [RegisterController::class, 'approveReopen'])->name('approve-reopen');
         Route::get('sessions/{session}/report',               [RegisterController::class, 'sessionReport'])->name('session-report');
