@@ -5,6 +5,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useLowStockSet } from '@/hooks/useLowStockSet'
 import { getPosProducts, getCategories, getProductByBarcode } from '@/api/products'
+import { parseEmbeddedBarcode } from '@/lib/embeddedBarcode'
 import CategoryFilter from './CategoryFilter'
 import ProductCard from './ProductCard'
 import type { Product } from '@/types/models'
@@ -16,7 +17,10 @@ interface ProductGridProps {
 export default function ProductGrid({ storeId }: ProductGridProps) {
   const { t } = useTranslation()
   const addProduct = useCartStore((s) => s.addProduct)
+  const updateQuantity = useCartStore((s) => s.updateQuantity)
+  const updateItemOverrides = useCartStore((s) => s.updateItemOverrides)
   const productDisplay = useSettingsStore((s) => s.productDisplay)
+  const embeddedBarcode = useSettingsStore((s) => s.embeddedBarcode)
 
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -39,6 +43,31 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
   // Barcode scanner — USB HID keyboard wedge sends chars rapidly then Enter
   const handleBarcodeSearch = useCallback(async (barcode: string) => {
     setBarcodeError(null)
+
+    // Scale-printed weighed-goods barcode? Parse out the item code + embedded
+    // price/weight; look the product up by the item code, then either override
+    // the line price (price-embedded: the scale already priced it) or set the
+    // quantity to the weight (weight-embedded: price = catalogue rate × kg).
+    const embedded = parseEmbeddedBarcode(barcode, embeddedBarcode)
+    if (embedded) {
+      try {
+        const product = await getProductByBarcode(embedded.itemCode, storeId)
+        addProduct(product)
+        if (embedded.mode === 'price') {
+          // value = total line price for this single weighed item.
+          updateItemOverrides(product.id, { unitPriceOverride: embedded.value.toFixed(2) })
+        } else {
+          // value = weight in kg; line total = catalogue unit price × weight.
+          updateQuantity(product.id, embedded.value)
+        }
+        setSearch('')
+      } catch {
+        setBarcodeError(t('pos.barcode.notFound', { barcode: embedded.itemCode }))
+        setTimeout(() => setBarcodeError(null), 3000)
+      }
+      return
+    }
+
     try {
       const product = await getProductByBarcode(barcode, storeId)
       addProduct(product)
@@ -47,7 +76,7 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
       setBarcodeError(t('pos.barcode.notFound', { barcode }))
       setTimeout(() => setBarcodeError(null), 3000)
     }
-  }, [storeId, addProduct, t])
+  }, [storeId, addProduct, updateQuantity, updateItemOverrides, embeddedBarcode, t])
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {

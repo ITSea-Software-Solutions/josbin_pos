@@ -341,6 +341,15 @@
       "warnRegisterOpen": "Register session is still open. Closing now is OK but you should close the register at end of shift.",
       "autoLaunch": "Start Josbin POS when this terminal boots",
       "autoLaunchHelp": "Recommended for POS terminals — cashier doesn't need to open the app manually after switching on the computer."
+    },
+    "weighed": {
+      "title": "Weighed goods / scale barcodes",
+      "enable": "Read scale barcodes",
+      "mode": "Embedded value",
+      "modePrice": "Price (scale already priced it)",
+      "modeWeight": "Weight (price = catalogue rate × kg)",
+      "prefix": "Prefix",
+      "help": "Scales print an EAN-13 with prefix 2 holding an item code + price or weight. Default layout: 2 + 6-digit item code + 5-digit value + check digit. Confirm the layout against your own scale before go-live — a wrong layout mis-prices weighed items."
     }
   },
   "auth": {

@@ -127,6 +127,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | CAT-17 | Barcode scanner — USB HID (keyboard wedge) | ✅ | Cashier | Auto via input field listener | `user_manual/04 §4.7` |
 | CAT-18 | Barcode scanner — camera (Quagga2) | ✅ | Cashier | `lib/quaggaBarcode.ts` | `user_manual/04 §4.8` |
 | CAT-19 | Bulk barcode label printing | ✅ | OA, SM | `BarcodeLabelScreen.tsx` | `user_manual/12` |
+| CAT-20 | Weighed-goods / scale barcodes (embedded price or weight EAN-13) — configurable layout, off by default | ✅ | Cashier | `lib/embeddedBarcode.ts` (parser + tests) → `ProductGrid` scan handler; `Settings → Weighed goods` | layout must be confirmed vs the client's scale (prefix 2, 6+5 default) |
 
 ### 1.5 POS — register & sales
 

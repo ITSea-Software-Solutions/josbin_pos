@@ -341,6 +341,15 @@
       "warnRegisterOpen": "Kassasessie is nog open. U mag nu afsluiten, maar sluit de kassa aan het einde van de dienst.",
       "autoLaunch": "Josbin POS automatisch starten als deze kassa wordt aangezet",
       "autoLaunchHelp": "Aanbevolen voor POS-kassa's — de medewerker hoeft de app niet handmatig te openen nadat de computer wordt ingeschakeld."
+    },
+    "weighed": {
+      "title": "Gewogen artikelen / weegschaal-barcodes",
+      "enable": "Weegschaal-barcodes inlezen",
+      "mode": "Ingebedde waarde",
+      "modePrice": "Prijs (weegschaal heeft geprijsd)",
+      "modeWeight": "Gewicht (prijs = catalogusprijs × kg)",
+      "prefix": "Prefix",
+      "help": "Weegschalen drukken een EAN-13 met prefix 2 die een artikelcode + prijs of gewicht bevat. Standaardindeling: 2 + 6 cijfers artikelcode + 5 cijfers waarde + controlecijfer. Bevestig de indeling met uw eigen weegschaal vóór ingebruikname — een verkeerde indeling beprijst gewogen artikelen verkeerd."
     }
   },
   "auth": {

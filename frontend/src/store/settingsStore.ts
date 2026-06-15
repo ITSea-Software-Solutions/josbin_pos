@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { PrinterConfig } from '@/lib/hardware'
+import { DEFAULT_EMBEDDED_BARCODE, type EmbeddedBarcodeConfig } from '@/lib/embeddedBarcode'
 
 export type ProductDisplay = 'name' | 'photo' | 'both'
 
@@ -15,6 +16,8 @@ interface SettingsState {
    *  sale (industry-standard POS behaviour). Thermal prints silently; the
    *  browser fallback opens the print dialog. */
   autoPrintReceipt: boolean
+  /** Scale-printed weighed-goods barcode layout (off by default). */
+  embeddedBarcode: EmbeddedBarcodeConfig
 
   setStoreId: (storeId: string | null) => void
   setProductDisplay: (display: ProductDisplay) => void
@@ -23,6 +26,7 @@ interface SettingsState {
   setDefaultBtwRate: (rate: string) => void
   setPrinter: (config: PrinterConfig) => void
   setAutoPrintReceipt: (enabled: boolean) => void
+  setEmbeddedBarcode: (config: Partial<EmbeddedBarcodeConfig>) => void
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -41,6 +45,7 @@ export const useSettingsStore = create<SettingsState>()(
         drawerPin: 1,
       },
       autoPrintReceipt: false,
+      embeddedBarcode: DEFAULT_EMBEDDED_BARCODE,
 
       setStoreId: (storeId) => set({ storeId: storeId ?? null }),
       setProductDisplay: (productDisplay) => set({ productDisplay }),
@@ -49,6 +54,7 @@ export const useSettingsStore = create<SettingsState>()(
       setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),
       setPrinter: (printer) => set({ printer }),
       setAutoPrintReceipt: (autoPrintReceipt) => set({ autoPrintReceipt }),
+      setEmbeddedBarcode: (config) => set((s) => ({ embeddedBarcode: { ...s.embeddedBarcode, ...config } })),
     }),
     { name: 'josbin_pos-settings' }
   )

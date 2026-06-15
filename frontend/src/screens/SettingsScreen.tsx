@@ -17,6 +17,7 @@ export default function SettingsScreen() {
     defaultBtwRate, setDefaultBtwRate,
     printer, setPrinter,
     autoPrintReceipt, setAutoPrintReceipt,
+    embeddedBarcode, setEmbeddedBarcode,
   } = useSettingsStore()
 
   const platform = detectPlatform()
@@ -369,6 +370,58 @@ export default function SettingsScreen() {
             {platform === 'electron'
               ? t('settings.printer.helpElectron')
               : t('settings.printer.helpAndroid')}
+          </div>
+        </div>
+
+        {/* ── Weighed goods / scale barcodes ────────────────────────────────── */}
+        <div style={{ ...sectionSt, gridColumn: '1 / -1' }}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>
+            ⚖ {t('settings.weighed.title')}
+          </h3>
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+              {t('settings.weighed.enable')}
+            </span>
+            <button
+              onClick={() => { setEmbeddedBarcode({ enabled: !embeddedBarcode.enabled }); handleSave() }}
+              style={{
+                width: 52, height: 28, borderRadius: 14,
+                background: embeddedBarcode.enabled ? 'var(--color-primary)' : 'var(--bg-input)',
+                border: '1px solid var(--border-color)', cursor: 'pointer', position: 'relative',
+              }}
+            >
+              <div style={{ position: 'absolute', top: 3, left: embeddedBarcode.enabled ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+            </button>
+          </div>
+
+          {embeddedBarcode.enabled && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <div>
+                <label style={labelSt}>{t('settings.weighed.mode')}</label>
+                <select
+                  value={embeddedBarcode.mode}
+                  onChange={(e) => { setEmbeddedBarcode({ mode: e.target.value as 'price' | 'weight', valueDivisor: e.target.value === 'price' ? 100 : 1000 }); handleSave() }}
+                  style={{ height: 44, width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)', color: 'var(--text-primary)', padding: '0 12px', fontSize: 'var(--font-size-sm)' }}
+                >
+                  <option value="price">{t('settings.weighed.modePrice')}</option>
+                  <option value="weight">{t('settings.weighed.modeWeight')}</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelSt}>{t('settings.weighed.prefix')}</label>
+                <input
+                  value={embeddedBarcode.prefix}
+                  onChange={(e) => { setEmbeddedBarcode({ prefix: e.target.value.replace(/\D/g, '') }); }}
+                  onBlur={handleSave} maxLength={2} inputMode="numeric"
+                  style={{ height: 44, width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)', color: 'var(--text-primary)', padding: '0 12px', fontSize: 'var(--font-size-base)', fontFamily: 'monospace' }}
+                />
+              </div>
+            </div>
+          )}
+
+          <div style={{ padding: '10px 14px', background: 'var(--bg-base)', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            {t('settings.weighed.help')}
           </div>
         </div>
 
