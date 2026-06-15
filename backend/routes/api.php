@@ -223,6 +223,9 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::get('/',                [SaleController::class, 'index'])->name('index');
         Route::post('/',               [SaleController::class, 'store'])->name('store');
         Route::post('hold',            [SaleController::class, 'hold'])->name('hold');
+        // Manager-gated return with no original sale. Declared before {sale} so
+        // "blind-return" is not bound as a sale id. Throttled like void/refund.
+        Route::post('blind-return',    [SaleController::class, 'blindReturn'])->middleware('throttle:20,1')->name('blind-return');
         Route::get('held',             [SaleController::class, 'heldList'])->name('held');
         Route::delete('held/{heldBill}',[SaleController::class, 'restore'])->name('restore');
         // Phase 2: pending-payments queue for OA. MUST be declared before the

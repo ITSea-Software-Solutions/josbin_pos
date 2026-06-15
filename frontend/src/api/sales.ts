@@ -108,6 +108,27 @@ export async function getSale(saleId: string): Promise<Sale> {
   return data.data
 }
 
+export interface BlindReturnPayload {
+  store_id: string
+  payment_method: 'cash' | 'card' | 'bank_transfer' | 'mobile_transfer'
+  reason: string
+  customer_id?: string | null
+  items: Array<{
+    product_id?: string | null
+    product_name: string
+    unit_price: number
+    quantity: number
+    btw_rate: number
+    btw_exempt?: boolean
+  }>
+}
+
+/** Manager-only: a return with no original sale on record. */
+export async function blindReturn(payload: BlindReturnPayload): Promise<Sale> {
+  const res = await apiClient.post<{ data: Sale }>('/sales/blind-return', payload)
+  return res.data.data
+}
+
 export async function sendReceiptEmail(saleId: string, email: string, locale: string): Promise<void> {
   // The backend requires `email` (POST /sales/{id}/receipt/email validates
   // ['required','email']) — omitting it always 422'd, so the button never sent.

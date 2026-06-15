@@ -161,6 +161,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | POS-18 | Hold bill / restore later | ✅ | Cashier | `SaleController::hold/held` + Activity API pre-render | `user_manual/09` |
 | POS-19 | Void sale (manager approval) | ✅ | SM+ | `SaleController::void` + `SalePolicy::void` | `user_manual/04 §4.10` |
 | POS-20 | Refund sale (partial or full) | ✅ | SM+ | `SaleController::refund` + `RefundModal.tsx` | task #65 (user_manual coverage pending) |
+| POS-20a | Return without original sale (blind return) — manager-gated, BTW extracted, stock restored, heavily audited | ✅ | SM+ | `SaleController::blindReturn` + `BlindReturnModal.tsx` (cart → negative sale) | audit event `sale.blind_return` |
 | POS-21 | On-the-fly customer add (name / phone / email) | ✅ | Cashier | `CustomerController::store` | `user_manual/07 §7.3` |
 | POS-22 | Today's sales total + count on POS toolbar | ✅ | Cashier | `MeController::salesSummary` | `user_manual/04 §4.2` |
 | POS-23 | Language toggle (NL ↔ EN) instant | ✅ | All | `i18n.ts` | `user_manual/13 §13.1` |

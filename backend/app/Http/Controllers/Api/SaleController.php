@@ -661,6 +661,132 @@ class SaleController extends Controller
         return response()->json(['data' => $refund->load('items')], 201);
     }
 
+    // ─── Blind return (no original sale) ──────────────────────────────────
+
+    /**
+     * POST /api/sales/blind-return
+     *
+     * A return with NO original sale on record — the customer brings goods back
+     * without a receipt the till can find. Because this creates money-out from
+     * nothing, it is manager-gated (cashiers lack `sales.refund`), requires a
+     * reason, and is written to the immutable audit trail with full attribution.
+     *
+     * Mechanically it is a negative Sale (mirrors refund()): negative totals/BTW,
+     * void_reason 'BLIND RETURN: …', items at negative quantity. Stock for any
+     * catalogue-linked line is restored; free-text lines (no product_id) refund
+     * money only.
+     */
+    public function blindReturn(Request $request): JsonResponse
+    {
+        // Manager+ only — sales.refund is granted to SM/OA/SA, never cashiers.
+        abort_unless($request->user()->can('sales.refund'), 403);
+
+        $data = $request->validate([
+            'store_id'             => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
+            'payment_method'       => ['required', Rule::in([\App\Models\Sale::PM_CASH, \App\Models\Sale::PM_CARD, \App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER])],
+            'reason'               => ['required', 'string', 'min:5', 'max:500'],
+            'customer_id'          => ['nullable', 'uuid', new \App\Rules\CustomerBelongsToOrg],
+            'items'                => ['required', 'array', 'min:1'],
+            'items.*.product_id'   => ['nullable', 'uuid', Rule::exists('products', 'id')->where('organisation_id', $request->user()->organisation_id)],
+            'items.*.product_name' => ['required', 'string', 'max:200'],
+            'items.*.unit_price'   => ['required', 'numeric', 'min:0'],
+            'items.*.quantity'     => ['required', 'numeric', 'gt:0'],
+            'items.*.btw_rate'     => ['required', 'numeric', 'min:0', 'max:100'],
+            'items.*.btw_exempt'   => ['sometimes', 'boolean'],
+        ]);
+
+        abort_unless($request->user()->canAccessStore($data['store_id']), 403);
+
+        // Lock the day's rate (same gate as a sale — keeps every money row auditable).
+        $rate = $this->dailyRate->ensureTodayRate();
+        if (! $rate) {
+            return response()->json(['message' => __('errors.no_daily_rate', ['vendor' => 'Josbin', 'email' => '']), 'code' => 'NO_DAILY_RATE'], 422);
+        }
+
+        $return = DB::transaction(function () use ($data, $request, $rate) {
+            $subtotal = '0.00';
+            $btwTotal = '0.00';
+            $lines    = [];
+
+            foreach ($data['items'] as $item) {
+                $exempt    = (bool) ($item['btw_exempt'] ?? false);
+                $lineGross = bcmul((string) $item['unit_price'], (string) $item['quantity'], 2);
+                $lineBtw   = $exempt ? '0.00' : $this->btw->extractBtw($lineGross, (string) $item['btw_rate']);
+
+                $subtotal = bcadd($subtotal, $lineGross, 2);
+                $btwTotal = bcadd($btwTotal, $lineBtw, 2);
+
+                $lines[] = [
+                    'product_id'            => $item['product_id'] ?? null,
+                    'product_name_snapshot' => $item['product_name'],
+                    'unit_price_srd'        => (string) $item['unit_price'],
+                    'quantity'              => '-' . $item['quantity'],   // negative = returned
+                    'discount_srd'          => '0.00',
+                    'discount_pct'          => '0.00',
+                    'btw_rate'              => (string) $item['btw_rate'],
+                    'btw_exempt'            => $exempt,
+                    'btw_srd'               => '-' . $lineBtw,
+                    'line_total_srd'        => '-' . $lineGross,
+                ];
+            }
+
+            $registerSessionId = RegisterSession::where('cashier_id', $request->user()->id)
+                ->where('store_id', $data['store_id'])
+                ->where('status', 'open')
+                ->latest('opened_at')
+                ->value('id');
+
+            $sale = Sale::create([
+                'store_id'            => $data['store_id'],
+                'cashier_id'          => $request->user()->id,
+                'register_session_id' => $registerSessionId,
+                'customer_id'         => $data['customer_id'] ?? null,
+                'sale_number'         => Sale::nextNumber($data['store_id']),
+                'subtotal_srd'        => '-' . $subtotal,
+                'discount_srd'        => '0.00',
+                'btw_srd'             => '-' . $btwTotal,
+                'total_srd'           => '-' . $subtotal,
+                'payment_method'      => $data['payment_method'],
+                'status'              => 'completed',
+                'source'              => 'pos',
+                'exchange_rate_used'  => $rate->usd_to_srd,
+                'void_reason'         => 'BLIND RETURN: ' . $data['reason'],
+                'occurred_at'         => now(),
+            ]);
+
+            foreach ($lines as $l) {
+                SaleItem::create(array_merge($l, ['sale_id' => $sale->id]));
+            }
+
+            // Heavyweight audit — money out with no original sale is exactly the
+            // event the Rekenkamer trail exists for. Manager id + reason + total.
+            \App\Models\AuditLog::create([
+                'user_id'         => $request->user()->id,
+                'organisation_id' => $request->user()->organisation_id,
+                'event'           => 'sale.blind_return',
+                'auditable_type'  => 'sale',
+                'auditable_id'    => $sale->id,
+                'old_values'      => null,
+                'new_values'      => [
+                    'reason'         => $data['reason'],
+                    'total_srd'      => '-' . $subtotal,
+                    'btw_srd'        => '-' . $btwTotal,
+                    'payment_method' => $data['payment_method'],
+                    'line_count'     => count($lines),
+                ],
+                'ip_address'      => $request->ip(),
+                'created_at'      => now(),
+            ]);
+
+            return $sale;
+        });
+
+        // Returned catalogue goods go back on the shelf (negative qtys → restore).
+        \App\Jobs\RecordStockMovements::dispatch($return->id, $request->user()->id, 'refund');
+
+        return response()->json(['data' => $return->load('items')], 201);
+    }
+
     // ─── List ─────────────────────────────────────────────────────────────
 
     // ─── Receipts ─────────────────────────────────────────────────────────

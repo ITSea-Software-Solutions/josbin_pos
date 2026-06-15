@@ -5,7 +5,9 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useLowStockSet } from '@/hooks/useLowStockSet'
 import DiscountModal from './DiscountModal'
 import LineItemEditModal from './LineItemEditModal'
+import BlindReturnModal from './BlindReturnModal'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useAuthStore } from '@/store/authStore'
 import type { CartItem } from '@/types/models'
 
 interface CartPanelProps {
@@ -28,9 +30,13 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
   const removeItem = useCartStore((s) => s.removeItem)
   const clearCart = useCartStore((s) => s.clearCart)
 
+  const role = useAuthStore((s) => s.user?.role)
+  const isManagerPlus = ['store_manager', 'organisation_admin', 'super_admin'].includes(role ?? '')
+
   const [saleDiscountOpen, setSaleDiscountOpen] = useState(false)
   const [editItem, setEditItem] = useState<CartItem | null>(null)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
+  const [blindReturnOpen, setBlindReturnOpen] = useState(false)
 
   const isEmpty = items.length === 0
 
@@ -194,6 +200,21 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
               →
             </button>
           </div>
+
+          {/* Manager-only: turn this cart into a return with no original sale. */}
+          {isManagerPlus && (
+            <button
+              onClick={() => setBlindReturnOpen(true)}
+              style={{
+                marginTop: 4, height: 32, borderRadius: 'var(--border-radius)',
+                border: '1px solid var(--color-error)', background: 'transparent',
+                color: 'var(--color-error)', cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)', fontWeight: 600,
+              }}
+            >
+              ↩ {t('pos.blindReturn.title')}
+            </button>
+          )}
         </div>
       )}
 
@@ -224,6 +245,8 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
         onConfirm={() => { clearCart(); setClearConfirmOpen(false) }}
         onCancel={() => setClearConfirmOpen(false)}
       />
+
+      <BlindReturnModal isOpen={blindReturnOpen} onClose={() => setBlindReturnOpen(false)} />
     </div>
   )
 }

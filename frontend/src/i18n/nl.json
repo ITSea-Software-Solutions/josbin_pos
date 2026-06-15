@@ -193,6 +193,15 @@
       "record": "Vastleggen",
       "recorded": "Kasmutatie vastgelegd",
       "newExpected": "Nieuw verwacht in kassa"
+    },
+    "blindReturn": {
+      "title": "Retour zonder bon",
+      "intro": "Maak van de huidige winkelwagen een retour zonder originele verkoop. Elke regel wordt teruggeboekt en de voorraad wordt hersteld. Manager-actie — vastgelegd in het auditspoor.",
+      "refundVia": "Terugbetaald via",
+      "reason": "Reden",
+      "reasonPlaceholder": "Bijv. klant bracht artikel terug zonder bon",
+      "confirm": "Retour bevestigen",
+      "done": "Retour vastgelegd — SRD {{total}} terugbetaald"
     }
   },
   "reports": {

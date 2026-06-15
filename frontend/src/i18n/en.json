@@ -193,6 +193,15 @@
       "record": "Record",
       "recorded": "Cash movement recorded",
       "newExpected": "New expected in drawer"
+    },
+    "blindReturn": {
+      "title": "Return without receipt",
+      "intro": "Turn the current cart into a return with no original sale. Each line is reversed and stock is restored. Manager action — recorded in the audit trail.",
+      "refundVia": "Refund via",
+      "reason": "Reason",
+      "reasonPlaceholder": "E.g. customer returned item without a receipt",
+      "confirm": "Confirm return",
+      "done": "Return recorded — SRD {{total}} refunded"
     }
   },
   "reports": {
