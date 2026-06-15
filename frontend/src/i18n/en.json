@@ -149,7 +149,8 @@
       "printed": "Printed!",
       "printError": "Print error — try PDF",
       "emailPlaceholder": "Email address (optional)",
-      "noPrinterConfigured": "Tip: set up a thermal printer in Settings → Printer for one-tap printing and automatic cash-drawer opening."
+      "noPrinterConfigured": "Tip: set up a thermal printer in Settings → Printer for one-tap printing and automatic cash-drawer opening.",
+      "setupHelp": "Set up printer, cash drawer & scanner"
     },
     "discount": {
       "title": "Add Discount",

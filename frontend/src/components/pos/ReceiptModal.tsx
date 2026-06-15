@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
+import HelpButton from '@/components/shared/HelpButton'
 import { getSale, sendReceiptEmail } from '@/api/sales'
 import { buildReceiptBytes } from '@/lib/escpos'
 import { printEscPos } from '@/lib/hardware'
@@ -352,6 +353,15 @@ export default function ReceiptModal({
             {t('pos.receipt.noPrinterConfigured')}
           </div>
         )}
+
+        {/* Always-available pointer to the full printer / cash-drawer / scanner
+            setup guide — right where a cashier first wonders "how do I print?". */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+            {t('pos.receipt.setupHelp')}
+          </span>
+          <HelpButton topic="hardware" />
+        </div>
       </div>
     </Modal>
   )

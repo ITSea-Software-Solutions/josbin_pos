@@ -184,6 +184,38 @@ export const POS_HELP: Record<string, HelpTopic> = {
     },
   },
 
+  hardware: {
+    guide: 'user_manual/13-settings',
+    en: {
+      title: 'Hardware setup — printer, cash drawer & scanner',
+      intro: 'One-time setup per terminal. Go to Settings → Printer to configure it all.',
+      steps: [
+        'Receipt printer (thermal): Settings → Printer → choose Network (enter the printer’s IP + port 9100) or USB (enter the Windows printer name). EPSON TM-T20 and compatible ESC/POS printers work.',
+        'Test it with “Test print” — a sample receipt should come out. Nothing? Re-check the IP / printer name and that it’s powered on and on the same network.',
+        'No thermal printer? Leave it on “None” — the Print button then uses your computer’s normal print dialog, so any installed printer still works (including a thermal one via its Windows driver).',
+        'Cash drawer: it plugs into the printer’s drawer port and pops open automatically on a cash sale. Pick the pulse pin (Pin 2 or Pin 5 — try the other if it doesn’t open) and use “Test drawer”.',
+        'Auto-print: turn on “Print receipt automatically” so every completed sale prints without a tap.',
+        'Barcode scanner: USB scanners are plug-and-play — just scan and the item drops into the cart, no setup. For a phone/camera scan, use the 📷 button on the search bar.',
+        'Weighed goods (scales): Settings → Weighed goods — enable and confirm the barcode layout against your scale before using it.',
+        'Print barcode labels: open Barcode & Labels, pick products + symbology (EAN-13 / Code 128 / QR), set quantities and bulk-print to a label printer.',
+      ],
+    },
+    nl: {
+      title: 'Apparatuur instellen — printer, kassalade & scanner',
+      intro: 'Eenmalige instelling per kassa. Ga naar Instellingen → Printer om alles in te stellen.',
+      steps: [
+        'Bonprinter (thermisch): Instellingen → Printer → kies Netwerk (IP-adres + poort 9100) of USB (Windows-printernaam). EPSON TM-T20 en compatibele ESC/POS-printers werken.',
+        'Test met “Testafdruk” — er hoort een voorbeeldbon uit te komen. Niets? Controleer het IP / de printernaam en of hij aanstaat en op hetzelfde netwerk zit.',
+        'Geen thermische printer? Laat op “Geen” staan — de Print-knop gebruikt dan het normale printvenster van de computer, dus elke geïnstalleerde printer werkt (ook een thermische via zijn Windows-stuurprogramma).',
+        'Kassalade: sluit aan op de ladepoort van de printer en gaat automatisch open bij een contante verkoop. Kies de puls-pin (Pin 2 of Pin 5 — probeer de andere als hij niet opent) en gebruik “Test lade”.',
+        'Automatisch printen: zet “Bon automatisch printen” aan zodat elke voltooide verkoop zonder tik afdrukt.',
+        'Streepjescodescanner: USB-scanners zijn plug-and-play — gewoon scannen en het artikel valt in de winkelwagen, geen instelling. Voor telefoon/camera: gebruik de 📷-knop bij de zoekbalk.',
+        'Gewogen artikelen (weegschalen): Instellingen → Gewogen artikelen — inschakelen en de barcode-indeling met uw weegschaal bevestigen vóór gebruik.',
+        'Streepjescodelabels printen: open Streepjescode & labels, kies producten + symbologie (EAN-13 / Code 128 / QR), stel aantallen in en print in bulk naar een labelprinter.',
+      ],
+    },
+  },
+
   settings: {
     guide: 'user_manual/13-settings',
     en: {

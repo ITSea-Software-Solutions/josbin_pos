@@ -5,6 +5,7 @@ import { listPrinters, openCashDrawer, detectPlatform } from '@/lib/hardware'
 import type { ProductDisplay } from '@/store/settingsStore'
 import type { PrinterConfig } from '@/lib/hardware'
 import { SystemActions } from '@/components/settings/SystemActions'
+import HelpButton from '@/components/shared/HelpButton'
 
 const DATE_FORMATS = ['DD-MM-YYYY', 'MM-DD-YYYY', 'YYYY-MM-DD', 'D MMMM YYYY', 'D MMM YYYY', 'DD/MM/YY']
 
@@ -191,9 +192,13 @@ export default function SettingsScreen() {
 
         {/* ── Printer & Cash Drawer ─────────────────────────────────────────── */}
         <div style={{ ...sectionSt, gridColumn: '1 / -1' }}>
-          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>
-            🖨 {t('settings.printer.title')}
-          </h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>
+              🖨 {t('settings.printer.title')}
+            </h3>
+            {/* Full printer / cash-drawer / scanner setup walkthrough. */}
+            <HelpButton topic="hardware" />
+          </div>
 
           {/* Connection type */}
           <div>

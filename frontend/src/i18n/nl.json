@@ -149,7 +149,8 @@
       "printed": "Afgedrukt!",
       "printError": "Afdrukfout — probeer PDF",
       "emailPlaceholder": "E-mailadres (optioneel)",
-      "noPrinterConfigured": "Tip: stel een thermische printer in via Instellingen → Printer voor afdrukken met één tik en automatisch openen van de kassalade."
+      "noPrinterConfigured": "Tip: stel een thermische printer in via Instellingen → Printer voor afdrukken met één tik en automatisch openen van de kassalade.",
+      "setupHelp": "Printer, kassalade & scanner instellen"
     },
     "discount": {
       "title": "Korting toevoegen",
