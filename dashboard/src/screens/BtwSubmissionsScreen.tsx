@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
   listBtwSubmissions, previewBtwSubmission, submitBtw,
-  acceptBtwSubmission, disputeBtwSubmission, supersedeBtwSubmission, bulkAcceptBtw,
+  acceptBtwSubmission, disputeBtwSubmission, supersedeBtwSubmission, bulkAcceptBtw, exportBtwSubmissionsCsv,
   type BtwSubmission, type BtwSubmissionStatus, type BtwSubmissionPeriodType, type BtwSubmissionPreview,
 } from '@/api/btwSubmissions'
 import { getOrganisations } from '@/api/organisations'
@@ -332,6 +332,25 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
   // Inspector multi-select for bulk accept (filed rows only).
   const [selectedIds,     setSelectedIds]     = useState<Set<string>>(new Set())
   const [bulkBanner,      setBulkBanner]      = useState<string | null>(null)
+  const [exporting,       setExporting]       = useState(false)
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      await exportBtwSubmissionsCsv({
+        status: statusFilter || undefined,
+        period_type: periodFilter || undefined,
+        organisation_id: orgFilter || undefined,
+        source: sourceFilter || undefined,
+        year: yearFilter ? Number(yearFilter) : undefined,
+        min_amount: minAmount ? Number(minAmount) : undefined,
+        sort: sortBy,
+        search: searchInput.trim() || undefined,
+      })
+    } finally {
+      setExporting(false)
+    }
+  }
   // OA/SM can resubmit a filed/disputed filing in their own org. Inspector
   // and SA cannot — that would be forgery (backend enforces; this just
   // hides the button to avoid 403 on click).
@@ -493,6 +512,11 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                   <option value="amount_asc">{isNl ? 'BTW laag → hoog' : 'BTW low → high'}</option>
                 </select>
               </div>
+              <button onClick={handleExport} disabled={exporting}
+                title={isNl ? 'Exporteer de gefilterde lijst als CSV' : 'Export the filtered list as CSV'}
+                style={{ height: 42, padding: '0 14px', borderRadius: 10, border: `1.5px solid ${BD.green}`, background: BD.green, color: '#fff', cursor: exporting ? 'wait' : 'pointer', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0, opacity: exporting ? 0.6 : 1 }}>
+                {exporting ? '…' : `⬇ ${isNl ? 'Exporteer CSV' : 'Export CSV'}`}
+              </button>
               {hasActive && (
                 <button onClick={() => { setStatusFilter(''); setPeriodFilter(''); setOrgFilter(''); setSourceFilter(''); setYearFilter(''); setMinAmount(''); setSortBy('newest'); setSearchInput('') }}
                   style={{ height: 42, padding: '0 14px', borderRadius: 10, border: `1.5px solid ${BD.greenLine}`, background: BD.greenSoft, color: BD.green, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>

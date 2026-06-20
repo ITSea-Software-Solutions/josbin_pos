@@ -2,6 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
 
+// Match the Belastingdienst portal skin when 2FA is reached via /belastingdienst
+// (the role isn't known yet during the challenge, so we key off the URL).
+const IS_TAX_PORTAL = /(^|\/)belastingdienst\/?$/i.test(window.location.pathname)
+  || new URLSearchParams(window.location.search).has('belastingdienst')
+const ACCENT       = IS_TAX_PORTAL ? '#1f6b3b' : '#7c3aed'
+const ACCENT_GRAD  = IS_TAX_PORTAL ? 'linear-gradient(135deg,#1f6b3b,#0e4429)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)'
+const ACCENT_SHADOW = IS_TAX_PORTAL ? '0 8px 24px rgba(15,58,34,0.4)' : '0 8px 24px rgba(124,58,237,0.4)'
+const PAGE_BG      = IS_TAX_PORTAL ? 'linear-gradient(135deg,#0e4429 0%,#0c3a22 100%)' : 'linear-gradient(135deg, #1c1c2e 0%, #2d2d44 100%)'
+
 // ─── 2FA Challenge ────────────────────────────────────────────────────────────
 function ChallengeView() {
   const { i18n } = useTranslation()
@@ -61,7 +70,7 @@ function ChallengeView() {
             fontFamily: 'monospace',
             fontSize: 26,
             textAlign: 'center',
-            borderColor: error ? '#ef4444' : code.length === 6 ? '#7c3aed' : '#e0e0ed',
+            borderColor: error ? '#ef4444' : code.length === 6 ? ACCENT : '#e0e0ed',
           }}
           disabled={isLoading}
         />
@@ -194,7 +203,7 @@ function SetupView() {
             <p style={{ color: '#ef4444', fontSize: 13, marginTop: 16, textAlign: 'center' }}>{fetchError}</p>
           ) : !qrData ? (
             <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e9e9ef', borderTopColor: '#7c3aed', animation: 'spin 1s linear infinite' }} />
+              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e9e9ef', borderTopColor: ACCENT, animation: 'spin 1s linear infinite' }} />
             </div>
           ) : (
             <>
@@ -250,7 +259,7 @@ function SetupView() {
                 fontFamily: 'monospace',
                 fontSize: 26,
                 textAlign: 'center',
-                borderColor: error ? '#ef4444' : code.length === 6 ? '#7c3aed' : '#e0e0ed',
+                borderColor: error ? '#ef4444' : code.length === 6 ? ACCENT : '#e0e0ed',
               }}
               disabled={isLoading}
             />
@@ -295,7 +304,7 @@ export default function TwoFactorScreen() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(135deg, #1c1c2e 0%, #2d2d44 100%)',
+      background: PAGE_BG,
       padding: 24,
     }}>
       {twoFactor.type === 'challenge' && <ChallengeView />}
@@ -321,11 +330,11 @@ const styles = {
     width: 60,
     height: 60,
     borderRadius: 18,
-    background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+    background: ACCENT_GRAD,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 8px 24px rgba(124,58,237,0.4)',
+    boxShadow: ACCENT_SHADOW,
     marginBottom: 24,
   },
   title: {
@@ -359,11 +368,11 @@ const styles = {
     borderRadius: 12,
     border: 'none',
     cursor: 'pointer',
-    background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+    background: ACCENT_GRAD,
     color: '#fff',
     fontSize: 15,
     fontWeight: 700,
-    boxShadow: '0 4px 14px rgba(124,58,237,0.4)',
+    boxShadow: ACCENT_SHADOW,
     transition: 'opacity 0.15s',
   },
   btnOutline: {

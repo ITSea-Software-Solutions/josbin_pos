@@ -205,6 +205,18 @@ export async function bulkAcceptBtw(ids: string[], inspectorNote?: string): Prom
   return res.data
 }
 
+/** Download the filtered submission list as a CSV (auth via the bearer header). */
+export async function exportBtwSubmissionsCsv(filters: BtwSubmissionFilters): Promise<void> {
+  const res = await apiClient.get('/btw-submissions/export', { params: filters, responseType: 'blob' })
+  const url = URL.createObjectURL(res.data as Blob)
+  const a = document.createElement('a')
+  a.href = url
+  const cd = (res.headers as Record<string, string>)['content-disposition']
+  a.download = cd?.match(/filename="?([^"]+)"?/)?.[1] ?? 'btw-submissions.csv'
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
+
 /** Wraps the existing list endpoint with the expanded filter set. */
 export async function listBtwSubmissionsFiltered(filters: BtwSubmissionFilters): Promise<{ data: BtwSubmission[]; total: number; current_page: number; last_page: number }> {
   const res = await apiClient.get('/btw-submissions', { params: filters })

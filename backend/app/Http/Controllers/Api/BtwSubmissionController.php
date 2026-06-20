@@ -34,18 +34,27 @@ class BtwSubmissionController extends Controller
     {
         $this->authorize('viewAny', BtwSubmission::class);
 
-        $user = $request->user();
         $query = BtwSubmission::query()
             ->with('organisation:id,name', 'store:id,name', 'submitter:id,name', 'reviewer:id,name');
 
-        // Scope: cross-org roles see everything; everyone else only their own
-        // org. Inspector sees the queue across all taxpayers; OA sees only
-        // their own org's filings.
+        $this->applyListFilters($query, $request);
+        $this->applyListSort($query, $request);
+
+        return response()->json($query->paginate($request->integer('per_page', 25)));
+    }
+
+    /**
+     * Scope + filters shared by index() and export() so the CSV always matches
+     * exactly what the inspector sees on screen.
+     */
+    private function applyListFilters($query, Request $request): void
+    {
+        $user = $request->user();
+
+        // Scope: cross-org roles see everything; everyone else only their own org.
         if (! $user->isCrossOrgRole()) {
             $query->where('organisation_id', $user->organisation_id);
         }
-
-        // Filters
         if ($request->filled('organisation_id') && $user->isCrossOrgRole()) {
             $query->where('organisation_id', $request->input('organisation_id'));
         }
@@ -75,8 +84,7 @@ class BtwSubmissionController extends Controller
         if ($request->filled('max_amount')) {
             $query->where('total_btw_srd', '<=', (float) $request->input('max_amount'));
         }
-        // Filter by source POS — 'pos' = Josbin POS native; 'api' = third-party
-        // POS via Layer-3 Open Integration API; 'mixed' = both contributed.
+        // Source POS — 'pos' = Josbin native; 'api' = third-party via Layer-3.
         if ($request->filled('source')) {
             $source = $request->input('source');
             $query->whereExists(function ($q) use ($source) {
@@ -91,18 +99,72 @@ class BtwSubmissionController extends Controller
             $query->where(fn ($q) => $q->where('reference', 'ilike', $term)
                 ->orWhereHas('organisation', fn ($o) => $o->where('name', 'ilike', $term)));
         }
+    }
 
-        // Sort — default newest-filed first (the inspector's working order).
+    private function applyListSort($query, Request $request): void
+    {
+        // Default newest-filed first (the inspector's working order).
         match ($request->input('sort')) {
             'oldest'      => $query->orderBy('submitted_at'),
             'amount_desc' => $query->orderByDesc('total_btw_srd')->orderByDesc('submitted_at'),
             'amount_asc'  => $query->orderBy('total_btw_srd')->orderByDesc('submitted_at'),
             default       => $query->orderByDesc('submitted_at'),
         };
+    }
 
-        $submissions = $query->paginate($request->integer('per_page', 25));
+    /**
+     * GET /api/btw-submissions/export
+     *
+     * Streams the FILTERED submission list as CSV (SRD, AST timestamps) for the
+     * inspector's records / Rekenkamer filing. Same scope + filters as index,
+     * no pagination — every matching row.
+     */
+    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $this->authorize('viewAny', BtwSubmission::class);
 
-        return response()->json($submissions);
+        $query = BtwSubmission::query()->with('organisation:id,name', 'submitter:id,name', 'reviewer:id,name');
+        $this->applyListFilters($query, $request);
+        $this->applyListSort($query, $request);
+
+        $statusLabel = [
+            'filed' => 'Filed', 'accepted' => 'Accepted', 'disputed' => 'Disputed', 'superseded' => 'Superseded',
+        ];
+        $filename = 'btw-submissions-' . now()->setTimezone('America/Paramaribo')->format('Y-m-d_His') . '.csv';
+
+        return response()->streamDownload(function () use ($query, $statusLabel) {
+            $out = fopen('php://output', 'w');
+            // UTF-8 BOM so Excel renders accents (Café, Nickerie) correctly.
+            fwrite($out, "\xEF\xBB\xBF");
+            fputcsv($out, [
+                'Reference', 'Organisation', 'BTW number', 'Period type', 'Period start', 'Period end',
+                'Sales count', 'Total sales (SRD)', 'Taxable (SRD)', 'Exempt (SRD)', 'BTW due (SRD)',
+                'Status', 'Submitted at (AST)', 'Submitted by', 'Reviewed at (AST)', 'Reviewed by',
+            ]);
+            $query->chunk(500, function ($rows) use ($out, $statusLabel) {
+                foreach ($rows as $s) {
+                    fputcsv($out, [
+                        $s->reference,
+                        $s->organisation?->name ?? '',
+                        $s->organisation?->btw_number ?? '',
+                        $s->period_type,
+                        $s->period_start,
+                        $s->period_end,
+                        $s->sales_count,
+                        $s->total_sales_srd,
+                        $s->btw_taxable_srd,
+                        $s->btw_exempt_srd,
+                        $s->total_btw_srd,
+                        $statusLabel[$s->status] ?? $s->status,
+                        optional($s->submitted_at)?->setTimezone('America/Paramaribo')->format('Y-m-d H:i'),
+                        $s->submitter?->name ?? '',
+                        optional($s->reviewed_at)?->setTimezone('America/Paramaribo')->format('Y-m-d H:i') ?? '',
+                        $s->reviewer?->name ?? '',
+                    ]);
+                }
+            });
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     /**
