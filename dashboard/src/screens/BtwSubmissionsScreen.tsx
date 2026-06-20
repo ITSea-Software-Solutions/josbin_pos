@@ -8,6 +8,8 @@ import {
   type BtwSubmission, type BtwSubmissionStatus, type BtwSubmissionPeriodType, type BtwSubmissionPreview,
 } from '@/api/btwSubmissions'
 import { getOrganisations } from '@/api/organisations'
+import { BD } from '@/theme/belastingdienst'
+import { BelastingdienstHeader } from '@/components/shared/BelastingdienstHeader'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -336,27 +338,33 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
   })
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '28px 32px', maxWidth: 1240, background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
 
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
-            {isNl ? 'BTW-aangiftes' : 'BTW Submissions'}
-          </h1>
-          <p style={{ fontSize: 14, color: '#6b7280' }}>
-            {isInspector
-              ? (isNl ? 'Alle aangiftes bij Belastingdienst Suriname, over alle organisaties.' : 'All BTW submissions to Belastingdienst Suriname, across all organisations.')
-              : (isNl ? 'BTW-aangiftes voor uw organisatie. Dien dagelijks of maandelijks in.' : 'BTW submissions for your organisation. File daily or monthly.')}
-          </p>
+      {/* Header — official for the inspector, plain for OA/SM */}
+      {isInspector ? (
+        <BelastingdienstHeader
+          overline={isNl ? 'Republiek Suriname · Belastingdienst' : 'Republic of Suriname · Tax Authority'}
+          title={isNl ? 'BTW-aangiftes' : 'BTW Submissions'}
+          subtitle={isNl ? 'Alle aangiftes bij Belastingdienst Suriname, over alle organisaties.' : 'All BTW submissions to Belastingdienst Suriname, across all organisations.'}
+        />
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+              {isNl ? 'BTW-aangiftes' : 'BTW Submissions'}
+            </h1>
+            <p style={{ fontSize: 14, color: '#6b7280' }}>
+              {isNl ? 'BTW-aangiftes voor uw organisatie. Dien dagelijks of maandelijks in.' : 'BTW submissions for your organisation. File daily or monthly.'}
+            </p>
+          </div>
+          {canSubmit && (
+            <button onClick={() => setShowSubmit(true)}
+              style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,.3)' }}>
+              + {isNl ? 'Nieuwe aangifte' : 'New submission'}
+            </button>
+          )}
         </div>
-        {canSubmit && (
-          <button onClick={() => setShowSubmit(true)}
-            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,.3)' }}>
-            + {isNl ? 'Nieuwe aangifte' : 'New submission'}
-          </button>
-        )}
-      </div>
+      )}
 
       {/* Success banner */}
       {successBanner && (
@@ -435,7 +443,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                   <tr key={s.id}
                     onClick={() => onOpenDetail?.(s.id)}
                     style={{ borderBottom: i < (page!.data.length - 1) ? '1px solid #f3f3f8' : 'none', cursor: onOpenDetail ? 'pointer' : 'default', transition: 'background .12s' }}
-                    onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = 'rgba(124,58,237,.03)' }}
+                    onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = isInspector ? BD.greenSoft : 'rgba(124,58,237,.03)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#1c1c2e', fontWeight: 600 }}>{s.reference}</td>
                     {(isInspector || role === 'super_admin') && (

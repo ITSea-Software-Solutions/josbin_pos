@@ -5,6 +5,8 @@ import { useDashboardAuthStore } from '@/store/authStore'
 import {
   getBtwSubmissionDetail, acceptBtwSubmission, disputeBtwSubmission, supersedeBtwSubmission,
 } from '@/api/btwSubmissions'
+import { BD } from '@/theme/belastingdienst'
+import { FlagStripe } from '@/components/shared/BelastingdienstHeader'
 
 /**
  * Task #82 — detail view of a single BTW submission.
@@ -35,7 +37,7 @@ const TILE: React.CSSProperties = {
 }
 
 const SOURCE_COLOUR: Record<string, string> = {
-  pos:    '#7c3aed', // Josbin POS
+  pos:    BD.green,  // Josbin POS
   api:    '#2563eb', // External Layer-3
   import: '#9ca3af',
 }
@@ -47,6 +49,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
   const user = useDashboardAuthStore((s) => s.user)
   const canReview = user?.role === 'tax_inspector' || user?.role === 'super_admin'
   const canResubmit = (user?.role === 'organisation_admin' || user?.role === 'store_manager')
+  const isInspector = user?.role === 'tax_inspector'
 
   const { data, isLoading } = useQuery({
     queryKey: ['btw-submission-detail', submissionId],
@@ -82,15 +85,23 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
   const canResubmitThis = canResubmit && ownOrg && (s.status === 'filed' || s.status === 'disputed')
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '28px 32px', maxWidth: 1200, background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
       {/* Back */}
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: isInspector ? BD.green : '#7c3aed', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
         ← {isNl ? 'Terug naar lijst' : 'Back to list'}
       </button>
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.3px', marginBottom: 6 }}>
+        {isInspector && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+            <FlagStripe w={34} h={22} />
+            <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '1.6px', color: BD.green, textTransform: 'uppercase' }}>
+              {isNl ? 'Belastingdienst · BTW-aangifte' : 'Tax Authority · BTW filing'}
+            </span>
+          </div>
+        )}
+        <h1 style={{ fontSize: 22, fontWeight: 900, color: BD.ink, letterSpacing: '-0.3px', marginBottom: 6, fontFamily: isInspector ? "Georgia,'Times New Roman',serif" : 'inherit' }}>
           {s.reference}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -110,7 +121,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
           </div>
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid #f3f4f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: 13, color: '#6b7280', fontWeight: 600 }}>{isNl ? 'BTW te betalen' : 'BTW due'}</span>
-            <span style={{ fontSize: 24, fontWeight: 900, color: '#7c3aed' }}>SRD {fmtSrd(s.total_btw_srd)}</span>
+            <span style={{ fontSize: 24, fontWeight: 900, color: BD.green }}>SRD {fmtSrd(s.total_btw_srd)}</span>
           </div>
         </div>
 

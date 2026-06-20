@@ -393,13 +393,45 @@ export default function DashboardLayout() {
     ? (isNl ? 'Winkeldetails' : 'Store Details')
     : (nav.find(n => n.id === screen)?.[isNl ? 'nl' : 'en'] ?? '')
 
+  // Chrome palette is role-aware: the Belastingdienst (tax_inspector) gets an
+  // official deep-green + gold government skin; everyone else keeps the
+  // commercial indigo "Management Portal" look.
+  const isTaxInspector = user?.role === 'tax_inspector'
+  const chrome = isTaxInspector
+    ? {
+        sidebarBg: '#0c3a22',
+        logoGrad: 'linear-gradient(135deg,#1f6b3b,#0e4429)',
+        logoShadow: '0 4px 14px rgba(15,58,34,.5)',
+        brand: 'Belastingdienst',
+        portal: isNl ? 'BTW-inspectieportaal' : 'BTW Inspection Portal',
+        portalColor: '#f4c430',
+        activeBg: 'linear-gradient(90deg, rgba(31,107,59,.45), rgba(14,68,41,.2))',
+        activeText: '#f4c430',
+        activeBar: '#f4c430',
+        toggleGrad: 'linear-gradient(135deg,#1f6b3b,#0e4429)',
+        toggleShadow: '0 2px 8px rgba(15,58,34,.5)',
+      }
+    : {
+        sidebarBg: '#1c1c2e',
+        logoGrad: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+        logoShadow: '0 4px 14px rgba(124,58,237,0.45)',
+        brand: 'Josbin POS',
+        portal: isNl ? 'Beheerportaal' : 'Management Portal',
+        portalColor: '#7c3aed',
+        activeBg: 'linear-gradient(90deg, rgba(124,58,237,0.25), rgba(79,70,229,0.15))',
+        activeText: '#a78bfa',
+        activeBar: '#7c3aed',
+        toggleGrad: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+        toggleShadow: '0 2px 8px rgba(124,58,237,0.4)',
+      }
+
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f5f5f8' }}>
 
       {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
       <aside style={{
         width: 260, flexShrink: 0, display: 'flex', flexDirection: 'column',
-        background: '#1c1c2e',
+        background: chrome.sidebarBg,
         boxShadow: '4px 0 20px rgba(0,0,0,0.3)',
         zIndex: 20,
       }}>
@@ -409,18 +441,22 @@ export default function DashboardLayout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{
               width: 42, height: 42, borderRadius: 12, flexShrink: 0,
-              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              background: chrome.logoGrad,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 14px rgba(124,58,237,0.45)',
+              boxShadow: chrome.logoShadow,
             }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} style={{ width: 20, height: 20 }}>
-                <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
-              </svg>
+              {isTaxInspector ? (
+                <span style={{ fontSize: 22, color: '#f4c430', lineHeight: 1 }}>★</span>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} style={{ width: 20, height: 20 }}>
+                  <rect x="2" y="3" width="20" height="14" rx="2" /><path d="M8 21h8M12 17v4" />
+                </svg>
+              )}
             </div>
             <div>
-              <p style={{ color: '#fff', fontWeight: 800, fontSize: 16, letterSpacing: '-0.3px' }}>Josbin POS</p>
-              <p style={{ color: '#7c3aed', fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                {isNl ? 'Beheerportaal' : 'Management Portal'}
+              <p style={{ color: '#fff', fontWeight: 800, fontSize: 16, letterSpacing: '-0.3px', fontFamily: isTaxInspector ? "Georgia,'Times New Roman',serif" : 'inherit' }}>{chrome.brand}</p>
+              <p style={{ color: chrome.portalColor, fontSize: 11, fontWeight: 600, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                {chrome.portal}
               </p>
             </div>
           </div>
@@ -448,9 +484,9 @@ export default function DashboardLayout() {
                       padding: '10px 12px', borderRadius: 10, border: 'none', cursor: 'pointer',
                       marginBottom: 2, textAlign: 'left', fontSize: 13.5, fontWeight: active ? 600 : 500,
                       transition: 'all 0.15s ease',
-                      background: active ? 'linear-gradient(90deg, rgba(124,58,237,0.25), rgba(79,70,229,0.15))' : 'transparent',
-                      color: active ? '#a78bfa' : 'rgba(255,255,255,0.55)',
-                      borderLeft: active ? '3px solid #7c3aed' : '3px solid transparent',
+                      background: active ? chrome.activeBg : 'transparent',
+                      color: active ? chrome.activeText : 'rgba(255,255,255,0.55)',
+                      borderLeft: active ? `3px solid ${chrome.activeBar}` : '3px solid transparent',
                     }}
                     onMouseEnter={e => {
                       if (!active) {
@@ -465,7 +501,7 @@ export default function DashboardLayout() {
                       }
                     }}
                   >
-                    <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0, color: active ? '#a78bfa' : 'inherit' }}>
+                    <span style={{ opacity: active ? 1 : 0.7, flexShrink: 0, color: active ? chrome.activeText : 'inherit' }}>
                       {item.icon}
                     </span>
                     {isNl ? item.nl : item.en}
@@ -487,9 +523,9 @@ export default function DashboardLayout() {
                 style={{
                   flex: 1, padding: '7px 0', borderRadius: 8, border: 'none', cursor: 'pointer',
                   fontSize: 12, fontWeight: 700, transition: 'all 0.15s',
-                  background: i18n.language === lang ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : 'rgba(255,255,255,0.07)',
+                  background: i18n.language === lang ? chrome.toggleGrad : 'rgba(255,255,255,0.07)',
                   color: i18n.language === lang ? '#fff' : 'rgba(255,255,255,0.4)',
-                  boxShadow: i18n.language === lang ? '0 2px 8px rgba(124,58,237,0.4)' : 'none',
+                  boxShadow: i18n.language === lang ? chrome.toggleShadow : 'none',
                 }}
               >
                 {lang.toUpperCase()}
@@ -503,10 +539,10 @@ export default function DashboardLayout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              background: chrome.logoGrad,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 13, fontWeight: 700, color: '#fff',
-              boxShadow: '0 2px 8px rgba(124,58,237,0.4)',
+              boxShadow: chrome.logoShadow,
             }}>{initials}</div>
             <div style={{ minWidth: 0, flex: 1 }}>
               <p style={{ color: '#fff', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user?.name}</p>
