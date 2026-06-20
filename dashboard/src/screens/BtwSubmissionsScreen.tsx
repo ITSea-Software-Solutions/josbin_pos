@@ -24,7 +24,16 @@ function fmtSrd(n: string | number) { return Number(n).toLocaleString('nl-SR', {
 function fmtDate(s: string) { return new Date(s).toLocaleDateString('nl-NL', { year: 'numeric', month: 'short', day: '2-digit' }) }
 
 const inputSt: React.CSSProperties = { width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 13, outline: 'none', boxSizing: 'border-box' }
-const selectSt = { ...inputSt, cursor: 'pointer' as const }
+
+// ── Filter toolbar styles (advanced, horizontal layout) ──────────────────────
+const CHEVRON = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6b62' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"
+const fieldLabelSt: React.CSSProperties = { display: 'block', fontSize: 10.5, fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase', color: BD.muted, marginBottom: 6 }
+const filterSelectSt: React.CSSProperties = {
+  width: '100%', height: 42, padding: '0 34px 0 12px', borderRadius: 10,
+  border: `1.5px solid ${BD.border}`, background: `#fff url("${CHEVRON}") no-repeat right 12px center`,
+  backgroundSize: '12px', appearance: 'none', WebkitAppearance: 'none', MozAppearance: 'none',
+  fontSize: 13, color: BD.ink, cursor: 'pointer', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+}
 
 // ─── Submit modal (OA / SM) ──────────────────────────────────────────────────
 
@@ -278,7 +287,7 @@ function OrgFilterDropdown({ value, onChange, isNl }: { value: string; onChange:
     staleTime: 5 * 60_000,
   })
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)} style={selectSt}
+    <select value={value} onChange={(e) => onChange(e.target.value)} style={filterSelectSt}
       title={isNl ? 'Filter op organisatie' : 'Filter by organisation'}>
       <option value="">{isNl ? 'Alle organisaties' : 'All organisations'}</option>
       {(orgs as Array<{ id: string; name: string }>).map((o) => (
@@ -377,38 +386,67 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
         </div>
       )}
 
-      {/* Filters — cross-org users get the full set; OA/SM see a subset
-          (org filter hidden — they only have their own org anyway). */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 18, flexWrap: 'wrap', alignItems: 'center' }}>
-        <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
-          placeholder={isNl ? '🔍 Zoek referentie of organisatie…' : '🔍 Search reference or organisation…'}
-          style={{ ...inputSt, minWidth: 240 }} />
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as BtwSubmissionStatus | '')} style={selectSt}>
-          <option value="">{isNl ? 'Alle statussen' : 'All statuses'}</option>
-          <option value="filed">{STATUS_STYLE.filed.label[isNl ? 'nl' : 'en']}</option>
-          <option value="accepted">{STATUS_STYLE.accepted.label[isNl ? 'nl' : 'en']}</option>
-          <option value="disputed">{STATUS_STYLE.disputed.label[isNl ? 'nl' : 'en']}</option>
-          <option value="superseded">{STATUS_STYLE.superseded.label[isNl ? 'nl' : 'en']}</option>
-        </select>
-        <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as BtwSubmissionPeriodType | '')} style={selectSt}>
-          <option value="">{isNl ? 'Alle periodes' : 'All periods'}</option>
-          <option value="daily">{isNl ? 'Dagelijks' : 'Daily'}</option>
-          <option value="monthly">{isNl ? 'Maandelijks' : 'Monthly'}</option>
-        </select>
-        {(isInspector || role === 'super_admin') && <OrgFilterDropdown value={orgFilter} onChange={setOrgFilter} isNl={isNl} />}
-        <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as 'pos' | 'api' | '')} style={selectSt}
-          title={isNl ? 'Filter op POS-bron — Josbin of externe API' : 'Filter by source POS — Josbin or external API'}>
-          <option value="">{isNl ? 'Alle POS-bronnen' : 'All POS sources'}</option>
-          <option value="pos">{isNl ? 'Josbin POS' : 'Josbin POS'}</option>
-          <option value="api">{isNl ? 'Externe POS (API)' : 'External POS (API)'}</option>
-        </select>
-        {(statusFilter || periodFilter || orgFilter || sourceFilter || searchInput) && (
-          <button onClick={() => { setStatusFilter(''); setPeriodFilter(''); setOrgFilter(''); setSourceFilter(''); setSearchInput('') }}
-            style={{ background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
-            ✗ {isNl ? 'Filters wissen' : 'Clear filters'}
-          </button>
-        )}
-      </div>
+      {/* Filters — contained toolbar: full-width search, then a horizontal row
+          of labelled dropdowns. Cross-org users get the full set; OA/SM see a
+          subset (org filter hidden — they only have their own org). */}
+      {(() => {
+        const hasActive = !!(statusFilter || periodFilter || orgFilter || sourceFilter || searchInput)
+        const fieldSt: React.CSSProperties = { flex: '1 1 170px', minWidth: 150 }
+        return (
+          <div style={{ background: '#fff', border: `1px solid ${BD.border}`, borderRadius: 14, padding: '16px 18px', marginBottom: 18, boxShadow: '0 1px 3px rgba(12,58,34,.05)' }}>
+            {/* Search */}
+            <div style={{ position: 'relative', marginBottom: 14 }}>
+              <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: BD.muted, pointerEvents: 'none', fontSize: 14 }}>🔍</span>
+              <input value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
+                placeholder={isNl ? 'Zoek op referentie of organisatie…' : 'Search by reference or organisation…'}
+                style={{ width: '100%', height: 44, padding: '0 14px 0 40px', border: `1.5px solid ${BD.border}`, borderRadius: 10, fontSize: 13.5, outline: 'none', boxSizing: 'border-box', color: BD.ink }} />
+            </div>
+
+            {/* Dropdown row */}
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+              <div style={fieldSt}>
+                <label style={fieldLabelSt}>{isNl ? 'Status' : 'Status'}</label>
+                <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as BtwSubmissionStatus | '')} style={filterSelectSt}>
+                  <option value="">{isNl ? 'Alle statussen' : 'All statuses'}</option>
+                  <option value="filed">{STATUS_STYLE.filed.label[isNl ? 'nl' : 'en']}</option>
+                  <option value="accepted">{STATUS_STYLE.accepted.label[isNl ? 'nl' : 'en']}</option>
+                  <option value="disputed">{STATUS_STYLE.disputed.label[isNl ? 'nl' : 'en']}</option>
+                  <option value="superseded">{STATUS_STYLE.superseded.label[isNl ? 'nl' : 'en']}</option>
+                </select>
+              </div>
+              <div style={fieldSt}>
+                <label style={fieldLabelSt}>{isNl ? 'Periode' : 'Period'}</label>
+                <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as BtwSubmissionPeriodType | '')} style={filterSelectSt}>
+                  <option value="">{isNl ? 'Alle periodes' : 'All periods'}</option>
+                  <option value="daily">{isNl ? 'Dagelijks' : 'Daily'}</option>
+                  <option value="monthly">{isNl ? 'Maandelijks' : 'Monthly'}</option>
+                </select>
+              </div>
+              {(isInspector || role === 'super_admin') && (
+                <div style={fieldSt}>
+                  <label style={fieldLabelSt}>{isNl ? 'Organisatie' : 'Organisation'}</label>
+                  <OrgFilterDropdown value={orgFilter} onChange={setOrgFilter} isNl={isNl} />
+                </div>
+              )}
+              <div style={fieldSt}>
+                <label style={fieldLabelSt}>{isNl ? 'POS-bron' : 'POS source'}</label>
+                <select value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value as 'pos' | 'api' | '')} style={filterSelectSt}
+                  title={isNl ? 'Filter op POS-bron — Josbin of externe API' : 'Filter by source POS — Josbin or external API'}>
+                  <option value="">{isNl ? 'Alle POS-bronnen' : 'All POS sources'}</option>
+                  <option value="pos">{isNl ? 'Josbin POS' : 'Josbin POS'}</option>
+                  <option value="api">{isNl ? 'Externe POS (API)' : 'External POS (API)'}</option>
+                </select>
+              </div>
+              {hasActive && (
+                <button onClick={() => { setStatusFilter(''); setPeriodFilter(''); setOrgFilter(''); setSourceFilter(''); setSearchInput('') }}
+                  style={{ height: 42, padding: '0 14px', borderRadius: 10, border: `1.5px solid ${BD.greenLine}`, background: BD.greenSoft, color: BD.green, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  ✗ {isNl ? 'Filters wissen' : 'Clear filters'}
+                </button>
+              )}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Table */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
