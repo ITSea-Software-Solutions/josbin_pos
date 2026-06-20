@@ -2,6 +2,7 @@ import { lazy, Suspense, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
 import HelpButton from '@/components/shared/HelpButton'
+import NotificationBell from '@/components/shared/NotificationBell'
 
 const DashboardOverview   = lazy(() => import('@/screens/DashboardOverview'))
 const StoreDetailScreen   = lazy(() => import('@/screens/StoreDetailScreen'))
@@ -594,6 +595,14 @@ export default function DashboardLayout() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            {/* In-app notification bell — BTW disputes/accepts/resubmits */}
+            <NotificationBell
+              accent={isTaxInspector ? '#1f6b3b' : '#6366f1'}
+              onNavigate={(n) => {
+                if (n.data.submission_id) openSubmissionDetail(n.data.submission_id)
+                else go('btw-submissions')
+              }}
+            />
             {/* Context-aware help for the current screen */}
             <HelpButton topic={
               screen === 'btw-submission-detail' ? 'btw-submissions'

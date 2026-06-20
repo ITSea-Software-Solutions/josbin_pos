@@ -97,6 +97,14 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::delete('sessions/{tokenId}', [\App\Http\Controllers\Api\MeController::class, 'revokeSession'])->name('sessions.revoke');
     });
 
+    // In-app notification bell — any authenticated user. Every action is
+    // strictly scoped to $request->user()'s own notifications.
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/',          [\App\Http\Controllers\Api\NotificationController::class, 'index'])->name('index');
+        Route::post('read-all',  [\App\Http\Controllers\Api\NotificationController::class, 'markAllRead'])->name('read-all');
+        Route::post('{id}/read', [\App\Http\Controllers\Api\NotificationController::class, 'markRead'])->name('read');
+    });
+
     // Auth
     Route::prefix('auth')->name('auth.')->group(function () {
         Route::get('me', [AuthController::class, 'me'])->name('me');

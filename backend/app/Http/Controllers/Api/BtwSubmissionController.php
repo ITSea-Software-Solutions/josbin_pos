@@ -590,8 +590,9 @@ class BtwSubmissionController extends Controller
 
         $accepted = 0;
         $skipped  = 0;
+        $acceptedSubs = [];
 
-        \DB::transaction(function () use ($data, $request, &$accepted, &$skipped) {
+        \DB::transaction(function () use ($data, $request, &$accepted, &$skipped, &$acceptedSubs) {
             $subs = BtwSubmission::whereIn('id', $data['ids'])->lockForUpdate()->get();
             foreach ($subs as $sub) {
                 if (! $request->user()->can('review', $sub) || $sub->status !== BtwSubmission::STATUS_FILED) {
@@ -616,8 +617,14 @@ class BtwSubmissionController extends Controller
                     'created_at'      => now(),
                 ]);
                 $accepted++;
+                $acceptedSubs[] = $sub;
             }
         });
+
+        // Notify each taxpayer after the transaction commits (queued).
+        foreach ($acceptedSubs as $sub) {
+            $this->notifyAccepted($sub);
+        }
 
         return response()->json(['accepted' => $accepted, 'skipped' => $skipped]);
     }
@@ -648,6 +655,9 @@ class BtwSubmissionController extends Controller
             'ip_address'      => $request->ip(),
             'created_at'      => now(),
         ]);
+
+        // Closure confirmation to the taxpayer (in-app bell + email).
+        $this->notifyAccepted($btwSubmission);
 
         return response()->json(['data' => $btwSubmission->fresh()->load('reviewer:id,name')]);
     }
@@ -687,53 +697,42 @@ class BtwSubmissionController extends Controller
         return response()->json(['data' => $btwSubmission->fresh()->load('reviewer:id,name')]);
     }
 
-    /**
-     * Email the organisation's admins + the filing's submitter that the
-     * Belastingdienst disputed a filing, with the reason and a resubmit link.
-     * Wrapped so an SMTP outage can never break the inspector's action.
-     */
     private function notifyDisputed(BtwSubmission $s, string $reason): void
     {
+        $this->notifyTaxpayer($s, new \App\Notifications\BtwFilingDisputed($s, $reason));
+    }
+
+    private function notifyAccepted(BtwSubmission $s): void
+    {
+        $this->notifyTaxpayer($s, new \App\Notifications\BtwFilingAccepted($s));
+    }
+
+    /**
+     * Notify the taxpayer (org admins + the filing's submitter) via both the
+     * in-app bell (database channel) and email. The notifications are queued,
+     * so a mail/queue hiccup can never break the inspector's action — and a
+     * failed mail job can't suppress the in-app notification for anyone.
+     */
+    private function notifyTaxpayer(BtwSubmission $s, \Illuminate\Notifications\Notification $notification): void
+    {
         try {
-            $org = Organisation::find($s->organisation_id);
             $recipients = \App\Models\User::query()
                 ->where('organisation_id', $s->organisation_id)
                 ->where('is_active', true)
                 ->where(fn ($q) => $q->where('role', \App\Models\User::ROLE_ORGANISATION_ADMIN)
                     ->orWhere('id', $s->submitted_by))
-                ->pluck('email')
-                ->filter()
-                ->unique()
-                ->values();
+                ->get();
 
             if ($recipients->isEmpty()) {
                 return;
             }
 
-            $locale = $org?->locale === 'en' ? 'en' : 'nl';
-            $period = $s->period_start === $s->period_end
-                ? $s->period_start
-                : "{$s->period_start} → {$s->period_end}";
-
-            $html = view('emails.btw-disputed', [
-                'locale'    => $locale,
-                'orgName'   => $org?->name ?? 'Organisatie',
-                'reference' => $s->reference,
-                'period'    => $period,
-                'btw'       => number_format((float) $s->total_btw_srd, 2, '.', ''),
-                'reason'    => $reason,
-                'portalUrl' => rtrim((string) config('josbin_pos.dashboard_url'), '/'),
-            ])->render();
-
-            $subject = ($locale === 'nl' ? 'BTW-aangifte betwist' : 'BTW filing disputed')
-                . ' — ' . $s->reference;
-
-            \Illuminate\Support\Facades\Mail::html($html, function ($m) use ($recipients, $subject) {
-                $m->to($recipients->all())->subject($subject);
-            });
+            \Illuminate\Support\Facades\Notification::send($recipients, $notification);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('[BTW] dispute notification failed', [
-                'submission' => $s->id, 'error' => $e->getMessage(),
+            \Illuminate\Support\Facades\Log::warning('[BTW] taxpayer notification failed', [
+                'submission'   => $s->id,
+                'notification' => $notification::class,
+                'error'        => $e->getMessage(),
             ]);
         }
     }
@@ -801,24 +800,12 @@ class BtwSubmissionController extends Controller
                 'inspector_note' => trim(($btwSubmission->inspector_note ?? '') . "\n[Superseded by " . $reference . " on " . now()->toIso8601String() . "]"),
             ]);
 
-            // Postgres unique constraint allows multiple superseded rows for
-            // the same period — the unique only matters for filed/accepted.
-            // We don't enforce that at the DB level (the unique IS on all
-            // rows), so we work around by also deleting the constraint... no,
-            // actually we keep it strict and accept that the period unique
-            // covers ALL statuses. To support resubmission then, the original
-            // must move out of the way — and "superseded" IS that, but the
-            // unique on (org, period_type, range) still trips because both
-            // rows have the same values for those columns.
-            //
-            // Resolution: relax the original's `period_end` by adding a
-            // microsecond... no, that breaks history. Better: the unique
-            // constraint should exclude superseded rows. Migration follow-up.
-            // For now: this path returns 500 on the second resubmission per
-            // period — known limitation, tracked.
-            //
-            // (Workaround: the unique was deferred to be evaluated at
-            // transaction commit; we don't have that. Migration to follow.)
+            // The partial unique index `btw_subs_active_period_unique` covers
+            // (org, period_type, period_start, period_end) WHERE status <>
+            // 'superseded' (see 2026_05_26_070001_btw_submissions_partial_unique).
+            // Moving the original to 'superseded' above therefore frees the
+            // period, so the new 'filed' row below inserts cleanly — and a
+            // period can be resubmitted any number of times.
 
             $newSubmission = BtwSubmission::create([
                 'organisation_id' => $btwSubmission->organisation_id,
@@ -861,9 +848,34 @@ class BtwSubmissionController extends Controller
             return $newSubmission;
         });
 
+        // Tell the Belastingdienst inspectors a corrected filing is waiting.
+        $this->notifyInspectors($newSubmission);
+
         return response()->json([
             'data' => $newSubmission->fresh()->load('organisation:id,name', 'store:id,name', 'submitter:id,name'),
         ], 201);
+    }
+
+    /** Notify all active Belastingdienst inspectors (in-app + email), best-effort. */
+    private function notifyInspectors(BtwSubmission $s): void
+    {
+        try {
+            $inspectors = \App\Models\User::query()
+                ->where('role', \App\Models\User::ROLE_TAX_INSPECTOR)
+                ->where('is_active', true)
+                ->get();
+
+            if ($inspectors->isEmpty()) {
+                return;
+            }
+
+            \Illuminate\Support\Facades\Notification::send($inspectors, new \App\Notifications\BtwFilingResubmitted($s));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[BTW] inspector notification failed', [
+                'submission' => $s->id,
+                'error'      => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
