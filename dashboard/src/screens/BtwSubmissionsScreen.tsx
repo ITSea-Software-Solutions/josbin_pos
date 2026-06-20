@@ -39,6 +39,14 @@ const filterSelectSt: React.CSSProperties = {
 
 function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose: () => void; onSubmitted: (s: BtwSubmission) => void }) {
   const qc = useQueryClient()
+  const user = useDashboardAuthStore((s) => s.user)
+  // A Store Manager is bound to one store → file for that store. Org Admin /
+  // SA have no store_id → org-wide (the formal consolidated Belastingdienst
+  // return). The backend enforces this regardless of what we send.
+  const filingStoreId = user?.store_id ?? null
+  const scopeLabel = filingStoreId
+    ? `${isNl ? 'Aangifte voor' : 'Filing for'}: ${user?.store_name ?? (isNl ? 'uw winkel' : 'your store')}`
+    : `${isNl ? 'Aangifte voor' : 'Filing for'}: ${isNl ? 'hele organisatie' : 'whole organisation'}`
   const today = new Date().toISOString().slice(0, 10)
   // Default to YESTERDAY for daily (today's still being rung up) and
   // PREVIOUS MONTH for monthly (current month not over).
@@ -74,13 +82,13 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
   }
 
   const previewMut = useMutation({
-    mutationFn: () => previewBtwSubmission({ period_type: periodType, period_start: start, period_end: end }),
+    mutationFn: () => previewBtwSubmission({ period_type: periodType, period_start: start, period_end: end, store_id: filingStoreId }),
     onSuccess: (p) => { setPreview(p); setError('') },
     onError: (e: unknown) => setError((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Preview failed'),
   })
 
   const submitMut = useMutation({
-    mutationFn: () => submitBtw({ period_type: periodType, period_start: start, period_end: end, submitter_note: note || undefined }),
+    mutationFn: () => submitBtw({ period_type: periodType, period_start: start, period_end: end, submitter_note: note || undefined, store_id: filingStoreId }),
     onSuccess: (s) => { qc.invalidateQueries({ queryKey: ['btw-submissions'] }); onSubmitted(s) },
     onError: (e: unknown) => {
       const r = (e as { response?: { data?: { message?: string; code?: string } } })?.response?.data
@@ -104,6 +112,12 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
             </p>
           </div>
           <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
+        </div>
+
+        {/* Filing scope — store (Store Manager) vs whole organisation (OA) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: filingStoreId ? '#eff6ff' : '#f5f3ff', border: `1px solid ${filingStoreId ? '#bfdbfe' : '#ddd6fe'}`, borderRadius: 10, padding: '9px 12px', marginBottom: 14 }}>
+          <span style={{ fontSize: 15 }}>{filingStoreId ? '🏪' : '🏢'}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: filingStoreId ? '#1d4ed8' : '#6d28d9' }}>{scopeLabel}</span>
         </div>
 
         {/* Period type toggle */}

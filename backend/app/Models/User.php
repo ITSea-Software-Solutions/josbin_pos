@@ -138,6 +138,19 @@ class User extends Authenticatable implements Auditable
     }
 
     /**
+     * Store-bound roles belong to exactly one store (users.store_id) and have
+     * no "all stores in org" reach — cashier + store_manager. Used to scope
+     * store-level features (BTW filing, reports, stock) to their own store.
+     */
+    public function isStoreBound(): bool
+    {
+        return in_array($this->role, [
+            self::ROLE_CASHIER,
+            self::ROLE_STORE_MANAGER,
+        ], true);
+    }
+
+    /**
      * Tax inspector is cross-organisation by design (Belastingdienst regulates
      * every taxpayer on the platform), so canAccessStore must short-circuit
      * the org-match check that applies to other org-scoped roles.

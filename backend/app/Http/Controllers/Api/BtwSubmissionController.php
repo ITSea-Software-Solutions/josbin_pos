@@ -55,10 +55,15 @@ class BtwSubmissionController extends Controller
         if (! $user->isCrossOrgRole()) {
             $query->where('organisation_id', $user->organisation_id);
         }
+        // A Store Manager only ever sees their own store's filings — same store
+        // scoping as Reports / Stock / Z-Report.
+        if ($user->isStoreBound()) {
+            $query->where('store_id', $user->store_id);
+        }
         if ($request->filled('organisation_id') && $user->isCrossOrgRole()) {
             $query->where('organisation_id', $request->input('organisation_id'));
         }
-        if ($request->filled('store_id')) {
+        if ($request->filled('store_id') && ! $user->isStoreBound()) {
             $query->where('store_id', $request->input('store_id'));
         }
         if ($request->filled('status')) {
@@ -190,6 +195,10 @@ class BtwSubmissionController extends Controller
         $base = BtwSubmission::query();
         if (! $user->isCrossOrgRole()) {
             $base->where('organisation_id', $user->organisation_id);
+        }
+        // A Store Manager's dashboard is scoped to their own store.
+        if ($user->isStoreBound()) {
+            $base->where('store_id', $user->store_id);
         }
 
         // ── Headline KPIs ────────────────────────────────────────────────────
@@ -436,6 +445,9 @@ class BtwSubmissionController extends Controller
             ->where('period_type', $data['period_type'])
             ->where('period_start', $data['period_start'])
             ->where('period_end', $data['period_end'])
+            ->where(fn ($q) => empty($data['store_id'])
+                ? $q->whereNull('store_id')
+                : $q->where('store_id', $data['store_id']))
             ->whereIn('status', [BtwSubmission::STATUS_FILED, BtwSubmission::STATUS_ACCEPTED])
             ->first(['id', 'reference', 'status', 'submitted_at']);
 
@@ -470,6 +482,9 @@ class BtwSubmissionController extends Controller
             ->where('period_type', $data['period_type'])
             ->where('period_start', $data['period_start'])
             ->where('period_end', $data['period_end'])
+            ->where(fn ($q) => empty($data['store_id'])
+                ? $q->whereNull('store_id')
+                : $q->where('store_id', $data['store_id']))
             ->whereIn('status', [BtwSubmission::STATUS_FILED, BtwSubmission::STATUS_ACCEPTED])
             ->first();
 
@@ -912,15 +927,30 @@ class BtwSubmissionController extends Controller
             ]);
         }
 
-        // Store scope: if store_id is set, it must belong to the user's org.
-        if (! empty($data['store_id'])) {
-            $org = \App\Models\Store::where('id', $data['store_id'])->value('organisation_id');
-            if ($org !== $request->user()->organisation_id) {
+        // Store scope.
+        $user = $request->user();
+        if ($user->isStoreBound()) {
+            // A Store Manager files ONLY for their own store — force it,
+            // ignoring any store_id the client sent. BTW is legally an
+            // organisation-level return, so the consolidated org-wide filing
+            // stays the Org Admin's job; an SM's filing is their store's slice.
+            if (! $user->store_id) {
+                throw ValidationException::withMessages([
+                    'store_id' => 'No store is assigned to your account. Ask your manager to assign one before filing BTW.',
+                ]);
+            }
+            $data['store_id'] = $user->store_id;
+        } elseif (! empty($data['store_id'])) {
+            // Org Admin (or SA) naming a specific store: it must be reachable
+            // within their organisation.
+            if (! $user->canAccessStore($data['store_id'])) {
                 throw ValidationException::withMessages([
                     'store_id' => 'Store does not belong to your organisation.',
                 ]);
             }
         }
+        // else: Org Admin org-wide filing (store_id null) — the formal
+        // consolidated Belastingdienst return covering every store.
 
         return $data;
     }

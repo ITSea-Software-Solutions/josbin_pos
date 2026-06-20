@@ -33,7 +33,14 @@ class BtwSubmissionPolicy
         if ($user->isCrossOrgRole()) {
             return true;
         }
-        return $user->organisation_id === $submission->organisation_id;
+        if ($user->organisation_id !== $submission->organisation_id) {
+            return false;
+        }
+        // A Store Manager can only see their own store's filings.
+        if ($user->isStoreBound()) {
+            return $submission->store_id === $user->store_id;
+        }
+        return true;
     }
 
     /**
@@ -71,6 +78,10 @@ class BtwSubmissionPolicy
             return false;
         }
         if ($user->organisation_id !== $submission->organisation_id) {
+            return false;
+        }
+        // A Store Manager can only correct their own store's filings.
+        if ($user->isStoreBound() && $submission->store_id !== $user->store_id) {
             return false;
         }
         // Already-accepted filings are locked. Only filed or disputed ones
