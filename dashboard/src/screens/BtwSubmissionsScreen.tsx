@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
   listBtwSubmissions, previewBtwSubmission, submitBtw,
-  acceptBtwSubmission, disputeBtwSubmission, supersedeBtwSubmission,
+  acceptBtwSubmission, disputeBtwSubmission, supersedeBtwSubmission, bulkAcceptBtw,
   type BtwSubmission, type BtwSubmissionStatus, type BtwSubmissionPeriodType, type BtwSubmissionPreview,
 } from '@/api/btwSubmissions'
 import { getOrganisations } from '@/api/organisations'
@@ -316,15 +316,22 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
   const canSubmit = role === 'organisation_admin' || role === 'store_manager'
   const canReview = role === 'tax_inspector' || role === 'super_admin'
 
+  const qc = useQueryClient()
   const [statusFilter,    setStatusFilter]    = useState<BtwSubmissionStatus | ''>(initialFilter?.status ?? '')
   const [periodFilter,    setPeriodFilter]    = useState<BtwSubmissionPeriodType | ''>('')
   const [orgFilter,       setOrgFilter]       = useState<string>(initialFilter?.organisation_id ?? '')
   const [sourceFilter,    setSourceFilter]    = useState<'pos' | 'api' | ''>('')
+  const [yearFilter,      setYearFilter]      = useState<string>('')
+  const [minAmount,       setMinAmount]       = useState<string>('')
+  const [sortBy,          setSortBy]          = useState<'newest' | 'oldest' | 'amount_desc' | 'amount_asc'>('newest')
   const [searchInput,     setSearchInput]     = useState('')
   const [showSubmit,      setShowSubmit]      = useState(false)
   const [reviewTarget,    setReviewTarget]    = useState<{ submission: BtwSubmission; action: 'accept' | 'dispute' } | null>(null)
   const [resubmitTarget,  setResubmitTarget]  = useState<BtwSubmission | null>(null)
   const [successBanner,   setSuccessBanner]   = useState<BtwSubmission | null>(null)
+  // Inspector multi-select for bulk accept (filed rows only).
+  const [selectedIds,     setSelectedIds]     = useState<Set<string>>(new Set())
+  const [bulkBanner,      setBulkBanner]      = useState<string | null>(null)
   // OA/SM can resubmit a filed/disputed filing in their own org. Inspector
   // and SA cannot — that would be forgery (backend enforces; this just
   // hides the button to avoid 403 on click).
@@ -335,15 +342,40 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
   }
 
   const { data: page, isLoading } = useQuery({
-    queryKey: ['btw-submissions', { statusFilter, periodFilter, orgFilter, sourceFilter, searchInput }],
+    queryKey: ['btw-submissions', { statusFilter, periodFilter, orgFilter, sourceFilter, yearFilter, minAmount, sortBy, searchInput }],
     queryFn: () => listBtwSubmissions({
       status: statusFilter || undefined,
       period_type: periodFilter || undefined,
       organisation_id: orgFilter || undefined,
       source: sourceFilter || undefined,
+      year: yearFilter ? Number(yearFilter) : undefined,
+      min_amount: minAmount ? Number(minAmount) : undefined,
+      sort: sortBy,
       search: searchInput.trim() || undefined,
       per_page: 50,
     } as Record<string, unknown>),
+  })
+
+  // Selection helpers — only FILED rows can be bulk-accepted.
+  const rows = page?.data ?? []
+  const filedIds = rows.filter((r) => r.status === 'filed').map((r) => r.id)
+  const allFiledSelected = filedIds.length > 0 && filedIds.every((id) => selectedIds.has(id))
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+  function toggleAllFiled() {
+    setSelectedIds(allFiledSelected ? new Set() : new Set(filedIds))
+  }
+  const bulkMut = useMutation({
+    mutationFn: () => bulkAcceptBtw([...selectedIds]),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ['btw-submissions'] })
+      qc.invalidateQueries({ queryKey: ['btw-inspector-dashboard'] })
+      setBulkBanner(isNl
+        ? `${r.accepted} aangifte(s) geaccepteerd${r.skipped ? `, ${r.skipped} overgeslagen` : ''}.`
+        : `${r.accepted} submission(s) accepted${r.skipped ? `, ${r.skipped} skipped` : ''}.`)
+      setSelectedIds(new Set())
+    },
   })
 
   return (
@@ -390,8 +422,10 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
           of labelled dropdowns. Cross-org users get the full set; OA/SM see a
           subset (org filter hidden — they only have their own org). */}
       {(() => {
-        const hasActive = !!(statusFilter || periodFilter || orgFilter || sourceFilter || searchInput)
-        const fieldSt: React.CSSProperties = { flex: '1 1 170px', minWidth: 150 }
+        const hasActive = !!(statusFilter || periodFilter || orgFilter || sourceFilter || yearFilter || minAmount || sortBy !== 'newest' || searchInput)
+        const fieldSt: React.CSSProperties = { flex: '1 1 160px', minWidth: 140 }
+        const thisYear = new Date().getFullYear()
+        const years = [thisYear, thisYear - 1, thisYear - 2, thisYear - 3]
         return (
           <div style={{ background: '#fff', border: `1px solid ${BD.border}`, borderRadius: 14, padding: '16px 18px', marginBottom: 18, boxShadow: '0 1px 3px rgba(12,58,34,.05)' }}>
             {/* Search */}
@@ -437,8 +471,30 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                   <option value="api">{isNl ? 'Externe POS (API)' : 'External POS (API)'}</option>
                 </select>
               </div>
+              <div style={fieldSt}>
+                <label style={fieldLabelSt}>{isNl ? 'Jaar' : 'Year'}</label>
+                <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} style={filterSelectSt}>
+                  <option value="">{isNl ? 'Alle jaren' : 'All years'}</option>
+                  {years.map((y) => <option key={y} value={y}>{y}</option>)}
+                </select>
+              </div>
+              <div style={fieldSt}>
+                <label style={fieldLabelSt}>{isNl ? 'Min. BTW (SRD)' : 'Min BTW (SRD)'}</label>
+                <input type="number" inputMode="decimal" min="0" value={minAmount} onChange={(e) => setMinAmount(e.target.value)}
+                  placeholder="0"
+                  style={{ width: '100%', height: 42, padding: '0 12px', borderRadius: 10, border: `1.5px solid ${BD.border}`, fontSize: 13, color: BD.ink, outline: 'none', boxSizing: 'border-box' }} />
+              </div>
+              <div style={fieldSt}>
+                <label style={fieldLabelSt}>{isNl ? 'Sorteren' : 'Sort'}</label>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} style={filterSelectSt}>
+                  <option value="newest">{isNl ? 'Nieuwste eerst' : 'Newest first'}</option>
+                  <option value="oldest">{isNl ? 'Oudste eerst' : 'Oldest first'}</option>
+                  <option value="amount_desc">{isNl ? 'BTW hoog → laag' : 'BTW high → low'}</option>
+                  <option value="amount_asc">{isNl ? 'BTW laag → hoog' : 'BTW low → high'}</option>
+                </select>
+              </div>
               {hasActive && (
-                <button onClick={() => { setStatusFilter(''); setPeriodFilter(''); setOrgFilter(''); setSourceFilter(''); setSearchInput('') }}
+                <button onClick={() => { setStatusFilter(''); setPeriodFilter(''); setOrgFilter(''); setSourceFilter(''); setYearFilter(''); setMinAmount(''); setSortBy('newest'); setSearchInput('') }}
                   style={{ height: 42, padding: '0 14px', borderRadius: 10, border: `1.5px solid ${BD.greenLine}`, background: BD.greenSoft, color: BD.green, cursor: 'pointer', fontSize: 12.5, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0 }}>
                   ✗ {isNl ? 'Filters wissen' : 'Clear filters'}
                 </button>
@@ -447,6 +503,33 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
           </div>
         )
       })()}
+
+      {/* Bulk action bar — inspector only, when filed rows are selected */}
+      {canReview && selectedIds.size > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: BD.greenDeep, borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(12,58,34,.25)' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700 }}>
+            {selectedIds.size} {isNl ? 'geselecteerd' : 'selected'}
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setSelectedIds(new Set())}
+              style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.3)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: 12.5, fontWeight: 600 }}>
+              {isNl ? 'Wissen' : 'Clear'}
+            </button>
+            <button onClick={() => bulkMut.mutate()} disabled={bulkMut.isPending}
+              style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: BD.gold, color: BD.greenDeep, cursor: 'pointer', fontSize: 12.5, fontWeight: 800, opacity: bulkMut.isPending ? 0.6 : 1 }}>
+              {bulkMut.isPending ? '…' : `✓ ${isNl ? 'Accepteer geselecteerde' : 'Accept selected'}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk result banner */}
+      {bulkBanner && (
+        <div style={{ marginBottom: 14, padding: '12px 16px', background: BD.greenSoft, border: `1px solid ${BD.greenLine}`, borderRadius: 10, color: BD.green, fontSize: 13, fontWeight: 600 }}>
+          ✓ {bulkBanner}
+          <button onClick={() => setBulkBanner(null)} style={{ float: 'right', background: 'none', border: 'none', cursor: 'pointer', color: BD.green, fontSize: 16 }}>×</button>
+        </div>
+      )}
 
       {/* Table */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
@@ -459,7 +542,14 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: isInspector ? BD.greenSoft : 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: `1px solid ${isInspector ? BD.greenLine : '#eeeef8'}` }}>
+                {canReview && (
+                  <th style={{ padding: '12px 8px 12px 16px', width: 38 }}>
+                    <input type="checkbox" checked={allFiledSelected} disabled={filedIds.length === 0}
+                      onChange={toggleAllFiled} title={isNl ? 'Selecteer alle ingediende' : 'Select all filed'}
+                      style={{ width: 16, height: 16, cursor: filedIds.length ? 'pointer' : 'not-allowed', accentColor: BD.green }} />
+                  </th>
+                )}
                 {[
                   isNl ? 'Referentie' : 'Reference',
                   isInspector || role === 'super_admin' ? (isNl ? 'Organisatie' : 'Organisation') : null,
@@ -483,6 +573,16 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                     style={{ borderBottom: i < (page!.data.length - 1) ? '1px solid #f3f3f8' : 'none', cursor: onOpenDetail ? 'pointer' : 'default', transition: 'background .12s' }}
                     onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = isInspector ? BD.greenSoft : 'rgba(124,58,237,.03)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
+                    {canReview && (
+                      <td style={{ padding: '14px 8px 14px 16px' }} onClick={(e) => e.stopPropagation()}>
+                        {s.status === 'filed' ? (
+                          <input type="checkbox" checked={selectedIds.has(s.id)} onChange={() => toggleOne(s.id)}
+                            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: BD.green }} />
+                        ) : (
+                          <span style={{ display: 'inline-block', width: 16 }} />
+                        )}
+                      </td>
+                    )}
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#1c1c2e', fontWeight: 600 }}>{s.reference}</td>
                     {(isInspector || role === 'super_admin') && (
                       <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>

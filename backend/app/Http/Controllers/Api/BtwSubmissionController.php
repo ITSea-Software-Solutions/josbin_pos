@@ -36,8 +36,7 @@ class BtwSubmissionController extends Controller
 
         $user = $request->user();
         $query = BtwSubmission::query()
-            ->with('organisation:id,name', 'store:id,name', 'submitter:id,name', 'reviewer:id,name')
-            ->orderByDesc('submitted_at');
+            ->with('organisation:id,name', 'store:id,name', 'submitter:id,name', 'reviewer:id,name');
 
         // Scope: cross-org roles see everything; everyone else only their own
         // org. Inspector sees the queue across all taxpayers; OA sees only
@@ -65,6 +64,17 @@ class BtwSubmissionController extends Controller
         if ($request->filled('to')) {
             $query->where('period_start', '<=', $request->input('to'));
         }
+        // Filing year — matches the tax period, not the submission timestamp.
+        if ($request->filled('year')) {
+            $query->whereYear('period_start', (int) $request->input('year'));
+        }
+        // BTW amount band (on the headline total_btw_srd).
+        if ($request->filled('min_amount')) {
+            $query->where('total_btw_srd', '>=', (float) $request->input('min_amount'));
+        }
+        if ($request->filled('max_amount')) {
+            $query->where('total_btw_srd', '<=', (float) $request->input('max_amount'));
+        }
         // Filter by source POS — 'pos' = Josbin POS native; 'api' = third-party
         // POS via Layer-3 Open Integration API; 'mixed' = both contributed.
         if ($request->filled('source')) {
@@ -81,6 +91,14 @@ class BtwSubmissionController extends Controller
             $query->where(fn ($q) => $q->where('reference', 'ilike', $term)
                 ->orWhereHas('organisation', fn ($o) => $o->where('name', 'ilike', $term)));
         }
+
+        // Sort — default newest-filed first (the inspector's working order).
+        match ($request->input('sort')) {
+            'oldest'      => $query->orderBy('submitted_at'),
+            'amount_desc' => $query->orderByDesc('total_btw_srd')->orderByDesc('submitted_at'),
+            'amount_asc'  => $query->orderBy('total_btw_srd')->orderByDesc('submitted_at'),
+            default       => $query->orderByDesc('submitted_at'),
+        };
 
         $submissions = $query->paginate($request->integer('per_page', 25));
 
@@ -491,6 +509,57 @@ class BtwSubmissionController extends Controller
     }
 
     /** POST /api/btw-submissions/{submission}/accept */
+    /**
+     * POST /api/btw-submissions/bulk-accept
+     *
+     * Inspector marks many FILED submissions reviewed & accepted in one action.
+     * Each is authorised individually (cross-org inspector passes; a non-review
+     * role is skipped, not errored) and only 'filed' rows transition — anything
+     * already accepted/disputed/superseded is skipped. Every accept still writes
+     * its own btw.accepted audit row.
+     */
+    public function bulkAccept(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'ids'            => ['required', 'array', 'min:1', 'max:200'],
+            'ids.*'          => ['uuid'],
+            'inspector_note' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $accepted = 0;
+        $skipped  = 0;
+
+        \DB::transaction(function () use ($data, $request, &$accepted, &$skipped) {
+            $subs = BtwSubmission::whereIn('id', $data['ids'])->lockForUpdate()->get();
+            foreach ($subs as $sub) {
+                if (! $request->user()->can('review', $sub) || $sub->status !== BtwSubmission::STATUS_FILED) {
+                    $skipped++;
+                    continue;
+                }
+                $sub->update([
+                    'status'         => BtwSubmission::STATUS_ACCEPTED,
+                    'reviewed_at'    => now(),
+                    'reviewed_by'    => $request->user()->id,
+                    'inspector_note' => $data['inspector_note'] ?? $sub->inspector_note,
+                ]);
+                \App\Models\AuditLog::create([
+                    'user_id'         => $request->user()->id,
+                    'organisation_id' => $sub->organisation_id,
+                    'event'           => 'btw.accepted',
+                    'auditable_type'  => 'btw_submission',
+                    'auditable_id'    => $sub->id,
+                    'old_values'      => ['status' => BtwSubmission::STATUS_FILED],
+                    'new_values'      => ['status' => BtwSubmission::STATUS_ACCEPTED, 'bulk' => true, 'note' => $data['inspector_note'] ?? null],
+                    'ip_address'      => $request->ip(),
+                    'created_at'      => now(),
+                ]);
+                $accepted++;
+            }
+        });
+
+        return response()->json(['accepted' => $accepted, 'skipped' => $skipped]);
+    }
+
     public function accept(Request $request, BtwSubmission $btwSubmission): JsonResponse
     {
         $this->authorize('review', $btwSubmission);

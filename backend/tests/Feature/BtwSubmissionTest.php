@@ -476,4 +476,61 @@ class BtwSubmissionTest extends TestCase
         $refs = collect($resp->json('data'))->pluck('reference');
         $this->assertContains($ref, $refs);
     }
+
+    private function seedFiled(Organisation $org, string $ref, string $btw = '0', string $start = '2026-05-20'): BtwSubmission
+    {
+        return BtwSubmission::create([
+            'organisation_id' => $org->id, 'period_type' => 'daily',
+            'period_start' => $start, 'period_end' => $start,
+            'sales_count' => 0, 'total_sales_srd' => '0', 'btw_exempt_srd' => '0',
+            'btw_taxable_srd' => '0', 'total_btw_srd' => $btw,
+            'status' => 'filed', 'submitted_at' => now(),
+            'submitted_by' => $this->superAdmin->id, 'reference' => $ref,
+        ]);
+    }
+
+    public function test_inspector_bulk_accepts_filed_and_skips_non_filed(): void
+    {
+        $a = $this->seedFiled($this->orgA, 'BTW-BULK-A', '0', '2026-05-20');
+        $b = $this->seedFiled($this->orgB, 'BTW-BULK-B', '0', '2026-05-20');
+        $c = $this->seedFiled($this->orgA, 'BTW-BULK-C', '0', '2026-05-21');
+        $c->update(['status' => 'accepted']); // already reviewed → should be skipped
+
+        $resp = $this->actingAs($this->inspector, 'sanctum')
+            ->postJson('/api/btw-submissions/bulk-accept', ['ids' => [$a->id, $b->id, $c->id]]);
+
+        $resp->assertOk()->assertJsonPath('accepted', 2)->assertJsonPath('skipped', 1);
+        $this->assertSame('accepted', $a->fresh()->status);
+        $this->assertSame('accepted', $b->fresh()->status);
+        $this->assertSame($this->inspector->id, $a->fresh()->reviewed_by);
+        // Each accept wrote its own audit row.
+        $this->assertDatabaseHas('audit_logs', ['event' => 'btw.accepted', 'auditable_id' => $a->id]);
+    }
+
+    public function test_bulk_accept_is_a_noop_for_a_non_review_role(): void
+    {
+        $a = $this->seedFiled($this->orgA, 'BTW-BULK-OA');
+        // OA cannot review — every row is skipped, nothing is accepted.
+        $this->actingAs($this->oaA, 'sanctum')
+            ->postJson('/api/btw-submissions/bulk-accept', ['ids' => [$a->id]])
+            ->assertOk()->assertJsonPath('accepted', 0);
+        $this->assertSame('filed', $a->fresh()->status);
+    }
+
+    public function test_year_and_amount_filters(): void
+    {
+        $this->seedFiled($this->orgA, 'BTW-Y-2025', '5.00', '2025-04-10');
+        $this->seedFiled($this->orgA, 'BTW-Y-2026', '500.00', '2026-04-10');
+
+        $byYear = $this->actingAs($this->inspector, 'sanctum')->getJson('/api/btw-submissions?year=2025');
+        $byYear->assertOk();
+        $this->assertEqualsCanonicalizing(['BTW-Y-2025'],
+            collect($byYear->json('data'))->whereIn('reference', ['BTW-Y-2025', 'BTW-Y-2026'])->pluck('reference')->all());
+
+        $byAmount = $this->actingAs($this->inspector, 'sanctum')->getJson('/api/btw-submissions?min_amount=100');
+        $byAmount->assertOk();
+        $refs = collect($byAmount->json('data'))->pluck('reference');
+        $this->assertContains('BTW-Y-2026', $refs);
+        $this->assertNotContains('BTW-Y-2025', $refs);
+    }
 }

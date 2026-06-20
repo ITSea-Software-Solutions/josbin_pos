@@ -191,8 +191,18 @@ export interface BtwSubmissionFilters extends Record<string, unknown> {
   to?: string
   source?: 'pos' | 'api'
   search?: string
+  year?: number
+  min_amount?: number
+  max_amount?: number
+  sort?: 'newest' | 'oldest' | 'amount_desc' | 'amount_asc'
   per_page?: number
   page?: number
+}
+
+/** Inspector bulk action — accept many filed submissions at once. */
+export async function bulkAcceptBtw(ids: string[], inspectorNote?: string): Promise<{ accepted: number; skipped: number }> {
+  const res = await apiClient.post<{ accepted: number; skipped: number }>('/btw-submissions/bulk-accept', { ids, inspector_note: inspectorNote })
+  return res.data
 }
 
 /** Wraps the existing list endpoint with the expanded filter set. */

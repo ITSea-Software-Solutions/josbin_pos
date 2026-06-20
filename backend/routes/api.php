@@ -332,6 +332,7 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         // Static paths first — Laravel binds {btwSubmission} greedily.
         Route::get('inspector-dashboard',     [\App\Http\Controllers\Api\BtwSubmissionController::class, 'inspectorDashboard'])->name('inspector-dashboard');
         Route::post('preview',                [\App\Http\Controllers\Api\BtwSubmissionController::class, 'preview'])->name('preview');
+        Route::post('bulk-accept',            [\App\Http\Controllers\Api\BtwSubmissionController::class, 'bulkAccept'])->middleware('throttle:30,1')->name('bulk-accept');
         Route::get('/',                       [\App\Http\Controllers\Api\BtwSubmissionController::class, 'index'])->name('index');
         Route::post('/',                      [\App\Http\Controllers\Api\BtwSubmissionController::class, 'store'])->name('store');
         Route::get('{btwSubmission}/detail',  [\App\Http\Controllers\Api\BtwSubmissionController::class, 'detail'])->name('detail');
