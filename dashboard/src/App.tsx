@@ -5,8 +5,17 @@ import { DemoBanner } from '@/components/shared/DemoBanner'
 import { ToastProvider } from '@/components/shared/Toast'
 
 const LoginScreen      = lazy(() => import('@/screens/LoginScreen'))
+const BelastingdienstLoginScreen = lazy(() => import('@/screens/BelastingdienstLoginScreen'))
 const DashboardLayout  = lazy(() => import('@/screens/DashboardLayout'))
 const TwoFactorScreen  = lazy(() => import('@/screens/TwoFactorScreen'))
+
+// Belastingdienst (tax authority) officials get a distinct government portal at
+// /belastingdienst — same auth, official chrome. SPA fallback serves index.html
+// for the path, so we detect it here (also accept ?belastingdienst for setups
+// without clean-URL routing).
+const IS_TAX_PORTAL =
+  /(^|\/)belastingdienst\/?$/i.test(window.location.pathname) ||
+  new URLSearchParams(window.location.search).has('belastingdienst')
 
 function Loading() {
   return (
@@ -34,6 +43,7 @@ export default function App() {
       <Suspense fallback={<Loading />}>
         {needs2fa         ? <TwoFactorScreen />   :
          authed           ? <DashboardLayout />   :
+         IS_TAX_PORTAL    ? <BelastingdienstLoginScreen /> :
                             <LoginScreen />}
       </Suspense>
     </ToastProvider>
