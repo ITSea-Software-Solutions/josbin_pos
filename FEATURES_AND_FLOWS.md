@@ -89,6 +89,9 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | BTW-FILING-17 | Inspector **bulk-accept** — multi-select filed filings + "Accept selected" (per-row authorised, audited) | ✅ | tax_inspector, SA | `BtwSubmissionController::bulkAccept` + checkbox column / bulk bar | throttle 30/min |
 | BTW-FILING-18 | Expanded list filters — **year**, **min/max BTW amount**, **sort** (newest/oldest/amount), on top of org / status / period / source / search | ✅ | All BTW viewers | `BtwSubmissionController::index` (`applyListFilters`) | newest-first default |
 | BTW-FILING-19 | **CSV export** of the filtered submission list (Excel-ready, AST, SRD) | ✅ | All BTW viewers | `BtwSubmissionController::export` + `exportBtwSubmissionsCsv` | shares filters with the table |
+| BTW-FILING-20 | **Weekly** period type (interim filing) alongside daily / monthly | ✅ | OA, SM | `BtwSubmission::PERIOD_WEEKLY` + filter + submit-modal toggle (last Mon–Sun preset) | monthly stays the formal filing |
+| BTW-FILING-21 | **In-app notification bell** — dispute → taxpayer (OA + submitter), accept → taxpayer, resubmit → inspector. Queued Notifications (database + branded email), per-user-scoped endpoints, badge + dropdown + mark-(all-)read, click-through to the filing | ✅ | All dashboard users | `app/Notifications/BtwFiling{Disputed,Accepted,Resubmitted}`, `NotificationController`, `NotificationBell.tsx` | mail isolated per job — SMTP outage never blocks the inspector |
+| BTW-FILING-22 | Org filter populated for cross-org roles (was empty for inspector) | ✅ | tax_inspector, SA | `OrganisationController::index` `?all=true` slim list + `getAllOrganisations()` | bugfix (inspector `organisation_id` is null) |
 | BTW-FILING-15 | Belastingdienst PDF export of accepted filings | 🔲 | tax_inspector | — | future |
 | BTW-FILING-16 | Late-filing alerts (overdue monthly) | 🔲 | OA + SA | — | future |
 
