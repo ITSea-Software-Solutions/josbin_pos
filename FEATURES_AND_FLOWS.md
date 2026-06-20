@@ -85,6 +85,10 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | BTW-FILING-15c | Enhanced filters on list — org dropdown, source POS (josbin / external API), search by reference or org, clear-all | ✅ | All BTW viewers | `BtwSubmissionController::index` + `BtwSubmissionsScreen.tsx` filter bar | task #82 |
 | BTW-FILING-15d | Click-row → detail navigation + click-tile-on-dashboard → list-with-filter navigation | ✅ | All BTW viewers | `DashboardLayout.tsx` `openSubmissionDetail` + `openBtwListWithFilter` | task #82 |
 | BTW-FILING-15e | Source POS attribution visible to inspector (Josbin native vs Layer-3 third-party API contributors per filing) | ✅ | tax_inspector, SA | `sales.source` already on schema; aggregated in detail endpoint | task #82 (future-proof for non-Josbin POS integrators) |
+| BTW-FILING-16 | Official **Belastingdienst Suriname government portal** — distinct gov-branded login at `/belastingdienst`, green/gold flag identity carried through sidebar chrome + 2FA screen | ✅ | tax_inspector | `BelastingdienstLoginScreen.tsx`, `theme/belastingdienst.ts`, role-aware `DashboardLayout` + `TwoFactorScreen` | — |
+| BTW-FILING-17 | Inspector **bulk-accept** — multi-select filed filings + "Accept selected" (per-row authorised, audited) | ✅ | tax_inspector, SA | `BtwSubmissionController::bulkAccept` + checkbox column / bulk bar | throttle 30/min |
+| BTW-FILING-18 | Expanded list filters — **year**, **min/max BTW amount**, **sort** (newest/oldest/amount), on top of org / status / period / source / search | ✅ | All BTW viewers | `BtwSubmissionController::index` (`applyListFilters`) | newest-first default |
+| BTW-FILING-19 | **CSV export** of the filtered submission list (Excel-ready, AST, SRD) | ✅ | All BTW viewers | `BtwSubmissionController::export` + `exportBtwSubmissionsCsv` | shares filters with the table |
 | BTW-FILING-15 | Belastingdienst PDF export of accepted filings | 🔲 | tax_inspector | — | future |
 | BTW-FILING-16 | Late-filing alerts (overdue monthly) | 🔲 | OA + SA | — | future |
 
