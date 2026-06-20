@@ -3,7 +3,7 @@ import apiClient from './client'
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export type BtwSubmissionStatus = 'filed' | 'accepted' | 'disputed' | 'superseded'
-export type BtwSubmissionPeriodType = 'daily' | 'monthly'
+export type BtwSubmissionPeriodType = 'daily' | 'weekly' | 'monthly'
 
 export interface BtwSubmission {
   id: string

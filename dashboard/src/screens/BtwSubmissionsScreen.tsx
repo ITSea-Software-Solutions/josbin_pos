@@ -7,7 +7,7 @@ import {
   acceptBtwSubmission, disputeBtwSubmission, supersedeBtwSubmission, bulkAcceptBtw, exportBtwSubmissionsCsv,
   type BtwSubmission, type BtwSubmissionStatus, type BtwSubmissionPeriodType, type BtwSubmissionPreview,
 } from '@/api/btwSubmissions'
-import { getOrganisations } from '@/api/organisations'
+import { getAllOrganisations } from '@/api/organisations'
 import { BD } from '@/theme/belastingdienst'
 import { BelastingdienstHeader } from '@/components/shared/BelastingdienstHeader'
 
@@ -53,8 +53,21 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
   const [preview, setPreview] = useState<BtwSubmissionPreview | null>(null)
   const [error, setError] = useState('')
 
+  // Previous full calendar week (Mon–Sun) — the natural "weekly" filing window.
+  const lastWeek = (() => {
+    const d = new Date()
+    const sinceMon = (d.getDay() + 6) % 7           // 0 = Monday
+    const thisMon = new Date(d); thisMon.setDate(d.getDate() - sinceMon)
+    const lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate() - 7)
+    const lastSun = new Date(lastMon); lastSun.setDate(lastMon.getDate() + 6)
+    return { start: lastMon.toISOString().slice(0, 10), end: lastSun.toISOString().slice(0, 10) }
+  })()
+
   function setMonthly() {
     setPeriodType('monthly'); setStart(prevMonthStart); setEnd(prevMonthEnd); setPreview(null); setError('')
+  }
+  function setWeekly() {
+    setPeriodType('weekly'); setStart(lastWeek.start); setEnd(lastWeek.end); setPreview(null); setError('')
   }
   function setDaily() {
     setPeriodType('daily'); setStart(yesterday); setEnd(yesterday); setPreview(null); setError('')
@@ -94,14 +107,21 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
         </div>
 
         {/* Period type toggle */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-          <button onClick={setDaily} style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === 'daily' ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: periodType === 'daily' ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === 'daily' ? '#7c3aed' : '#6b7280', cursor: 'pointer' }}>
-            {isNl ? '📅 Dagelijks' : '📅 Daily'}
-          </button>
-          <button onClick={setMonthly} style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === 'monthly' ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: periodType === 'monthly' ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === 'monthly' ? '#7c3aed' : '#6b7280', cursor: 'pointer' }}>
-            {isNl ? '🗓️ Maandelijks (formele aangifte)' : '🗓️ Monthly (formal filing)'}
-          </button>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+          {([
+            ['daily',   isNl ? '📅 Dagelijks' : '📅 Daily',     setDaily],
+            ['weekly',  isNl ? '🗓 Wekelijks' : '🗓 Weekly',     setWeekly],
+            ['monthly', isNl ? '📆 Maandelijks' : '📆 Monthly',  setMonthly],
+          ] as const).map(([pt, label, fn]) => (
+            <button key={pt} onClick={fn}
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === pt ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: periodType === pt ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === pt ? '#7c3aed' : '#6b7280', cursor: 'pointer' }}>
+              {label}
+            </button>
+          ))}
         </div>
+        <p style={{ fontSize: 11, color: '#9090a0', marginBottom: 14 }}>
+          {isNl ? 'Maandelijks is de formele Belastingdienst-aangifte; dagelijks/wekelijks zijn tussentijds.' : 'Monthly is the formal Belastingdienst filing; daily/weekly are interim.'}
+        </p>
 
         {/* Date range */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
@@ -283,7 +303,7 @@ function ResubmitModal({ submission, isNl, onClose, onResubmitted }: { submissio
 function OrgFilterDropdown({ value, onChange, isNl }: { value: string; onChange: (v: string) => void; isNl: boolean }) {
   const { data: orgs = [] } = useQuery({
     queryKey: ['organisations-for-btw-filter'],
-    queryFn:  getOrganisations,
+    queryFn:  getAllOrganisations,
     staleTime: 5 * 60_000,
   })
   return (
@@ -472,6 +492,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                 <select value={periodFilter} onChange={(e) => setPeriodFilter(e.target.value as BtwSubmissionPeriodType | '')} style={filterSelectSt}>
                   <option value="">{isNl ? 'Alle periodes' : 'All periods'}</option>
                   <option value="daily">{isNl ? 'Dagelijks' : 'Daily'}</option>
+                  <option value="weekly">{isNl ? 'Wekelijks' : 'Weekly'}</option>
                   <option value="monthly">{isNl ? 'Maandelijks' : 'Monthly'}</option>
                 </select>
               </div>

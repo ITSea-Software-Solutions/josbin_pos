@@ -116,7 +116,11 @@ class BtwSubmissionService
         $orgSlug = strtoupper(substr(preg_replace('/[^A-Z0-9]/i', '',
             \App\Models\Organisation::where('id', $organisationId)->value('name') ?? 'ORG'), 0, 8));
 
-        $tag = $periodType === BtwSubmission::PERIOD_MONTHLY ? 'MTH' : 'DAY';
+        $tag = match ($periodType) {
+            BtwSubmission::PERIOD_MONTHLY => 'MTH',
+            BtwSubmission::PERIOD_WEEKLY  => 'WK',
+            default                       => 'DAY',
+        };
 
         $count = BtwSubmission::where('organisation_id', $organisationId)
             ->where('period_type', $periodType)

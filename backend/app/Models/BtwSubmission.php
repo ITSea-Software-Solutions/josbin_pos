@@ -27,6 +27,7 @@ class BtwSubmission extends Model implements Auditable
     public const STATUS_SUPERSEDED = 'superseded';
 
     public const PERIOD_DAILY   = 'daily';
+    public const PERIOD_WEEKLY  = 'weekly';
     public const PERIOD_MONTHLY = 'monthly';
 
     public const STATUSES = [
@@ -35,7 +36,7 @@ class BtwSubmission extends Model implements Auditable
     ];
 
     public const PERIOD_TYPES = [
-        self::PERIOD_DAILY, self::PERIOD_MONTHLY,
+        self::PERIOD_DAILY, self::PERIOD_WEEKLY, self::PERIOD_MONTHLY,
     ];
 
     protected $fillable = [

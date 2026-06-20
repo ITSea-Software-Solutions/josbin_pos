@@ -11,6 +11,10 @@ return [
     |
     */
 
+    // Public URL of the management dashboard SPA — used in notification emails
+    // (e.g. the "correct & resubmit" link when a BTW filing is disputed).
+    'dashboard_url' => env('DASHBOARD_URL', 'http://142.93.88.143:8090'),
+
     // URL of the Josbin POS license server (managed by the developer company)
     'license_server_url' => env('JOSBIN_POS_LICENSE_SERVER_URL', 'https://license.josbin-pos.sr'),
 

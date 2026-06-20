@@ -23,23 +23,36 @@ class OrganisationController extends Controller
             \App\Models\User::ROLE_ORGANISATION_ADMIN,
             \App\Models\User::ROLE_STORE_MANAGER,
             \App\Models\User::ROLE_AUDITOR,
+            \App\Models\User::ROLE_TAX_INSPECTOR,   // cross-org: needs the org list to filter BTW filings
         ], true)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
 
-        if ($user->isSuperAdmin()) {
-            $orgs = Organisation::query()
-                ->withCount(['stores', 'users'])
-                ->orderBy('name')
-                ->paginate($request->integer('per_page', 25));
-        } else {
-            $orgs = Organisation::where('id', $user->organisation_id)
-                ->withCount(['stores', 'users'])
-                ->get();
-            return response()->json(['data' => $orgs]);
+        // Cross-org roles (Super Admin, tax inspector) see every organisation.
+        // The inspector's own organisation_id is null, so it MUST take this
+        // branch — the old isSuperAdmin()-only check sent it to the own-org
+        // path below where where('id', null) returns nothing (the empty
+        // org-filter bug on the BTW screen).
+        if ($user->isCrossOrgRole()) {
+            // Dropdowns ask for the full slim list (id + name); the SA
+            // Organisations screen paginates with store/user counts.
+            if ($request->boolean('all')) {
+                return response()->json([
+                    'data' => Organisation::orderBy('name')->get(['id', 'name', 'is_active']),
+                ]);
+            }
+            return response()->json(
+                Organisation::query()->withCount(['stores', 'users'])->orderBy('name')
+                    ->paginate($request->integer('per_page', 25))
+            );
         }
 
-        return response()->json($orgs);
+        // Own-org roles (OA / SM / Auditor) only ever see their own organisation.
+        $orgs = Organisation::where('id', $user->organisation_id)
+            ->withCount(['stores', 'users'])
+            ->get();
+
+        return response()->json(['data' => $orgs]);
     }
 
     /** POST /api/organisations — super admin only */

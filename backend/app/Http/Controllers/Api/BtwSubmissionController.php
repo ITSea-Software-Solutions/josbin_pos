@@ -680,7 +680,62 @@ class BtwSubmissionController extends Controller
             'created_at'      => now(),
         ]);
 
+        // Push notification to the taxpayer (org admins + the original submitter)
+        // so they actually know to act — best-effort, never blocks the dispute.
+        $this->notifyDisputed($btwSubmission, $data['inspector_note']);
+
         return response()->json(['data' => $btwSubmission->fresh()->load('reviewer:id,name')]);
+    }
+
+    /**
+     * Email the organisation's admins + the filing's submitter that the
+     * Belastingdienst disputed a filing, with the reason and a resubmit link.
+     * Wrapped so an SMTP outage can never break the inspector's action.
+     */
+    private function notifyDisputed(BtwSubmission $s, string $reason): void
+    {
+        try {
+            $org = Organisation::find($s->organisation_id);
+            $recipients = \App\Models\User::query()
+                ->where('organisation_id', $s->organisation_id)
+                ->where('is_active', true)
+                ->where(fn ($q) => $q->where('role', \App\Models\User::ROLE_ORGANISATION_ADMIN)
+                    ->orWhere('id', $s->submitted_by))
+                ->pluck('email')
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($recipients->isEmpty()) {
+                return;
+            }
+
+            $locale = $org?->locale === 'en' ? 'en' : 'nl';
+            $period = $s->period_start === $s->period_end
+                ? $s->period_start
+                : "{$s->period_start} → {$s->period_end}";
+
+            $html = view('emails.btw-disputed', [
+                'locale'    => $locale,
+                'orgName'   => $org?->name ?? 'Organisatie',
+                'reference' => $s->reference,
+                'period'    => $period,
+                'btw'       => number_format((float) $s->total_btw_srd, 2, '.', ''),
+                'reason'    => $reason,
+                'portalUrl' => rtrim((string) config('josbin_pos.dashboard_url'), '/'),
+            ])->render();
+
+            $subject = ($locale === 'nl' ? 'BTW-aangifte betwist' : 'BTW filing disputed')
+                . ' — ' . $s->reference;
+
+            \Illuminate\Support\Facades\Mail::html($html, function ($m) use ($recipients, $subject) {
+                $m->to($recipients->all())->subject($subject);
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[BTW] dispute notification failed', [
+                'submission' => $s->id, 'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

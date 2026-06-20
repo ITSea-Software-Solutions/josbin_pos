@@ -61,6 +61,16 @@ export async function getOrganisations(): Promise<Organisation[]> {
   return res.data.data
 }
 
+/**
+ * Full slim org list (id + name) for filter dropdowns — bypasses pagination so
+ * a cross-org user (Super Admin, tax inspector) sees EVERY organisation, not
+ * just the first page.
+ */
+export async function getAllOrganisations(): Promise<Array<{ id: string; name: string }>> {
+  const res = await apiClient.get<{ data: Array<{ id: string; name: string }> }>('/organisations', { params: { all: true } })
+  return res.data.data
+}
+
 export async function getOrganisation(id: string): Promise<Organisation> {
   const res = await apiClient.get<{ data: Organisation }>(`/organisations/${id}`)
   return res.data.data
