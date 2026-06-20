@@ -77,7 +77,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | BTW-FILING-09 | Idempotency: one filing per (org, period_type, range) | ✅ | Auto | unique constraint + 409 BTW_ALREADY_FILED | — |
 | BTW-FILING-10 | Tax inspector accept / dispute workflow | ✅ | tax_inspector + SA | `BtwSubmissionController::accept/dispute` | — |
 | BTW-FILING-11 | Hash chain (tamper-evident, continues audit trail pattern) | ✅ | Auto | `BtwSubmissionService::hashChain` | — |
-| BTW-FILING-12 | Cross-org list for inspector + SA; own-org for OA/SM | ✅ | All BTW roles | `BtwSubmissionController::index` policy scope | — |
+| BTW-FILING-12 | Cross-org list for inspector + SA; own-org for OA; **own-store for SM** | ✅ | All BTW roles | `BtwSubmissionController::index` policy scope | — |
 | BTW-FILING-13 | Audit log entries for every transition (`btw.submitted/accepted/disputed`) | ✅ | Auto | controller writes `audit_logs` | — |
 | BTW-FILING-14 | Resubmission via `superseded` status (recompute totals, audit-logged) | ✅ | OA, SM (own org only) | `BtwSubmissionController::supersede` + `ResubmitModal` + partial unique idx | task #80 |
 | BTW-FILING-15a | Tax Inspector dashboard — KPI landing with month-over-month BTW, pending review, disputed open, 30-day trend, top orgs, late-filings alert | ✅ | tax_inspector, SA, OA (scoped) | `BtwSubmissionController::inspectorDashboard` + `TaxInspectorDashboard.tsx` | task #82 |
@@ -92,6 +92,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | BTW-FILING-20 | **Weekly** period type (interim filing) alongside daily / monthly | ✅ | OA, SM | `BtwSubmission::PERIOD_WEEKLY` + filter + submit-modal toggle (last Mon–Sun preset) | monthly stays the formal filing |
 | BTW-FILING-21 | **In-app notification bell** — dispute → taxpayer (OA + submitter), accept → taxpayer, resubmit → inspector. Queued Notifications (database + branded email), per-user-scoped endpoints, badge + dropdown + mark-(all-)read, click-through to the filing | ✅ | All dashboard users | `app/Notifications/BtwFiling{Disputed,Accepted,Resubmitted}`, `NotificationController`, `NotificationBell.tsx` | mail isolated per job — SMTP outage never blocks the inspector |
 | BTW-FILING-22 | Org filter populated for cross-org roles (was empty for inspector) | ✅ | tax_inspector, SA | `OrganisationController::index` `?all=true` slim list + `getAllOrganisations()` | bugfix (inspector `organisation_id` is null) |
+| BTW-FILING-23 | **Store Manager filing is store-scoped** — SM files / previews / lists / supersedes / views ONLY their own store (forced server-side); OA files the org-wide consolidated return. Store-aware partial unique index lets org-wide + per-store filings coexist per period. Submit modal shows the scope (🏪 store vs 🏢 org). | ✅ | store_manager (scoped), OA (org-wide) | `BtwSubmissionController` (`validatePayload` force + `index`/dashboard scope), `BtwSubmissionPolicy` (view/supersede), `User::isStoreBound`, `btw_subs_store_aware_unique` migration, `SubmitBtwModal` | +BtwStoreScopeTest (8) |
 | BTW-FILING-15 | Belastingdienst PDF export of accepted filings | 🔲 | tax_inspector | — | future |
 | BTW-FILING-16 | Late-filing alerts (overdue monthly) | 🔲 | OA + SA | — | future |
 
