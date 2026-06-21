@@ -565,9 +565,15 @@ class BtwSubmissionController extends Controller
             return $submission;
         });
 
-        // Tell the Belastingdienst inspectors a new filing is waiting in their
-        // review queue (in-app bell + email). Best-effort; never blocks filing.
-        $this->notifyInspectors($submission, new \App\Notifications\BtwFilingSubmitted($submission));
+        // Ping the Belastingdienst inspectors only for the FORMAL MONTHLY
+        // filing — that's the legal return that needs review. Daily/weekly are
+        // interim and just sit in the inspector's list/queue, so a shop that
+        // files daily doesn't spam the inspector's bell. (Resubmits always
+        // ping, regardless of period — they follow a dispute the inspector
+        // raised.) Best-effort; never blocks the filing.
+        if ($submission->period_type === BtwSubmission::PERIOD_MONTHLY) {
+            $this->notifyInspectors($submission, new \App\Notifications\BtwFilingSubmitted($submission));
+        }
 
         return response()->json([
             'data' => $submission->fresh()->load('organisation:id,name', 'store:id,name', 'submitter:id,name'),

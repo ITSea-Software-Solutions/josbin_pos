@@ -99,14 +99,46 @@ class BtwNotificationTest extends TestCase
         return BtwSubmission::findOrFail($res->json('data.id'));
     }
 
-    public function test_new_filing_notifies_inspectors(): void
+    /** Make a sale in the month + file the formal MONTHLY return. */
+    private function fileMonthly(string $monthStart = '2026-05-01', string $monthEnd = '2026-05-31'): BtwSubmission
+    {
+        $when = Carbon::parse($monthStart, 'America/Paramaribo')->setTime(12, 0)->addDays(5);
+        $sale = Sale::create([
+            'store_id' => $this->storeA->id, 'cashier_id' => $this->cashierA->id,
+            'sale_number' => Sale::nextNumber($this->storeA->id),
+            'subtotal_srd' => '110.00', 'discount_srd' => '0.00', 'btw_srd' => '10.00',
+            'total_srd' => '110.00', 'payment_method' => 'cash', 'status' => 'completed',
+            'source' => 'pos', 'occurred_at' => $when,
+        ]);
+        SaleItem::create([
+            'sale_id' => $sale->id, 'product_name_snapshot' => 'Item', 'unit_price_srd' => '110.00',
+            'quantity' => 1, 'discount_srd' => '0.00', 'discount_pct' => '0.00', 'btw_rate' => '10',
+            'btw_exempt' => false, 'btw_srd' => '10.00', 'line_total_srd' => '110.00',
+        ]);
+
+        $res = $this->actingAs($this->oaA, 'sanctum')->postJson('/api/btw-submissions', [
+            'period_type' => 'monthly', 'period_start' => $monthStart, 'period_end' => $monthEnd,
+        ])->assertCreated();
+
+        return BtwSubmission::findOrFail($res->json('data.id'));
+    }
+
+    public function test_monthly_filing_notifies_inspectors(): void
     {
         Notification::fake();
-        $this->fileDaily();
+        $this->fileMonthly();
 
         Notification::assertSentTo($this->inspector, BtwFilingSubmitted::class);
         // The taxpayer who filed should NOT get the inspector-facing alert.
         Notification::assertNotSentTo($this->oaA, BtwFilingSubmitted::class);
+    }
+
+    public function test_interim_daily_filing_does_not_notify_inspectors(): void
+    {
+        Notification::fake();
+        $this->fileDaily();   // daily = interim, must NOT ping the inspector
+
+        Notification::assertNotSentTo($this->inspector, BtwFilingSubmitted::class);
     }
 
     public function test_dispute_notifies_taxpayer_not_other_orgs(): void
