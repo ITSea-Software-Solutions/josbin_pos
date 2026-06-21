@@ -406,3 +406,54 @@ describe('cartStore — customer attach / detach', () => {
     expect(useCartStore.getState().items).toHaveLength(1)
   })
 })
+
+describe('cartStore — restoreCart (held bills)', () => {
+  it('restores a full-CartItem hold (real POS shape)', () => {
+    const item: CartItem = {
+      product: P10,
+      quantity: 2,
+      unitPriceOverride: null,
+      btwRateOverride: null,
+      discount: null,
+      computed: {
+        unitPrice: '11.00', subtotal: '22.00', discountAmount: '0.00',
+        taxableBase: '22.00', btwAmount: '2.00', lineTotal: '22.00',
+      },
+    }
+    useCartStore.getState().restoreCart([item], null, { type: 'fixed', value: 0 } as CartDiscount)
+    const { items, totals } = useCartStore.getState()
+    expect(items).toHaveLength(1)
+    expect(items[0].product.id).toBe('p10')
+    expect(items[0].quantity).toBe(2)
+    expect(items[0].computed.lineTotal).toBe('22.00')
+    expect(totals.total).toBe('22.00')
+  })
+
+  it('restores a THIN seeded/legacy hold (no nested product) without crashing', () => {
+    // The shape DemoSeeder/legacy rows store: flat, no `product` object.
+    const thin = {
+      product_id: 'seed-1', name: 'Fernandes Cola',
+      unit_price: '11.00', quantity: 3, btw_rate: '10.00',
+    }
+    expect(() =>
+      useCartStore.getState().restoreCart([thin], null, { type: 'fixed', value: 0 } as CartDiscount),
+    ).not.toThrow()
+
+    const { items, totals } = useCartStore.getState()
+    expect(items).toHaveLength(1)
+    expect(items[0].product.id).toBe('seed-1')
+    expect(items[0].product.name_nl).toBe('Fernandes Cola')
+    expect(items[0].quantity).toBe(3)
+    // 3 × 11.00 = 33.00 incl. 10% BTW → base 33.00, btw 3.00
+    expect(items[0].computed.lineTotal).toBe('33.00')
+    expect(items[0].computed.btwAmount).toBe('3.00')
+    expect(totals.total).toBe('33.00')
+  })
+
+  it('tolerates a missing/empty items array', () => {
+    expect(() =>
+      useCartStore.getState().restoreCart([], null, { type: 'fixed', value: 0 } as CartDiscount),
+    ).not.toThrow()
+    expect(useCartStore.getState().items).toHaveLength(0)
+  })
+})

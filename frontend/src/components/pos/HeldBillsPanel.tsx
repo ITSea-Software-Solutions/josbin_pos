@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import { useToast } from '@/components/shared/Toast'
 import { useCartStore } from '@/store/cartStore'
 import { getHeldBills, restoreHeldBill } from '@/api/sales'
 import type { HeldBill } from '@/types/models'
@@ -16,6 +17,7 @@ interface HeldBillsPanelProps {
 export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPanelProps) {
   const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
+  const toast = useToast()
   const restoreCart = useCartStore((s) => s.restoreCart)
   const cartItemCount = useCartStore((s) => s.items.length)
   const qc = useQueryClient()
@@ -33,9 +35,18 @@ export default function HeldBillsPanel({ isOpen, onClose, storeId }: HeldBillsPa
   const restoreMutation = useMutation({
     mutationFn: restoreHeldBill,
     onSuccess: (bill) => {
-      restoreCart(bill.items, bill.customer, bill.sale_discount)
-      qc.invalidateQueries({ queryKey: ['held-bills', storeId] })
-      onClose()
+      // onSuccess errors aren't routed to onError by react-query, so guard
+      // the cart load explicitly — a bad bill must never fail silently.
+      try {
+        restoreCart(bill.items, bill.customer, bill.sale_discount)
+        qc.invalidateQueries({ queryKey: ['held-bills', storeId] })
+        onClose()
+      } catch {
+        toast.error(isNl ? 'Kon de bon niet in de kassa laden.' : 'Could not load the bill into the cart.')
+      }
+    },
+    onError: () => {
+      toast.error(isNl ? 'Kon de bon niet openen. Probeer opnieuw.' : 'Could not open the bill. Please try again.')
     },
   })
 

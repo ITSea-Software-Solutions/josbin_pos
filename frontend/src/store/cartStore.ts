@@ -48,6 +48,43 @@ function computeItem(item: Omit<CartItem, 'computed'>): CartItem['computed'] {
   }
 }
 
+/**
+ * Held-bill cart_data is an unversioned JSON blob. Real POS holds store full
+ * CartItems (with a nested `product`), but seeded / legacy / partial rows can
+ * carry a thin shape ({ product_id, name, unit_price, quantity, btw_rate }).
+ * Normalize either into a CartItem so restoring a bill never crashes on a
+ * missing `item.product` (which would otherwise throw and silently abort the
+ * restore). Unknown fields fall back to safe defaults.
+ */
+function normalizeHeldItem(raw: unknown): Omit<CartItem, 'computed'> {
+  const r = (raw ?? {}) as Record<string, any>
+
+  // Already a full CartItem (real hold) — keep its product as-is.
+  const product: Product = r.product && typeof r.product === 'object'
+    ? r.product
+    : {
+        id: String(r.product_id ?? r.id ?? ''),
+        organisation_id: String(r.organisation_id ?? ''),
+        category_id: String(r.category_id ?? ''),
+        name_nl: String(r.name_nl ?? r.name ?? ''),
+        name_en: String(r.name_en ?? r.name ?? ''),
+        barcode: r.barcode ?? null,
+        price: String(r.unit_price ?? r.price ?? '0'),
+        btw_rate: String(r.btw_rate ?? '0'),
+        btw_exempt: Boolean(r.btw_exempt ?? false),
+        stock_qty: Number(r.stock_qty ?? 0),
+        image_url: r.image_url ?? null,
+      }
+
+  return {
+    product,
+    quantity: Number(r.quantity) || 1,
+    unitPriceOverride: r.unitPriceOverride ?? null,
+    btwRateOverride: r.btwRateOverride ?? null,
+    discount: r.discount ?? null,
+  }
+}
+
 function computeTotals(items: CartItem[], saleDiscount: CartDiscount): CartTotals {
   const subtotal = items.reduce((sum, i) => sum + toDecimal(i.computed.taxableBase), 0)
 
@@ -100,7 +137,9 @@ interface CartState {
   clearSaleDiscount: () => void
   setCustomer: (customer: Customer | null) => void
   clearCart: () => void
-  restoreCart: (items: CartItem[], customer: Customer | null, saleDiscount: CartDiscount) => void
+  // items is loosely typed: held-bill cart_data may be full CartItems (real
+  // holds) or a thin seeded/legacy shape — normalizeHeldItem handles both.
+  restoreCart: (items: readonly unknown[], customer: Customer | null, saleDiscount: CartDiscount) => void
 }
 
 const EMPTY_DISCOUNT: CartDiscount = { type: 'percent', value: 0 }
@@ -216,16 +255,19 @@ export const useCartStore = create<CartState>()(
         }),
 
       restoreCart: (items, customer, saleDiscount) => {
-        // Recompute all items (in case prices changed since bill was held)
-        const recomputed = items.map((i) => ({
-          ...i,
-          computed: computeItem(i),
-        }))
+        // Normalize first — held-bill JSON may carry full CartItems (real
+        // holds) or a thin seeded/legacy shape with no nested `product`.
+        // Then recompute (in case prices changed since the bill was held).
+        const recomputed = (items ?? []).map((i) => {
+          const norm = normalizeHeldItem(i)
+          return { ...norm, computed: computeItem(norm) }
+        })
+        const discount = saleDiscount ?? EMPTY_DISCOUNT
         set({
           items: recomputed,
-          customer,
-          saleDiscount,
-          totals: rebuildTotals(recomputed, saleDiscount),
+          customer: customer ?? null,
+          saleDiscount: discount,
+          totals: rebuildTotals(recomputed, discount),
         })
       },
     }),
