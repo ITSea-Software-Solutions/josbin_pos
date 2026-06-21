@@ -565,6 +565,10 @@ class BtwSubmissionController extends Controller
             return $submission;
         });
 
+        // Tell the Belastingdienst inspectors a new filing is waiting in their
+        // review queue (in-app bell + email). Best-effort; never blocks filing.
+        $this->notifyInspectors($submission, new \App\Notifications\BtwFilingSubmitted($submission));
+
         return response()->json([
             'data' => $submission->fresh()->load('organisation:id,name', 'store:id,name', 'submitter:id,name'),
         ], 201);
@@ -864,7 +868,7 @@ class BtwSubmissionController extends Controller
         });
 
         // Tell the Belastingdienst inspectors a corrected filing is waiting.
-        $this->notifyInspectors($newSubmission);
+        $this->notifyInspectors($newSubmission, new \App\Notifications\BtwFilingResubmitted($newSubmission));
 
         return response()->json([
             'data' => $newSubmission->fresh()->load('organisation:id,name', 'store:id,name', 'submitter:id,name'),
@@ -872,7 +876,7 @@ class BtwSubmissionController extends Controller
     }
 
     /** Notify all active Belastingdienst inspectors (in-app + email), best-effort. */
-    private function notifyInspectors(BtwSubmission $s): void
+    private function notifyInspectors(BtwSubmission $s, \Illuminate\Notifications\Notification $notification): void
     {
         try {
             $inspectors = \App\Models\User::query()
@@ -884,11 +888,12 @@ class BtwSubmissionController extends Controller
                 return;
             }
 
-            \Illuminate\Support\Facades\Notification::send($inspectors, new \App\Notifications\BtwFilingResubmitted($s));
+            \Illuminate\Support\Facades\Notification::send($inspectors, $notification);
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('[BTW] inspector notification failed', [
-                'submission' => $s->id,
-                'error'      => $e->getMessage(),
+                'submission'   => $s->id,
+                'notification' => $notification::class,
+                'error'        => $e->getMessage(),
             ]);
         }
     }

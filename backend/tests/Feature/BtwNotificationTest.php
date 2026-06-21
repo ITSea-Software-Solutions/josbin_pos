@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Notifications\BtwFilingAccepted;
 use App\Notifications\BtwFilingDisputed;
 use App\Notifications\BtwFilingResubmitted;
+use App\Notifications\BtwFilingSubmitted;
 use Database\Seeders\RolesAndPermissionsSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -96,6 +97,16 @@ class BtwNotificationTest extends TestCase
         ])->assertCreated();
 
         return BtwSubmission::findOrFail($res->json('data.id'));
+    }
+
+    public function test_new_filing_notifies_inspectors(): void
+    {
+        Notification::fake();
+        $this->fileDaily();
+
+        Notification::assertSentTo($this->inspector, BtwFilingSubmitted::class);
+        // The taxpayer who filed should NOT get the inspector-facing alert.
+        Notification::assertNotSentTo($this->oaA, BtwFilingSubmitted::class);
     }
 
     public function test_dispute_notifies_taxpayer_not_other_orgs(): void
