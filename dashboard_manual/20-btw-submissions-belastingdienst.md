@@ -17,6 +17,7 @@ A **BTW submission** is a snapshot of one period's totals (sales, BTW collected,
 | Period type | Use case | Belastingdienst expects this |
 |---|---|---|
 | **Daily** (`period_start == period_end`) | High-volume shops that want transparency, ad-hoc audits, or have an internal policy to file daily | Optional — not the legal cycle |
+| **Weekly** (full Mon–Sun week) | Interim check-in between dailies and the monthly close | Optional — interim only |
 | **Monthly** (1st → last day of one calendar month) | Standard | **Yes — formal monthly filing cycle** |
 
 Both kinds are stored. The inspector can drill into a daily for a specific date even if the monthly has been accepted — they're two views of the same underlying sales data.
@@ -39,10 +40,18 @@ Both kinds are stored. The inspector can drill into a daily for a specific date 
 
 ### Step 1 — Pick the period
 
-A modal opens. Pick **Dagelijks / Daily** or **Maandelijks / Monthly**.
+A modal opens. At the top it shows **who the filing is for**:
+
+- 🏪 **Filing for: \<your store\>** — if you're a **Store Manager**. Your filings cover only your assigned store; the scope is fixed and you can't change it. (Reports, Stock and Z-Report scope to your store the same way.)
+- 🏢 **Filing for: whole organisation** — if you're an **Org Admin**. This is the consolidated organisation-level return (every store combined) — the formal filing Belastingdienst expects, because BTW is filed per organisation (one BTW number).
+
+Then pick **Dagelijks / Daily**, **Wekelijks / Weekly**, or **Maandelijks / Monthly**.
 
 - **Daily** pre-fills *yesterday* as the date (you usually file the previous day's totals first thing in the morning).
+- **Weekly** pre-fills *last week* (previous Monday–Sunday) — an interim view between dailies and the monthly close.
 - **Monthly** pre-fills *last month* (1st to last day). The end-date input is locked — monthly *must* be a full calendar month per Belastingdienst format.
+
+> A Store Manager's per-store filing and the Org Admin's org-wide filing for the **same period can both exist** — they're different scopes. What you can't do is file the *same* scope + period twice (that's the duplicate block in Step 2).
 
 ### Step 2 — Compute totals (the preview button)
 
@@ -110,16 +119,18 @@ For each `filed` row, the inspector sees two action buttons:
 
 - Reason examples: *"Totalen komen niet overeen met aanvullende Z-rapporten."* (Totals don't match supplementary Z-reports.)
 - Confirm → status → `disputed`
-- The taxpayer's OA gets the dispute reason in the filing detail
+- The taxpayer is **notified** — the Org Admins + whoever submitted the filing get an in-app 🔔 notification (the bell in the dashboard header, with the dispute reason and a link to the filing) **and** an official Belastingdienst-styled email. They don't have to be watching the list to find out.
 - Audit log: `btw.disputed` event
 
-A disputed filing **stays in the system** as a permanent record. The taxpayer's OA can then resubmit a correction (§20.5).
+A disputed filing **stays in the system** as a permanent record. The taxpayer can then resubmit a correction (§20.5). When they do, the **inspector is notified** in turn (🔔 + email) that a corrected filing is waiting; when the inspector **accepts**, the taxpayer gets a closure notification.
+
+> 📧 **Email delivery note:** the in-app 🔔 bell always works. The *email* half only sends once real SMTP credentials are configured on the server — until then the notification lives in the bell only.
 
 ---
 
 ## 20.4 What the OA does about a disputed filing
 
-1. Filing now shows `Status = Disputed` with the inspector's reason in `inspector_note`.
+1. You're alerted by the 🔔 notification (and email, if SMTP is configured). The filing now shows `Status = Disputed` with the inspector's reason in `inspector_note`.
 2. OA reviews the reason. Common causes: missing sales, BTW-exempt classification disputed, period boundary mistake.
 3. OA fixes the underlying data (records the missing sale, corrects the product's BTW flag, etc.).
 4. OA clicks **↺ Corrigeer / Resubmit** on the disputed row → goes to §20.5.

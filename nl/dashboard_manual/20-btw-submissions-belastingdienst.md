@@ -17,6 +17,7 @@ Een **BTW-aangifte** is een momentopname van de totalen van één periode (verko
 | Periodetype | Toepassing | Belastingdienst verwacht dit |
 |---|---|---|
 | **Dagelijks** (`period_start == period_end`) | Hoog-volume winkels die transparantie willen, ad-hoc audits, of een intern beleid om dagelijks aangifte te doen | Optioneel — niet de wettelijke cyclus |
+| **Wekelijks** (volledige ma–zo week) | Tussentijdse controle tussen dagelijks en de maandafsluiting | Optioneel — alleen tussentijds |
 | **Maandelijks** (1e → laatste dag van één kalendermaand) | Standaard | **Ja — formele maandelijkse aangiftecyclus** |
 
 Beide soorten worden opgeslagen. De inspecteur kan inzoomen op een dagaangifte voor een specifieke datum, ook als de maandaangifte is geaccepteerd — het zijn twee weergaven van dezelfde onderliggende verkoopdata.
@@ -39,10 +40,18 @@ Beide soorten worden opgeslagen. De inspecteur kan inzoomen op een dagaangifte v
 
 ### Stap 1 — Kies de periode
 
-Een modal opent. Kies **Dagelijks** of **Maandelijks**.
+Een modal opent. Bovenaan toont deze **voor wie de aangifte is**:
+
+- 🏪 **Aangifte voor: \<uw vestiging\>** — als u **Vestigingsmanager** bent. Uw aangiftes dekken alleen uw toegewezen vestiging; de scope ligt vast en is niet wijzigbaar. (Rapporten, Voorraad en Z-rapport scopen op dezelfde manier naar uw vestiging.)
+- 🏢 **Aangifte voor: hele organisatie** — als u **Organisatiebeheerder** bent. Dit is de geconsolideerde aangifte op organisatieniveau (alle vestigingen samen) — de formele aangifte die de Belastingdienst verwacht, omdat BTW per organisatie wordt aangegeven (één BTW-nummer).
+
+Kies daarna **Dagelijks**, **Wekelijks** of **Maandelijks**.
 
 - **Dagelijks** vult vooraf *gisteren* in als datum (u dient meestal de totalen van de vorige dag in als eerste in de ochtend).
+- **Wekelijks** vult vooraf *vorige week* in (vorige maandag–zondag) — een tussentijdse weergave tussen dagelijks en de maandafsluiting.
 - **Maandelijks** vult vooraf *vorige maand* in (1e tot laatste dag). De einddatum-invoer is vergrendeld — maandelijks *moet* een volledige kalendermaand zijn volgens het Belastingdienst-formaat.
+
+> Een vestigingsaangifte van een Vestigingsmanager en de organisatiebrede aangifte van de Organisatiebeheerder voor **dezelfde periode kunnen beide bestaan** — het zijn verschillende scopes. Wat niet kan, is dezelfde scope + periode twee keer indienen (dat is de dubbel-blokkering in Stap 2).
 
 ### Stap 2 — Totalen berekenen (de voorvertoonknop)
 
@@ -110,10 +119,12 @@ Voor elke `filed`-rij ziet de inspecteur twee actieknoppen:
 
 - Voorbeelden van redenen: *"Totalen komen niet overeen met aanvullende Z-rapporten."*
 - Bevestigen → status → `disputed`
-- De OA van de belastingplichtige krijgt de betwistingsreden in het aangifte-detail
+- De belastingplichtige wordt **gemeld** — de Organisatiebeheerders + degene die de aangifte indiende krijgen een in-app 🔔 melding (de bel in de dashboardkop, met de betwistingsreden en een link naar de aangifte) **én** een officiële e-mail in Belastingdienst-stijl. Ze hoeven de lijst niet in de gaten te houden om het te weten te komen.
 - Auditlogboek: `btw.disputed`-gebeurtenis
 
-Een betwiste aangifte **blijft in het systeem** als een permanent record. De OA van de belastingplichtige kan dan een correctie opnieuw indienen (§20.5).
+Een betwiste aangifte **blijft in het systeem** als een permanent record. De belastingplichtige kan dan een correctie opnieuw indienen (§20.5). Wanneer dat gebeurt, wordt de **inspecteur op zijn beurt gemeld** (🔔 + e-mail) dat een gecorrigeerde aangifte klaarstaat; wanneer de inspecteur **accepteert**, krijgt de belastingplichtige een afsluitende melding.
+
+> 📧 **Opmerking over e-mailbezorging:** de in-app 🔔 bel werkt altijd. De *e-mail*-helft verstuurt pas zodra echte SMTP-gegevens op de server zijn geconfigureerd — tot dan leeft de melding alleen in de bel.
 
 ---
 
