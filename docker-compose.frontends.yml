@@ -16,6 +16,26 @@ services:
     depends_on:
       - nginx
 
+  # HTTPS (self-signed) variant of the dashboard on :8443. Serves the SAME
+  # built dist as dashboard-web — a SEPARATE container so the plain-HTTP
+  # dashboard (:8090) is never at risk if TLS/config has an issue. Enables
+  # secure-context browser features (camera barcode scanner). The cert lives
+  # in ./docker/frontends/certs (git-ignored, generated on the host).
+  dashboard-tls:
+    image: nginx:1.25-alpine
+    container_name: josbin_dashboard_tls
+    restart: unless-stopped
+    ports:
+      - "8443:443"
+    volumes:
+      - ./dashboard/dist:/usr/share/nginx/html:ro
+      - ./docker/frontends/dashboard-tls.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/frontends/certs:/etc/nginx/certs:ro
+    networks:
+      - josbin_pos_internal
+    depends_on:
+      - nginx
+
   pos-web:
     image: nginx:1.25-alpine
     container_name: josbin_pos_web

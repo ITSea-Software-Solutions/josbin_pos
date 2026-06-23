@@ -68,3 +68,6 @@ backend/josbin_pos_demo
 
 # Per-environment deploy config (host + public URLs); not committed
 deploy.env
+
+# Self-signed TLS certs for the HTTPS dashboard (generated on the host)
+docker/frontends/certs/
