@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import { getUsers, createUser, updateUser, type User, type CreateUserPayload } from '@/api/users'
 import { getOrganisations, getOrgStores, type Organisation, type Store } from '@/api/organisations'
 import { getTwoFactorPolicy, updateTwoFactorPolicy } from '@/api/securityPolicy'
@@ -867,8 +868,22 @@ export default function UsersScreen() {
     },
   })
 
+  // Client-side column sort (shared hook → identical behaviour across all
+  // dashboard tables). Accessors mirror what each cell displays so the order
+  // matches what the user reads (role → localized label, store → resolved name).
+  const { sorted: sortedUsers, sort, toggle, indicator } = useTableSort(users ?? [], {
+    name:      (u) => (u.name ?? '').toLowerCase(),
+    email:     (u) => (u.email ?? '').toLowerCase(),
+    role:      (u) => (ROLE_CFG[u.role]?.label[isNl ? 'nl' : 'en'] ?? u.role ?? '').toLowerCase(),
+    store:     (u) => (u.store_name ?? (u.store_id ? storeMap[u.store_id] : '') ?? '').toLowerCase(),
+    license:   (u) => (u.org_license?.tier ?? '').toLowerCase(),
+    twofactor: (u) => (u.two_factor_enabled ? 1 : 0),
+    lastlogin: (u) => (u.last_login_at ? new Date(u.last_login_at).getTime() : null),
+    status:    (u) => (u.is_active ? 1 : 0),
+  })
+
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
@@ -936,27 +951,32 @@ export default function UsersScreen() {
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                 {[
-                  isNl ? 'Gebruiker' : 'User',
-                  isNl ? 'E-mailadres' : 'Email',
-                  isNl ? 'Rol' : 'Role',
-                  isNl ? 'Vestiging' : 'Store',
+                  { key: 'name',  label: isNl ? 'Gebruiker' : 'User' },
+                  { key: 'email', label: isNl ? 'E-mailadres' : 'Email' },
+                  { key: 'role',  label: isNl ? 'Rol' : 'Role' },
+                  { key: 'store', label: isNl ? 'Vestiging' : 'Store' },
                   // SA-only: licence info is only meaningful to whoever can
                   // issue / extend / revoke licences. Other roles see a
                   // cleaner table without it.
-                  ...(isSuperAdmin ? [isNl ? 'Licentie' : 'Licence'] : []),
-                  '2FA',
-                  isNl ? 'Laatste login' : 'Last login',
-                  isNl ? 'Status' : 'Status',
-                  isNl ? 'Acties' : 'Actions',
+                  ...(isSuperAdmin ? [{ key: 'license', label: isNl ? 'Licentie' : 'Licence' }] : []),
+                  { key: 'twofactor', label: '2FA' },
+                  { key: 'lastlogin', label: isNl ? 'Laatste login' : 'Last login' },
+                  { key: 'status',    label: isNl ? 'Status' : 'Status' },
+                  { key: '',          label: isNl ? 'Acties' : 'Actions' },
                 ].map((h) => (
-                  <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                  <th key={h.label}
+                    onClick={h.key ? () => toggle(h.key) : undefined}
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    {h.label}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {(users ?? []).map((user, i) => (
+              {sortedUsers.map((user, i) => (
                 <tr key={user.id}
-                  style={{ borderBottom: i < (users?.length ?? 0) - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
+                  style={{ borderBottom: i < sortedUsers.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >

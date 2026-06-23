@@ -432,7 +432,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
   })
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1240, background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
+    <div style={{ padding: '28px 32px', maxWidth: '100%', background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
 
       {/* Header — official for the inspector, plain for OA/SM */}
       {isInspector ? (

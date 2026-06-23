@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTableSort } from '@/lib/useTableSort'
 import { listPendingPayments, confirmPendingPayment, type PendingPaymentSale } from '@/api/pendingPayments'
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -88,8 +89,19 @@ export default function PendingPaymentsScreen() {
   const rows = page?.data ?? []
   const totalPending = rows.reduce((a, s) => a + Number(s.total_srd), 0)
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  const { sorted, sort, toggle, indicator } = useTableSort(rows, {
+    sale_number: (s) => (s.sale_number ?? '').toLowerCase(),
+    method:      (s) => s.payment_method ?? '',
+    provider:    (s) => (s.payment_provider ?? '').toLowerCase(),
+    reference:   (s) => (s.payment_reference ?? '').toLowerCase(),
+    payer:       (s) => (s.payment_sender_name ?? '').toLowerCase(),
+    amount:      (s) => Number(s.total_srd) || 0,
+    date:        (s) => (s.occurred_at ? new Date(s.occurred_at).getTime() : null),
+  })
+
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Openstaande betalingen' : 'Pending Payments'}
@@ -133,25 +145,29 @@ export default function PendingPaymentsScreen() {
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                 {[
-                  isNl ? 'Bon nr.' : 'Sale no.',
-                  isNl ? 'Methode' : 'Method',
-                  isNl ? 'Aanbieder' : 'Provider',
-                  isNl ? 'Referentie' : 'Reference',
-                  isNl ? 'Betaler' : 'Payer',
-                  isNl ? 'Bedrag' : 'Amount',
-                  isNl ? 'Datum' : 'Date',
-                  isNl ? 'Actie' : 'Action',
+                  { key: 'sale_number', label: isNl ? 'Bon nr.' : 'Sale no.' },
+                  { key: 'method',      label: isNl ? 'Methode' : 'Method' },
+                  { key: 'provider',    label: isNl ? 'Aanbieder' : 'Provider' },
+                  { key: 'reference',   label: isNl ? 'Referentie' : 'Reference' },
+                  { key: 'payer',       label: isNl ? 'Betaler' : 'Payer' },
+                  { key: 'amount',      label: isNl ? 'Bedrag' : 'Amount' },
+                  { key: 'date',        label: isNl ? 'Datum' : 'Date' },
                 ].map((h) => (
-                  <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                  <th key={h.key} onClick={() => toggle(h.key)}
+                    style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                    {h.label}
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                  </th>
                 ))}
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{isNl ? 'Actie' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((s, i) => {
+              {sorted.map((s, i) => {
                 const age = daysAgo(s.occurred_at)
                 const ageColor = age > 14 ? '#dc2626' : age > 7 ? '#f59e0b' : '#9090a0'
                 return (
-                  <tr key={s.id} style={{ borderBottom: i < rows.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
+                  <tr key={s.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#1c1c2e', fontWeight: 600 }}>{s.sale_number}</td>
                     <td style={{ padding: '14px 16px', fontSize: 13 }}>
                       {METHOD_ICON[s.payment_method] ?? '•'} {s.payment_method === 'bank_transfer' ? (isNl ? 'Overschrijving' : 'Bank transfer') : (isNl ? 'Mobiel' : 'Mobile')}

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import apiClient from '@/api/client'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useToast } from '@/components/shared/Toast'
@@ -208,8 +209,18 @@ export default function ApiKeysScreen() {
   const total  = keys?.length ?? 0
   const active = keys?.filter((k) => k.is_active).length ?? 0
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  const { sorted: sortedKeys, sort, toggle: toggleSort, indicator } = useTableSort(keys ?? [], {
+    store:    (k) => (k.store_name ?? '').toLowerCase(),
+    system:   (k) => (k.pos_system ?? '').toLowerCase(),
+    webhook:  (k) => (k.webhook_url ?? '').toLowerCase(),
+    events:   (k) => k.webhook_events?.length ?? 0,
+    lastping: (k) => (k.last_ping_at ? new Date(k.last_ping_at).getTime() : null),
+    status:   (k) => (k.is_active ? 1 : 0),
+  })
+
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
@@ -586,25 +597,27 @@ export default function ApiKeysScreen() {
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                 {[
-                  isNl ? 'Vestiging' : 'Store',
-                  isNl ? 'Systeem' : 'System',
-                  'Webhook URL',
-                  isNl ? 'Gebeurtenissen' : 'Events',
-                  isNl ? 'Laatste ping' : 'Last ping',
-                  isNl ? 'Status' : 'Status',
-                  '',
+                  { key: 'store',    label: isNl ? 'Vestiging' : 'Store' },
+                  { key: 'system',   label: isNl ? 'Systeem' : 'System' },
+                  { key: 'webhook',  label: 'Webhook URL' },
+                  { key: 'events',   label: isNl ? 'Gebeurtenissen' : 'Events' },
+                  { key: 'lastping', label: isNl ? 'Laatste ping' : 'Last ping' },
+                  { key: 'status',   label: isNl ? 'Status' : 'Status' },
+                  { key: null,       label: '' },
                 ].map((h) => (
-                  <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
-                    {h}
+                  <th key={h.label || 'actions'} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    {h.label}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {(keys ?? []).map((key, i) => (
+              {sortedKeys.map((key, i) => (
                 <tr
                   key={key.id}
-                  style={{ borderBottom: i < (keys?.length ?? 0) - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
+                  style={{ borderBottom: i < sortedKeys.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >

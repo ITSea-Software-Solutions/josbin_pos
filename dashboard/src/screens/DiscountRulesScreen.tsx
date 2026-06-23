@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import apiClient from '@/api/client'
 
 interface DiscountRule {
@@ -175,8 +176,19 @@ export default function DiscountRulesScreen() {
   const active = rules.filter(r => r.is_active)
   const inactive = rules.filter(r => !r.is_active)
 
+  // Active rules first by default; sorting (when a column is picked) overrides
+  // that ordering. Shared hook → identical behaviour across all dashboard tables.
+  const { sorted, sort, toggle, indicator } = useTableSort([...active, ...inactive], {
+    name:     (r) => (r.name ?? '').toLowerCase(),
+    discount: (r) => Number(r.value) || 0,
+    applies:  (r) => appliesToLabel(r).toLowerCase(),
+    minQty:   (r) => (r.min_qty == null ? null : Number(r.min_qty) || 0),
+    validity: (r) => (r.valid_from ? new Date(r.valid_from).getTime() : null),
+    status:   (r) => (r.is_active ? 1 : 0),
+  })
+
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
@@ -207,15 +219,27 @@ export default function DiscountRulesScreen() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
-                {[isNl ? 'Naam' : 'Name', isNl ? 'Korting' : 'Discount', isNl ? 'Van toepassing op' : 'Applies to', isNl ? 'Min. aantal' : 'Min. qty', isNl ? 'Geldigheid' : 'Validity', 'Status', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>{h}</th>
+                {[
+                  { key: 'name',     label: isNl ? 'Naam' : 'Name' },
+                  { key: 'discount', label: isNl ? 'Korting' : 'Discount' },
+                  { key: 'applies',  label: isNl ? 'Van toepassing op' : 'Applies to' },
+                  { key: 'minQty',   label: isNl ? 'Min. aantal' : 'Min. qty' },
+                  { key: 'validity', label: isNl ? 'Geldigheid' : 'Validity' },
+                  { key: 'status',   label: 'Status' },
+                ].map((h) => (
+                  <th key={h.key} onClick={() => toggle(h.key)}
+                    style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
+                    {h.label}
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                  </th>
                 ))}
+                <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}></th>
               </tr>
             </thead>
             <tbody>
-              {[...active, ...inactive].map((r, i) => (
+              {sorted.map((r, i) => (
                 <tr key={r.id}
-                  style={{ borderBottom: i < rules.length - 1 ? '1px solid #f3f3f8' : 'none', opacity: r.is_active ? 1 : 0.5 }}
+                  style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none', opacity: r.is_active ? 1 : 0.5 }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}
                 >

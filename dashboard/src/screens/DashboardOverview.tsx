@@ -244,7 +244,7 @@ export default function DashboardOverview({
   const isSuperAdmin = user?.role === 'super_admin'
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1600 }}>
+    <div style={{ padding: '28px 32px', maxWidth: '100%' }}>
 
       {/* Task #73 — Super Admin sees the platform-pulse panel above the
           per-store cards. OA / SM / Auditor see only the existing org view. */}

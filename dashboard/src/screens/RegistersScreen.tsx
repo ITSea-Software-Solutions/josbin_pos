@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
   getStoreSessions, approveReopen, getRegisters, createRegister, updateRegister, deleteRegister, clearClosedToday,
@@ -528,10 +529,23 @@ export default function RegistersScreen() {
   const closedCount  = sessions.filter(s => s.status === 'closed').length
   const pendingCount = sessions.filter(s => s.status === 'reopen_requested').length
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  const { sorted: sortedSessions, sort, toggle: toggleSort, indicator } = useTableSort(sessions, {
+    register:    (s) => (s.register_name ?? (s.register_number != null ? `Register ${s.register_number}` : '')).toLowerCase(),
+    cashier:     (s) => (s.cashier_name ?? '').toLowerCase(),
+    status:      (s) => (s.status ?? '').toLowerCase(),
+    float:       (s) => Number(s.opening_float) || 0,
+    expected:    (s) => (s.expected_cash != null ? Number(s.expected_cash) || 0 : null),
+    counted:     (s) => (s.closing_cash_counted != null ? Number(s.closing_cash_counted) || 0 : null),
+    discrepancy: (s) => (s.discrepancy != null ? Number(s.discrepancy) || 0 : null),
+    opened:      (s) => (s.opened_at ? new Date(s.opened_at).getTime() : null),
+    closed:      (s) => (s.closed_at ? new Date(s.closed_at).getTime() : null),
+  })
+
   const noStore = !selectedStoreId
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
@@ -656,28 +670,32 @@ export default function RegistersScreen() {
               <thead>
                 <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                   {[
-                    isNl ? 'Kassa' : 'Register',
-                    isNl ? 'Kassier' : 'Cashier',
-                    isNl ? 'Status' : 'Status',
-                    isNl ? 'Opening float' : 'Opening float',
-                    isNl ? 'Verwacht' : 'Expected',
-                    isNl ? 'Geteld' : 'Counted',
-                    isNl ? 'Verschil' : 'Discrepancy',
-                    isNl ? 'Geopend' : 'Opened',
-                    isNl ? 'Gesloten' : 'Closed',
-                    isNl ? 'Actie' : 'Action',
+                    { key: 'register',    label: isNl ? 'Kassa' : 'Register' },
+                    { key: 'cashier',     label: isNl ? 'Kassier' : 'Cashier' },
+                    { key: 'status',      label: isNl ? 'Status' : 'Status' },
+                    { key: 'float',       label: isNl ? 'Opening float' : 'Opening float' },
+                    { key: 'expected',    label: isNl ? 'Verwacht' : 'Expected' },
+                    { key: 'counted',     label: isNl ? 'Geteld' : 'Counted' },
+                    { key: 'discrepancy', label: isNl ? 'Verschil' : 'Discrepancy' },
+                    { key: 'opened',      label: isNl ? 'Geopend' : 'Opened' },
+                    { key: 'closed',      label: isNl ? 'Gesloten' : 'Closed' },
+                    { key: null,          label: isNl ? 'Actie' : 'Action' },
                   ].map(h => (
-                    <th key={h} style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>{h}</th>
+                    <th key={h.label} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
+                      style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                      {h.label}
+                      {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {sessions.map((s, i) => {
+                {sortedSessions.map((s, i) => {
                   const disc = s.discrepancy ? parseFloat(s.discrepancy) : null
                   const discColor = disc === null ? '#6b7280' : disc < 0 ? '#dc2626' : disc > 0 ? '#16a34a' : '#6b7280'
                   return (
                     <tr key={s.id}
-                      style={{ borderBottom: i < sessions.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
+                      style={{ borderBottom: i < sortedSessions.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >

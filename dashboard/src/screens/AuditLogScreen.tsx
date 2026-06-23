@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useQuery, keepPreviousData } from '@tanstack/react-query'
+import { useTableSort } from '@/lib/useTableSort'
 import { getAuditLog, getAuditSummary, type AuditEntry, type AuditFilters } from '@/api/auditLog'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
@@ -237,11 +238,21 @@ export default function AuditLogScreen() {
     setFilters(f => ({ ...f, search: search || undefined, page: 1 }))
   }
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  // Server-paginated: sorting reorders the current page only.
+  const { sorted: sortedEntries, sort, toggle: toggleSort, indicator } = useTableSort(data?.data ?? [], {
+    time:  (e) => (e.created_at ? new Date(e.created_at).getTime() : null),
+    event: (e) => (e.event ?? '').toLowerCase(),
+    model: (e) => (e.model_type ?? '').toLowerCase(),
+    user:  (e) => (e.user?.name ?? '').toLowerCase(),
+    ip:    (e) => (e.ip_address ?? '').toLowerCase(),
+  })
+
   const EVENT_OPTS = ['', 'created', 'updated', 'deleted']
   const MODEL_OPTS = ['', 'Sale', 'Product', 'User', 'Organisation', 'Store', 'ZReport']
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1600 }}>
+    <div style={{ padding: '28px 32px', maxWidth: '100%' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
@@ -357,25 +368,27 @@ export default function AuditLogScreen() {
               <thead>
                 <tr style={{ background: '#f8f8fb', borderBottom: '2px solid #ebebf0' }}>
                   {[
-                    isNl ? 'Tijdstip' : 'Time',
-                    'Event',
-                    'Model',
-                    isNl ? 'Gebruiker' : 'User',
-                    isNl ? 'Wijzigingen' : 'Changes',
-                    'IP',
-                    '',
+                    { key: 'time',  label: isNl ? 'Tijdstip' : 'Time' },
+                    { key: 'event', label: 'Event' },
+                    { key: 'model', label: 'Model' },
+                    { key: 'user',  label: isNl ? 'Gebruiker' : 'User' },
+                    { key: null,    label: isNl ? 'Wijzigingen' : 'Changes' },
+                    { key: 'ip',    label: 'IP' },
+                    { key: null,    label: '' },
                   ].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
-                      {h}
+                    <th key={h.label || 'expand'} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
+                      style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                      {h.label}
+                      {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#059669' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {(data?.data ?? []).map((entry: AuditEntry) => (
+                {sortedEntries.map((entry: AuditEntry) => (
                   <AuditRow key={entry.id} entry={entry} />
                 ))}
-                {(data?.data ?? []).length === 0 && (
+                {sortedEntries.length === 0 && (
                   <tr><td colSpan={7} style={{ textAlign: 'center', padding: 40, color: '#9090a0', fontSize: 14 }}>
                     {isNl ? 'Geen logboekitems gevonden' : 'No audit entries found'}
                   </td></tr>

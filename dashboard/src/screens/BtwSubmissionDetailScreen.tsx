@@ -85,7 +85,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
   const canResubmitThis = canResubmit && ownOrg && (s.status === 'filed' || s.status === 'disputed')
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1200, background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
+    <div style={{ padding: '28px 32px', maxWidth: '100%', background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
       {/* Back */}
       <button onClick={onBack} style={{ background: 'none', border: 'none', color: isInspector ? BD.green : '#7c3aed', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
         ← {isNl ? 'Terug naar lijst' : 'Back to list'}

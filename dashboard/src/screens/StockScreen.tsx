@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import { getStockMovements, adjustStock, getLowStockProducts, type LowStockProduct } from '@/api/stock'
 import { getStores } from '@/api/stores'
 import apiClient from '@/api/client'
@@ -274,12 +275,20 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
   const lastPage = activeTab === 'all' ? (allData?.last_page ?? 1) : 1
   const isLoading = activeTab === 'all' ? allLoading : lowLoading
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  const { sorted, sort, toggle, indicator } = useTableSort(products, {
+    name:      (p) => ((isNl ? p.name_nl : p.name_en) ?? '').toLowerCase(),
+    category:  (p) => (p.category ? (isNl ? p.category.name_nl : p.category.name_en) : '').toLowerCase(),
+    stock:     (p) => parseFloat(p.stock_qty) || 0,
+    threshold: (p) => parseFloat(p.low_stock_threshold) || 0,
+  })
+
   // Split low-stock list into "out" vs "low but in stock" for the banner copy.
   const outCount = (lowStockData as LowStockProduct[]).filter(p => parseFloat(p.stock_qty) <= 0).length
   const lowCount = lowStockData.length - outCount
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Voorraadbeheer' : 'Stock Management'}
@@ -397,9 +406,19 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
-              {[isNl ? 'Product' : 'Product', isNl ? 'Categorie' : 'Category', isNl ? 'Voorraad' : 'Stock', isNl ? 'Min. drempel' : 'Min. threshold', ''].map((h, i) => (
-                <th key={i} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</th>
+              {[
+                { key: 'name',      label: isNl ? 'Product' : 'Product' },
+                { key: 'category',  label: isNl ? 'Categorie' : 'Category' },
+                { key: 'stock',     label: isNl ? 'Voorraad' : 'Stock' },
+                { key: 'threshold', label: isNl ? 'Min. drempel' : 'Min. threshold' },
+              ].map((h) => (
+                <th key={h.key} onClick={() => toggle(h.key)}
+                  style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', cursor: 'pointer', userSelect: 'none' }}>
+                  {h.label}
+                  <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                </th>
               ))}
+              <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}></th>
             </tr>
           </thead>
           <tbody>
@@ -422,7 +441,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
                     : (isNl ? 'Geen producten gevonden' : 'No products found')}
                 </p>
               </td></tr>
-            ) : products.map((p, i) => {
+            ) : sorted.map((p, i) => {
               const qty = parseFloat(p.stock_qty)
               const threshold = parseFloat(p.low_stock_threshold)
               // "out" wins over "low" — never paint a zero-stock row yellow.
@@ -436,7 +455,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
 
               return (
                 <tr key={p.id}
-                  style={{ borderBottom: i < products.length - 1 ? '1px solid #f3f3f8' : 'none', background: baseBg }}
+                  style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none', background: baseBg }}
                   onMouseEnter={e => (e.currentTarget.style.background = hoverBg)}
                   onMouseLeave={e => (e.currentTarget.style.background = baseBg ?? '')}
                 >

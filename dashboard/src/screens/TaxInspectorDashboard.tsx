@@ -50,7 +50,7 @@ export default function TaxInspectorDashboard({ onNavigateToSubmissions }: Props
   const peakIdx = data.trend_30d.findIndex((p) => Number(p.btw_srd) === peakBtw)
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1320, background: BD.paper, minHeight: '100%' }}>
+    <div style={{ padding: '28px 32px', maxWidth: '100%', background: BD.paper, minHeight: '100%' }}>
       {isInspector ? (
         <BelastingdienstHeader
           overline={isNl ? 'Republiek Suriname · Belastingdienst' : 'Republic of Suriname · Tax Authority'}

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getCustomers, updateCustomer, redactCustomer, type Customer } from '@/api/customers'
+import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useToast } from '@/components/shared/Toast'
@@ -91,8 +92,19 @@ export default function CustomersScreen() {
   const lastPage = data?.last_page ?? 1
   const total = data?.total ?? 0
 
+  // Client-side column sort (shared hook → identical behaviour across all
+  // dashboard tables). Sorts the current page of results.
+  const { sorted, sort, toggle, indicator } = useTableSort(customers, {
+    name:   (c) => (c.name ?? '').toLowerCase(),
+    phone:  (c) => (c.phone ?? '').toLowerCase(),
+    email:  (c) => (c.email ?? '').toLowerCase(),
+    spend:  (c) => parseFloat(c.total_spend_srd) || 0,
+    visits: (c) => Number(c.visit_count) || 0,
+    since:  (c) => (c.created_at ? new Date(c.created_at).getTime() : null),
+  })
+
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
@@ -119,15 +131,20 @@ export default function CustomersScreen() {
           <thead>
             <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
               {[
-                isNl ? 'Naam' : 'Name',
-                isNl ? 'Telefoon' : 'Phone',
-                'Email',
-                isNl ? 'Totaal besteed' : 'Total spend',
-                isNl ? 'Bezoeken' : 'Visits',
-                isNl ? 'Klant sinds' : 'Customer since',
-                '',
+                { key: 'name',   label: isNl ? 'Naam' : 'Name' },
+                { key: 'phone',  label: isNl ? 'Telefoon' : 'Phone' },
+                { key: 'email',  label: 'Email' },
+                { key: 'spend',  label: isNl ? 'Totaal besteed' : 'Total spend' },
+                { key: 'visits', label: isNl ? 'Bezoeken' : 'Visits' },
+                { key: 'since',  label: isNl ? 'Klant sinds' : 'Customer since' },
+                { key: '',       label: '' },
               ].map((h, i) => (
-                <th key={i} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>{h}</th>
+                <th key={i}
+                  onClick={h.key ? () => toggle(h.key) : undefined}
+                  style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                  {h.label}
+                  {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                </th>
               ))}
             </tr>
           </thead>
@@ -149,9 +166,9 @@ export default function CustomersScreen() {
                   {isNl ? 'Geen klanten gevonden' : 'No customers found'}
                 </p>
               </td></tr>
-            ) : customers.map((c, i) => (
+            ) : sorted.map((c, i) => (
               <tr key={c.id}
-                style={{ borderBottom: i < customers.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .1s' }}
+                style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .1s' }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                 onMouseLeave={e => (e.currentTarget.style.background = '')}
               >

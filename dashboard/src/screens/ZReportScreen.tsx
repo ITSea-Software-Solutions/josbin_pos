@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import { getDashboardZReports, type ZReportSummary } from '@/api/dashboard'
 import { formatSRD } from '@/utils/currency'
 import { format, subDays } from 'date-fns'
@@ -183,6 +184,19 @@ export default function ZReportScreen() {
 
   const reports: ZReportSummary[] = data?.data ?? []
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  // Server-paginated (per_page 50): sorting reorders the current page only.
+  const { sorted: sortedReports, sort, toggle: toggleSort, indicator } = useTableSort(reports, {
+    date:      (r) => (r.report_date ? new Date(r.report_date).getTime() : null),
+    store:     (r) => (r.store?.name ?? '').toLowerCase(),
+    revenue:   (r) => Number(r.total_sales_srd) || 0,
+    btw:       (r) => Number(r.total_btw_srd) || 0,
+    trans:     (r) => Number(r.transaction_count) || 0,
+    cashdiff:  (r) => Number(r.cash_discrepancy_srd) || 0,
+    sync:      (r) => (r.sync_status ?? '').toLowerCase(),
+    closedby:  (r) => (r.closed_by?.name ?? '').toLowerCase(),
+  })
+
   const syncLabels: Record<string, string> = {
     synced:  isNl ? 'Verzonden ✓' : 'Sent ✓',
     pending: isNl ? 'In wachtrij' : 'Pending',
@@ -195,7 +209,7 @@ export default function ZReportScreen() {
   const failedCount  = reports.filter((r) => r.sync_status === 'failed').length
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
@@ -321,30 +335,32 @@ export default function ZReportScreen() {
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                 {[
-                  isNl ? 'Datum' : 'Date',
-                  isNl ? 'Vestiging' : 'Store',
-                  isNl ? 'Omzet' : 'Revenue',
-                  'BTW',
-                  isNl ? 'Trans.' : 'Trans.',
-                  isNl ? 'Kasgeschil' : 'Cash diff.',
-                  isNl ? 'Sync' : 'Sync',
-                  isNl ? 'Afgesloten door' : 'Closed by',
+                  { key: 'date',     label: isNl ? 'Datum' : 'Date' },
+                  { key: 'store',    label: isNl ? 'Vestiging' : 'Store' },
+                  { key: 'revenue',  label: isNl ? 'Omzet' : 'Revenue' },
+                  { key: 'btw',      label: 'BTW' },
+                  { key: 'trans',    label: isNl ? 'Trans.' : 'Trans.' },
+                  { key: 'cashdiff', label: isNl ? 'Kasgeschil' : 'Cash diff.' },
+                  { key: 'sync',     label: isNl ? 'Sync' : 'Sync' },
+                  { key: 'closedby', label: isNl ? 'Afgesloten door' : 'Closed by' },
                 ].map((h) => (
-                  <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
-                    {h}
+                  <th key={h.key} onClick={() => toggleSort(h.key)}
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                    {h.label}
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {reports.map((r, i) => {
+              {sortedReports.map((r, i) => {
                 const diff = parseFloat(r.cash_discrepancy_srd)
                 const hasDiff = Math.abs(diff) > 0.005
                 const sc = SYNC_CFG[r.sync_status] ?? SYNC_CFG.never
                 return (
                   <tr
                     key={r.id}
-                    style={{ borderBottom: i < reports.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
+                    style={{ borderBottom: i < sortedReports.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                   >

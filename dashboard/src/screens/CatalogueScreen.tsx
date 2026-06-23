@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTableSort } from '@/lib/useTableSort'
 import { useTranslation } from 'react-i18next'
 import Quagga from '@ericblade/quagga2'
 import {
@@ -679,9 +680,6 @@ export default function CatalogueScreen() {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('')
   const [selectedCatId, setSelectedCatId] = useState<string>('')
   const [search, setSearch]               = useState('')
-  // Client-side column sort for the products table (search + category filter
-  // stay server-side). null = backend default order.
-  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null)
   const [editProduct, setEditProduct]     = useState<Product | undefined>()
   const [editCategory, setEditCategory]   = useState<Category | undefined>()
   const [showProductForm, setShowProductForm]   = useState(false)
@@ -717,8 +715,8 @@ export default function CatalogueScreen() {
     enabled: tab === 'products' && (!!effectiveOrgId || !isSuperAdmin),
   })
 
-  // Column sort — click a header to cycle asc → desc → off.
-  const sortAccessors: Record<string, (p: Product) => string | number> = {
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  const { sorted: sortedProducts, sort, toggle: toggleSort, indicator } = useTableSort(products, {
     name:     (p) => ((isNl ? p.name_nl : p.name_en) ?? '').toLowerCase(),
     sku:      (p) => (p.sku ?? '').toLowerCase(),
     category: (p) => (p.category_name ?? '').toLowerCase(),
@@ -727,20 +725,7 @@ export default function CatalogueScreen() {
     btw:      (p) => (p.btw_exempt ? -1 : parseFloat(p.btw_rate) || 0),
     stock:    (p) => parseFloat(p.stock_qty) || 0,
     status:   (p) => (p.is_active ? 1 : 0),
-  }
-  const sortedProducts = sort && sortAccessors[sort.key]
-    ? [...products].sort((a, b) => {
-        const av = sortAccessors[sort.key](a)
-        const bv = sortAccessors[sort.key](b)
-        const cmp = typeof av === 'number' && typeof bv === 'number'
-          ? av - bv
-          : String(av).localeCompare(String(bv))
-        return sort.dir === 'asc' ? cmp : -cmp
-      })
-    : products
-  function toggleSort(key: string) {
-    setSort((s) => s?.key !== key ? { key, dir: 'asc' } : s.dir === 'asc' ? { key, dir: 'desc' } : null)
-  }
+  })
 
   const toggleProductStatus = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => updateProduct(id, { is_active: active }),
@@ -789,7 +774,7 @@ export default function CatalogueScreen() {
   const noOrgSelected = isSuperAdmin && !selectedOrgId
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
@@ -926,7 +911,7 @@ export default function CatalogueScreen() {
                           {h.label}
                           {h.key && (
                             <span style={{ marginLeft: 5, fontSize: 9, color: active ? '#7c3aed' : '#c0c0cc' }}>
-                              {active ? (sort?.dir === 'asc' ? '▲' : '▼') : '⇅'}
+                              {indicator(h.key)}
                             </span>
                           )}
                         </th>

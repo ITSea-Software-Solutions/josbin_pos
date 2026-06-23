@@ -85,7 +85,7 @@ export default function StoreDetailScreen({ storeId, onBack }: Props) {
     iso ? new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : '—'
 
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: 24, maxWidth: '100%', margin: '0 auto' }}>
 
       {/* Back link — only when a parent passed onBack (e.g. Overview).
           Mirrors BtwSubmissionDetailScreen so the user can return without

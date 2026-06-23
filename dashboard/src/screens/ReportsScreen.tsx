@@ -136,7 +136,7 @@ export default function ReportsScreen() {
   ]
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>

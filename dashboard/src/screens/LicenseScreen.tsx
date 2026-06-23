@@ -399,7 +399,7 @@ export default function LicenseScreen() {
   const highCount     = licenses?.filter((l) => l.urgency === 'high').length ?? 0
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import apiClient from '@/api/client'
+import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useToast } from '@/components/shared/Toast'
@@ -859,12 +860,22 @@ export default function OrganisationsScreen() {
     (o.btw_number ?? '').includes(search),
   )
 
+  // Client-side column sort (shared hook → identical behaviour across all
+  // dashboard tables). Sorts the filtered list.
+  const { sorted: sortedOrgs, sort, toggle, indicator } = useTableSort(filtered ?? [], {
+    name:   (o) => (o.name ?? '').toLowerCase(),
+    type:   (o) => (o.type ?? '').toLowerCase(),
+    stores: (o) => Number(o.store_count) || 0,
+    status: (o) => (o.is_active ? 1 : 0),
+    tier:   (o) => (o.subscription_tier ?? '').toLowerCase(),
+  })
+
   const total    = orgs?.length ?? 0
   const active   = orgs?.filter((o) => o.is_active).length ?? 0
   const govCount = orgs?.filter((o) => o.is_government).length ?? 0
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1200 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
 
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
@@ -961,19 +972,24 @@ export default function OrganisationsScreen() {
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                 {[
-                  isNl ? 'Organisatie' : 'Organisation',
-                  isNl ? 'Type' : 'Type',
-                  isNl ? 'Vestigingen' : 'Stores',
-                  isNl ? 'Status' : 'Status',
-                  isNl ? 'Abonnement' : 'Tier',
-                  isNl ? 'Acties' : 'Actions',
+                  { key: 'name',   label: isNl ? 'Organisatie' : 'Organisation' },
+                  { key: 'type',   label: isNl ? 'Type' : 'Type' },
+                  { key: 'stores', label: isNl ? 'Vestigingen' : 'Stores' },
+                  { key: 'status', label: isNl ? 'Status' : 'Status' },
+                  { key: 'tier',   label: isNl ? 'Abonnement' : 'Tier' },
+                  { key: '',       label: isNl ? 'Acties' : 'Actions' },
                 ].map((h) => (
-                  <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '.7px' }}>{h}</th>
+                  <th key={h.label}
+                    onClick={h.key ? () => toggle(h.key) : undefined}
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    {h.label}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {(filtered ?? []).map((org) => (
+              {sortedOrgs.map((org) => (
                 <OrgRow
                   key={org.id} org={org} isNl={isNl}
                   onView={(o) => setViewTarget(o)}

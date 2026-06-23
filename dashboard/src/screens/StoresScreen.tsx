@@ -15,6 +15,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
   getOrganisations, getOrgStores, createStore, updateStore, deactivateStore,
@@ -262,8 +263,17 @@ export default function StoresScreen() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['org-stores', activeOrgId] }); setConfirmDeactivate(null) },
   })
 
+  // Client-side column sort (shared hook → identical behaviour across all
+  // dashboard tables).
+  const { sorted: sortedStores, sort, toggle, indicator } = useTableSort(stores as Store[], {
+    name:   (s) => (s.name ?? '').toLowerCase(),
+    city:   (s) => (s.city ?? '').toLowerCase(),
+    pos:    (s) => (s.pos_type ?? '').toLowerCase(),
+    status: (s) => (s.is_active ? 1 : 0),
+  })
+
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
@@ -446,13 +456,24 @@ export default function StoresScreen() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8f7ff', borderBottom: '1px solid #eeeef8' }}>
-                {[isNl ? 'Naam' : 'Name', isNl ? 'Stad' : 'City', 'POS', isNl ? 'Status' : 'Status', ''].map((h) => (
-                  <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                {[
+                  { key: 'name',   label: isNl ? 'Naam' : 'Name' },
+                  { key: 'city',   label: isNl ? 'Stad' : 'City' },
+                  { key: 'pos',    label: 'POS' },
+                  { key: 'status', label: isNl ? 'Status' : 'Status' },
+                  { key: '',       label: '' },
+                ].map((h) => (
+                  <th key={h.label || 'actions'}
+                    onClick={h.key ? () => toggle(h.key) : undefined}
+                    style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    {h.label}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {(stores as Store[]).map((s) => (
+              {sortedStores.map((s) => (
                 <tr key={s.id} style={{ borderBottom: '1px solid #f3f3f8' }}>
                   <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{s.name}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>{s.city || '—'}</td>

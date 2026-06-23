@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
+import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import { getPriceOverrides, upsertPriceOverride, deletePriceOverride, pushCatalogue, type PriceOverride } from '@/api/priceOverrides'
 import { getStores, type Store } from '@/api/stores'
@@ -108,6 +109,14 @@ export default function PriceOverridesScreen() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['price-overrides', selectedStoreId] }),
   })
 
+  // Column sort (shared hook → identical behaviour across all dashboard tables).
+  const { sorted, sort, toggle, indicator } = useTableSort(overrides as PriceOverride[], {
+    product: (o) => (o.product_name ?? '').toLowerCase(),
+    base:    (o) => parseFloat(o.base_price) || 0,
+    store:   (o) => parseFloat(o.price_override) || 0,
+    diff:    (o) => (parseFloat(o.price_override) || 0) - (parseFloat(o.base_price) || 0),
+  })
+
   async function handlePush() {
     setPushStatus('pushing')
     try {
@@ -121,7 +130,7 @@ export default function PriceOverridesScreen() {
   }
 
   return (
-    <div style={{ padding: '32px 36px', maxWidth: 1100 }}>
+    <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
@@ -196,17 +205,27 @@ export default function PriceOverridesScreen() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
-                {[isNl ? 'Product' : 'Product', isNl ? 'Basisprijs' : 'Base price', isNl ? 'Vestigingsprijs' : 'Store price', isNl ? 'Verschil' : 'Difference', ''].map((h, i) => (
-                  <th key={i} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</th>
+                {[
+                  { key: 'product', label: isNl ? 'Product' : 'Product' },
+                  { key: 'base',    label: isNl ? 'Basisprijs' : 'Base price' },
+                  { key: 'store',   label: isNl ? 'Vestigingsprijs' : 'Store price' },
+                  { key: 'diff',    label: isNl ? 'Verschil' : 'Difference' },
+                ].map((h) => (
+                  <th key={h.key} onClick={() => toggle(h.key)}
+                    style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', cursor: 'pointer', userSelect: 'none' }}>
+                    {h.label}
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                  </th>
                 ))}
+                <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}></th>
               </tr>
             </thead>
             <tbody>
-              {(overrides as PriceOverride[]).map((o, i) => {
+              {sorted.map((o, i) => {
                 const diff = parseFloat(o.price_override) - parseFloat(o.base_price)
                 return (
                   <tr key={o.id}
-                    style={{ borderBottom: i < overrides.length - 1 ? '1px solid #f3f3f8' : 'none' }}
+                    style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}
                   >
