@@ -332,9 +332,12 @@ export default function DashboardLayout() {
       sections: { [SA]: 'platform', [OA]: 'organisation' } },
 
     // ── Stores ──────────────────────────────────────────────────────────────
-    // SA: drill-in for support. OA/SM: daily org-mgmt home.
+    // SA: drill-in for support. OA: org-mgmt home (add/edit stores).
+    // Store Manager is intentionally excluded — only SA/OA create or edit
+    // stores (backend StorePolicy/OrganisationPolicy already enforce this);
+    // showing the menu only led an SM to a screen where every action 403s.
     { id: 'stores', nl: 'Vestigingen', en: 'Stores', icon: IC.organisations,
-      sections: { [SA]: 'support_tools', [OA]: 'organisation', [SM]: 'organisation' } },
+      sections: { [SA]: 'support_tools', [OA]: 'organisation' } },
 
     // ── Operational reports ─────────────────────────────────────────────────
     { id: 'reports', nl: 'Rapporten', en: 'Reports', icon: IC.reports,

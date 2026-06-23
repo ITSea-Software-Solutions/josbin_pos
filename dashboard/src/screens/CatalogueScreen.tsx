@@ -679,6 +679,9 @@ export default function CatalogueScreen() {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('')
   const [selectedCatId, setSelectedCatId] = useState<string>('')
   const [search, setSearch]               = useState('')
+  // Client-side column sort for the products table (search + category filter
+  // stay server-side). null = backend default order.
+  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null)
   const [editProduct, setEditProduct]     = useState<Product | undefined>()
   const [editCategory, setEditCategory]   = useState<Category | undefined>()
   const [showProductForm, setShowProductForm]   = useState(false)
@@ -713,6 +716,31 @@ export default function CatalogueScreen() {
     }),
     enabled: tab === 'products' && (!!effectiveOrgId || !isSuperAdmin),
   })
+
+  // Column sort — click a header to cycle asc → desc → off.
+  const sortAccessors: Record<string, (p: Product) => string | number> = {
+    name:     (p) => ((isNl ? p.name_nl : p.name_en) ?? '').toLowerCase(),
+    sku:      (p) => (p.sku ?? '').toLowerCase(),
+    category: (p) => (p.category_name ?? '').toLowerCase(),
+    price:    (p) => parseFloat(p.price) || 0,
+    cost:     (p) => parseFloat(p.cost_price ?? '0') || 0,
+    btw:      (p) => (p.btw_exempt ? -1 : parseFloat(p.btw_rate) || 0),
+    stock:    (p) => parseFloat(p.stock_qty) || 0,
+    status:   (p) => (p.is_active ? 1 : 0),
+  }
+  const sortedProducts = sort && sortAccessors[sort.key]
+    ? [...products].sort((a, b) => {
+        const av = sortAccessors[sort.key](a)
+        const bv = sortAccessors[sort.key](b)
+        const cmp = typeof av === 'number' && typeof bv === 'number'
+          ? av - bv
+          : String(av).localeCompare(String(bv))
+        return sort.dir === 'asc' ? cmp : -cmp
+      })
+    : products
+  function toggleSort(key: string) {
+    setSort((s) => s?.key !== key ? { key, dir: 'asc' } : s.dir === 'asc' ? { key, dir: 'desc' } : null)
+  }
 
   const toggleProductStatus = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => updateProduct(id, { is_active: active }),
@@ -868,32 +896,48 @@ export default function CatalogueScreen() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
-                    {[
-                      '',                                            // image thumbnail
-                      isNl ? 'Product' : 'Product',
-                      'SKU',
-                      isNl ? 'Categorie' : 'Category',
-                      isNl ? 'Barcode' : 'Barcode',
-                      isNl ? 'Prijs (SRD)' : 'Price (SRD)',
+                    {([
+                      { label: '',                                   key: null },   // image thumbnail
+                      { label: isNl ? 'Product' : 'Product',         key: 'name' },
+                      { label: 'SKU',                                key: 'sku' },
+                      { label: isNl ? 'Categorie' : 'Category',      key: 'category' },
+                      { label: isNl ? 'Barcode' : 'Barcode',         key: null },
+                      { label: isNl ? 'Prijs (SRD)' : 'Price (SRD)', key: 'price' },
                       // Cost column visible to OA + SA + SM (catalogue
                       // ownership). Backend strips cost_price for cashier +
-                      // any role without products.view_cost, so even if
-                      // rendered the cell would be blank for them.
-                      ...(canViewCost ? [isNl ? 'Inkoop (SRD)' : 'Cost (SRD)'] : []),
-                      'BTW',
-                      isNl ? 'Voorraad' : 'Stock',
-                      isNl ? 'Eenheid' : 'Unit',
-                      isNl ? 'Status' : 'Status',
-                      isNl ? 'Acties' : 'Actions',
-                    ].map((h, i) => (
-                      <th key={i} style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{h}</th>
-                    ))}
+                      // any role without products.view_cost.
+                      ...(canViewCost ? [{ label: isNl ? 'Inkoop (SRD)' : 'Cost (SRD)', key: 'cost' }] : []),
+                      { label: 'BTW',                                key: 'btw' },
+                      { label: isNl ? 'Voorraad' : 'Stock',          key: 'stock' },
+                      { label: isNl ? 'Eenheid' : 'Unit',            key: null },
+                      { label: isNl ? 'Status' : 'Status',           key: 'status' },
+                      { label: isNl ? 'Acties' : 'Actions',          key: null },
+                    ] as { label: string; key: string | null }[]).map((h, i) => {
+                      const active = h.key && sort?.key === h.key
+                      return (
+                        <th key={i}
+                          onClick={h.key ? () => toggleSort(h.key as string) : undefined}
+                          style={{
+                            padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700,
+                            color: active ? '#7c3aed' : '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px',
+                            cursor: h.key ? 'pointer' : 'default', userSelect: 'none', whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {h.label}
+                          {h.key && (
+                            <span style={{ marginLeft: 5, fontSize: 9, color: active ? '#7c3aed' : '#c0c0cc' }}>
+                              {active ? (sort?.dir === 'asc' ? '▲' : '▼') : '⇅'}
+                            </span>
+                          )}
+                        </th>
+                      )
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {products.map((p, i) => (
+                  {sortedProducts.map((p, i) => (
                     <tr key={p.id}
-                      style={{ borderBottom: i < products.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
+                      style={{ borderBottom: i < sortedProducts.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
