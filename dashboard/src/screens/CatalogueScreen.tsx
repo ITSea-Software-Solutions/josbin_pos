@@ -89,6 +89,20 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
 
   useEffect(() => {
     if (!viewportRef.current) return
+
+    // Browsers only expose the camera API (getUserMedia) in a SECURE context —
+    // HTTPS, or http://localhost. On a plain-HTTP origin (e.g. http://<ip>:port)
+    // navigator.mediaDevices is undefined and Quagga throws a raw
+    // "getUserMedia is not defined" error. Detect this up front and show a
+    // clear, actionable message instead of attempting (and failing).
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+      setError(isNl
+        ? 'Camerascannen werkt alleen via een beveiligde verbinding (HTTPS). Op een HTTP-adres blokkeert de browser de camera. Gebruik een USB-barcodescanner of typ de barcode in het veld.'
+        : 'Camera scanning only works over a secure (HTTPS) connection. On an HTTP address the browser blocks the camera. Use a USB barcode scanner or type the barcode in the field.')
+      return
+    }
+
+    let started = false
     Quagga.init({
       inputStream: {
         type: 'LiveStream',
@@ -98,7 +112,15 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
       decoder: { readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'code_128_reader'] },
       locate: true,
     }, (err) => {
-      if (err) { setError(String(err)); return }
+      if (err) {
+        const raw = String(err)
+        const denied = /NotAllowed|Permission|denied/i.test(raw)
+        setError(denied
+          ? (isNl ? 'Cameratoegang geweigerd — sta de camera toe in je browser en probeer opnieuw.' : 'Camera access was denied — allow the camera in your browser and try again.')
+          : (isNl ? `Camera kon niet starten. Gebruik een USB-scanner of typ de barcode. (${raw})` : `Camera could not start. Use a USB scanner or type the barcode. (${raw})`))
+        return
+      }
+      started = true
       Quagga.start()
     })
 
@@ -110,8 +132,8 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
       setTimeout(() => setFlash(false), 300)
     })
 
-    return () => { Quagga.stop() }
-  }, [])
+    return () => { try { if (started) Quagga.stop() } catch { /* not started */ } }
+  }, [isNl])
 
   function confirm() {
     if (detected) { onDetected(detected); onClose() }
