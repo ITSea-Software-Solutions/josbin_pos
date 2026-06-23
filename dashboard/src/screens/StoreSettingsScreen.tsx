@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
@@ -54,6 +54,10 @@ interface FormState {
 function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSaved: () => void }) {
   const qc = useQueryClient()
   const logoInputRef = useRef<HTMLInputElement>(null)
+  // Store Managers may edit their store's receipt/display settings, but the
+  // default BTW rate is a tax setting and stays Org-Admin-controlled (the
+  // backend also ignores it from a manager). Show it read-only for them.
+  const btwLocked = useDashboardAuthStore((s) => s.user?.role) === 'store_manager'
 
   const [form, setForm] = useState<FormState>({
     name:               store.name ?? '',
@@ -157,8 +161,15 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
           <Field label={isNl ? 'Adres' : 'Address'}>
             <input style={inputStyle} value={form.address} onChange={e => set('address', e.target.value)} />
           </Field>
-          <Field label={isNl ? 'Standaard BTW-tarief (%)' : 'Default BTW rate (%)'} hint={isNl ? 'Wordt gebruikt als standaard bij nieuwe producten' : 'Used as default when creating new products'}>
-            <input type="number" min="0" max="100" step="0.01" style={{ ...inputStyle, maxWidth: 120 }} value={form.default_btw_rate} onChange={e => set('default_btw_rate', e.target.value)} />
+          <Field
+            label={isNl ? 'Standaard BTW-tarief (%)' : 'Default BTW rate (%)'}
+            hint={btwLocked
+              ? (isNl ? 'Wordt door uw organisatie ingesteld' : 'Set by your organisation')
+              : (isNl ? 'Wordt gebruikt als standaard bij nieuwe producten' : 'Used as default when creating new products')}
+          >
+            <input type="number" min="0" max="100" step="0.01" disabled={btwLocked}
+              style={{ ...inputStyle, maxWidth: 120, ...(btwLocked ? { background: '#f3f4f6', color: '#9ca3af', cursor: 'not-allowed' } : {}) }}
+              value={form.default_btw_rate} onChange={e => set('default_btw_rate', e.target.value)} />
           </Field>
         </Section>
 
@@ -270,10 +281,18 @@ export default function StoreSettingsScreen() {
     enabled: !!selectedStoreId,
   })
 
-  // Non-super-admins only manage their own org's stores — auto-select if only one
+  // Non-super-admins only manage their own org's stores.
   const availableStores = isSuperAdmin
     ? stores
     : stores.filter(s => s.organisation_id === user?.organisation_id)
+
+  // Auto-select when there's exactly one store to manage (e.g. a Store Manager
+  // pinned to a single store) — saves a pointless "choose a store" step.
+  useEffect(() => {
+    if (!selectedStoreId && availableStores.length === 1) {
+      setSelectedStoreId(availableStores[0].id)
+    }
+  }, [selectedStoreId, availableStores])
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>

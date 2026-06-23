@@ -26,8 +26,13 @@ class StorePolicy
     public function update(User $user, Store $store): bool
     {
         if ($user->isSuperAdmin()) return true;
-        return $user->role === User::ROLE_ORGANISATION_ADMIN
-            && $user->organisation_id === $store->organisation_id;
+        if ($user->organisation_id !== $store->organisation_id) return false;
+        // Org Admin manages any store in their org.
+        if ($user->role === User::ROLE_ORGANISATION_ADMIN) return true;
+        // Store Manager may edit the OPERATIONAL settings of their OWN store
+        // (receipt header/footer/logo, display name). Tax + structural fields
+        // are stripped in the controller; create/delete stay OA/SA-only.
+        return $user->role === User::ROLE_STORE_MANAGER && $user->store_id === $store->id;
     }
 
     public function delete(User $user, Store $store): bool

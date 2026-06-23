@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getConsolidatedReport, getConsolidatedBtwReport, getProfitReport, exportReport } from '@/api/dashboard'
 import { getStores } from '@/api/stores'
+import { useTableSort } from '@/lib/useTableSort'
 import { formatSRD } from '@/utils/currency'
 import { format, subDays, startOfMonth } from 'date-fns'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -111,6 +112,45 @@ export default function ReportsScreen() {
   const canSeeProfit = ['super_admin', 'organisation_admin', 'store_manager'].includes(actor?.role ?? '')
 
   const [exporting, setExporting] = useState(false)
+
+  // ── Client-side column sorting (shared hook → identical behaviour across all
+  // dashboard tables). One hook call per data table; all called unconditionally
+  // at top level. `?? []` guards the possibly-undefined report responses.
+  const perStoreSort = useTableSort(consolidated?.per_store ?? [], {
+    store:        (r) => r.store_name.toLowerCase(),
+    city:         (r) => (r.city ?? '').toLowerCase(),
+    revenue:      (r) => Number(r.total_sales) || 0,
+    btw:          (r) => Number(r.total_btw) || 0,
+    transactions: (r) => r.transaction_count || 0,
+  })
+  const topProductsSort = useTableSort(consolidated?.top_products ?? [], {
+    product: (r) => r.name.toLowerCase(),
+    qty:     (r) => Number(r.qty) || 0,
+    revenue: (r) => Number(r.revenue) || 0,
+  })
+  const btwBreakdownSort = useTableSort(btwReport?.breakdown ?? [], {
+    rate:    (r) => Number(r.btw_rate) || 0,
+    exempt:  (r) => (r.btw_exempt ? 1 : 0),
+    gross:   (r) => Number(r.gross_incl_btw) || 0,
+    net:     (r) => Number(r.net_excl_btw) || 0,
+    btw:     (r) => Number(r.btw_amount) || 0,
+    sales:   (r) => r.sale_count || 0,
+  })
+  const profitPerStoreSort = useTableSort(profitReport?.per_store ?? [], {
+    store:        (r) => r.store_name.toLowerCase(),
+    revenue:      (r) => Number(r.revenue_srd) || 0,
+    cost:         (r) => Number(r.cost_srd) || 0,
+    profit:       (r) => Number(r.profit_srd) || 0,
+    margin:       (r) => (r.margin_pct == null ? null : Number(r.margin_pct) || 0),
+    transactions: (r) => r.transactions || 0,
+  })
+  const profitTopSort = useTableSort(profitReport?.top_products_by_profit ?? [], {
+    product: (r) => r.name.toLowerCase(),
+    qty:     (r) => Number(r.qty) || 0,
+    revenue: (r) => Number(r.revenue_srd) || 0,
+    profit:  (r) => Number(r.profit_srd) || 0,
+    margin:  (r) => (r.margin_pct == null ? null : Number(r.margin_pct) || 0),
+  })
 
   async function handleExportPdf() {
     setExporting(true)
@@ -350,14 +390,16 @@ export default function ReportsScreen() {
               <thead>
                 <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                   {[
-                    isNl ? 'Vestiging' : 'Store',
-                    isNl ? 'Stad' : 'City',
-                    isNl ? 'Omzet' : 'Revenue',
-                    'BTW',
-                    isNl ? 'Transacties' : 'Transactions',
+                    { key: 'store',        label: isNl ? 'Vestiging' : 'Store' },
+                    { key: 'city',         label: isNl ? 'Stad' : 'City' },
+                    { key: 'revenue',      label: isNl ? 'Omzet' : 'Revenue' },
+                    { key: 'btw',          label: 'BTW' },
+                    { key: 'transactions', label: isNl ? 'Transacties' : 'Transactions' },
                   ].map((h) => (
-                    <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
-                      {h}
+                    <th key={h.key} onClick={() => perStoreSort.toggle(h.key)}
+                      style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                      {h.label}
+                      <span style={{ marginLeft: 5, fontSize: 9, color: perStoreSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{perStoreSort.indicator(h.key)}</span>
                     </th>
                   ))}
                 </tr>
@@ -365,10 +407,10 @@ export default function ReportsScreen() {
               <tbody>
                 {isLoading
                   ? Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={5} />)
-                  : (consolidated?.per_store ?? []).map((row, i) => (
+                  : perStoreSort.sorted.map((row, i) => (
                     <tr
                       key={row.store_id}
-                      style={{ borderBottom: i < (consolidated?.per_store.length ?? 0) - 1 ? '1px solid #f3f3f8' : 'none' }}
+                      style={{ borderBottom: i < perStoreSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
@@ -395,18 +437,25 @@ export default function ReportsScreen() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
-                    {['#', isNl ? 'Product' : 'Product', isNl ? 'Aantal' : 'Qty', isNl ? 'Omzet' : 'Revenue'].map((h) => (
-                      <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
-                        {h}
+                    {[
+                      { key: null,        label: '#' },
+                      { key: 'product',   label: isNl ? 'Product' : 'Product' },
+                      { key: 'qty',       label: isNl ? 'Aantal' : 'Qty' },
+                      { key: 'revenue',   label: isNl ? 'Omzet' : 'Revenue' },
+                    ].map((h) => (
+                      <th key={h.label} onClick={h.key ? () => topProductsSort.toggle(h.key!) : undefined}
+                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                        {h.label}
+                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: topProductsSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{topProductsSort.indicator(h.key)}</span>}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {consolidated!.top_products.map((p, i) => (
+                  {topProductsSort.sorted.map((p, i) => (
                     <tr
                       key={p.name}
-                      style={{ borderBottom: i < consolidated!.top_products.length - 1 ? '1px solid #f3f3f8' : 'none' }}
+                      style={{ borderBottom: i < topProductsSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
@@ -464,15 +513,17 @@ export default function ReportsScreen() {
               <thead>
                 <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                   {[
-                    isNl ? 'Tarief' : 'Rate',
-                    isNl ? 'Vrijgesteld' : 'Exempt',
-                    isNl ? 'Bruto incl. BTW' : 'Gross incl. BTW',
-                    isNl ? 'Netto excl. BTW' : 'Net excl. BTW',
-                    'BTW',
-                    isNl ? 'Verkopen' : 'Sales',
+                    { key: 'rate',   label: isNl ? 'Tarief' : 'Rate' },
+                    { key: 'exempt', label: isNl ? 'Vrijgesteld' : 'Exempt' },
+                    { key: 'gross',  label: isNl ? 'Bruto incl. BTW' : 'Gross incl. BTW' },
+                    { key: 'net',    label: isNl ? 'Netto excl. BTW' : 'Net excl. BTW' },
+                    { key: 'btw',    label: 'BTW' },
+                    { key: 'sales',  label: isNl ? 'Verkopen' : 'Sales' },
                   ].map((h) => (
-                    <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
-                      {h}
+                    <th key={h.key} onClick={() => btwBreakdownSort.toggle(h.key)}
+                      style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                      {h.label}
+                      <span style={{ marginLeft: 5, fontSize: 9, color: btwBreakdownSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{btwBreakdownSort.indicator(h.key)}</span>
                     </th>
                   ))}
                 </tr>
@@ -480,10 +531,10 @@ export default function ReportsScreen() {
               <tbody>
                 {isLoading
                   ? Array.from({ length: 3 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
-                  : (btwReport?.breakdown ?? []).map((row, i) => (
+                  : btwBreakdownSort.sorted.map((row, i) => (
                     <tr
                       key={i}
-                      style={{ borderBottom: i < (btwReport?.breakdown.length ?? 0) - 1 ? '1px solid #f3f3f8' : 'none' }}
+                      style={{ borderBottom: i < btwBreakdownSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
                       onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
@@ -586,20 +637,24 @@ export default function ReportsScreen() {
                 <thead>
                   <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
                     {[
-                      isNl ? 'Vestiging' : 'Store',
-                      isNl ? 'Omzet'     : 'Revenue',
-                      isNl ? 'Inkoop'    : 'Cost',
-                      isNl ? 'Winst'     : 'Profit',
-                      isNl ? 'Marge'     : 'Margin',
-                      isNl ? 'Transacties' : 'Txns',
+                      { key: 'store',        label: isNl ? 'Vestiging' : 'Store' },
+                      { key: 'revenue',      label: isNl ? 'Omzet'     : 'Revenue' },
+                      { key: 'cost',         label: isNl ? 'Inkoop'    : 'Cost' },
+                      { key: 'profit',       label: isNl ? 'Winst'     : 'Profit' },
+                      { key: 'margin',       label: isNl ? 'Marge'     : 'Margin' },
+                      { key: 'transactions', label: isNl ? 'Transacties' : 'Txns' },
                     ].map((h) => (
-                      <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                      <th key={h.key} onClick={() => profitPerStoreSort.toggle(h.key)}
+                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                        {h.label}
+                        <span style={{ marginLeft: 5, fontSize: 9, color: profitPerStoreSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{profitPerStoreSort.indicator(h.key)}</span>
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {profitReport.per_store.map((s, i) => (
-                    <tr key={s.store_id} style={{ borderBottom: i < profitReport.per_store.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
+                  {profitPerStoreSort.sorted.map((s, i) => (
+                    <tr key={s.store_id} style={{ borderBottom: i < profitPerStoreSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
                       <td style={{ padding: '12px 20px', fontWeight: 700, color: '#1c1c2e' }}>{s.store_name}<div style={{ fontSize: 11, color: '#9090a0', fontWeight: 400 }}>{s.city}</div></td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(s.revenue_srd)}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{formatSRD(s.cost_srd)}</td>
@@ -623,14 +678,25 @@ export default function ReportsScreen() {
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
-                    {['#', isNl ? 'Product' : 'Product', isNl ? 'Aantal' : 'Qty', isNl ? 'Omzet' : 'Revenue', isNl ? 'Winst' : 'Profit', isNl ? 'Marge' : 'Margin'].map((h) => (
-                      <th key={h} style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                    {[
+                      { key: null,      label: '#' },
+                      { key: 'product', label: isNl ? 'Product' : 'Product' },
+                      { key: 'qty',     label: isNl ? 'Aantal' : 'Qty' },
+                      { key: 'revenue', label: isNl ? 'Omzet' : 'Revenue' },
+                      { key: 'profit',  label: isNl ? 'Winst' : 'Profit' },
+                      { key: 'margin',  label: isNl ? 'Marge' : 'Margin' },
+                    ].map((h) => (
+                      <th key={h.label} onClick={h.key ? () => profitTopSort.toggle(h.key!) : undefined}
+                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                        {h.label}
+                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: profitTopSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{profitTopSort.indicator(h.key)}</span>}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {profitReport.top_products_by_profit.map((p, i) => (
-                    <tr key={i} style={{ borderBottom: i < profitReport.top_products_by_profit.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
+                  {profitTopSort.sorted.map((p, i) => (
+                    <tr key={i} style={{ borderBottom: i < profitTopSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
                       <td style={{ padding: '12px 20px', fontWeight: 700, color: '#9090a0', width: 32 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</td>
                       <td style={{ padding: '12px 20px', fontWeight: 600, color: '#1c1c2e' }}>{p.name}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{parseFloat(p.qty).toFixed(0)}</td>

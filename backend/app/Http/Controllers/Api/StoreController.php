@@ -71,6 +71,13 @@ class StoreController extends Controller
             'is_active'         => ['sometimes', 'boolean'],
         ]);
 
+        // A Store Manager edits operational settings of their own store, but
+        // tax (default_btw_rate) and structural flags stay Org-Admin-controlled
+        // — same principle as BTW rate being OA-only on products.
+        if ($request->user()->isStoreBound()) {
+            unset($data['default_btw_rate'], $data['is_active'], $data['pos_type']);
+        }
+
         $store->update($data);
 
         return response()->json(['data' => $store->fresh()]);

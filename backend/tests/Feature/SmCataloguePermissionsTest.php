@@ -184,4 +184,44 @@ class SmCataloguePermissionsTest extends TestCase
         $this->actingAs($this->sm, 'sanctum')->postJson('/api/products/push')
             ->assertForbidden();
     }
+
+    // ── Store settings: SM edits OWN store's operational fields, not tax/structure ──
+
+    public function test_sm_can_update_own_store_receipt_settings(): void
+    {
+        $this->actingAs($this->sm, 'sanctum')->putJson("/api/stores/{$this->store->id}", [
+            'name'           => 'Main Store (Updated)',
+            'receipt_header' => 'Bedankt voor uw bezoek',
+            'receipt_footer' => 'Tot ziens!',
+        ])->assertOk();
+
+        $fresh = $this->store->fresh();
+        $this->assertSame('Main Store (Updated)', $fresh->name);
+        $this->assertSame('Bedankt voor uw bezoek', $fresh->receipt_header);
+    }
+
+    public function test_sm_store_update_ignores_btw_and_structural_fields(): void
+    {
+        $this->actingAs($this->sm, 'sanctum')->putJson("/api/stores/{$this->store->id}", [
+            'receipt_header'   => 'x',
+            'default_btw_rate' => '25',   // tax — must be ignored for SM
+            'is_active'        => false,  // structural — must be ignored for SM
+        ])->assertOk();
+
+        $fresh = $this->store->fresh();
+        $this->assertEquals(10.0, (float) $fresh->default_btw_rate);  // unchanged
+        $this->assertTrue((bool) $fresh->is_active);                  // unchanged
+    }
+
+    public function test_sm_cannot_update_another_store(): void
+    {
+        $other = Store::create([
+            'organisation_id' => $this->org->id, 'name' => 'Second Store',
+            'city' => 'Nickerie', 'default_btw_rate' => 10, 'is_active' => true, 'pos_type' => 'native',
+        ]);
+
+        $this->actingAs($this->sm, 'sanctum')->putJson("/api/stores/{$other->id}", [
+            'receipt_header' => 'nope',
+        ])->assertForbidden();
+    }
 }
