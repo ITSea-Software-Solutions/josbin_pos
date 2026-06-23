@@ -13,6 +13,7 @@ import TopBar from '@/components/pos/TopBar'
 import OnScreenKeyboard from '@/components/pos/OnScreenKeyboard'
 import PaymentModal from '@/components/pos/PaymentModal'
 import ReceiptModal from '@/components/pos/ReceiptModal'
+import HoldBillModal from '@/components/pos/HoldBillModal'
 
 // Lazy-load secondary screens
 const ReportsScreen       = lazy(() => import('./ReportsScreen'))
@@ -50,6 +51,7 @@ export default function POSScreen() {
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
+  const [holdModalOpen, setHoldModalOpen] = useState(false)
 
   function handleSaleComplete(saleId: string, cashTendered: number, change: number) {
     setPaymentOpen(false)
@@ -61,11 +63,12 @@ export default function POSScreen() {
     clearCart()
   }
 
-  const handleHoldBill = useCallback(async () => {
+  const handleHoldBill = useCallback(async (label?: string) => {
     if (items.length === 0) return
     try {
       await holdBill({
         store_id: storeId,
+        label: label?.trim() || undefined,   // optional — list falls back to hold time
         customer_id: customer?.id ?? null,
         cart_data: items,
         total_srd: parseFloat(totals.total),
@@ -108,7 +111,7 @@ export default function POSScreen() {
 
       switch (e.key) {
         case 'F2':
-          if (items.length > 0) { e.preventDefault(); handleHoldBill() }
+          if (items.length > 0) { e.preventDefault(); setHoldModalOpen(true) }
           break
         case 'F4':
           if (completedSale) { e.preventDefault(); handleNewSale() }
@@ -130,7 +133,7 @@ export default function POSScreen() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [activeScreen, items.length, paymentOpen, completedSale, keyboardOpen, handleHoldBill])
+  }, [activeScreen, items.length, paymentOpen, completedSale, keyboardOpen])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
@@ -157,7 +160,7 @@ export default function POSScreen() {
           <div style={{ width: 340, flexShrink: 0 }}>
             <CartPanel
               onCheckout={() => setPaymentOpen(true)}
-              onHoldBill={handleHoldBill}
+              onHoldBill={() => { if (items.length > 0) setHoldModalOpen(true) }}
             />
           </div>
         </div>
@@ -198,6 +201,13 @@ export default function POSScreen() {
           onNewSale={handleNewSale}
         />
       )}
+
+      {/* Name-this-bill prompt before parking (Hold) */}
+      <HoldBillModal
+        isOpen={holdModalOpen}
+        onClose={() => setHoldModalOpen(false)}
+        onConfirm={(label) => handleHoldBill(label)}
+      />
 
       {/* On-screen keyboard — floats above everything at the bottom */}
       {keyboardOpen && (
