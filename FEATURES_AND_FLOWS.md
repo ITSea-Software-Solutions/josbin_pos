@@ -47,7 +47,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | # | Feature | Status | Roles | Code | Docs |
 |---|---|---|---|---|---|
 | ORG-01 | Create / edit / deactivate organisation | ✅ | SA | `OrganisationController` | `dashboard_manual/02` |
-| ORG-02 | Read-only org header for OA / SM | ✅ | OA / SM (view only) | `StoresScreen.tsx` | `dashboard_manual/02 §2.4` |
+| ORG-02 | Stores screen — OA manages stores; **Store Manager no longer sees the Stores menu** (only SA/OA create/edit stores; backend `StorePolicy`/`OrganisationPolicy` already SA/OA-only) | ✅ | SA, OA | `StoresScreen.tsx`, `DashboardLayout` nav | `dashboard_manual/02 §2.4` |
 | ORG-03 | Create / edit / deactivate store (under org) | ✅ | SA, OA | `OrganisationController::storeCreate`, `StoreController::update` | `dashboard_manual/02 §2.5` |
 | ORG-04 | Licence-gated store creation (LICENSE_REQUIRED / EXPIRED / LIMIT_REACHED) | ✅ | OA blocked when gate fails | `OrganisationController::storeCreate` | this doc §4.3 + G-007 |
 | ORG-05 | Per-store receipt template (logo + header + footer) | ✅ | SA, OA, SM | `StoreController::update`, `uploadLogo` | `dashboard_manual/02 §2.7` |
@@ -133,7 +133,8 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | CAT-15 | Low-stock badge on POS product grid | 🟡 | Cashier | `useLowStockSet` hook exists; POS docs missing | task #66 |
 | CAT-16 | Discount rules (product / category / cart) | ✅ | OA | `DiscountRuleController` + `DiscountRuleService` | `dashboard_manual/07` |
 | CAT-17 | Barcode scanner — USB HID (keyboard wedge) | ✅ | Cashier | Auto via input field listener | `user_manual/04 §4.7` |
-| CAT-18 | Barcode scanner — camera (Quagga2) | ✅ | Cashier | `lib/quaggaBarcode.ts` | `user_manual/04 §4.8` |
+| CAT-18 | Barcode scanner — camera (Quagga2) on the dashboard product form. **Requires a secure context (HTTPS/localhost)** — on plain-HTTP it shows a clear "use USB scanner or type the barcode" message instead of a raw error | ✅ | OA, SM (product form) | `CatalogueScreen.tsx` `BarcodeScanModal` | `dashboard_manual/04` |
+| CAT-19 | Product table — click-to-sort columns (name/SKU/category/price/cost/BTW/stock/status, asc→desc→off) on top of server-side search + category filter | ✅ | All catalogue viewers | `CatalogueScreen.tsx` (`sortAccessors`/`toggleSort`) | — |
 | CAT-19 | Bulk barcode label printing | ✅ | OA, SM | `BarcodeLabelScreen.tsx` | `user_manual/12` |
 | CAT-20 | Weighed-goods / scale barcodes (embedded price or weight EAN-13) — configurable layout, off by default | ✅ | Cashier | `lib/embeddedBarcode.ts` (parser + tests) → `ProductGrid` scan handler; `Settings → Weighed goods` | layout must be confirmed vs the client's scale (prefix 2, 6+5 default) |
 
