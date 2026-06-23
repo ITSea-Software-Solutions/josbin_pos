@@ -154,6 +154,19 @@ class ReceiptService
     }
 
     /**
+     * Render the receipt as standalone HTML (same Blade as the PDF, so the
+     * content is identical). Used by the POS browser-print fallback: printing
+     * an HTML document in an iframe is reliable across browsers, whereas
+     * printing a PDF blob in an iframe renders blank in Chrome.
+     */
+    public function generateHtml(Sale $sale, string $locale = 'nl', array $cashData = []): string
+    {
+        $data = $this->buildViewData($sale, $locale, $cashData);
+
+        return view('receipts.receipt', $data)->render();
+    }
+
+    /**
      * Send an email receipt.
      */
     public function sendEmail(Sale $sale, string $to, string $locale = 'nl'): void

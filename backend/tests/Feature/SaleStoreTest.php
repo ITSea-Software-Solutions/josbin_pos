@@ -111,6 +111,38 @@ class SaleStoreTest extends TestCase
         $this->assertStringStartsWith('POS-', $sale->sale_number);
     }
 
+    public function test_receipt_html_endpoint_renders_the_receipt(): void
+    {
+        // Create a sale, then fetch its receipt as HTML (the POS browser-print
+        // path). Must be a real HTML document carrying the sale's data — the
+        // PDF-blob print was rendering blank, the HTML path is the fix.
+        $created = $this->actingAs($this->cashier, 'sanctum')->postJson('/api/sales', [
+            'store_id'       => $this->store->id,
+            'payment_method' => 'cash',
+            'cash_tendered'  => 50.00,
+            'items'          => [[
+                'product_id'   => $this->cola->id,
+                'product_name' => $this->cola->name_nl,
+                'unit_price'   => '11.00',
+                'quantity'     => 1,
+                'btw_rate'     => '10',
+                'btw_exempt'   => false,
+            ]],
+        ])->assertStatus(201);
+
+        $saleId = $created->json('data.id');
+        $saleNumber = $created->json('data.sale_number');
+
+        $res = $this->actingAs($this->cashier, 'sanctum')
+            ->get("/api/sales/{$saleId}/receipt/html?locale=nl&cash_tendered=50&change=39");
+
+        $res->assertOk();
+        $this->assertStringContainsString('text/html', $res->headers->get('Content-Type'));
+        $res->assertSee('<!DOCTYPE html>', false);
+        $res->assertSee($saleNumber, false);   // the receipt carries real data
+        $res->assertSee('Totaal', false);      // not a blank document
+    }
+
     public function test_mixed_cart_btw_total_matches_btw_engine(): void
     {
         // 2× Cola (taxed) + 3× Rice (exempt) — only Cola contributes BTW

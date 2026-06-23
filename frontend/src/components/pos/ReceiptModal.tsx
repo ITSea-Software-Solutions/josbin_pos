@@ -108,11 +108,17 @@ export default function ReceiptModal({
   }, [sale, store, printer, cashTendered, change, i18n.language])
 
   /**
-   * Browser-print fallback — no thermal printer configured. Loads the receipt
-   * PDF into a hidden iframe and calls print(), which opens the OS print
-   * dialog. Works with ANY printer installed on the machine (including
-   * thermal printers via their Windows driver) — the same flow web-based POS
-   * like Loyverse/Square use when no receipt printer is paired.
+   * Browser-print fallback — no thermal printer configured. Fetches the
+   * receipt as HTML and prints it from a hidden same-origin iframe (srcdoc),
+   * which opens the OS print dialog and works with ANY installed printer
+   * (including a thermal printer via its Windows driver).
+   *
+   * Why HTML and not the PDF: printing a PDF *blob* loaded into an iframe is
+   * unreliable in Chrome — the PDF-viewer plugin doesn't expose its rendered
+   * content to the parent's print() call, so the preview comes out blank
+   * ("Page 1 of 1", empty). An HTML document in a same-origin iframe prints
+   * its actual content every time. The HTML is rendered from the same Blade
+   * template as the PDF, so the printout is identical.
    */
   const printViaBrowser = useCallback(async () => {
     setPrintStatus('printing')
@@ -120,8 +126,8 @@ export default function ReceiptModal({
       const params = new URLSearchParams({ locale: i18n.language })
       if (cashTendered > 0) params.set('cash_tendered', String(cashTendered))
       if (change > 0) params.set('change', String(change))
-      const res = await apiClient.get(`/sales/${saleId}/receipt/pdf?${params}`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const res = await apiClient.get(`/sales/${saleId}/receipt/html?${params}`, { responseType: 'text' })
+      const html = typeof res.data === 'string' ? res.data : String(res.data)
 
       const iframe = document.createElement('iframe')
       iframe.style.position = 'fixed'
@@ -130,22 +136,22 @@ export default function ReceiptModal({
       iframe.style.width = '0'
       iframe.style.height = '0'
       iframe.style.border = '0'
-      iframe.src = url
+      iframe.setAttribute('aria-hidden', 'true')
       iframe.onload = () => {
         try {
           iframe.contentWindow?.focus()
           iframe.contentWindow?.print()
           setPrintStatus('ok')
         } catch {
-          // Cross-origin/viewer edge case — fall back to opening the PDF.
-          window.open(url, '_blank')
-          setPrintStatus('idle')
+          setPrintStatus('error')
         }
       }
       document.body.appendChild(iframe)
+      // srcdoc keeps the iframe same-origin, so contentWindow.print() is allowed.
+      iframe.srcdoc = html
       // Keep the iframe alive long enough for the print dialog + spooling,
       // then clean up. (Removing it immediately cancels the print job.)
-      setTimeout(() => { iframe.remove(); URL.revokeObjectURL(url) }, 60_000)
+      setTimeout(() => { iframe.remove() }, 60_000)
     } catch {
       setPrintStatus('error')
     }

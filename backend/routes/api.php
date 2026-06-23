@@ -247,6 +247,7 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::post('{sale}/void',        [SaleController::class, 'void'])->middleware('throttle:20,1')->name('void');
         Route::post('{sale}/refund',      [SaleController::class, 'refund'])->middleware('throttle:20,1')->name('refund');
         Route::get('{sale}/receipt/pdf',  [SaleController::class, 'receiptPdf'])->name('receipt.pdf');
+        Route::get('{sale}/receipt/html', [SaleController::class, 'receiptHtml'])->name('receipt.html');
         Route::post('{sale}/receipt/email',[SaleController::class, 'receiptEmail'])->name('receipt.email');
         Route::post('{sale}/confirm-payment', [SaleController::class, 'confirmPayment'])->name('confirm-payment');
     });

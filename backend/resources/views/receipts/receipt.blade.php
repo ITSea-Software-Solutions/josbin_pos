@@ -28,7 +28,9 @@
   .total-row td { font-weight: bold; font-size: 12px; }
   .btw-table td { font-size: 10px; }
   .footer  { margin-top: 6px; font-size: 10px; }
-  @media print { body { padding: 0; } }
+  /* Browser print only — DomPDF uses setPaper() and ignores @page, so this
+     just sizes the sheet to an 80mm receipt roll when printed from the POS. */
+  @media print { body { padding: 0; } @page { size: 80mm auto; margin: 0; } }
 </style>
 </head>
 <body>

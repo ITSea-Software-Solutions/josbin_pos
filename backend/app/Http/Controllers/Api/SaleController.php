@@ -810,6 +810,30 @@ class SaleController extends Controller
         ]);
     }
 
+    /**
+     * GET /api/sales/{sale}/receipt/html
+     *
+     * Same receipt as the PDF, rendered as HTML. The POS browser-print
+     * fallback fetches this and prints it from a hidden iframe — reliable,
+     * unlike printing a PDF blob (which renders blank in Chrome).
+     */
+    public function receiptHtml(Request $request, Sale $sale): Response
+    {
+        $this->authorize('view', $sale);
+
+        $locale   = $request->input('locale', $sale->cashier?->locale ?? 'nl');
+        $cashData = [
+            'cash_tendered' => $request->input('cash_tendered', 0),
+            'change'        => $request->input('change', 0),
+        ];
+
+        return response(
+            $this->receipt->generateHtml($sale, $locale, $cashData),
+            200,
+            ['Content-Type' => 'text/html; charset=UTF-8']
+        );
+    }
+
     /** POST /api/sales/{sale}/receipt/email */
     public function receiptEmail(Request $request, Sale $sale): JsonResponse
     {
