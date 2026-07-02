@@ -122,6 +122,9 @@ class UserController extends Controller
                 ? ['required', 'uuid', 'exists:organisations,id']
                 : ['prohibited'],
             'is_active'       => ['sometimes', 'boolean'],
+            // When set, email the new user a bilingual welcome with their login
+            // email + dashboard URL (never a plaintext password — see below).
+            'send_welcome_email' => ['sometimes', 'boolean'],
             // Single-store assignment. Required for cashier + store_manager
             // (one user, one store — no floating cashiers, no "all stores"
             // grant). Prohibited for org-scoped roles to keep the data clean.
@@ -134,6 +137,11 @@ class UserController extends Controller
         if (! $actor->isSuperAdmin()) {
             $data['organisation_id'] = $actor->organisation_id;
         }
+
+        // send_welcome_email is a controller flag, not a users column — pull it
+        // out before mass-assigning so it never hits User::create().
+        $sendWelcome = (bool) ($data['send_welcome_email'] ?? false);
+        unset($data['send_welcome_email']);
 
         $user = User::create([
             ...$data,
@@ -152,9 +160,35 @@ class UserController extends Controller
             $this->logStoreAssignment($actor, $user, null, $data['store_id']);
         }
 
+        if ($sendWelcome) {
+            $this->sendWelcomeEmail($user);
+        }
+
         return response()->json([
             'data' => $this->formatUser($user->fresh()->load('organisation:id,name', 'store:id,name')),
         ], 201);
+    }
+
+    /**
+     * Email the new user their login details (bilingual, per the user's locale).
+     * Queued and best-effort: a mail/queue hiccup must never break user
+     * creation — same defensive approach as BtwSubmissionController's taxpayer
+     * notifications. Never emails a plaintext password (the admin sets it and
+     * shares it securely — the notification only carries the login email +
+     * dashboard URL).
+     */
+    private function sendWelcomeEmail(User $user): void
+    {
+        try {
+            $user->loadMissing('organisation:id,name,locale');
+            $user->notify(new \App\Notifications\WelcomeCredentials($user));
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Users] welcome email failed', [
+                'user'  => $user->id,
+                'email' => $user->email,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /** GET /api/users/{user} */
