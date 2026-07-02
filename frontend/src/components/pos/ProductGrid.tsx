@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useLowStockSet } from '@/hooks/useLowStockSet'
+import { useToast } from '@/components/shared/Toast'
 import { getPosProducts, getCategories, getProductByBarcode } from '@/api/products'
 import { parseEmbeddedBarcode } from '@/lib/embeddedBarcode'
 import { getRecent, getFavorites, recordRecent, toggleFavorite } from '@/lib/productFavorites'
@@ -25,6 +26,7 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
   const updateItemOverrides = useCartStore((s) => s.updateItemOverrides)
   const productDisplay = useSettingsStore((s) => s.productDisplay)
   const embeddedBarcode = useSettingsStore((s) => s.embeddedBarcode)
+  const toast = useToast()
 
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -40,12 +42,21 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     staleTime: 1000 * 60 * 5,
   })
 
+  const { data: lowStockIds } = useLowStockSet(storeId)
+
   // Every add path (grid tap, barcode, quick-row tap) records recency so the
-  // quick row reflects what this cashier actually rings up.
+  // quick row reflects what this cashier actually rings up, and surfaces a
+  // low / out-of-stock reorder signal as a non-blocking toast.
   const handleAdd = useCallback((product: Product) => {
     addProduct(product)
     setRecentIds(recordRecent(storeId, product.id))
-  }, [addProduct, storeId])
+    const qty = Number(product.stock_qty)
+    if (Number.isFinite(qty) && qty <= 0) {
+      toast.warning(t('pos.stockWarning.outShort'))
+    } else if (lowStockIds?.has(product.id)) {
+      toast.info(Number.isFinite(qty) && qty > 0 ? t('pos.stockWarning.lowMany', { count: qty }) : t('pos.stockWarning.lowOne'))
+    }
+  }, [addProduct, storeId, lowStockIds, toast, t])
 
   const handleToggleFavorite = useCallback((productId: string) => {
     setFavIds(toggleFavorite(storeId, productId))
@@ -56,8 +67,6 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     queryFn: getCategories,
     staleTime: 1000 * 60 * 10,
   })
-
-  const { data: lowStockIds } = useLowStockSet(storeId)
 
   // Barcode scanner — USB HID keyboard wedge sends chars rapidly then Enter
   const handleBarcodeSearch = useCallback(async (barcode: string) => {
