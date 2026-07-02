@@ -163,6 +163,7 @@
       "email": "Email receipt",
       "print": "Print receipt",
       "newSale": "New Sale",
+      "setupPrinter": "Set up printer",
       "printThermal": "Print thermal receipt",
       "printPdf": "Open PDF",
       "printing": "Printing...",

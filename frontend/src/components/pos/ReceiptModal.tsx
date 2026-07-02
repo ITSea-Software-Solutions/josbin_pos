@@ -17,10 +17,11 @@ interface ReceiptModalProps {
   cashTendered: number
   change: number
   onNewSale: () => void
+  onOpenSettings?: () => void
 }
 
 export default function ReceiptModal({
-  isOpen, onClose, saleId, cashTendered, change, onNewSale,
+  isOpen, onClose, saleId, cashTendered, change, onNewSale, onOpenSettings,
 }: ReceiptModalProps) {
   const { t, i18n } = useTranslation()
   const printer       = useSettingsStore((s) => s.printer)
@@ -367,6 +368,21 @@ export default function ReceiptModal({
                 </span>
               )}
             </div>
+          )}
+
+          {/* No thermal printer configured → nudge to set one up (the Print
+              button still works via the OS dialog; this is a shortcut). */}
+          {!hasThermal && onOpenSettings && (
+            <button
+              onClick={() => { onOpenSettings(); onClose() }}
+              style={{
+                height: 'var(--touch-target)', background: 'none', border: '1px dashed var(--border-color)',
+                borderRadius: 'var(--border-radius)', color: 'var(--text-secondary)', cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              🖨 {t('pos.receipt.setupPrinter')}
+            </button>
           )}
 
           {/* New sale */}
