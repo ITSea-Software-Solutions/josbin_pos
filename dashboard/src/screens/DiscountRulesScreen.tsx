@@ -3,6 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useTableSort } from '@/lib/useTableSort'
 import apiClient from '@/api/client'
+import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import EmptyState from '@/components/shared/EmptyState'
+import { useToast } from '@/components/shared/Toast'
 
 interface DiscountRule {
   id: string
@@ -138,7 +141,14 @@ export default function DiscountRulesScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const qc = useQueryClient()
+  const toast = useToast()
   const [editRule, setEditRule] = useState<DiscountRule | 'new' | null>(null)
+  // Bulk selection + confirm state.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkAction, setBulkAction] = useState<'enable' | 'disable' | 'delete' | null>(null)
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null)
+  // Single-row delete confirm (replaces the old window.confirm()).
+  const [deleteTarget, setDeleteTarget] = useState<DiscountRule | null>(null)
 
   const { data: rules = [], isLoading } = useQuery({
     queryKey: ['discount-rules'],
@@ -153,7 +163,15 @@ export default function DiscountRulesScreen() {
 
   const deleteMut = useMutation({
     mutationFn: (id: string) => apiClient.delete(`/discount-rules/${id}`),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['discount-rules'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['discount-rules'] })
+      setDeleteTarget(null)
+      toast.success(isNl ? 'Regel verwijderd' : 'Rule deleted')
+    },
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e)
+      toast.error(isNl ? `Verwijderen mislukt: ${msg}` : `Delete failed: ${msg}`)
+    },
   })
 
   function appliesToLabel(r: DiscountRule) {
@@ -187,6 +205,55 @@ export default function DiscountRulesScreen() {
     status:   (r) => (r.is_active ? 1 : 0),
   })
 
+  // ── Bulk selection ──────────────────────────────────────────────────────
+  const allSelected = rules.length > 0 && rules.every((r) => selectedIds.has(r.id))
+  const selectedRules = rules.filter((r) => selectedIds.has(r.id))
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id); else n.add(id)
+      return n
+    })
+  }
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(rules.map((r) => r.id)))
+  }
+
+  // Run the existing single-rule API sequentially so backend validation and
+  // audit logging stay per-rule, while we show aggregate progress.
+  async function runBulk(action: 'enable' | 'disable' | 'delete') {
+    setBulkAction(null)
+    const targets = action === 'delete'
+      ? selectedRules
+      : selectedRules.filter((r) => r.is_active !== (action === 'enable'))
+    if (targets.length === 0) {
+      toast.info(isNl ? 'Niets te wijzigen.' : 'Nothing to change.')
+      setSelectedIds(new Set())
+      return
+    }
+    setBulkProgress({ done: 0, total: targets.length })
+    let ok = 0, failed = 0
+    for (const r of targets) {
+      try {
+        if (action === 'delete') await apiClient.delete(`/discount-rules/${r.id}`)
+        else await apiClient.put(`/discount-rules/${r.id}`, { is_active: action === 'enable' })
+        ok++
+      } catch {
+        failed++
+      }
+      setBulkProgress((p) => (p ? { ...p, done: p.done + 1 } : p))
+    }
+    setBulkProgress(null)
+    setSelectedIds(new Set())
+    qc.invalidateQueries({ queryKey: ['discount-rules'] })
+    const verb = action === 'delete' ? (isNl ? 'verwijderd' : 'deleted')
+      : action === 'enable' ? (isNl ? 'ingeschakeld' : 'enabled')
+      : (isNl ? 'uitgeschakeld' : 'disabled')
+    if (failed === 0) toast.success(isNl ? `${ok} regel(s) ${verb}.` : `${ok} rule(s) ${verb}.`)
+    else toast.warning(isNl ? `${ok} ${verb}, ${failed} mislukt.` : `${ok} ${verb}, ${failed} failed.`)
+  }
+
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
@@ -209,16 +276,54 @@ export default function DiscountRulesScreen() {
           <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #ede9fe', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : rules.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef' }}>
-          <p style={{ fontSize: 40, marginBottom: 12 }}>🎁</p>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#6b7280', marginBottom: 6 }}>{isNl ? 'Nog geen kortingsregels' : 'No discount rules yet'}</p>
-          <p style={{ fontSize: 13, color: '#9090a0' }}>{isNl ? 'Voeg een regel toe voor promoties of bulkkortingen.' : 'Add a rule for promotions or bulk discounts.'}</p>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef' }}>
+          <EmptyState
+            icon="🎁"
+            isNl={isNl}
+            title={{ nl: 'Nog geen kortingsregels', en: 'No discount rules yet' }}
+            description={{ nl: 'Voeg een regel toe voor promoties of bulkkortingen.', en: 'Add a rule for promotions or bulk discounts.' }}
+            cta={{ label: { nl: '+ Nieuwe regel', en: '+ New rule' }, onClick: () => setEditRule('new') }}
+          />
         </div>
       ) : (
+        <>
+        {/* Sticky bulk-action bar — appears when rows are selected. */}
+        {selectedIds.size > 0 && (
+          <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(124,58,237,.35)' }}>
+            <span style={{ fontSize: 13.5, fontWeight: 700 }}>
+              {bulkProgress
+                ? (isNl ? `Bezig… ${bulkProgress.done}/${bulkProgress.total}` : `Working… ${bulkProgress.done}/${bulkProgress.total}`)
+                : `${selectedIds.size} ${isNl ? 'geselecteerd' : 'selected'}`}
+            </span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={() => setSelectedIds(new Set())} disabled={!!bulkProgress}
+                style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.35)', background: 'transparent', color: '#fff', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 600, opacity: bulkProgress ? 0.6 : 1 }}>
+                {isNl ? 'Wissen' : 'Clear'}
+              </button>
+              <button onClick={() => setBulkAction('enable')} disabled={!!bulkProgress}
+                style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#f0fdf4', color: '#15803d', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 800, opacity: bulkProgress ? 0.6 : 1 }}>
+                ✓ {isNl ? 'Inschakelen' : 'Enable'}
+              </button>
+              <button onClick={() => setBulkAction('disable')} disabled={!!bulkProgress}
+                style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#fff7ed', color: '#c2410c', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 800, opacity: bulkProgress ? 0.6 : 1 }}>
+                {isNl ? 'Uitschakelen' : 'Disable'}
+              </button>
+              <button onClick={() => setBulkAction('delete')} disabled={!!bulkProgress}
+                style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#fef2f2', color: '#dc2626', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 800, opacity: bulkProgress ? 0.6 : 1 }}>
+                {isNl ? 'Verwijderen' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        )}
         <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                <th style={{ padding: '11px 8px 11px 16px', width: 38 }}>
+                  <input type="checkbox" checked={allSelected} onChange={toggleAll}
+                    title={isNl ? 'Alles selecteren' : 'Select all'}
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#7c3aed' }} />
+                </th>
                 {[
                   { key: 'name',     label: isNl ? 'Naam' : 'Name' },
                   { key: 'discount', label: isNl ? 'Korting' : 'Discount' },
@@ -243,6 +348,10 @@ export default function DiscountRulesScreen() {
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}
                 >
+                  <td style={{ padding: '12px 8px 12px 16px' }}>
+                    <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleOne(r.id)}
+                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#7c3aed' }} />
+                  </td>
                   <td style={{ padding: '12px 16px' }}>
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{r.name}</p>
                     {r.stackable && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7c3aed' }}>{isNl ? 'Stapelbaar' : 'Stackable'}</p>}
@@ -273,7 +382,7 @@ export default function DiscountRulesScreen() {
                         style={{ height: 30, padding: '0 10px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', fontSize: 12, cursor: 'pointer' }}>
                         {isNl ? 'Bewerken' : 'Edit'}
                       </button>
-                      <button onClick={() => { if (confirm(isNl ? 'Verwijderen?' : 'Delete?')) deleteMut.mutate(r.id) }}
+                      <button onClick={() => setDeleteTarget(r)}
                         style={{ height: 30, padding: '0 8px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', fontSize: 12, cursor: 'pointer' }}>
                         ✕
                       </button>
@@ -284,11 +393,56 @@ export default function DiscountRulesScreen() {
             </tbody>
           </table>
         </div>
+        </>
       )}
 
       {editRule !== null && (
         <RuleModal rule={editRule === 'new' ? null : editRule} isNl={isNl} onClose={() => setEditRule(null)} />
       )}
+
+      {/* Single-row delete confirm (replaces window.confirm). */}
+      <ConfirmDialog
+        isOpen={deleteTarget !== null}
+        loading={deleteMut.isPending}
+        tone="danger"
+        title={isNl ? 'Kortingsregel verwijderen?' : 'Delete discount rule?'}
+        message={isNl
+          ? `"${deleteTarget?.name}" wordt permanent verwijderd. Dit kan niet ongedaan worden gemaakt.`
+          : `"${deleteTarget?.name}" will be permanently deleted. This cannot be undone.`}
+        confirmLabel={isNl ? 'Verwijderen' : 'Delete'}
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => deleteTarget && deleteMut.mutate(deleteTarget.id)}
+      />
+
+      {/* Bulk enable / disable / delete confirm. */}
+      <ConfirmDialog
+        isOpen={bulkAction !== null}
+        tone={bulkAction === 'delete' || bulkAction === 'disable' ? 'danger' : 'default'}
+        title={
+          bulkAction === 'delete'  ? (isNl ? 'Geselecteerde regels verwijderen?' : 'Delete selected rules?')
+          : bulkAction === 'enable'  ? (isNl ? 'Geselecteerde regels inschakelen?' : 'Enable selected rules?')
+          : (isNl ? 'Geselecteerde regels uitschakelen?' : 'Disable selected rules?')
+        }
+        message={(() => {
+          const n = bulkAction === 'delete'
+            ? selectedRules.length
+            : selectedRules.filter((r) => r.is_active !== (bulkAction === 'enable')).length
+          return bulkAction === 'delete'
+            ? (isNl ? `${n} regel(s) worden permanent verwijderd. Dit kan niet ongedaan worden gemaakt.` : `${n} rule(s) will be permanently deleted. This cannot be undone.`)
+            : bulkAction === 'enable'
+              ? (isNl ? `${n} regel(s) worden ingeschakeld en gaan direct gelden bij de kassa.` : `${n} rule(s) will be enabled and apply immediately at the POS.`)
+              : (isNl ? `${n} regel(s) worden uitgeschakeld en gelden niet meer bij de kassa.` : `${n} rule(s) will be disabled and no longer apply at the POS.`)
+        })()}
+        confirmLabel={
+          bulkAction === 'delete'  ? (isNl ? 'Verwijderen' : 'Delete')
+          : bulkAction === 'enable'  ? (isNl ? 'Inschakelen' : 'Enable')
+          : (isNl ? 'Uitschakelen' : 'Disable')
+        }
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setBulkAction(null)}
+        onConfirm={() => bulkAction && runBulk(bulkAction)}
+      />
     </div>
   )
 }

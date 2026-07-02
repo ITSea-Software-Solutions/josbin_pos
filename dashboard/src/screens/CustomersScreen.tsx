@@ -5,6 +5,7 @@ import { getCustomers, updateCustomer, redactCustomer, type Customer } from '@/a
 import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import EmptyState from '@/components/shared/EmptyState'
 import { useToast } from '@/components/shared/Toast'
 
 function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: boolean; onClose: () => void }) {
@@ -160,11 +161,17 @@ export default function CustomersScreen() {
                 </tr>
               ))
             ) : customers.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: '60px 20px', textAlign: 'center' }}>
-                <div style={{ fontSize: 36, marginBottom: 10 }}>👤</div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#6b7280' }}>
-                  {isNl ? 'Geen klanten gevonden' : 'No customers found'}
-                </p>
+              <tr><td colSpan={7} style={{ padding: 0 }}>
+                <EmptyState
+                  icon="👤"
+                  isNl={isNl}
+                  title={{ nl: 'Geen klanten gevonden', en: 'No customers found' }}
+                  description={
+                    search
+                      ? { nl: 'Pas uw zoekopdracht aan.', en: 'Try adjusting your search.' }
+                      : { nl: 'Klanten worden aangemaakt vanaf de kassa tijdens een verkoop.', en: 'Customers are added from the POS during a sale.' }
+                  }
+                />
               </td></tr>
             ) : sorted.map((c, i) => (
               <tr key={c.id}

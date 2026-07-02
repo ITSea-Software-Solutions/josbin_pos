@@ -7,6 +7,7 @@ import { getOrganisations, getOrgStores, type Organisation, type Store } from '@
 import { getTwoFactorPolicy, updateTwoFactorPolicy } from '@/api/securityPolicy'
 import { useDashboardAuthStore } from '@/store/authStore'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import EmptyState from '@/components/shared/EmptyState'
 import { useToast } from '@/components/shared/Toast'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -823,7 +824,16 @@ export default function UsersScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const qc = useQueryClient()
-  const isSuperAdmin = useDashboardAuthStore((s) => s.user?.role === 'super_admin')
+  const currentUser = useDashboardAuthStore((s) => s.user)
+  const isSuperAdmin = currentUser?.role === 'super_admin'
+  // Which users the current actor may create/edit (mirrors backend
+  // MANAGEABLE_ROLES). Empty for cashier/auditor → no bulk bar for them.
+  const manageableRoles = MANAGEABLE_ROLES[currentUser?.role ?? ''] ?? []
+  const canManageUsers = manageableRoles.length > 0
+  // A row is bulk-selectable only when the actor can manage that role AND it
+  // isn't the actor's own account (self-deactivate is a footgun; backend
+  // blocks it anyway — hide it to avoid confusing partial-failure toasts).
+  const canManage = (u: User) => canManageUsers && manageableRoles.includes(u.role) && u.id !== currentUser?.id
 
   const [showCreate, setShowCreate] = useState(false)
   const [editTarget, setEditTarget] = useState<User | null>(null)
@@ -831,6 +841,10 @@ export default function UsersScreen() {
   // Replaces the browser confirm() — keeps the user pinned in the modal
   // while the mutation runs, with consistent styling + Escape support.
   const [statusTarget, setStatusTarget] = useState<User | null>(null)
+  // Bulk selection + confirm dialog for activate/deactivate.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkAction, setBulkAction] = useState<'activate' | 'deactivate' | null>(null)
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null)
   const toast = useToast()
 
   const { data: users, isLoading } = useQuery({ queryKey: ['users'], queryFn: getUsers })
@@ -881,6 +895,56 @@ export default function UsersScreen() {
     lastlogin: (u) => (u.last_login_at ? new Date(u.last_login_at).getTime() : null),
     status:    (u) => (u.is_active ? 1 : 0),
   })
+
+  // Bulk selection over the manageable rows only. Select-all targets every
+  // manageable user; per-row checkboxes render only for manageable users.
+  const selectableIds = (users ?? []).filter(canManage).map((u) => u.id)
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selectedIds.has(id))
+  const selectedUsers = (users ?? []).filter((u) => selectedIds.has(u.id))
+
+  function toggleOne(id: string) {
+    setSelectedIds((prev) => {
+      const n = new Set(prev)
+      if (n.has(id)) n.delete(id); else n.add(id)
+      return n
+    })
+  }
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(selectableIds))
+  }
+
+  // Run the single-user update sequentially so we can show progress and keep
+  // the backend's per-user policy checks intact. Skips no-ops (already in the
+  // target state) so "activate 5" on 3 active + 2 inactive only touches 2.
+  async function runBulk(activate: boolean) {
+    const targets = selectedUsers.filter((u) => u.is_active !== activate)
+    setBulkAction(null)
+    if (targets.length === 0) {
+      toast.info(isNl ? 'Niets te wijzigen — geselecteerde gebruikers hebben al deze status.' : 'Nothing to change — selected users already have this status.')
+      setSelectedIds(new Set())
+      return
+    }
+    setBulkProgress({ done: 0, total: targets.length })
+    let ok = 0, failed = 0
+    for (const u of targets) {
+      try {
+        await updateUser(u.id, { is_active: activate })
+        ok++
+      } catch {
+        failed++
+      }
+      setBulkProgress((p) => (p ? { ...p, done: p.done + 1 } : p))
+    }
+    setBulkProgress(null)
+    setSelectedIds(new Set())
+    qc.invalidateQueries({ queryKey: ['users'] })
+    const verb = activate ? (isNl ? 'geactiveerd' : 'activated') : (isNl ? 'gedeactiveerd' : 'deactivated')
+    if (failed === 0) {
+      toast.success(isNl ? `${ok} gebruiker(s) ${verb}.` : `${ok} user(s) ${verb}.`)
+    } else {
+      toast.warning(isNl ? `${ok} ${verb}, ${failed} mislukt.` : `${ok} ${verb}, ${failed} failed.`)
+    }
+  }
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
@@ -933,6 +997,33 @@ export default function UsersScreen() {
         </div>
       )}
 
+      {/* Bulk action bar — sticky, appears when manageable rows are selected.
+          Only rendered for actors who can manage users (super_admin,
+          organisation_admin, store_manager). */}
+      {canManageUsers && selectedIds.size > 0 && (
+        <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(124,58,237,.35)' }}>
+          <span style={{ fontSize: 13.5, fontWeight: 700 }}>
+            {bulkProgress
+              ? (isNl ? `Bezig… ${bulkProgress.done}/${bulkProgress.total}` : `Working… ${bulkProgress.done}/${bulkProgress.total}`)
+              : `${selectedIds.size} ${isNl ? 'geselecteerd' : 'selected'}`}
+          </span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => setSelectedIds(new Set())} disabled={!!bulkProgress}
+              style={{ height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid rgba(255,255,255,.35)', background: 'transparent', color: '#fff', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 600, opacity: bulkProgress ? 0.6 : 1 }}>
+              {isNl ? 'Wissen' : 'Clear'}
+            </button>
+            <button onClick={() => setBulkAction('activate')} disabled={!!bulkProgress}
+              style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#f0fdf4', color: '#15803d', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 800, opacity: bulkProgress ? 0.6 : 1 }}>
+              ✓ {isNl ? 'Activeren' : 'Activate'}
+            </button>
+            <button onClick={() => setBulkAction('deactivate')} disabled={!!bulkProgress}
+              style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#fef2f2', color: '#dc2626', cursor: bulkProgress ? 'not-allowed' : 'pointer', fontSize: 12.5, fontWeight: 800, opacity: bulkProgress ? 0.6 : 1 }}>
+              {isNl ? 'Deactiveren' : 'Deactivate'}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Table card */}
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
@@ -950,6 +1041,13 @@ export default function UsersScreen() {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                {canManageUsers && (
+                  <th style={{ padding: '12px 8px 12px 20px', width: 38 }}>
+                    <input type="checkbox" checked={allSelected} disabled={selectableIds.length === 0}
+                      onChange={toggleAll} title={isNl ? 'Alles selecteren' : 'Select all'}
+                      style={{ width: 16, height: 16, cursor: selectableIds.length ? 'pointer' : 'not-allowed', accentColor: '#7c3aed' }} />
+                  </th>
+                )}
                 {[
                   { key: 'name',  label: isNl ? 'Gebruiker' : 'User' },
                   { key: 'email', label: isNl ? 'E-mailadres' : 'Email' },
@@ -980,6 +1078,18 @@ export default function UsersScreen() {
                   onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >
+                  {/* Bulk-select checkbox — only for rows the actor can manage
+                      (and never their own account). */}
+                  {canManageUsers && (
+                    <td style={{ padding: '14px 8px 14px 20px' }}>
+                      {canManage(user) ? (
+                        <input type="checkbox" checked={selectedIds.has(user.id)} onChange={() => toggleOne(user.id)}
+                          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#7c3aed' }} />
+                      ) : (
+                        <span style={{ display: 'inline-block', width: 16 }} />
+                      )}
+                    </td>
+                  )}
                   {/* User */}
                   <td style={{ padding: '14px 20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -1127,11 +1237,12 @@ export default function UsersScreen() {
               ))}
               {(users ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={8} style={{ padding: '60px 24px', textAlign: 'center' }}>
-                    <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280' }}>
-                      {isNl ? 'Geen gebruikers gevonden' : 'No users found'}
-                    </div>
+                  <td colSpan={8 + (canManageUsers ? 1 : 0) + (isSuperAdmin ? 1 : 0)} style={{ padding: 0 }}>
+                    <EmptyState
+                      icon="👥"
+                      isNl={isNl}
+                      title={{ nl: 'Geen gebruikers gevonden', en: 'No users found' }}
+                    />
                   </td>
                 </tr>
               )}
@@ -1192,6 +1303,36 @@ export default function UsersScreen() {
         cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
         onCancel={() => setStatusTarget(null)}
         onConfirm={() => statusTarget && toggleStatus.mutate({ id: statusTarget.id, active: !statusTarget.is_active })}
+      />
+
+      {/* Bulk activate / deactivate confirm — spell out how many rows will
+          actually change (skipping those already in the target state). */}
+      <ConfirmDialog
+        isOpen={bulkAction !== null}
+        tone={bulkAction === 'deactivate' ? 'danger' : 'default'}
+        title={
+          bulkAction === 'deactivate'
+            ? (isNl ? 'Geselecteerde gebruikers deactiveren?' : 'Deactivate selected users?')
+            : (isNl ? 'Geselecteerde gebruikers activeren?' : 'Activate selected users?')
+        }
+        message={(() => {
+          const n = selectedUsers.filter((u) => u.is_active !== (bulkAction === 'activate')).length
+          return bulkAction === 'deactivate'
+            ? (isNl
+                ? `${n} gebruiker(s) kunnen niet meer inloggen op het Dashboard of de POS.`
+                : `${n} user(s) will no longer be able to sign in to the Dashboard or POS.`)
+            : (isNl
+                ? `${n} gebruiker(s) krijgen opnieuw toegang met hun bestaande wachtwoord.`
+                : `${n} user(s) will regain access using their existing password.`)
+        })()}
+        confirmLabel={
+          bulkAction === 'deactivate'
+            ? (isNl ? 'Deactiveer' : 'Deactivate')
+            : (isNl ? 'Activeer'   : 'Activate')
+        }
+        cancelLabel={isNl ? 'Annuleren' : 'Cancel'}
+        onCancel={() => setBulkAction(null)}
+        onConfirm={() => runBulk(bulkAction === 'activate')}
       />
     </div>
   )

@@ -634,7 +634,7 @@ export default function DashboardLayout() {
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           <Suspense fallback={<ScreenLoading />}>
-            {screen === 'overview'      && <DashboardOverview onStoreSelect={openStore} onOpenStockAlerts={openStockLowOnly} />}
+            {screen === 'overview'      && <DashboardOverview onStoreSelect={openStore} onOpenStockAlerts={openStockLowOnly} onNavigate={go} />}
             {screen === 'store' && selectedStoreId && (
               <StoreDetailScreen
                 storeId={selectedStoreId}

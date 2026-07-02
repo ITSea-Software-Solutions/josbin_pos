@@ -23,6 +23,7 @@ import {
 } from '@/api/organisations'
 import { getLicenses, type License } from '@/api/licenses'
 import { useVendor } from '@/hooks/useVendor'
+import EmptyState from '@/components/shared/EmptyState'
 
 const TYPE_LABEL: Record<string, { nl: string; en: string }> = {
   retail:    { nl: 'Detailhandel', en: 'Retail' },
@@ -438,20 +439,18 @@ export default function StoresScreen() {
         ) : isLoading ? (
           <div style={{ padding: '40px 24px', textAlign: 'center', color: '#9090a0', fontSize: 13 }}>{isNl ? 'Laden…' : 'Loading…'}</div>
         ) : stores.length === 0 ? (
-          <div style={{ padding: '40px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>🏬</div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#374151', marginBottom: 4 }}>
-              {isNl ? 'Nog geen vestigingen' : 'No stores yet'}
-            </p>
-            <p style={{ fontSize: 12, color: '#9090a0', marginBottom: 16 }}>
-              {isNl ? 'Voeg uw eerste vestiging toe om te beginnen.' : 'Add your first store to get started.'}
-            </p>
-            <button onClick={() => setAddOpen(true)} disabled={!canCreate}
-              title={blockReason ?? undefined}
-              style={{ padding: '10px 22px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5 }}>
-              + {isNl ? 'Nieuwe vestiging' : 'New store'}
-            </button>
-          </div>
+          <EmptyState
+            icon="🏬"
+            isNl={isNl}
+            title={{ nl: 'Nog geen vestigingen', en: 'No stores yet' }}
+            description={{ nl: 'Voeg uw eerste vestiging toe om te beginnen.', en: 'Add your first store to get started.' }}
+            cta={{
+              label: { nl: '+ Nieuwe vestiging', en: '+ New store' },
+              onClick: () => setAddOpen(true),
+              disabled: !canCreate,
+              title: blockReason ?? undefined,
+            }}
+          />
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>

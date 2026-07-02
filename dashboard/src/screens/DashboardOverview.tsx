@@ -7,7 +7,76 @@ import { useOrgChannel, usePlatformChannel } from '@/hooks/useEcho'
 import { formatSRD } from '@/utils/currency'
 import { getWeeklySummary, getAnomalies, type AnomalyEntry } from '@/api/ai'
 import { getStockAlertSummary } from '@/api/stock'
+import { getUsers } from '@/api/users'
+import { getProducts } from '@/api/catalogue'
+import { getStores } from '@/api/stores'
 import PlatformOverviewPanel from '@/screens/PlatformOverviewPanel'
+
+/** Screens the onboarding card can deep-link to. Kept as a literal union so
+ *  the parent's `go(screen: Screen)` is assignable without a wider `string`. */
+type OnboardingScreen = 'stores' | 'users' | 'catalogue' | 'pos-launcher'
+
+// ─── First-run onboarding checklist ───────────────────────────────────────────
+// Nudges a new Org Admin through setup (Stores → Users → Catalogue → first sale).
+// Self-fetches cheap counts; hides once the org is set up or the user dismisses.
+const ONBOARDING_DISMISS_KEY = 'josbin_onboarding_dismissed'
+
+function OnboardingCard({ isNl, onNavigate }: { isNl: boolean; onNavigate?: (s: OnboardingScreen) => void }) {
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem(ONBOARDING_DISMISS_KEY) === '1')
+
+  const { data: stores } = useQuery({ queryKey: ['onb-stores'], queryFn: () => getStores(), staleTime: 60_000 })
+  const { data: users } = useQuery({ queryKey: ['onb-users'], queryFn: () => getUsers(), staleTime: 60_000 })
+  const { data: products } = useQuery({ queryKey: ['onb-products'], queryFn: () => getProducts(), staleTime: 60_000 })
+
+  if (dismissed) return null
+  // Wait for all three before deciding, to avoid a flash / premature hide.
+  if (!stores || !users || !products) return null
+
+  const hasStores = stores.length > 0
+  const hasUsers = users.length > 1          // the admin themselves always exists
+  const hasProducts = products.length > 0
+
+  // Once the org is genuinely set up, retire the card automatically.
+  if (hasStores && hasUsers && hasProducts) return null
+
+  const steps: { done: boolean; label: string; screen: OnboardingScreen }[] = [
+    { done: hasStores,   label: isNl ? 'Voeg een vestiging toe' : 'Add a store',        screen: 'stores' },
+    { done: hasUsers,    label: isNl ? 'Maak gebruikers aan'    : 'Create users',        screen: 'users' },
+    { done: hasProducts, label: isNl ? 'Vul de catalogus'       : 'Add products',        screen: 'catalogue' },
+    { done: false,       label: isNl ? 'Verkoop testen in de kassa' : 'Ring a test sale', screen: 'pos-launcher' },
+  ]
+  const doneCount = steps.filter((s) => s.done).length
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg,#faf9ff,#f3f0ff)', border: '1px solid #e3dcff', borderRadius: 16, padding: '20px 24px', marginBottom: 24, boxShadow: '0 2px 12px rgba(124,58,237,.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
+        <div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: '#4c1d95' }}>
+            {isNl ? '🚀 Aan de slag' : '🚀 Get started'}
+          </div>
+          <div style={{ fontSize: 12.5, color: '#7c6ba8', marginTop: 2 }}>
+            {isNl ? `${doneCount} van ${steps.length} stappen voltooid` : `${doneCount} of ${steps.length} steps done`}
+          </div>
+        </div>
+        <button onClick={() => { localStorage.setItem(ONBOARDING_DISMISS_KEY, '1'); setDismissed(true) }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9a8cc0', fontSize: 12, fontWeight: 600 }}>
+          {isNl ? 'Verbergen' : 'Dismiss'}
+        </button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 10 }}>
+        {steps.map((s) => (
+          <button key={s.screen} onClick={() => onNavigate?.(s.screen)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', background: '#fff', border: `1px solid ${s.done ? '#bbf7d0' : '#e5e0f5'}`, borderRadius: 10, padding: '11px 13px', cursor: 'pointer' }}>
+            <span style={{ width: 22, height: 22, flexShrink: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: s.done ? '#22c55e' : '#ede9fe', color: s.done ? '#fff' : '#7c3aed' }}>
+              {s.done ? '✓' : ''}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: s.done ? '#15803d' : '#3d3d50', textDecoration: s.done ? 'line-through' : 'none' }}>{s.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 function KpiCard({
@@ -159,10 +228,13 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
 export default function DashboardOverview({
   onStoreSelect,
   onOpenStockAlerts,
+  onNavigate,
 }: {
   onStoreSelect: (id: string) => void
   /** Called when the manager clicks the "Stock alerts" tile — should jump to the Stock screen with the low-stock filter on. */
   onOpenStockAlerts?: () => void
+  /** Deep-link the onboarding card's steps to their screens. */
+  onNavigate?: (screen: OnboardingScreen) => void
 }) {
   const { t, i18n } = useTranslation()
   const qc     = useQueryClient()
@@ -249,6 +321,12 @@ export default function DashboardOverview({
       {/* Task #73 — Super Admin sees the platform-pulse panel above the
           per-store cards. OA / SM / Auditor see only the existing org view. */}
       {isSuperAdmin && <PlatformOverviewPanel />}
+
+      {/* First-run onboarding — Org Admin (and Super Admin, who can still be
+          setting up an org). Hidden for cashier / auditor / tax_inspector. */}
+      {(user?.role === 'organisation_admin' || isSuperAdmin) && (
+        <OnboardingCard isNl={isNl} onNavigate={onNavigate} />
+      )}
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
