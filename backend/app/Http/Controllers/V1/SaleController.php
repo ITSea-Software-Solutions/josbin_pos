@@ -52,8 +52,12 @@ class SaleController extends Controller
             'items.*.discount_srd' => ['nullable', 'numeric', 'min:0'],
         ]);
 
-        // Idempotency: return existing if already processed
-        $existing = Sale::where('store_id', $store->id)
+        // Idempotency: return existing if THIS integration already processed
+        // this sale_ref. Scoped to (api_integration_id, external_sale_ref) —
+        // NOT store-only — so two different integrations reusing the same
+        // sale_ref on the same store don't collide (which would silently hand
+        // the retrying integrator another vendor's sale and corrupt BTW).
+        $existing = Sale::where('api_integration_id', $integration->id)
             ->where('external_sale_ref', $data['sale_ref'])
             ->first();
         if ($existing) {
@@ -118,6 +122,7 @@ class SaleController extends Controller
                 'status'             => 'completed',
                 'source'             => 'api',
                 'external_sale_ref'  => $data['sale_ref'],
+                'api_integration_id' => $integration->id,
                 'exchange_rate_used' => $rate?->usd_to_srd ?? null,
                 'occurred_at'        => $data['occurred_at'],
             ]);

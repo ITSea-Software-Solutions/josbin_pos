@@ -33,7 +33,7 @@ class Sale extends Model implements Auditable
         'qr_payload',
         'status', 'source', 'exchange_rate_used',
         'void_reason', 'voided_by', 'voided_at', 'void_approved_by',
-        'external_sale_ref', 'occurred_at',
+        'external_sale_ref', 'api_integration_id', 'occurred_at',
     ];
 
     protected $casts = [
