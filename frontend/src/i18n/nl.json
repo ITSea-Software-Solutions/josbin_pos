@@ -35,6 +35,26 @@
     "searchPlaceholder": "Zoeken of streepjescode...",
     "allCategories": "Alle categorieën",
     "noProducts": "Geen producten gevonden",
+    "sync": {
+      "online": "Online",
+      "offline": "Offline",
+      "onlineTip": "Verbonden — verkopen synchroniseren met het hoofdkantoor",
+      "offlineTip": "Geen internet — verkopen worden lokaal opgeslagen en later gesynchroniseerd"
+    },
+    "reasonChips": {
+      "damaged": "Beschadigd",
+      "expired": "Verlopen",
+      "wrongItem": "Verkeerd artikel",
+      "customerRequest": "Klantverzoek",
+      "other": "Anders"
+    },
+    "favorites": {
+      "title": "Favorieten",
+      "recent": "Recent",
+      "pin": "Vastzetten als favoriet",
+      "unpin": "Favoriet verwijderen",
+      "empty": "Nog geen favorieten — tik op ☆ op een product"
+    },
     "cart": {
       "title": "Winkelwagen",
       "empty": "Winkelwagen is leeg",
@@ -149,6 +169,8 @@
       "printed": "Afgedrukt!",
       "printError": "Afdrukfout — probeer PDF",
       "emailPlaceholder": "E-mailadres (optioneel)",
+      "emailInvalid": "Voer een geldig e-mailadres in",
+      "useCustomerEmail": "E-mail van klant gebruiken",
       "noPrinterConfigured": "Tip: stel een thermische printer in via Instellingen → Printer voor afdrukken met één tik en automatisch openen van de kassalade.",
       "setupHelp": "Printer, kassalade & scanner instellen"
     },

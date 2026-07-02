@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
+import QuickReasonChips from './QuickReasonChips'
 import { getSale, refundSale } from '@/api/sales'
 import type { Sale, SaleItem } from '@/types/models'
 
@@ -330,6 +331,9 @@ export default function RefundModal({ isOpen, onClose, sale }: RefundModalProps)
             }}>
               {t('pos.refund.reason')}
             </label>
+            <div style={{ marginBottom: 8 }}>
+              <QuickReasonChips value={reason} onChange={setReason} />
+            </div>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}

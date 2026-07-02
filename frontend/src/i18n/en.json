@@ -35,6 +35,26 @@
     "searchPlaceholder": "Search or scan barcode...",
     "allCategories": "All categories",
     "noProducts": "No products found",
+    "sync": {
+      "online": "Online",
+      "offline": "Offline",
+      "onlineTip": "Connected — sales sync to head office",
+      "offlineTip": "No internet — sales are saved locally and synced later"
+    },
+    "reasonChips": {
+      "damaged": "Damaged",
+      "expired": "Expired",
+      "wrongItem": "Wrong item",
+      "customerRequest": "Customer request",
+      "other": "Other"
+    },
+    "favorites": {
+      "title": "Favorites",
+      "recent": "Recent",
+      "pin": "Pin as favorite",
+      "unpin": "Remove favorite",
+      "empty": "No favorites yet — tap ☆ on a product"
+    },
     "cart": {
       "title": "Cart",
       "empty": "Cart is empty",
@@ -149,6 +169,8 @@
       "printed": "Printed!",
       "printError": "Print error — try PDF",
       "emailPlaceholder": "Email address (optional)",
+      "emailInvalid": "Enter a valid email address",
+      "useCustomerEmail": "Use customer email",
       "noPrinterConfigured": "Tip: set up a thermal printer in Settings → Printer for one-tap printing and automatic cash-drawer opening.",
       "setupHelp": "Set up printer, cash drawer & scanner"
     },

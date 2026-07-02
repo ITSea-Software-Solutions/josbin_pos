@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import axios from 'axios'
 import Modal from '@/components/shared/Modal'
+import QuickReasonChips from './QuickReasonChips'
 import { useToast } from '@/components/shared/Toast'
 import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
@@ -91,6 +92,7 @@ export default function BlindReturnModal({ isOpen, onClose }: BlindReturnModalPr
         </select>
 
         <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>{t('pos.blindReturn.reason')}</label>
+        <QuickReasonChips value={reason} onChange={setReason} />
         <textarea
           value={reason} onChange={(e) => setReason(e.target.value)} rows={2} maxLength={500}
           placeholder={t('pos.blindReturn.reasonPlaceholder')}

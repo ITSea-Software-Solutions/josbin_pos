@@ -5,6 +5,7 @@ import { getDailyReport, closeZReport, getZReportHistory, submitZReport } from '
 import type { ZReportRecord } from '@/api/reports'
 import apiClient from '@/api/client'
 import Modal from '@/components/shared/Modal'
+import QuickReasonChips from '@/components/pos/QuickReasonChips'
 import { useToast } from '@/components/shared/Toast'
 import { useDateFormatter } from '@/utils/date'
 
@@ -201,6 +202,9 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
                 <label style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', display: 'block', marginBottom: 5 }}>
                   {t('endOfDay.discrepancyNote')}
                 </label>
+                <div style={{ marginBottom: 6 }}>
+                  <QuickReasonChips value={discrepancyNote} onChange={setDiscrepancyNote} />
+                </div>
                 <textarea
                   value={discrepancyNote}
                   onChange={(e) => setDiscrepancyNote(e.target.value)}

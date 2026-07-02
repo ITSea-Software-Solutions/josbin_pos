@@ -6,6 +6,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { useCartStore } from '@/store/cartStore'
 import { useRegisterStore } from '@/store/registerStore'
 import { getDailyReport } from '@/api/reports'
+import { useOnlineStatus } from '@/hooks/useOnlineStatus'
 import CustomerModal from './CustomerModal'
 import HeldBillsPanel from './HeldBillsPanel'
 import CashMovementModal from './CashMovementModal'
@@ -31,6 +32,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
   const cartItemCount = useCartStore((s) => s.items.length)
 
   const session = useRegisterStore((s) => s.session)
+  const isOnline = useOnlineStatus()
 
   const [customerOpen, setCustomerOpen]         = useState(false)
   const [heldBillsOpen, setHeldBillsOpen]       = useState(false)
@@ -130,6 +132,26 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
 
         {/* Right side: today totals + customer + held bills + lang + user */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 12px', flexShrink: 0 }}>
+          {/* Network / sync status — sources from navigator.onLine (no client
+              outbox count exists yet, so we do not fabricate a queued figure) */}
+          <div
+            title={isOnline ? t('pos.sync.onlineTip') : t('pos.sync.offlineTip')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              padding: '3px 9px', borderRadius: 20,
+              background: isOnline ? 'rgba(34,197,94,.1)' : 'rgba(220,38,38,.1)',
+              border: `1px solid ${isOnline ? 'rgba(34,197,94,.25)' : 'rgba(220,38,38,.25)'}`,
+            }}
+          >
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: isOnline ? '#22c55e' : '#dc2626', display: 'inline-block',
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: isOnline ? '#15803d' : '#b91c1c' }}>
+              {isOnline ? t('pos.sync.online') : t('pos.sync.offline')}
+            </span>
+          </div>
+
           {/* Today's sales */}
           {todaySummary && (
             <div style={{

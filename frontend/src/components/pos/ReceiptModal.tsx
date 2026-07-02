@@ -38,12 +38,19 @@ export default function ReceiptModal({
   const [showEmail, setShowEmail]       = useState(false)
   const [emailStatus, setEmailStatus]   = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
 
-  // Fetch sale details for ESC/POS building
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  const emailValid = EMAIL_RE.test(emailInput.trim())
+
+  // Fetch sale details for ESC/POS building. Also needed (for the attached
+  // customer's email) when the email panel is used on a non-thermal terminal,
+  // so enable it whenever the email form is open too.
   const { data: sale } = useQuery({
     queryKey: ['sale', saleId],
     queryFn: () => getSale(saleId),
-    enabled: isOpen && hasThermal,
+    enabled: isOpen && (hasThermal || showEmail),
   })
+
+  const customerEmail = sale?.customer?.email?.trim() || ''
 
   // Fetch store details for receipt header/footer
   const { data: store } = useQuery<Store>({
@@ -197,7 +204,7 @@ export default function ReceiptModal({
   function handleEmail() {
     // Require a syntactically valid address — the backend rejects anything else
     // with a 422, and sending to an empty field is the bug this replaces.
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim())) {
+    if (!emailValid) {
       setEmailStatus('error')
       return
     }
@@ -301,35 +308,64 @@ export default function ReceiptModal({
               ✉ {t('pos.receipt.email')}
             </button>
           ) : (
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input
-                type="email"
-                placeholder={t('pos.receipt.emailPlaceholder')}
-                value={emailInput}
-                onChange={(e) => { setEmailInput(e.target.value); if (emailStatus === 'error') setEmailStatus('idle') }}
-                style={{
-                  flex: 1, height: 'var(--touch-target)',
-                  borderRadius: 'var(--border-radius)',
-                  border: '1px solid var(--border-color)',
-                  background: 'var(--bg-input)',
-                  color: 'var(--text-primary)',
-                  padding: '0 12px', fontSize: 'var(--font-size-sm)',
-                }}
-              />
-              <button
-                onClick={handleEmail}
-                disabled={emailStatus === 'sending' || !emailInput.trim()}
-                style={{
-                  height: 'var(--touch-target)', padding: '0 16px',
-                  borderRadius: 'var(--border-radius)',
-                  border: 'none',
-                  background: emailStatus === 'ok' ? 'var(--color-success)' : emailStatus === 'error' ? 'var(--color-error)' : 'var(--color-primary)',
-                  color: '#fff', cursor: 'pointer', fontWeight: 600,
-                  fontSize: 'var(--font-size-sm)',
-                }}
-              >
-                {emailStatus === 'sending' ? '⏳' : emailStatus === 'ok' ? '✓' : emailStatus === 'error' ? '✗' : t('app.send')}
-              </button>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {/* Prefill chip — one tap uses the attached customer's email */}
+              {customerEmail && customerEmail !== emailInput.trim() && (
+                <button
+                  type="button"
+                  onClick={() => { setEmailInput(customerEmail); if (emailStatus === 'error') setEmailStatus('idle') }}
+                  data-testid="chip-use-customer-email"
+                  style={{
+                    alignSelf: 'flex-start',
+                    height: 26, padding: '0 10px',
+                    borderRadius: 20, cursor: 'pointer',
+                    fontSize: 11, fontWeight: 600,
+                    background: 'rgba(79,142,247,0.12)',
+                    border: '1px solid var(--color-primary)',
+                    color: 'var(--color-primary)',
+                    whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}
+                >
+                  👤 {t('pos.receipt.useCustomerEmail')}: {customerEmail}
+                </button>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="email"
+                  placeholder={t('pos.receipt.emailPlaceholder')}
+                  value={emailInput}
+                  onChange={(e) => { setEmailInput(e.target.value); if (emailStatus === 'error') setEmailStatus('idle') }}
+                  style={{
+                    flex: 1, height: 'var(--touch-target)',
+                    borderRadius: 'var(--border-radius)',
+                    border: `1px solid ${emailInput.trim() && !emailValid ? 'var(--color-error)' : 'var(--border-color)'}`,
+                    background: 'var(--bg-input)',
+                    color: 'var(--text-primary)',
+                    padding: '0 12px', fontSize: 'var(--font-size-sm)',
+                  }}
+                />
+                <button
+                  onClick={handleEmail}
+                  disabled={emailStatus === 'sending' || !emailValid}
+                  style={{
+                    height: 'var(--touch-target)', padding: '0 16px',
+                    borderRadius: 'var(--border-radius)',
+                    border: 'none',
+                    background: emailStatus === 'ok' ? 'var(--color-success)' : emailStatus === 'error' ? 'var(--color-error)' : 'var(--color-primary)',
+                    color: '#fff', cursor: emailStatus === 'sending' || !emailValid ? 'not-allowed' : 'pointer', fontWeight: 600,
+                    fontSize: 'var(--font-size-sm)',
+                    opacity: emailStatus === 'sending' || !emailValid ? 0.5 : 1,
+                  }}
+                >
+                  {emailStatus === 'sending' ? '⏳' : emailStatus === 'ok' ? '✓' : emailStatus === 'error' ? '✗' : t('app.send')}
+                </button>
+              </div>
+              {/* Inline validation — only once they have typed something invalid */}
+              {emailInput.trim() && !emailValid && (
+                <span style={{ fontSize: 11, color: 'var(--color-error)' }}>
+                  {t('pos.receipt.emailInvalid')}
+                </span>
+              )}
             </div>
           )}
 
