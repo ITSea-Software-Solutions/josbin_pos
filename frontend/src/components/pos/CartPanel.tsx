@@ -129,12 +129,20 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
             onClick={() => setSaleDiscountOpen(true)}
             style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
           >
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-discount)' }}>
+            <span style={{ display: 'flex', alignItems: 'center', fontSize: 'var(--font-size-sm)', color: 'var(--color-discount)' }}>
               {t('pos.cart.saleDiscount')}
               {saleDiscount.value > 0 && (
-                <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.8 }}>
-                  ({saleDiscount.type === 'percent' ? `${saleDiscount.value}%` : `SRD ${saleDiscount.value.toFixed(2)}`})
-                </span>
+                <>
+                  <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.8 }}>
+                    ({saleDiscount.type === 'percent' ? `${saleDiscount.value}%` : `SRD ${saleDiscount.value.toFixed(2)}`})
+                  </span>
+                  <span
+                    role="button"
+                    title={isNl ? 'Verwijderen' : 'Remove'}
+                    onClick={(e) => { e.stopPropagation(); clearSaleDiscount() }}
+                    style={{ marginLeft: 6, width: 18, height: 18, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1 }}
+                  >×</span>
+                </>
               )}
             </span>
             <span className="currency-srd" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-discount)' }}>

@@ -21,7 +21,8 @@ type Step = 'method' | 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_tra
 const NUMPAD = ['7','8','9','4','5','6','1','2','3','','0','.']
 
 export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: PaymentModalProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isNl = i18n.language === 'nl'
   const items = useCartStore((s) => s.items)
   const totals = useCartStore((s) => s.totals)
   const saleDiscount = useCartStore((s) => s.saleDiscount)
@@ -615,6 +616,23 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               SRD {(step === 'mixed' ? cardAmount : cashInput) || '0'}
             </div>
           </div>
+
+          {/* Split presets — one tap sets the card portion; cash is the remainder. */}
+          {step === 'mixed' && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[
+                { label: isNl ? 'Kaart 50%' : 'Card 50%', pct: 0.5 },
+                { label: isNl ? 'Kaart 70%' : 'Card 70%', pct: 0.7 },
+                { label: isNl ? 'Kaart 30%' : 'Card 30%', pct: 0.3 },
+              ].map((p) => (
+                <button key={p.pct} type="button"
+                  onClick={() => setCardAmount((total * p.pct).toFixed(2))}
+                  style={{ flex: 1, padding: '9px 0', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', fontWeight: 600, cursor: 'pointer' }}>
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {step === 'cash' && (
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px' }}>
