@@ -53,9 +53,11 @@ log "Building docs site (manual + flow diagrams)"
 # Fold the standalone diagram pages into the same web root so they are served
 # at /flows.html and /architecture.html alongside the VitePress manual.
 cp docs/flows.html docs/architecture.html docs-site/.vitepress/dist/ || fail "docs asset copy failed"
-# Marketing sizzle-reel + teaser (self-contained bilingual HTML) → /promo.html and /teaser.html
+# Marketing sizzle-reel + teaser + landing page (self-contained bilingual HTML)
+# → /promo.html, /teaser.html, /videos.html (the one link to share with clients).
 cp marketing/josbin-pos-promo.html  docs-site/.vitepress/dist/promo.html  || fail "promo copy failed"
 cp marketing/josbin-pos-teaser.html docs-site/.vitepress/dist/teaser.html || fail "teaser copy failed"
+cp marketing/videos.html            docs-site/.vitepress/dist/videos.html || fail "videos copy failed"
 
 # ── 2. Push code: backend via git pull on the server, dist via rsync ──────────
 log "Pulling backend code on server (branch: $GIT_BRANCH)"
