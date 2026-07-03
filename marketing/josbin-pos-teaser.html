@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="description" content="Josbin POS — enterprise kassa- en winkelbeheersysteem voor Suriname.">
+<title>Josbin POS — Teaser (NL/EN)</title>
+</head>
+<body>
+<style>
+  :root{
+    --ink:#0a0e1a; --stage:#0c1322; --surface:#141d31; --surface2:#1b2640;
+    --line:#25314e; --line-soft:#1a2440;
+    --em:#16c98d; --em-deep:#0f9d6f; --em-glow:rgba(22,201,141,.45);
+    --gold:#f5c542; --red:#e5484d; --sky:#5cc8ff;
+    --text:#eef2fb; --muted:#94a2c2; --dim:#6b7a9c;
+    --stack:-apple-system,"SF Pro Display","Segoe UI Variable","Segoe UI",system-ui,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  .promo-wrap{
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:22px 16px 26px;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(22,201,141,.10), transparent 60%),
+      radial-gradient(900px 500px at 110% 120%, rgba(245,197,66,.07), transparent 55%),
+      var(--ink);
+    color:var(--text); font-family:var(--stack); -webkit-font-smoothing:antialiased;
+  }
+  .stage{
+    position:relative; width:min(1180px,94vw); aspect-ratio:16/9;
+    container-type:size; border-radius:20px; overflow:hidden; isolation:isolate;
+    background:radial-gradient(120% 120% at 12% 8%, #12203a 0%, var(--stage) 42%, #080d18 100%);
+    box-shadow:0 40px 120px -30px rgba(0,0,0,.8), 0 0 0 1px var(--line), inset 0 0 0 1px rgba(255,255,255,.02);
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:5cqi 5cqi; mask:radial-gradient(120% 90% at 50% 40%,#000 30%,transparent 78%);
+  }
+  .stage::after{
+    content:""; position:absolute; z-index:0; width:60cqi; height:60cqi; left:-10cqi; top:-24cqi;
+    background:radial-gradient(closest-side,var(--em-glow),transparent 70%); filter:blur(8px);
+    animation:drift 18s ease-in-out infinite alternate;
+  }
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(70cqi,26cqi)}}
+
+  .scene{
+    position:absolute; inset:0; z-index:1; padding:6.4cqi 7.6cqi;
+    display:flex; flex-direction:column; justify-content:center;
+    opacity:0; visibility:hidden; transform:scale(1.02);
+    transition:opacity .5s ease, transform .7s cubic-bezier(.2,.7,.2,1), visibility 0s .5s;
+  }
+  .scene.is-active{opacity:1; visibility:visible; transform:none; transition:opacity .5s ease, transform .7s cubic-bezier(.2,.7,.2,1);}
+
+  .eyebrow{font-size:1.5cqi; font-weight:700; letter-spacing:.3em; text-transform:uppercase; color:var(--em); margin-bottom:2.2cqi; display:flex; align-items:center; gap:1.2cqi;}
+  .eyebrow::before{content:""; width:2.6cqi; height:.28cqi; border-radius:2px; background:linear-gradient(90deg,var(--em),transparent);}
+  .headline{font-size:5.4cqi; font-weight:800; line-height:.99; letter-spacing:-.02em; text-wrap:balance; margin:0;}
+  .headline .accent{color:var(--em);}
+  .headline .gold{color:var(--gold);}
+  .subline{font-size:2.05cqi; color:var(--muted); font-weight:500; margin-top:1.8cqi; max-width:56cqi;}
+
+  .scene.is-active .r1{animation:rise .7s .05s both cubic-bezier(.2,.7,.2,1)}
+  .scene.is-active .r2{animation:rise .7s .18s both cubic-bezier(.2,.7,.2,1)}
+  .scene.is-active .r3{animation:rise .7s .32s both cubic-bezier(.2,.7,.2,1)}
+  .scene.is-active .r4{animation:rise .7s .46s both cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(2.6cqi)}to{opacity:1;transform:none}}
+
+  .chips{display:flex; flex-wrap:wrap; gap:1.3cqi; margin-top:3cqi;}
+  .chip{font-size:1.65cqi; font-weight:600; padding:1cqi 1.9cqi; border-radius:100px; background:var(--surface); border:1px solid var(--line); color:var(--text); display:flex; align-items:center; gap:.8cqi;}
+  .chip .dot{width:1cqi;height:1cqi;border-radius:50%;background:var(--em);box-shadow:0 0 0 .5cqi var(--em-glow)}
+  .chip.gold .dot{background:var(--gold);box-shadow:0 0 0 .5cqi rgba(245,197,66,.3)}
+
+  .brand{display:flex; align-items:center; gap:2cqi; margin-bottom:2.6cqi;}
+  .logo{width:8.4cqi; height:8.4cqi; border-radius:2.2cqi; display:grid; place-items:center; font-weight:800; font-size:4cqi; color:#04140d;
+    background:linear-gradient(135deg,var(--em),#39e6a8); box-shadow:0 12px 30px -6px var(--em-glow), inset 0 0 0 1px rgba(255,255,255,.25);}
+  .wordmark{font-size:7cqi; font-weight:800; letter-spacing:-.03em; line-height:1;}
+  .wordmark b{color:var(--em)}
+  .flag{display:flex;flex-direction:column;width:5.4cqi;height:3.6cqi;border-radius:.8cqi;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+  .flag i{display:block;width:100%}
+  .flag .g{height:26%;background:#377e3f}.flag .w{height:12%;background:#fff}.flag .r{height:24%;background:#b40a2d;position:relative}
+  .flag .r::after{content:"★";position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);font-size:2cqi;line-height:0}
+
+  .split{display:grid; grid-template-columns:1.25fr .95fr; gap:2.8cqi; align-items:stretch; margin-top:.6cqi;}
+  .panel{background:linear-gradient(180deg,var(--surface),#111a2c); border:1px solid var(--line); border-radius:2.2cqi; padding:2.2cqi; position:relative; overflow:hidden;}
+  .panel-title{font-size:1.45cqi;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:1.6cqi;display:flex;justify-content:space-between}
+  .grid6{display:grid; grid-template-columns:repeat(3,1fr); gap:1.3cqi;}
+  .tile{background:var(--surface2); border:1px solid var(--line); border-radius:1.5cqi; padding:1.4cqi 1.1cqi; display:flex; flex-direction:column; gap:.5cqi; min-height:10.4cqi; justify-content:space-between;}
+  .tile .emo{font-size:3.2cqi; line-height:1}
+  .tile .nm{font-size:1.45cqi; font-weight:600; color:var(--text); line-height:1.1}
+  .tile .pr{font-size:1.45cqi; font-weight:700; color:var(--em); font-variant-numeric:tabular-nums}
+  .scene.is-active .tile{animation:pop .5s both}
+  .scene.is-active .tile:nth-child(2){animation-delay:.06s}.scene.is-active .tile:nth-child(3){animation-delay:.12s}
+  .scene.is-active .tile:nth-child(4){animation-delay:.18s}.scene.is-active .tile:nth-child(5){animation-delay:.24s}.scene.is-active .tile:nth-child(6){animation-delay:.3s}
+  @keyframes pop{from{opacity:0;transform:scale(.9) translateY(1.4cqi)}to{opacity:1;transform:none}}
+  .tile.zap{animation:zap 1.1s .8s both !important}
+  @keyframes zap{0%,60%{box-shadow:0 0 0 0 transparent;border-color:var(--line)}70%{box-shadow:0 0 0 .5cqi var(--em-glow);border-color:var(--em)}100%{box-shadow:0 0 0 0 transparent;border-color:var(--line)}}
+
+  .cart{display:flex;flex-direction:column;height:100%}
+  .cart .lines{display:flex;flex-direction:column;gap:1.1cqi;flex:1}
+  .line{display:flex;justify-content:space-between;align-items:center;font-size:1.7cqi;opacity:0}
+  .line .l{display:flex;gap:1cqi;align-items:center;color:var(--text)}
+  .line .q{color:var(--dim);font-variant-numeric:tabular-nums}
+  .line .amt{font-weight:700;font-variant-numeric:tabular-nums}
+  .scene.is-active .line{animation:slideIn .5s both}
+  .scene.is-active .line:nth-child(1){animation-delay:.5s}.scene.is-active .line:nth-child(2){animation-delay:.9s}.scene.is-active .line:nth-child(3){animation-delay:1.3s}
+  @keyframes slideIn{from{opacity:0;transform:translateX(2cqi)}to{opacity:1;transform:none}}
+  .total-row{margin-top:1.6cqi;padding-top:1.6cqi;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline}
+  .total-row .lab{font-size:1.65cqi;color:var(--muted);font-weight:600}
+  .total-row .big{font-size:4.4cqi;font-weight:800;color:var(--em);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .scan-beam{position:absolute;left:2.2cqi;right:2.2cqi;height:.4cqi;top:40%;background:linear-gradient(90deg,transparent,var(--em),transparent);border-radius:2px;opacity:0;filter:drop-shadow(0 0 1cqi var(--em))}
+  .scene.is-active .scan-beam{animation:scan 1.4s .2s ease-in-out}
+  @keyframes scan{0%{opacity:0;top:22%}20%{opacity:1}80%{opacity:1}100%{opacity:0;top:78%}}
+
+  .paygrid{display:flex;gap:2.2cqi;align-items:center;margin-top:.6cqi}
+  .payways{display:flex;flex-direction:column;gap:1.3cqi;flex:1}
+  .payway{display:flex;align-items:center;gap:1.6cqi;background:var(--surface);border:1px solid var(--line);border-radius:1.4cqi;padding:1.5cqi 1.9cqi;font-size:1.95cqi;font-weight:600;opacity:.4}
+  .payway .ic{width:3.8cqi;height:3.8cqi;border-radius:1cqi;display:grid;place-items:center;font-size:2.1cqi;background:var(--surface2)}
+  .scene.is-active .payway:nth-child(1){animation:payCycle 4s both}
+  .scene.is-active .payway:nth-child(2){animation:payCycle2 4s both}
+  .scene.is-active .payway:nth-child(3){animation:payCycle3 4s both}
+  .scene.is-active .payway:nth-child(4){animation:payCycle4 4s both}
+  @keyframes payCycle{0%,22%{opacity:1;border-color:var(--em)}30%,100%{opacity:.4;border-color:var(--line)}}
+  @keyframes payCycle2{0%,24%{opacity:.4}30%,46%{opacity:1;border-color:var(--em)}54%,100%{opacity:.4;border-color:var(--line)}}
+  @keyframes payCycle3{0%,48%{opacity:.4}54%,70%{opacity:1;border-color:var(--em)}78%,100%{opacity:.4;border-color:var(--line)}}
+  @keyframes payCycle4{0%,72%{opacity:.4}80%,96%{opacity:1;border-color:var(--em)}100%{opacity:.4}}
+  .change{width:31cqi;background:var(--surface);border:1px solid var(--line);border-radius:1.8cqi;padding:2.4cqi;text-align:center}
+  .change .k{font-size:1.45cqi;color:var(--dim);text-transform:uppercase;letter-spacing:.16em;font-weight:700}
+  .change .v{font-size:5.2cqi;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:.5cqi}
+  .change .sub{font-size:1.5cqi;color:var(--muted);margin-top:.5cqi}
+
+  .pcigrid{display:flex;gap:3cqi;align-items:center;margin-top:.6cqi}
+  .cardface{width:42cqi;height:25cqi;border-radius:2.4cqi;padding:2.8cqi;position:relative;color:#eaf6ff;
+    background:linear-gradient(135deg,#173453,#0b1f38);border:1px solid #2c4a68;box-shadow:0 24px 60px -18px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.05);overflow:hidden}
+  .cardface::after{content:"";position:absolute;width:20cqi;height:20cqi;right:-6cqi;top:-8cqi;border-radius:50%;background:radial-gradient(closest-side,rgba(22,201,141,.35),transparent)}
+  .cardchip{width:5cqi;height:3.6cqi;border-radius:.8cqi;background:linear-gradient(135deg,#e9c86b,#b8922f);margin-bottom:2.6cqi}
+  .cardnum{font-size:3.2cqi;font-weight:700;letter-spacing:.15em;font-variant-numeric:tabular-nums;display:flex;gap:1.4cqi}
+  .cardnum .mask{color:#54708f}
+  .cardnum .last{color:#fff}
+  .cardrow{display:flex;justify-content:space-between;margin-top:2.4cqi;font-size:1.5cqi;color:#9fb6d0}
+  .lockbadge{position:absolute;right:2.4cqi;bottom:2.4cqi;font-size:1.5cqi;font-weight:700;color:var(--em);display:flex;align-items:center;gap:.7cqi}
+
+  .flow{display:flex;align-items:stretch;gap:1.4cqi;margin-top:2cqi;justify-content:center;flex-wrap:wrap}
+  .fstep{background:var(--surface);border:1px solid var(--line);border-radius:1.4cqi;padding:1.6cqi 1.8cqi;font-size:1.7cqi;font-weight:600;text-align:center;width:21cqi;display:flex;flex-direction:column;justify-content:center;gap:.5cqi}
+  .fstep .ic{font-size:2.6cqi}
+  .fstep.ok{border-color:var(--em)}.fstep.ok .ic{color:var(--em)}
+  .fstep.bad{border-color:var(--red)}.fstep.bad .ic{color:#ff8a8d}
+  .farrow{align-self:center;color:var(--em);font-size:2.4cqi;font-weight:800}
+  .outcome{display:flex;flex-direction:column;gap:1cqi;justify-content:center}
+  .scene.is-active .fstep{animation:pop .5s both}
+  .scene.is-active .fstep:nth-child(3){animation-delay:.15s}.scene.is-active .outcome{animation:rise .6s .3s both}
+
+  .outro{align-items:center;text-align:center}
+  .checklist{display:grid;grid-template-columns:repeat(3,auto);gap:1.2cqi 3.4cqi;margin:2.6cqi 0;justify-content:center}
+  .check{display:flex;align-items:center;gap:1.2cqi;font-size:1.9cqi;font-weight:600;opacity:0}
+  .check .tick{width:2.4cqi;height:2.4cqi;border-radius:50%;background:var(--em);color:#04140d;display:grid;place-items:center;font-weight:800;font-size:1.5cqi;flex:none}
+  .scene.is-active .check{animation:rise .45s both}
+  .scene.is-active .check:nth-child(1){animation-delay:.08s}.scene.is-active .check:nth-child(2){animation-delay:.16s}
+  .scene.is-active .check:nth-child(3){animation-delay:.24s}.scene.is-active .check:nth-child(4){animation-delay:.32s}
+  .scene.is-active .check:nth-child(5){animation-delay:.4s}.scene.is-active .check:nth-child(6){animation-delay:.48s}
+  .cta{display:inline-flex;align-items:center;gap:1.4cqi;background:linear-gradient(135deg,var(--em),#3ee3a6);color:#04140d;font-weight:800;font-size:2.1cqi;padding:1.5cqi 3cqi;border-radius:100px;box-shadow:0 16px 40px -10px var(--em-glow)}
+
+  .kicker{font-size:1.35cqi;font-weight:700;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;position:absolute;top:5cqi;right:7.6cqi;z-index:3}
+  .brandmini{position:absolute;top:4.6cqi;left:7.6cqi;z-index:3;display:flex;align-items:center;gap:1cqi;font-weight:800;font-size:1.9cqi;letter-spacing:-.02em}
+  .brandmini .d{width:1.5cqi;height:1.5cqi;border-radius:.5cqi;background:linear-gradient(135deg,var(--em),#3ee3a6)}
+  .brandmini b{color:var(--em)}
+  .progress{position:absolute;left:0;right:0;bottom:0;height:.5cqi;background:rgba(255,255,255,.06);z-index:4}
+  .progress .fill{height:100%;width:0;background:linear-gradient(90deg,var(--em),var(--gold));box-shadow:0 0 1cqi var(--em-glow)}
+  .fill.run{animation:fillbar linear forwards}
+  @keyframes fillbar{to{width:100%}}
+  .dots{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .dots button{width:8px;height:8px;border-radius:50%;border:0;background:var(--line);cursor:pointer;padding:0;transition:.3s}
+  .dots button[aria-current="true"]{background:var(--em);width:22px;border-radius:5px}
+  .dots button:focus-visible{outline:2px solid var(--em);outline-offset:3px}
+  .bar{display:flex;align-items:center;gap:16px;width:min(1180px,94vw);justify-content:space-between}
+  .bar .left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:100px;padding:9px 15px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:.2s}
+  .btn:hover{border-color:var(--em);color:var(--em)}
+  .btn:focus-visible{outline:2px solid var(--em);outline-offset:2px}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .btn#lang{border-color:rgba(245,197,66,.4)}
+  .hint{font-size:12px;color:var(--dim)}.hint b{color:var(--muted);font-weight:600}
+  .credit{font-size:11.5px;color:var(--dim)}.credit b{color:var(--muted)}
+
+  @media (max-width:640px){ .bar{flex-direction:column;gap:12px} .headline{font-size:6.4cqi} }
+  @media (prefers-reduced-motion:reduce){
+    .stage *{animation:none !important}.stage::after{animation:none !important}
+    .scene{transition:opacity .2s !important}
+    .payway{opacity:1}.line,.scan-beam,.check,.fstep,.outcome{opacity:1}
+    .tile{opacity:1}
+  }
+</style>
+
+<div class="promo-wrap">
+  <div class="stage" id="stage" aria-label="Josbin POS teaser">
+
+    <!-- 0 · Hook -->
+    <section class="scene" data-dur="3800">
+      <div class="brand r1">
+        <div class="logo">J</div>
+        <div class="wordmark">Josbin&nbsp;<b>POS</b></div>
+        <div class="flag" title="Suriname"><i class="g"></i><i class="w"></i><i class="r"></i><i class="w"></i><i class="g"></i></div>
+      </div>
+      <h1 class="headline r2" data-en='The point-of-sale system<br><span class="accent">for Suriname.</span>'>Het kassasysteem<br><span class="accent">voor Suriname.</span></h1>
+      <p class="subline r3" data-en='POS · inventory · VAT · multiple stores — Dutch &amp; English, works offline.'>POS · voorraad · BTW · meerdere winkels — Nederlands &amp; Engels, werkt offline.</p>
+      <div class="chips r4">
+        <span class="chip" data-en='<span class="dot"></span>SRD &amp; VAT'><span class="dot"></span>SRD &amp; BTW</span>
+        <span class="chip gold" data-en='<span class="dot"></span>Bank-grade security'><span class="dot"></span>Bankniveau-beveiliging</span>
+        <span class="chip" data-en='<span class="dot"></span>Works offline'><span class="dot"></span>Werkt offline</span>
+      </div>
+    </section>
+
+    <!-- 1 · Sell fast -->
+    <section class="scene" data-dur="4200">
+      <span class="brandmini"><span class="d"></span>Josbin&nbsp;<b>POS</b></span>
+      <div class="eyebrow r1" data-en='Sales · Point of sale'>Verkoop · Point of sale</div>
+      <h1 class="headline r1" data-en='Ring up &amp; scan — <span class="accent">lightning fast.</span>'>Aanslaan &amp; scannen — <span class="accent">razendsnel.</span></h1>
+      <div class="split r2">
+        <div class="panel">
+          <div class="panel-title" data-en='<span>Products</span><span>Tap or scan</span>'><span>Producten</span><span>Tik of scan</span></div>
+          <div class="grid6">
+            <div class="tile" data-en='<span class="emo">🍚</span><span class="nm">Rice 5kg</span><span class="pr">SRD 89,00</span>'><span class="emo">🍚</span><span class="nm">Rijst 5kg</span><span class="pr">SRD 89,00</span></div>
+            <div class="tile zap" data-en='<span class="emo">🥤</span><span class="nm">Soft drink</span><span class="pr">SRD 12,50</span>'><span class="emo">🥤</span><span class="nm">Frisdrank</span><span class="pr">SRD 12,50</span></div>
+            <div class="tile" data-en='<span class="emo">🍞</span><span class="nm">Bread</span><span class="pr">SRD 15,00</span>'><span class="emo">🍞</span><span class="nm">Brood</span><span class="pr">SRD 15,00</span></div>
+            <div class="tile" data-en='<span class="emo">🧻</span><span class="nm">Toilet paper</span><span class="pr">SRD 34,00</span>'><span class="emo">🧻</span><span class="nm">Toiletpapier</span><span class="pr">SRD 34,00</span></div>
+            <div class="tile" data-en='<span class="emo">🥚</span><span class="nm">Eggs 10</span><span class="pr">SRD 28,00</span>'><span class="emo">🥚</span><span class="nm">Eieren 10</span><span class="pr">SRD 28,00</span></div>
+            <div class="tile" data-en='<span class="emo">☕</span><span class="nm">Coffee</span><span class="pr">SRD 45,00</span>'><span class="emo">☕</span><span class="nm">Koffie</span><span class="pr">SRD 45,00</span></div>
+          </div>
+          <div class="scan-beam"></div>
+        </div>
+        <div class="panel cart">
+          <div class="panel-title" data-en='<span>Cart</span><span>3 items</span>'><span>Winkelwagen</span><span>3 items</span></div>
+          <div class="lines">
+            <div class="line" data-en='<span class="l"><span class="q">1×</span> Soft drink</span><span class="amt">12,50</span>'><span class="l"><span class="q">1×</span> Frisdrank</span><span class="amt">12,50</span></div>
+            <div class="line" data-en='<span class="l"><span class="q">1×</span> Bread</span><span class="amt">15,00</span>'><span class="l"><span class="q">1×</span> Brood</span><span class="amt">15,00</span></div>
+            <div class="line" data-en='<span class="l"><span class="q">2×</span> Eggs 10</span><span class="amt">56,00</span>'><span class="l"><span class="q">2×</span> Eieren 10</span><span class="amt">56,00</span></div>
+          </div>
+          <div class="total-row"><span class="lab" data-en='Total'>Totaal</span><span class="big">SRD 83,50</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 · Every payment -->
+    <section class="scene" data-dur="4000">
+      <span class="brandmini"><span class="d"></span>Josbin&nbsp;<b>POS</b></span>
+      <div class="eyebrow r1" data-en='Payments'>Betalen · Payments</div>
+      <h1 class="headline r1" data-en='Every payment method — <span class="accent">cash or online.</span>'>Elke betaalwijze — <span class="accent">contant of online.</span></h1>
+      <div class="paygrid r2">
+        <div class="payways">
+          <div class="payway" data-en='<span class="ic">💵</span>Cash — change calculated instantly'><span class="ic">💵</span>Contant — wisselgeld direct berekend</div>
+          <div class="payway" data-en='<span class="ic">💳</span>PIN / Card — with bank slip'><span class="ic">💳</span>PIN / Kaart — met bankbon</div>
+          <div class="payway" data-en='<span class="ic">📲</span>Online — bank &amp; mobile transfer'><span class="ic">📲</span>Online — bank- &amp; mobiel overmaken</div>
+          <div class="payway" data-en='<span class="ic">🔀</span>Mixed — part cash, part card'><span class="ic">🔀</span>Gemengd — deels contant, deels kaart</div>
+        </div>
+        <div class="change">
+          <div class="k" data-en='Change'>Wisselgeld</div>
+          <div class="v">SRD 16,50</div>
+          <div class="sub" data-en='Received 100,00 · Total 83,50'>Ontvangen 100,00 · Totaal 83,50</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · Security / PCI -->
+    <section class="scene" data-dur="4200">
+      <span class="brandmini"><span class="d"></span>Josbin&nbsp;<b>POS</b></span>
+      <div class="pcigrid">
+        <div class="r2" style="flex:none">
+          <div class="cardface">
+            <div class="cardchip"></div>
+            <div class="cardnum"><span class="mask">••••</span><span class="mask">••••</span><span class="mask">••••</span><span class="last">4242</span></div>
+            <div class="cardrow"><span>DSB · PIN-terminal</span><span>Auth A99887</span></div>
+            <div class="lockbadge">🔒 PCI-safe</div>
+          </div>
+        </div>
+        <div>
+          <div class="eyebrow r1" data-en='Security · Enterprise'>Beveiliging · Enterprise</div>
+          <h1 class="headline r1" style="font-size:4.6cqi" data-en='Secure down to<br><span class="accent">card level.</span>'>Veilig tot op<br><span class="accent">kaartniveau.</span></h1>
+          <p class="subline r2" data-en='Only the last 4 digits · TLS 1.3 · AES-256.'>Alleen de laatste 4 cijfers · TLS 1.3 · AES-256.</p>
+          <div class="chips r3">
+            <span class="chip"><span class="dot"></span>Passkey + 2FA</span>
+            <span class="chip" data-en='<span class="dot"></span>6 roles (RBAC)'><span class="dot"></span>6 rollen (RBAC)</span>
+            <span class="chip gold" data-en='<span class="dot"></span>Immutable audit trail'><span class="dot"></span>Onveranderlijk auditspoor</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · BTW → Belastingdienst -->
+    <section class="scene" data-dur="4200">
+      <span class="brandmini"><span class="d"></span>Josbin&nbsp;<b>POS</b></span>
+      <div class="eyebrow r1" data-en='Tax Office · VAT'>Belastingdienst · BTW</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='VAT automatic — <span class="gold">straight to the Tax Office.</span>'>BTW automatisch — <span class="gold">direct naar de Belastingdienst.</span></h1>
+      <div class="flow r2">
+        <div class="fstep" data-en='<span class="ic">🧾</span>VAT calculated on the receipt'><span class="ic">🧾</span>BTW berekend op de bon</div>
+        <div class="farrow">→</div>
+        <div class="fstep" data-en='<span class="ic">🏛️</span>Filed with the Tax Office'><span class="ic">🏛️</span>Ingediend bij de Belastingdienst</div>
+        <div class="farrow">→</div>
+        <div class="outcome">
+          <div class="fstep ok" data-en='<span class="ic">✓</span>Accepted'><span class="ic">✓</span>Geaccepteerd</div>
+          <div class="fstep bad" data-en='<span class="ic">⚠</span>Disputed → alert to store'><span class="ic">⚠</span>Betwist → melding naar winkel</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · Outro / CTA -->
+    <section class="scene outro" data-dur="5200">
+      <div class="brand r1" style="justify-content:center;margin-bottom:1.6cqi">
+        <div class="logo">J</div>
+        <div class="wordmark">Josbin&nbsp;<b>POS</b></div>
+      </div>
+      <h1 class="headline r1" style="font-size:4.4cqi" data-en='One system. <span class="gold">Your whole business.</span>'>Eén systeem. <span class="gold">Uw hele onderneming.</span></h1>
+      <div class="checklist">
+        <div class="check" data-en='<span class="tick">✓</span>Register &amp; barcode'><span class="tick">✓</span>Kassa &amp; barcode</div>
+        <div class="check" data-en='<span class="tick">✓</span>Cash &amp; online'><span class="tick">✓</span>Contant &amp; online</div>
+        <div class="check" data-en='<span class="tick">✓</span>PCI-secure'><span class="tick">✓</span>PCI-veilig</div>
+        <div class="check" data-en='<span class="tick">✓</span>VAT → Tax Office'><span class="tick">✓</span>BTW → Belastingdienst</div>
+        <div class="check" data-en='<span class="tick">✓</span>Multi-store &amp; roles'><span class="tick">✓</span>Multi-winkel &amp; rollen</div>
+        <div class="check"><span class="tick">✓</span>NL &amp; EN · offline</div>
+      </div>
+      <span class="cta r4" data-en='Request a demo →'>Vraag een demo aan →</span>
+    </section>
+
+    <div class="kicker" id="kicker">01 / 06</div>
+    <div class="progress"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <div class="bar">
+    <div class="left">
+      <div class="ctrl">
+        <button class="btn" id="play" aria-label="Pauzeren / afspelen">⏸ Pauze</button>
+        <button class="btn" id="replay" aria-label="Opnieuw afspelen">↻ Opnieuw</button>
+        <button class="btn" id="voice" aria-pressed="false" aria-label="Nederlandse stem aan of uit">🔇 Stem uit</button>
+        <button class="btn" id="lang" aria-label="Taal / Language">🌐 English</button>
+      </div>
+      <div class="dots" id="dots" role="tablist" aria-label="Scenes"></div>
+    </div>
+    <div class="right ctrl">
+      <span class="hint" id="hint">🎬 <b>Tip:</b> ↻ Opnieuw → 🔊 Stem aan, dan scherm opnemen = ingesproken teaser (±25s)</span>
+    </div>
+  </div>
+  <div class="credit"><b>Josbin POS</b> — teaser · Paramaribo, Suriname</div>
+</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var scenes = Array.prototype.slice.call(stage.querySelectorAll('.scene'));
+  var fill = document.getElementById('fill');
+  var kicker = document.getElementById('kicker');
+  var dotsWrap = document.getElementById('dots');
+  var playBtn = document.getElementById('play');
+  var replayBtn = document.getElementById('replay');
+  var voiceBtn = document.getElementById('voice');
+  var langBtn = document.getElementById('lang');
+  var hintEl = document.getElementById('hint');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var durs = scenes.map(function(s){ return parseInt(s.getAttribute('data-dur'),10) || 4000; });
+  var i = 0, paused = false, lang = 'nl';
+
+  var UI = {
+    nl:{ pause:'⏸ Pauze', play:'▶ Afspelen', replay:'↻ Opnieuw', vOn:'🔊 Stem aan', vOff:'🔇 Stem uit', vNo:'🔇 Geen stem', step:'▶ Volgende', lang:'🌐 English',
+         hint:'🎬 <b>Tip:</b> ↻ Opnieuw → 🔊 Stem aan, dan scherm opnemen = ingesproken teaser (±25s)' },
+    en:{ pause:'⏸ Pause', play:'▶ Play', replay:'↻ Replay', vOn:'🔊 Voice on', vOff:'🔇 Voice off', vNo:'🔇 No voice', step:'▶ Next', lang:'🌐 Nederlands',
+         hint:'🎬 <b>Tip:</b> ↻ Replay → 🔊 Voice on, then screen-record = narrated teaser (±25s)' }
+  };
+
+  var VO_NL = [
+    "Josbin P O S. Het complete kassasysteem, gebouwd voor Suriname.",
+    "Sla verkopen razendsnel aan, in Surinaamse dollar.",
+    "Accepteer elke betaalwijze: contant, kaart, of online.",
+    "Veilig tot op kaartniveau, met beveiliging op bankniveau.",
+    "B T W automatisch berekend, en direct ingediend bij de Belastingdienst.",
+    "Josbin P O S. Eén systeem voor uw hele onderneming. Vraag vandaag een demo aan."
+  ];
+  var VO_EN = [
+    "Josbin P O S. The complete point of sale system, built for Suriname.",
+    "Ring up sales in a flash, in Surinamese dollars.",
+    "Accept every payment method: cash, card, or online.",
+    "Secure down to card level, with bank grade security.",
+    "VAT calculated automatically, and filed directly with the Tax Office.",
+    "Josbin P O S. One system for your whole business. Request a demo today."
+  ];
+  var synth = window.speechSynthesis || null;
+  var voiceOn = false, nlVoice = null, enVoice = null, voiceReady = false;
+  function pickVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices() || [];
+    nlVoice = vs.filter(function(v){ return /^nl(\b|[-_])/i.test(v.lang); })[0] ||
+              vs.filter(function(v){ return /nederlands|dutch|belg|flemish|vlaams/i.test(v.name); })[0] || null;
+    enVoice = vs.filter(function(v){ return /^en(\b|[-_])/i.test(v.lang); })[0] ||
+              vs.filter(function(v){ return /english/i.test(v.name); })[0] || null;
+    voiceReady = true;
+  }
+  if(synth){ pickVoice(); try{ synth.onvoiceschanged = pickVoice; }catch(e){} }
+  function voArr(){ return lang === 'en' ? VO_EN : VO_NL; }
+  function speak(n){
+    if(!synth || !voiceOn) return;
+    try{ synth.cancel(); }catch(e){}
+    var line = voArr()[n]; if(!line) return;
+    var u = new SpeechSynthesisUtterance(line);
+    u.lang = (lang === 'en') ? 'en-US' : 'nl-NL'; u.rate = 0.98; u.pitch = 1.0;
+    var v = (lang === 'en') ? enVoice : nlVoice;
+    if(v){ u.voice = v; }
+    try{ synth.speak(u); }catch(e){}
+  }
+  function voDur(n){
+    if(!voiceOn) return durs[n];
+    var line = voArr()[n]; var est = (line ? line.length : 0) * 62 + 900;
+    return Math.max(durs[n], est);
+  }
+
+  scenes.forEach(function(s, n){
+    var b = document.createElement('button');
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-label','Scene ' + (n+1));
+    b.addEventListener('click', function(){ go(n); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+  function pad(n){ return (n<10?'0':'') + n; }
+
+  function runFill(ms){
+    fill.classList.remove('run'); fill.style.width='0';
+    fill.style.animationDuration = ms + 'ms';
+    void fill.offsetWidth;
+    fill.classList.add('run');
+    fill.style.animationPlayState = paused ? 'paused' : 'running';
+  }
+  function show(n){
+    scenes.forEach(function(s,k){ s.classList.toggle('is-active', k===n); });
+    dots.forEach(function(d,k){ d.setAttribute('aria-current', k===n ? 'true':'false'); });
+    kicker.textContent = pad(n+1) + ' / ' + pad(scenes.length);
+    speak(n);
+    if(!reduced){ runFill(voDur(n)); }
+  }
+  function next(){ go((i+1) % scenes.length); }
+  function go(n){ i = n; show(i); }
+  fill.addEventListener('animationend', function(){ if(!paused && !reduced) next(); });
+
+  function setPaused(p){
+    paused = p; stage.classList.toggle('paused', p);
+    var all = stage.querySelectorAll('*');
+    for(var k=0;k<all.length;k++){ all[k].style.animationPlayState = p ? 'paused' : 'running'; }
+    fill.style.animationPlayState = p ? 'paused' : 'running';
+    if(synth){ try{ p ? synth.pause() : synth.resume(); }catch(e){} }
+    playBtn.textContent = reduced ? UI[lang].step : (p ? UI[lang].play : UI[lang].pause);
+  }
+
+  function applyLang(){
+    var els = stage.querySelectorAll('[data-en]');
+    for(var k=0;k<els.length;k++){
+      var el = els[k];
+      if(el._nl == null){ el._nl = el.innerHTML; }
+      el.innerHTML = (lang === 'en') ? el.getAttribute('data-en') : el._nl;
+    }
+    var u = UI[lang];
+    playBtn.textContent = reduced ? u.step : (paused ? u.play : u.pause);
+    replayBtn.textContent = u.replay;
+    voiceBtn.textContent = !synth ? u.vNo : (voiceOn ? u.vOn : u.vOff);
+    langBtn.textContent = u.lang;
+    if(hintEl){ hintEl.innerHTML = u.hint; }
+  }
+  function setLang(l){
+    lang = l; applyLang();
+    if(voiceOn && !paused){ speak(i); if(!reduced){ runFill(voDur(i)); } }
+  }
+
+  function setVoice(on){
+    voiceOn = on && !!synth;
+    voiceBtn.setAttribute('aria-pressed', voiceOn ? 'true' : 'false');
+    voiceBtn.textContent = voiceOn ? UI[lang].vOn : UI[lang].vOff;
+    if(voiceOn){ if(!voiceReady){ pickVoice(); } if(!paused){ speak(i); if(!reduced){ runFill(voDur(i)); } } }
+    else if(synth){ try{ synth.cancel(); }catch(e){} }
+  }
+
+  playBtn.addEventListener('click', function(){ if(reduced){ next(); } else { setPaused(!paused); } });
+  replayBtn.addEventListener('click', function(){ if(synth){ try{ synth.cancel(); }catch(e){} } setPaused(false); go(0); });
+  voiceBtn.addEventListener('click', function(){ setVoice(!voiceOn); });
+  langBtn.addEventListener('click', function(){ setLang(lang === 'nl' ? 'en' : 'nl'); });
+  document.addEventListener('keydown', function(e){
+    if(e.code==='Space'){ e.preventDefault(); if(!reduced) setPaused(!paused); }
+    else if(e.code==='ArrowRight'){ next(); }
+    else if(e.code==='ArrowLeft'){ go((i-1+scenes.length)%scenes.length); }
+  });
+
+  if(!synth){ voiceBtn.disabled = true; }
+  applyLang();
+  show(0);
+})();
+</script>
+</body>
+</html>
