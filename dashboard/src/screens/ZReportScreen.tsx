@@ -44,7 +44,7 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
   }
 
   return (
-    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef', marginBottom: 24, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+    <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5', marginBottom: 24, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
@@ -55,25 +55,25 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-            background: 'linear-gradient(135deg, #7c3aed20, #4f46e520)',
+            background: 'linear-gradient(135deg, #29337120, #1f2a6320)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
           }}>
             💾
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
               {isNl ? 'USB back-up importeren' : 'Import USB backup'}
               <span style={{ marginLeft: 8, padding: '2px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: '#fef3c7', color: '#92400e' }}>
                 {isNl ? 'Noodgeval • Laag 4' : 'Emergency • Layer 4'}
               </span>
             </div>
-            <div style={{ fontSize: 12, color: '#9090a0', marginTop: 1 }}>
+            <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 1 }}>
               {isNl ? '.josbin_pos bestanden van vestigingen zonder internet' : '.josbin_pos files from stores without internet'}
             </div>
           </div>
         </div>
         <svg
-          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9090a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7e88a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
           style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}
         >
           <polyline points="6 9 12 15 18 9"/>
@@ -81,7 +81,7 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
       </button>
 
       {open && (
-        <div style={{ padding: '0 22px 22px', borderTop: '1px solid #f0f0f8' }}>
+        <div style={{ padding: '0 22px 22px', borderTop: '1px solid #eef2fb' }}>
           <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 18, marginTop: 14 }}>
             {isNl
               ? 'Upload een .josbin_pos bestand dat opgeslagen is op een USB-stick of verzonden via e-mail/WhatsApp door een vestiging zonder internetverbinding.'
@@ -97,7 +97,7 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
                 value={storeId}
                 onChange={(e) => setStoreId(e.target.value)}
                 placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 9, border: '1px solid #e0e0ed', fontSize: 13, fontFamily: 'monospace', outline: 'none' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: 9, border: '1px solid #d9e1f1', fontSize: 13, fontFamily: 'monospace', outline: 'none' }}
               />
             </div>
             <div>
@@ -110,7 +110,7 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
                 accept=".josbin_pos"
                 style={{
                   width: '100%', boxSizing: 'border-box', padding: '8px 12px',
-                  borderRadius: 9, border: '1px solid #e0e0ed',
+                  borderRadius: 9, border: '1px solid #d9e1f1',
                   fontSize: 12, cursor: 'pointer',
                 }}
               />
@@ -148,10 +148,10 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
             disabled={uploading || !storeId.trim()}
             style={{
               padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              background: 'linear-gradient(135deg, #293371, #1f2a63)',
               color: '#fff', fontWeight: 700, fontSize: 13,
               opacity: (uploading || !storeId.trim()) ? 0.5 : 1,
-              boxShadow: '0 2px 8px rgba(124,58,237,.3)',
+              boxShadow: '0 2px 8px rgba(41,51,113,.3)',
             }}
           >
             {uploading ? (isNl ? 'Importeren…' : 'Importing…') : (isNl ? 'Importeren' : 'Import')}
@@ -213,7 +213,7 @@ export default function ZReportScreen() {
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Z-Rapporten & Synchronisatie' : 'Z-Reports & Sync'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -227,17 +227,17 @@ export default function ZReportScreen() {
       {!isLoading && data && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24, maxWidth: 720 }}>
           {[
-            { label: isNl ? 'Totaal'       : 'Total',    value: data.total,   color: '#7c3aed' },
+            { label: isNl ? 'Totaal'       : 'Total',    value: data.total,   color: '#293371' },
             { label: isNl ? 'Verzonden'    : 'Synced',   value: syncedCount,  color: '#16a34a' },
             { label: isNl ? 'In wachtrij'  : 'Pending',  value: pendingCount, color: '#d97706' },
             { label: isNl ? 'Mislukt'      : 'Failed',   value: failedCount,  color: '#dc2626' },
           ].map((s) => (
             <div key={s.label} style={{
-              background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+              background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
               padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
             }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: s.color, letterSpacing: '-0.5px' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -248,39 +248,39 @@ export default function ZReportScreen() {
 
       {/* Filter bar */}
       <div style={{
-        background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef',
+        background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5',
         padding: '14px 18px', marginBottom: 20,
         display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 12,
         boxShadow: '0 1px 4px rgba(0,0,0,.04)',
       }}>
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
             {isNl ? 'Van' : 'From'}
           </label>
           <input
             type="date" value={dateFrom} max={dateTo}
             onChange={(e) => setDateFrom(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0ed', fontSize: 13, color: '#1c1c2e', outline: 'none' }}
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d9e1f1', fontSize: 13, color: '#16203a', outline: 'none' }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
             {isNl ? 'Tot' : 'To'}
           </label>
           <input
             type="date" value={dateTo} min={dateFrom} max={today()}
             onChange={(e) => setDateTo(e.target.value)}
-            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0ed', fontSize: 13, color: '#1c1c2e', outline: 'none' }}
+            style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #d9e1f1', fontSize: 13, color: '#16203a', outline: 'none' }}
           />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
             {isNl ? 'Sync status' : 'Sync status'}
           </label>
           <select
             value={syncFilter}
             onChange={(e) => setSyncFilter(e.target.value)}
-            style={{ padding: '8px 32px 8px 12px', borderRadius: 8, border: '1px solid #e0e0ed', fontSize: 13, color: '#1c1c2e', outline: 'none', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' fill=\'none\' stroke=\'%239090a0\' stroke-width=\'2\' viewBox=\'0 0 24 24\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+            style={{ padding: '8px 32px 8px 12px', borderRadius: 8, border: '1px solid #d9e1f1', fontSize: 13, color: '#16203a', outline: 'none', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' fill=\'none\' stroke=\'%239090a0\' stroke-width=\'2\' viewBox=\'0 0 24 24\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
           >
             <option value="">{isNl ? 'Alle' : 'All'}</option>
             <option value="pending">{isNl ? 'In wachtrij' : 'Pending'}</option>
@@ -290,7 +290,7 @@ export default function ZReportScreen() {
         </div>
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 10 }}>
           {data && (
-            <span style={{ fontSize: 12, color: '#9090a0' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {data.total} {isNl ? 'rapporten' : 'reports'}
             </span>
           )}
@@ -300,8 +300,8 @@ export default function ZReportScreen() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: '#f5f5fb', color: '#7c3aed',
-              border: '1px solid #ddd6fe', fontSize: 12, fontWeight: 600,
+              background: '#f2f5fb', color: '#293371',
+              border: '1px solid #d5deef', fontSize: 12, fontWeight: 600,
               cursor: isFetching ? 'not-allowed' : 'pointer',
               opacity: isFetching ? 0.6 : 1,
             }}
@@ -317,23 +317,23 @@ export default function ZReportScreen() {
       </div>
 
       {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f3f3f8' }}>
-                <div style={{ width: 80, height: 12, borderRadius: 6, background: '#f0f0f8' }} />
-                <div style={{ width: 130, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ width: 100, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ flex: 1, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ width: 70, height: 22, borderRadius: 11, background: '#f0f0f8' }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f1f4fb' }}>
+                <div style={{ width: 80, height: 12, borderRadius: 6, background: '#eef2fb' }} />
+                <div style={{ width: 130, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ width: 100, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ flex: 1, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ width: 70, height: 22, borderRadius: 11, background: '#eef2fb' }} />
               </div>
             ))}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 {[
                   { key: 'date',     label: isNl ? 'Datum' : 'Date' },
                   { key: 'store',    label: isNl ? 'Vestiging' : 'Store' },
@@ -345,9 +345,9 @@ export default function ZReportScreen() {
                   { key: 'closedby', label: isNl ? 'Afgesloten door' : 'Closed by' },
                 ].map((h) => (
                   <th key={h.key} onClick={() => toggleSort(h.key)}
-                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
               </tr>
@@ -360,18 +360,18 @@ export default function ZReportScreen() {
                 return (
                   <tr
                     key={r.id}
-                    style={{ borderBottom: i < sortedReports.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                    style={{ borderBottom: i < sortedReports.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                   >
-                    <td style={{ padding: '14px 20px', fontWeight: 700, color: '#1c1c2e', fontSize: 13.5, whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '14px 20px', fontWeight: 700, color: '#16203a', fontSize: 13.5, whiteSpace: 'nowrap' }}>
                       {r.report_date}
                     </td>
                     <td style={{ padding: '14px 20px' }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{r.store?.name ?? r.store_id.slice(0, 8) + '…'}</div>
-                      {r.store?.city && <div style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>{r.store.city}</div>}
+                      <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{r.store?.name ?? r.store_id.slice(0, 8) + '…'}</div>
+                      {r.store?.city && <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 1 }}>{r.store.city}</div>}
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#7c3aed' }}>
+                    <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#293371' }}>
                       {formatSRD(r.total_sales_srd)}
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#059669', fontWeight: 600 }}>
@@ -416,7 +416,7 @@ export default function ZReportScreen() {
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ fontSize: 13.5, fontWeight: 600, color: '#374151' }}>{r.closed_by?.name ?? '—'}</div>
                       {r.synced_at && (
-                        <div style={{ fontSize: 11, color: '#9090a0', marginTop: 2 }}>
+                        <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 2 }}>
                           {new Date(r.synced_at).toLocaleString(isNl ? 'nl-SR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}
                         </div>
                       )}
@@ -443,8 +443,8 @@ export default function ZReportScreen() {
 
         {/* Footer */}
         {!isLoading && reports.length > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f3f3f8', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 12, color: '#9090a0' }}>
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {data?.total} {isNl ? 'rapporten in totaal' : 'reports total'}
             </span>
           </div>

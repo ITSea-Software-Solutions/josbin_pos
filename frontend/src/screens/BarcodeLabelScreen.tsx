@@ -159,19 +159,19 @@ function ProductRow({
     <div style={{
       display: 'grid', gridTemplateColumns: '36px 1fr 120px 80px',
       alignItems: 'center', padding: '10px 16px', gap: 12,
-      borderBottom: '1px solid #f0f0f8',
-      background: selected ? 'rgba(124,58,237,0.04)' : 'transparent',
+      borderBottom: '1px solid #eef2fb',
+      background: selected ? 'rgba(41,51,113,0.04)' : 'transparent',
       transition: 'background 0.1s',
     }}>
       <input
         type="checkbox" checked={selected} onChange={onToggle}
-        style={{ width: 18, height: 18, accentColor: '#7c3aed', cursor: 'pointer' }}
+        style={{ width: 18, height: 18, accentColor: '#293371', cursor: 'pointer' }}
       />
       <div>
-        <p style={{ fontSize: 13, fontWeight: 500, color: '#1c1c2e' }}>{name}</p>
-        <p style={{ fontSize: 11, color: '#9090a0', fontFamily: 'monospace' }}>{product.barcode ?? '—'}</p>
+        <p style={{ fontSize: 13, fontWeight: 500, color: '#16203a' }}>{name}</p>
+        <p style={{ fontSize: 11, color: '#7e88a0', fontFamily: 'monospace' }}>{product.barcode ?? '—'}</p>
       </div>
-      <p style={{ fontSize: 13, fontWeight: 600, color: '#1c1c2e' }}>
+      <p style={{ fontSize: 13, fontWeight: 600, color: '#16203a' }}>
         SRD {parseFloat(product.price).toFixed(2)}
       </p>
       <input
@@ -180,7 +180,7 @@ function ProductRow({
         disabled={!selected}
         style={{
           width: 70, padding: '5px 8px', borderRadius: 6,
-          border: '1px solid #e0e0ed', fontSize: 13, textAlign: 'center',
+          border: '1px solid #d9e1f1', fontSize: 13, textAlign: 'center',
           opacity: selected ? 1 : 0.35,
           outline: 'none', background: '#fff',
         }}
@@ -307,15 +307,15 @@ export default function BarcodeLabelScreen() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', background: '#f5f5f8' }}>
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', background: '#f2f5fb' }}>
       {/* Hidden print iframe */}
       <iframe ref={printFrameRef} style={{ display: 'none' }} title="print-labels" />
 
       {/* Left: product selector */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
-        <div style={{ padding: '20px 20px 12px', flexShrink: 0, background: '#fff', borderBottom: '1px solid #e9e9ef' }}>
-          <h1 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', marginBottom: 12 }}>{T.title}</h1>
+        <div style={{ padding: '20px 20px 12px', flexShrink: 0, background: '#fff', borderBottom: '1px solid #e6ecf5' }}>
+          <h1 style={{ fontSize: 18, fontWeight: 800, color: '#16203a', marginBottom: 12 }}>{T.title}</h1>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <input
               value={search}
@@ -323,7 +323,7 @@ export default function BarcodeLabelScreen() {
               placeholder={T.search}
               style={{
                 flex: 1, padding: '9px 14px', borderRadius: 8,
-                border: '1px solid #e0e0ed', fontSize: 13, outline: 'none', background: '#fafafa',
+                border: '1px solid #d9e1f1', fontSize: 13, outline: 'none', background: '#fafafa',
               }}
             />
             <button
@@ -331,7 +331,7 @@ export default function BarcodeLabelScreen() {
               disabled={isFetching}
               title={isNl ? 'Vernieuwen' : 'Refresh'}
               style={{
-                ...btnStyle('#fff', '#9090a0', '#e0e0ed'),
+                ...btnStyle('#fff', '#7e88a0', '#d9e1f1'),
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 opacity: isFetching ? 0.5 : 1,
               }}
@@ -346,10 +346,10 @@ export default function BarcodeLabelScreen() {
               </svg>
               {isNl ? 'Vernieuwen' : 'Refresh'}
             </button>
-            <button onClick={selectAll} style={btnStyle('#f0eeff', '#7c3aed')}>
+            <button onClick={selectAll} style={btnStyle('#f0eeff', '#293371')}>
               {T.selectAll}
             </button>
-            <button onClick={clearAll} style={btnStyle('#fff', '#9090a0', '#e0e0ed')}>
+            <button onClick={clearAll} style={btnStyle('#fff', '#7e88a0', '#d9e1f1')}>
               {T.clearAll}
             </button>
           </div>
@@ -359,8 +359,8 @@ export default function BarcodeLabelScreen() {
         <div style={{
           display: 'grid', gridTemplateColumns: '36px 1fr 120px 80px',
           padding: '8px 16px', gap: 12,
-          background: '#f9f9fc', borderBottom: '1px solid #e9e9ef',
-          fontSize: 11, fontWeight: 700, color: '#9090a0',
+          background: '#f9f9fc', borderBottom: '1px solid #e6ecf5',
+          fontSize: 11, fontWeight: 700, color: '#7e88a0',
           textTransform: 'uppercase', letterSpacing: '0.5px', flexShrink: 0,
         }}>
           <div />
@@ -372,9 +372,9 @@ export default function BarcodeLabelScreen() {
         {/* Product list */}
         <div style={{ flex: 1, overflowY: 'auto', background: '#fff' }}>
           {isLoading ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#9090a0' }}>{T.loading}</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#7e88a0' }}>{T.loading}</div>
           ) : filtered.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: '#9090a0' }}>{T.noProducts}</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#7e88a0' }}>{T.noProducts}</div>
           ) : filtered.map(p => (
             <ProductRow
               key={p.id}
@@ -391,10 +391,10 @@ export default function BarcodeLabelScreen() {
 
       {/* Right: settings + print */}
       <div style={{
-        width: 260, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e9e9ef',
+        width: 260, flexShrink: 0, background: '#fff', borderLeft: '1px solid #e6ecf5',
         display: 'flex', flexDirection: 'column', padding: '20px 16px', gap: 20,
       }}>
-        <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{T.settings}</h2>
+        <h2 style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{T.settings}</h2>
 
         {/* Barcode type */}
         <div>
@@ -405,9 +405,9 @@ export default function BarcodeLabelScreen() {
                 <input
                   type="radio" name="btype" value={t} checked={barcodeType === t}
                   onChange={() => setBarcodeType(t)}
-                  style={{ accentColor: '#7c3aed' }}
+                  style={{ accentColor: '#293371' }}
                 />
-                <span style={{ color: '#1c1c2e', fontWeight: barcodeType === t ? 600 : 400 }}>{t}</span>
+                <span style={{ color: '#16203a', fontWeight: barcodeType === t ? 600 : 400 }}>{t}</span>
               </label>
             ))}
           </div>
@@ -422,9 +422,9 @@ export default function BarcodeLabelScreen() {
                 <input
                   type="radio" name="lsize" value={s} checked={labelSize === s}
                   onChange={() => setLabelSize(s)}
-                  style={{ accentColor: '#7c3aed' }}
+                  style={{ accentColor: '#293371' }}
                 />
-                <span style={{ color: '#1c1c2e', fontWeight: labelSize === s ? 600 : 400 }}>
+                <span style={{ color: '#16203a', fontWeight: labelSize === s ? 600 : 400 }}>
                   {LABEL_SIZES[s].label}
                 </span>
               </label>
@@ -437,16 +437,16 @@ export default function BarcodeLabelScreen() {
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
             <input
               type="checkbox" checked={showName} onChange={e => setShowName(e.target.checked)}
-              style={{ accentColor: '#7c3aed', width: 16, height: 16 }}
+              style={{ accentColor: '#293371', width: 16, height: 16 }}
             />
-            <span style={{ color: '#1c1c2e', fontWeight: 500 }}>{T.showName}</span>
+            <span style={{ color: '#16203a', fontWeight: 500 }}>{T.showName}</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
             <input
               type="checkbox" checked={showPrice} onChange={e => setShowPrice(e.target.checked)}
-              style={{ accentColor: '#7c3aed', width: 16, height: 16 }}
+              style={{ accentColor: '#293371', width: 16, height: 16 }}
             />
-            <span style={{ color: '#1c1c2e', fontWeight: 500 }}>{T.showPrice}</span>
+            <span style={{ color: '#16203a', fontWeight: 500 }}>{T.showPrice}</span>
           </label>
         </div>
 
@@ -454,9 +454,9 @@ export default function BarcodeLabelScreen() {
 
         {/* Selection summary */}
         {selection.size > 0 && (
-          <div style={{ background: 'rgba(124,58,237,0.08)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
-            <p style={{ fontSize: 22, fontWeight: 800, color: '#7c3aed' }}>{totalLabels}</p>
-            <p style={{ fontSize: 12, color: '#6d6d80', marginTop: 2 }}>
+          <div style={{ background: 'rgba(41,51,113,0.08)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
+            <p style={{ fontSize: 22, fontWeight: 800, color: '#293371' }}>{totalLabels}</p>
+            <p style={{ fontSize: 12, color: '#5f6a84', marginTop: 2 }}>
               {T.labels} · {selection.size} {T.selected}
             </p>
           </div>
@@ -472,12 +472,12 @@ export default function BarcodeLabelScreen() {
             border: 'none',
             cursor: selection.size === 0 ? 'not-allowed' : 'pointer',
             background: selection.size === 0
-              ? '#e0e0ed'
-              : 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-            color: selection.size === 0 ? '#9090a0' : '#fff',
+              ? '#d9e1f1'
+              : 'linear-gradient(135deg, #293371, #1f2a63)',
+            color: selection.size === 0 ? '#7e88a0' : '#fff',
             fontSize: 15,
             fontWeight: 700,
-            boxShadow: selection.size === 0 ? 'none' : '0 4px 14px rgba(124,58,237,0.4)',
+            boxShadow: selection.size === 0 ? 'none' : '0 4px 14px rgba(41,51,113,0.4)',
             transition: 'all 0.15s',
           }}
         >
@@ -503,7 +503,7 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: 11,
   fontWeight: 700,
-  color: '#6d6d80',
+  color: '#5f6a84',
   textTransform: 'uppercase',
   letterSpacing: '0.5px',
   marginBottom: 8,

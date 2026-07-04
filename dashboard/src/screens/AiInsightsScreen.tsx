@@ -10,12 +10,12 @@ function pct(v: number | string | null) {
   return `${sign}${n.toFixed(1)}%`
 }
 
-function StatCard({ label, value, sub, color = '#7c3aed' }: { label: string; value: string; sub?: string; color?: string }) {
+function StatCard({ label, value, sub, color = '#293371' }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '18px 22px', flex: 1, minWidth: 160 }}>
-      <p style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>{label}</p>
+    <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '18px 22px', flex: 1, minWidth: 160 }}>
+      <p style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>{label}</p>
       <p style={{ fontSize: 26, fontWeight: 900, color, marginBottom: sub ? 4 : 0 }}>{value}</p>
-      {sub && <p style={{ fontSize: 12, color: '#9090a0' }}>{sub}</p>}
+      {sub && <p style={{ fontSize: 12, color: '#7e88a0' }}>{sub}</p>}
     </div>
   )
 }
@@ -42,7 +42,7 @@ export default function AiInsightsScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'AI-inzichten' : 'AI Insights'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -52,25 +52,25 @@ export default function AiInsightsScreen() {
 
       {/* Weekly summary */}
       <section style={{ marginBottom: 32 }}>
-        <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: 16 }}>
           📊 {isNl ? 'Wekelijkse samenvatting' : 'Weekly Summary'}
           {summary?.generated_at && (
-            <span style={{ fontSize: 12, fontWeight: 400, color: '#9090a0', marginLeft: 10 }}>
+            <span style={{ fontSize: 12, fontWeight: 400, color: '#7e88a0', marginLeft: 10 }}>
               {isNl ? 'Gegenereerd:' : 'Generated:'} {new Date(summary.generated_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-US')}
             </span>
           )}
         </h2>
 
         {summaryLoading ? (
-          <div style={{ height: 120, background: '#f8f7ff', borderRadius: 14, border: '1px solid #ede9fe', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid #ede9fe', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite' }} />
+          <div style={{ height: 120, background: '#f4f6fc', borderRadius: 14, border: '1px solid #e6ebf7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite' }} />
           </div>
         ) : !summary ? (
-          <div style={{ background: '#f8f7ff', border: '1px dashed #c4b5fd', borderRadius: 14, padding: '32px 24px', textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#7c3aed', marginBottom: 6 }}>
+          <div style={{ background: '#f4f6fc', border: '1px dashed #b9c1de', borderRadius: 14, padding: '32px 24px', textAlign: 'center' }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#293371', marginBottom: 6 }}>
               {isNl ? 'Nog geen samenvatting beschikbaar' : 'No summary available yet'}
             </p>
-            <p style={{ fontSize: 13, color: '#9090a0' }}>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>
               {isNl ? 'De wekelijkse samenvatting wordt elke maandag gegenereerd.' : 'The weekly summary is generated every Monday morning.'}
             </p>
           </div>
@@ -94,7 +94,7 @@ export default function AiInsightsScreen() {
                 <StatCard
                   label={isNl ? 'Gem. bonbedrag' : 'Avg. basket'}
                   value={`SRD ${parseFloat(String(stats.this_week.avg_basket)).toFixed(2)}`}
-                  color='#7c3aed'
+                  color='#293371'
                 />
                 {stats.this_week.void_count > 0 && (
                   <StatCard
@@ -108,12 +108,12 @@ export default function AiInsightsScreen() {
 
             {/* AI narrative */}
             {summary.narrative && (
-              <div style={{ background: 'linear-gradient(135deg,#f8f7ff,#eff6ff)', border: '1px solid #e0e7ff', borderRadius: 14, padding: '20px 24px', display: 'flex', gap: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+              <div style={{ background: 'linear-gradient(135deg,#f4f6fc,#eff6ff)', border: '1px solid #e0e7ff', borderRadius: 14, padding: '20px 24px', display: 'flex', gap: 14 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#293371,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                   🤖
                 </div>
                 <div>
-                  <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#7c3aed', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#293371', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                     AI {isNl ? 'Analyse' : 'Analysis'}
                   </p>
                   <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{summary.narrative}</p>
@@ -129,11 +129,11 @@ export default function AiInsightsScreen() {
                 </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {stats.top_products.slice(0, 5).map((p, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#fff', borderRadius: 10, border: '1px solid #f3f3f8' }}>
-                      <span style={{ width: 24, height: 24, borderRadius: 6, background: '#7c3aed', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#fff', borderRadius: 10, border: '1px solid #f1f4fb' }}>
+                      <span style={{ width: 24, height: 24, borderRadius: 6, background: '#293371', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
                         {i + 1}
                       </span>
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#1c1c2e' }}>{p.name}</span>
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#16203a' }}>{p.name}</span>
                       <span style={{ fontSize: 12, color: '#6b7280' }}>{p.qty}x</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: '#16a34a' }}>SRD {parseFloat(String(p.revenue)).toFixed(2)}</span>
                     </div>
@@ -147,7 +147,7 @@ export default function AiInsightsScreen() {
 
       {/* Anomaly / fraud alerts */}
       <section>
-        <h2 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: 16 }}>
           🚨 {isNl ? 'Fraudewaarschuwingen (30 dagen)' : 'Fraud Alerts (30 days)'}
           {anomalies.length > 0 && (
             <span style={{ marginLeft: 10, padding: '2px 10px', borderRadius: 12, background: '#fef2f2', border: '1px solid #fecaca', fontSize: 12, fontWeight: 700, color: '#dc2626' }}>
@@ -157,7 +157,7 @@ export default function AiInsightsScreen() {
         </h2>
 
         {anomLoading ? (
-          <div style={{ height: 80, background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ height: 80, background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ width: 24, height: 24, borderRadius: '50%', border: '3px solid #f3f3f3', borderTopColor: '#dc2626', animation: 'spin 0.8s linear infinite' }} />
           </div>
         ) : anomalies.length === 0 ? (
@@ -194,7 +194,7 @@ export default function AiInsightsScreen() {
                       {a.total_srd && <span>💰 SRD {parseFloat(a.total_srd).toFixed(2)}</span>}
                     </div>
                   </div>
-                  <span style={{ fontSize: 11, color: '#9090a0', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 11, color: '#7e88a0', whiteSpace: 'nowrap' }}>
                     {new Date(a.detected_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>

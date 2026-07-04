@@ -167,7 +167,7 @@ export default function CatalogueImportExportScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Catalogus importeren / exporteren' : 'Import / Export Catalogue'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -184,7 +184,7 @@ export default function CatalogueImportExportScreen() {
           disabled={exporting}
           style={{
             height: 42, padding: '0 20px', borderRadius: 10, border: 'none', cursor: exporting ? 'not-allowed' : 'pointer',
-            background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700,
+            background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700,
             display: 'flex', alignItems: 'center', gap: 8, opacity: exporting ? 0.7 : 1,
           }}
         >
@@ -222,18 +222,18 @@ export default function CatalogueImportExportScreen() {
       </div>
 
       {/* Column reference card */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', marginBottom: 24, overflow: 'hidden' }}>
-        <div style={{ padding: '12px 20px', borderBottom: '1px solid #f3f3f8', fontWeight: 800, fontSize: 13, color: '#1c1c2e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', marginBottom: 24, overflow: 'hidden' }}>
+        <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f4fb', fontWeight: 800, fontSize: 13, color: '#16203a', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{isNl ? 'CSV-kolomreferentie' : 'CSV column reference'}</span>
-          <span style={{ fontSize: 11, fontWeight: 400, color: '#9090a0' }}>{isNl ? '* = verplicht' : '* = required'}</span>
+          <span style={{ fontSize: 11, fontWeight: 400, color: '#7e88a0' }}>{isNl ? '* = verplicht' : '* = required'}</span>
         </div>
         <div style={{ padding: '16px 20px', display: 'flex', flexWrap: 'wrap', gap: 8 }}>
           {KNOWN_HEADERS.map(h => (
             <div key={h} style={{
               padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
               background: COL_LABELS[h]?.required ? '#f5f0ff' : '#f9f9f9',
-              border: `1px solid ${COL_LABELS[h]?.required ? '#c4b5fd' : '#e5e7eb'}`,
-              color: COL_LABELS[h]?.required ? '#7c3aed' : '#374151',
+              border: `1px solid ${COL_LABELS[h]?.required ? '#b9c1de' : '#e5e7eb'}`,
+              color: COL_LABELS[h]?.required ? '#293371' : '#374151',
             }}>
               <code style={{ fontFamily: 'monospace', fontSize: 11 }}>{h}</code>
               <span style={{ marginLeft: 6, color: '#6b7280', fontWeight: 400 }}>
@@ -242,7 +242,7 @@ export default function CatalogueImportExportScreen() {
             </div>
           ))}
         </div>
-        <div style={{ padding: '10px 20px', borderTop: '1px solid #f3f3f8', background: '#fafafa' }}>
+        <div style={{ padding: '10px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa' }}>
           <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>
             {isNl
               ? '• Barcode mag leeg zijn (product wordt dan altijd aangemaakt). Als barcode aanwezig is, werkt import als upsert (bijwerken of aanmaken). • Categorie wordt automatisch aangemaakt als de naam niet bestaat. • btw_exempt: 1 = vrijgesteld, 0 = belast.'
@@ -294,7 +294,7 @@ export default function CatalogueImportExportScreen() {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         style={{
-          border: `2px dashed ${dragOver ? '#7c3aed' : file ? '#22c55e' : '#d1d5db'}`,
+          border: `2px dashed ${dragOver ? '#293371' : file ? '#22c55e' : '#d1d5db'}`,
           borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer',
           background: dragOver ? '#f5f0ff' : file ? '#f0fdf4' : '#fafafa',
           transition: 'all .15s', marginBottom: 20,
@@ -321,7 +321,7 @@ export default function CatalogueImportExportScreen() {
             <p style={{ fontWeight: 700, fontSize: 15, color: '#374151', marginBottom: 4 }}>
               {isNl ? 'Sleep een CSV of Excel-bestand hiernaartoe' : 'Drag a CSV or Excel file here'}
             </p>
-            <p style={{ fontSize: 13, color: '#9090a0' }}>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>
               {isNl ? 'of klik om een bestand te kiezen — .csv, .xlsx of .xls' : 'or click to choose a file — .csv, .xlsx or .xls'}
             </p>
           </div>
@@ -330,10 +330,10 @@ export default function CatalogueImportExportScreen() {
 
       {/* Preview table */}
       {preview && (
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', marginBottom: 20 }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', marginBottom: 20 }}>
           {/* Preview header */}
-          <div style={{ padding: '12px 20px', borderBottom: '1px solid #f3f3f8', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontWeight: 800, fontSize: 13, color: '#1c1c2e' }}>
+          <div style={{ padding: '12px 20px', borderBottom: '1px solid #f1f4fb', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: 800, fontSize: 13, color: '#16203a' }}>
               {isNl ? 'Voorbeeldweergave' : 'Preview'} — {preview.rows.length} {isNl ? 'rijen' : 'rows'}
             </span>
             {preview.headerErrors.length > 0 ? (
@@ -357,30 +357,30 @@ export default function CatalogueImportExportScreen() {
           {/* Table */}
           <div style={{ overflowX: 'auto', maxHeight: 360, overflowY: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-              <thead style={{ position: 'sticky', top: 0, background: '#f8f7ff', zIndex: 1 }}>
+              <thead style={{ position: 'sticky', top: 0, background: '#f4f6fc', zIndex: 1 }}>
                 <tr>
-                  <th style={{ padding: '8px 12px', textAlign: 'left', color: '#6d6d80', fontWeight: 700, whiteSpace: 'nowrap', borderBottom: '1px solid #eeeef8' }}>#</th>
+                  <th style={{ padding: '8px 12px', textAlign: 'left', color: '#5f6a84', fontWeight: 700, whiteSpace: 'nowrap', borderBottom: '1px solid #e9eef9' }}>#</th>
                   {['name_nl', 'name_en', 'barcode', 'price', 'btw_rate', 'btw_exempt', 'category_name_nl', 'stock_qty'].map(col => (
                     preview.headers.includes(col) && (
-                      <th key={col} style={{ padding: '8px 12px', textAlign: 'left', color: '#6d6d80', fontWeight: 700, whiteSpace: 'nowrap', borderBottom: '1px solid #eeeef8' }}>
+                      <th key={col} style={{ padding: '8px 12px', textAlign: 'left', color: '#5f6a84', fontWeight: 700, whiteSpace: 'nowrap', borderBottom: '1px solid #e9eef9' }}>
                         {isNl ? COL_LABELS[col]?.nl ?? col : COL_LABELS[col]?.en ?? col}
                       </th>
                     )
                   ))}
-                  <th style={{ padding: '8px 12px', borderBottom: '1px solid #eeeef8' }} />
+                  <th style={{ padding: '8px 12px', borderBottom: '1px solid #e9eef9' }} />
                 </tr>
               </thead>
               <tbody>
                 {preview.rows.map(row => (
                   <tr
                     key={row._rowNum}
-                    style={{ borderBottom: '1px solid #f3f3f8', background: row._valid ? '' : '#fff8f8' }}
+                    style={{ borderBottom: '1px solid #f1f4fb', background: row._valid ? '' : '#fff8f8' }}
                   >
                     <td style={{ padding: '7px 12px', color: '#9ca3af', whiteSpace: 'nowrap' }}>{row._rowNum}</td>
-                    {preview.headers.includes('name_nl')          && <td style={{ padding: '7px 12px', fontWeight: 600, color: '#1c1c2e' }}>{row.name_nl || <span style={{ color: '#f87171' }}>—</span>}</td>}
+                    {preview.headers.includes('name_nl')          && <td style={{ padding: '7px 12px', fontWeight: 600, color: '#16203a' }}>{row.name_nl || <span style={{ color: '#f87171' }}>—</span>}</td>}
                     {preview.headers.includes('name_en')          && <td style={{ padding: '7px 12px', color: '#6b7280' }}>{row.name_en}</td>}
                     {preview.headers.includes('barcode')          && <td style={{ padding: '7px 12px', fontFamily: 'monospace', color: '#6b7280', fontSize: 11 }}>{row.barcode}</td>}
-                    {preview.headers.includes('price')            && <td style={{ padding: '7px 12px', color: row.price ? '#1c1c2e' : '#9ca3af' }}>{row.price ? `SRD ${row.price}` : '—'}</td>}
+                    {preview.headers.includes('price')            && <td style={{ padding: '7px 12px', color: row.price ? '#16203a' : '#9ca3af' }}>{row.price ? `SRD ${row.price}` : '—'}</td>}
                     {preview.headers.includes('btw_rate')         && <td style={{ padding: '7px 12px', color: '#6b7280' }}>{row.btw_rate ? `${row.btw_rate}%` : '—'}</td>}
                     {preview.headers.includes('btw_exempt')       && <td style={{ padding: '7px 12px', color: '#6b7280' }}>{row.btw_exempt === '1' ? '✓' : '—'}</td>}
                     {preview.headers.includes('category_name_nl') && <td style={{ padding: '7px 12px', color: '#6b7280' }}>{row.category_name_nl}</td>}

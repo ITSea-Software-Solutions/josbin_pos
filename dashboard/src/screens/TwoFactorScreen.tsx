@@ -6,10 +6,10 @@ import { useDashboardAuthStore } from '@/store/authStore'
 // (the role isn't known yet during the challenge, so we key off the URL).
 const IS_TAX_PORTAL = /(^|\/)belastingdienst\/?$/i.test(window.location.pathname)
   || new URLSearchParams(window.location.search).has('belastingdienst')
-const ACCENT       = IS_TAX_PORTAL ? '#1f6b3b' : '#7c3aed'
-const ACCENT_GRAD  = IS_TAX_PORTAL ? 'linear-gradient(135deg,#1f6b3b,#0e4429)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)'
-const ACCENT_SHADOW = IS_TAX_PORTAL ? '0 8px 24px rgba(15,58,34,0.4)' : '0 8px 24px rgba(124,58,237,0.4)'
-const PAGE_BG      = IS_TAX_PORTAL ? 'linear-gradient(135deg,#0e4429 0%,#0c3a22 100%)' : 'linear-gradient(135deg, #1c1c2e 0%, #2d2d44 100%)'
+const ACCENT       = IS_TAX_PORTAL ? '#1f6b3b' : '#293371'
+const ACCENT_GRAD  = IS_TAX_PORTAL ? 'linear-gradient(135deg,#1f6b3b,#0e4429)' : 'linear-gradient(135deg, #293371, #1f2a63)'
+const ACCENT_SHADOW = IS_TAX_PORTAL ? '0 8px 24px rgba(15,58,34,0.4)' : '0 8px 24px rgba(41,51,113,0.4)'
+const PAGE_BG      = IS_TAX_PORTAL ? 'linear-gradient(135deg,#0e4429 0%,#0c3a22 100%)' : 'linear-gradient(135deg, #16203a 0%, #2d2d44 100%)'
 
 // ─── 2FA Challenge ────────────────────────────────────────────────────────────
 function ChallengeView() {
@@ -70,7 +70,7 @@ function ChallengeView() {
             fontFamily: 'monospace',
             fontSize: 26,
             textAlign: 'center',
-            borderColor: error ? '#ef4444' : code.length === 6 ? ACCENT : '#e0e0ed',
+            borderColor: error ? '#ef4444' : code.length === 6 ? ACCENT : '#d9e1f1',
           }}
           disabled={isLoading}
         />
@@ -160,18 +160,18 @@ function SetupView() {
             : 'Two-factor authentication is set up successfully. Save your recovery codes in a safe place.'}
         </p>
 
-        <div style={{ marginTop: 24, background: '#1c1c2e', borderRadius: 10, padding: '16px 20px' }}>
+        <div style={{ marginTop: 24, background: '#16203a', borderRadius: 10, padding: '16px 20px' }}>
           <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 12 }}>
             {isNl ? 'HERSTELCODES' : 'RECOVERY CODES'}
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             {recoveryCodes.map((c) => (
-              <code key={c} style={{ fontSize: 12, fontFamily: 'monospace', color: '#a78bfa', background: 'rgba(124,58,237,0.15)', padding: '4px 8px', borderRadius: 6 }}>{c}</code>
+              <code key={c} style={{ fontSize: 12, fontFamily: 'monospace', color: '#8f9ac9', background: 'rgba(41,51,113,0.15)', padding: '4px 8px', borderRadius: 6 }}>{c}</code>
             ))}
           </div>
         </div>
 
-        <p style={{ fontSize: 12, color: '#9090a0', marginTop: 16, textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 16, textAlign: 'center' }}>
           {isNl
             ? 'U bent nu ingelogd en wordt doorgestuurd naar het dashboard.'
             : 'You are now logged in and will be redirected to the dashboard.'}
@@ -203,13 +203,13 @@ function SetupView() {
             <p style={{ color: '#ef4444', fontSize: 13, marginTop: 16, textAlign: 'center' }}>{fetchError}</p>
           ) : !qrData ? (
             <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center' }}>
-              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e9e9ef', borderTopColor: ACCENT, animation: 'spin 1s linear infinite' }} />
+              <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ecf5', borderTopColor: ACCENT, animation: 'spin 1s linear infinite' }} />
             </div>
           ) : (
             <>
               {/* QR code via Google Charts API (offline-safe for local Docker) */}
               <div style={{ marginTop: 24, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-                <div style={{ background: '#fff', padding: 12, borderRadius: 12, border: '1px solid #e9e9ef' }}>
+                <div style={{ background: '#fff', padding: 12, borderRadius: 12, border: '1px solid #e6ecf5' }}>
                   <img
                     src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(qrData.qr_code_url)}`}
                     alt="QR Code"
@@ -218,11 +218,11 @@ function SetupView() {
                     style={{ display: 'block' }}
                   />
                 </div>
-                <div style={{ background: '#f5f5f8', borderRadius: 8, padding: '10px 16px', width: '100%' }}>
-                  <p style={{ fontSize: 11, color: '#9090a0', marginBottom: 4 }}>
+                <div style={{ background: '#f2f5fb', borderRadius: 8, padding: '10px 16px', width: '100%' }}>
+                  <p style={{ fontSize: 11, color: '#7e88a0', marginBottom: 4 }}>
                     {isNl ? 'Of voer de code handmatig in:' : 'Or enter manually:'}
                   </p>
-                  <code style={{ fontSize: 13, fontFamily: 'monospace', color: '#1c1c2e', wordBreak: 'break-all', letterSpacing: '0.1em' }}>{qrData.secret}</code>
+                  <code style={{ fontSize: 13, fontFamily: 'monospace', color: '#16203a', wordBreak: 'break-all', letterSpacing: '0.1em' }}>{qrData.secret}</code>
                 </div>
               </div>
 
@@ -259,7 +259,7 @@ function SetupView() {
                 fontFamily: 'monospace',
                 fontSize: 26,
                 textAlign: 'center',
-                borderColor: error ? '#ef4444' : code.length === 6 ? ACCENT : '#e0e0ed',
+                borderColor: error ? '#ef4444' : code.length === 6 ? ACCENT : '#d9e1f1',
               }}
               disabled={isLoading}
             />
@@ -340,13 +340,13 @@ const styles = {
   title: {
     fontSize: 22,
     fontWeight: 800,
-    color: '#1c1c2e',
+    color: '#16203a',
     marginBottom: 8,
     textAlign: 'center' as const,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6d6d80',
+    color: '#5f6a84',
     textAlign: 'center' as const,
     lineHeight: 1.6,
   },
@@ -355,7 +355,7 @@ const styles = {
     width: '100%',
     padding: '16px 12px',
     borderRadius: 12,
-    border: '2px solid #e0e0ed',
+    border: '2px solid #d9e1f1',
     outline: 'none',
     background: '#fafafa',
     transition: 'border-color 0.15s',
@@ -379,10 +379,10 @@ const styles = {
     display: 'block',
     padding: '14px',
     borderRadius: 12,
-    border: '2px solid #e0e0ed',
+    border: '2px solid #d9e1f1',
     cursor: 'pointer',
     background: '#fff',
-    color: '#6d6d80',
+    color: '#5f6a84',
     fontSize: 14,
     fontWeight: 600,
     transition: 'border-color 0.15s',
@@ -391,7 +391,7 @@ const styles = {
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    color: '#9090a0',
+    color: '#7e88a0',
     fontSize: 13,
     fontWeight: 500,
   },

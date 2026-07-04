@@ -59,7 +59,7 @@ export default function Modal({
   if (!isOpen) return null
 
   const headerTint = {
-    default: { bg: '#fff',     border: '#eeeef8', titleColor: '#1c1c2e' },
+    default: { bg: '#fff',     border: '#e9eef9', titleColor: '#16203a' },
     danger:  { bg: '#fef2f2',  border: '#fee2e2', titleColor: '#991b1b' },
     warning: { bg: '#fef9c3',  border: '#fef08a', titleColor: '#854d0e' },
   }[tone]
@@ -96,7 +96,7 @@ export default function Modal({
           maxWidth: 'calc(100vw - 40px)',
           maxHeight: 'calc(100vh - 80px)',
           background: '#fff',
-          border: '1px solid #e9e9ef',
+          border: '1px solid #e6ecf5',
           borderRadius: 16,
           boxShadow: '0 24px 60px rgba(0,0,0,0.18)',
           display: 'flex', flexDirection: 'column',
@@ -132,7 +132,7 @@ export default function Modal({
                 aria-label="Close"
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  color: '#9090a0', fontSize: 18, lineHeight: 1,
+                  color: '#7e88a0', fontSize: 18, lineHeight: 1,
                   padding: 4, borderRadius: 6,
                 }}
               >

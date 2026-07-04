@@ -14,8 +14,8 @@ function logoUrl(path?: string): string | null {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.04)', marginBottom: 20 }}>
-      <div style={{ padding: '14px 24px', borderBottom: '1px solid #f3f3f8', fontWeight: 800, fontSize: 14, color: '#1c1c2e' }}>{title}</div>
+    <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.04)', marginBottom: 20 }}>
+      <div style={{ padding: '14px 24px', borderBottom: '1px solid #f1f4fb', fontWeight: 800, fontSize: 14, color: '#16203a' }}>{title}</div>
       <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>{children}</div>
     </div>
   )
@@ -33,7 +33,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '9px 12px',
-  borderRadius: 8, border: '1.5px solid #e5e7eb', fontSize: 13, color: '#1c1c2e',
+  borderRadius: 8, border: '1.5px solid #e5e7eb', fontSize: 13, color: '#16203a',
   background: '#fff', outline: 'none',
 }
 
@@ -224,7 +224,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
           disabled={saveMut.isPending}
           style={{
             height: 44, padding: '0 28px', borderRadius: 10, border: 'none', cursor: saveMut.isPending ? 'not-allowed' : 'pointer',
-            background: saveStatus === 'ok' ? '#16a34a' : saveStatus === 'error' ? '#dc2626' : 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+            background: saveStatus === 'ok' ? '#16a34a' : saveStatus === 'error' ? '#dc2626' : 'linear-gradient(135deg,#293371,#1f2a63)',
             color: '#fff', fontSize: 14, fontWeight: 700, transition: 'background .3s',
             opacity: saveMut.isPending ? 0.8 : 1,
           }}
@@ -238,8 +238,8 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
 
       {/* Right: Receipt preview */}
       <div style={{ position: 'sticky', top: 20 }}>
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.04)' }}>
-          <div style={{ padding: '14px 20px', borderBottom: '1px solid #f3f3f8', fontWeight: 800, fontSize: 13, color: '#1c1c2e' }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.04)' }}>
+          <div style={{ padding: '14px 20px', borderBottom: '1px solid #f1f4fb', fontWeight: 800, fontSize: 13, color: '#16203a' }}>
             {isNl ? 'Bonvoorbeeld' : 'Receipt preview'}
           </div>
           <div style={{ padding: '16px 20px' }}>
@@ -298,7 +298,7 @@ export default function StoreSettingsScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Vestigingsinstellingen' : 'Store Settings'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -307,7 +307,7 @@ export default function StoreSettingsScreen() {
       </div>
 
       {/* Store selector */}
-      <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '14px 18px', marginBottom: 24, display: 'flex', gap: 12, alignItems: 'center' }}>
+      <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '14px 18px', marginBottom: 24, display: 'flex', gap: 12, alignItems: 'center' }}>
         <label style={{ fontSize: 13, fontWeight: 600, color: '#6b7280', flexShrink: 0 }}>
           {isNl ? 'Vestiging:' : 'Store:'}
         </label>
@@ -324,13 +324,13 @@ export default function StoreSettingsScreen() {
       </div>
 
       {!selectedStoreId ? (
-        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef' }}>
+        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5' }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>🏪</p>
           <p style={{ fontSize: 15, fontWeight: 700, color: '#6b7280' }}>{isNl ? 'Kies een vestiging om te bewerken' : 'Choose a store to edit'}</p>
         </div>
       ) : isLoading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #ede9fe', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : store ? (
         <StoreForm key={store.id} store={store} isNl={isNl} onSaved={() => {}} />

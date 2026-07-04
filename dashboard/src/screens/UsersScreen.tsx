@@ -13,9 +13,9 @@ import { useToast } from '@/components/shared/Toast'
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const ROLE_CFG: Record<string, { bg: string; color: string; border: string; label: { nl: string; en: string } }> = {
-  super_admin:        { bg: '#f3f0ff', color: '#6d28d9', border: '#ddd6fe', label: { nl: 'Super Admin',      en: 'Super Admin'     } },
+  super_admin:        { bg: '#f3f0ff', color: '#1e2657', border: '#d5deef', label: { nl: 'Super Admin',      en: 'Super Admin'     } },
   organisation_admin: { bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe', label: { nl: 'Org. Beheerder',   en: 'Org. Admin'      } },
-  store_manager:      { bg: '#eef2ff', color: '#4338ca', border: '#c7d2fe', label: { nl: 'Winkelbeheerder',  en: 'Store Manager'   } },
+  store_manager:      { bg: '#eef2ff', color: '#1a234f', border: '#c7d2fe', label: { nl: 'Winkelbeheerder',  en: 'Store Manager'   } },
   cashier:            { bg: '#f0fdf4', color: '#15803d', border: '#bbf7d0', label: { nl: 'Kassamedewerker',  en: 'Cashier'         } },
   auditor:            { bg: '#fffbeb', color: '#92400e', border: '#fde68a', label: { nl: 'Controleur',       en: 'Auditor'         } },
   api_integration:    { bg: '#f9fafb', color: '#374151', border: '#e5e7eb', label: { nl: 'API Integratie',   en: 'API Integration' } },
@@ -68,8 +68,8 @@ const inputSt: React.CSSProperties = {
   transition: 'border-color .15s, box-shadow .15s', boxSizing: 'border-box',
 }
 function focusIn(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
-  e.currentTarget.style.borderColor = '#7c3aed'
-  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(124,58,237,.12)'
+  e.currentTarget.style.borderColor = '#293371'
+  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(41,51,113,.12)'
 }
 function focusOut(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
   e.currentTarget.style.borderColor = '#e5e7eb'
@@ -116,7 +116,7 @@ function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
 
   if (!orgId) {
     return (
-      <div style={{ padding: '10px 12px', background: '#f9fafb', border: '1px dashed #e5e7eb', borderRadius: 8, fontSize: 12, color: '#9090a0' }}>
+      <div style={{ padding: '10px 12px', background: '#f9fafb', border: '1px dashed #e5e7eb', borderRadius: 8, fontSize: 12, color: '#7e88a0' }}>
         {isNl ? 'Kies eerst een organisatie hierboven.' : 'Pick an organisation above first.'}
       </div>
     )
@@ -134,7 +134,7 @@ function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
         {isNl ? 'Toegewezen vestiging' : 'Assigned store'} *
       </label>
       {isLoading ? (
-        <div style={{ padding: '10px 12px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 12, color: '#9090a0', background: '#fff' }}>
+        <div style={{ padding: '10px 12px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 12, color: '#7e88a0', background: '#fff' }}>
           {isNl ? 'Vestigingen laden…' : 'Loading stores…'}
         </div>
       ) : stores.length === 0 ? (
@@ -158,7 +158,7 @@ function StoreAssignmentPicker({ orgId, value, onChange, isNl, role }: {
           ))}
         </select>
       )}
-      <p style={{ fontSize: 11.5, color: '#9090a0', marginTop: 5 }}>
+      <p style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 5 }}>
         {helpText} {isNl ? 'Eén gebruiker, één vestiging.' : 'One user, one store.'}
       </p>
     </div>
@@ -299,14 +299,14 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-.3px', marginBottom: 3 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#16203a', letterSpacing: '-.3px', marginBottom: 3 }}>
               {isNl ? 'Gebruiker aanmaken' : 'Create user'}
             </h2>
-            <p style={{ fontSize: 13, color: '#9090a0' }}>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>
               {isNl ? 'Vul alle gegevens in en stuur de inloggegevens naar de gebruiker.' : 'Fill in all details and share the credentials with the user.'}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -345,7 +345,7 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
               {roleOptions.map((r) => <option key={r.value} value={r.value}>{isNl ? r.nl : r.en}</option>)}
             </select>
             {/* Role description hint */}
-            <p style={{ fontSize: 11.5, color: '#9090a0', marginTop: 5 }}>
+            <p style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 5 }}>
               {form.role === 'organisation_admin' && (isNl ? 'Beheert één organisatie — vestigingen, gebruikers, catalogus.' : 'Manages one organisation — stores, users, catalogue.')}
               {form.role === 'store_manager'      && (isNl ? 'Beheert toegewezen vestiging(en), maakt kassamedewerkers aan.' : 'Manages assigned store(s), creates cashier accounts.')}
               {form.role === 'cashier'            && (isNl ? 'Toegang tot POS-scherm alleen — kan geen rapporten of instellingen zien.' : 'Access to POS screen only — cannot view reports or settings.')}
@@ -419,7 +419,7 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
                 <button
                   type="button"
                   onClick={() => setShowPassword((s) => !s)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9090a0', padding: 0 }}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#7e88a0', padding: 0 }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     {showPassword
@@ -431,12 +431,12 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
               <button
                 type="button"
                 onClick={() => { const p = generatePassword(); set('password', p); setShowPassword(true) }}
-                style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid #ddd6fe', background: '#f5f3ff', color: '#6d28d9', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+                style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid #d5deef', background: '#f2f5fc', color: '#1e2657', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
               >
                 {isNl ? 'Genereer' : 'Generate'}
               </button>
             </div>
-            <p style={{ fontSize: 11.5, color: '#9090a0', marginTop: 5 }}>
+            <p style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 5 }}>
               {isNl
                 ? 'De gebruiker moet dit wachtwoord wijzigen bij de eerste login.'
                 : 'The user must change this password on first login.'}
@@ -449,13 +449,13 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
               type="checkbox"
               checked={form.send_welcome_email ?? true}
               onChange={(e) => set('send_welcome_email', e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: '#7c3aed', cursor: 'pointer' }}
+              style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }}
             />
             <div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>
                 {isNl ? 'Welkom-e-mail versturen' : 'Send welcome email'}
               </div>
-              <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 1 }}>
+              <div style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 1 }}>
                 {isNl
                   ? 'Stuur automatisch een welkomst-e-mail met inloggegevens naar de gebruiker.'
                   : 'Automatically send a welcome email with login credentials to the user.'}
@@ -471,7 +471,7 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
           <button
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending || !canSubmit}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', cursor: 'pointer', opacity: mutation.isPending || !canSubmit ? 0.5 : 1, boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !canSubmit ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}
           >
             {mutation.isPending ? (isNl ? 'Aanmaken…' : 'Creating…') : (isNl ? 'Gebruiker aanmaken' : 'Create user')}
           </button>
@@ -546,13 +546,13 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <Avatar name={user.name} />
             <div>
-              <h2 style={{ fontSize: 18, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-.3px', marginBottom: 2 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: '#16203a', letterSpacing: '-.3px', marginBottom: 2 }}>
                 {isNl ? 'Gebruiker bewerken' : 'Edit user'}
               </h2>
-              <p style={{ fontSize: 12.5, color: '#9090a0' }}>{user.email}</p>
+              <p style={{ fontSize: 12.5, color: '#7e88a0' }}>{user.email}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', flexShrink: 0 }}>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', flexShrink: 0 }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -640,7 +640,7 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
                   style={{ ...inputSt, paddingRight: 40 }} onFocus={focusIn} onBlur={focusOut}
                 />
                 <button type="button" onClick={() => setShowPassword((s) => !s)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#9090a0', padding: 0 }}>
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#7e88a0', padding: 0 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     {showPassword
                       ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></>
@@ -650,7 +650,7 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
               </div>
               <button type="button"
                 onClick={() => { const p = generatePassword(); set('password', p); setShowPassword(true) }}
-                style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid #ddd6fe', background: '#f5f3ff', color: '#6d28d9', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                style={{ padding: '10px 14px', borderRadius: 10, border: '1px solid #d5deef', background: '#f2f5fc', color: '#1e2657', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
                 {isNl ? 'Reset' : 'Reset'}
               </button>
             </div>
@@ -662,7 +662,7 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name || !form.email}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', cursor: 'pointer', opacity: mutation.isPending || !form.name || !form.email ? 0.5 : 1, boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name || !form.email ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
             {mutation.isPending ? (isNl ? 'Opslaan…' : 'Saving…') : (isNl ? 'Opslaan' : 'Save changes')}
           </button>
         </div>
@@ -705,20 +705,20 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
   }
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, marginBottom: 24, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+    <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, marginBottom: 24, overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 22px', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg,#7c3aed20,#4f46e520)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg,#29337120,#1f2a6320)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
             🔐
           </div>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
               {isNl ? 'Tweestapsverificatie per rol' : 'Two-factor authentication per role'}
             </div>
-            <div style={{ fontSize: 12, color: '#9090a0', marginTop: 1 }}>
+            <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 1 }}>
               {isNl
                 ? 'Bepaal welke rollen verplicht 2FA moeten gebruiken.'
                 : 'Choose which roles must use 2FA.'}
@@ -726,7 +726,7 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
           </div>
         </div>
         <svg
-          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9090a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7e88a0" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
           style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}
         >
           <polyline points="6 9 12 15 18 9"/>
@@ -734,9 +734,9 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
       </button>
 
       {open && (
-        <div style={{ padding: '0 22px 22px', borderTop: '1px solid #f0f0f8' }}>
+        <div style={{ padding: '0 22px 22px', borderTop: '1px solid #eef2fb' }}>
           {isLoading || !policy ? (
-            <p style={{ fontSize: 13, color: '#9090a0', marginTop: 14 }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0', marginTop: 14 }}>{isNl ? 'Laden…' : 'Loading…'}</p>
           ) : (
             <>
               <p style={{ fontSize: 12.5, color: '#6b7280', margin: '14px 0 16px' }}>
@@ -747,9 +747,9 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
 
               {/* Always-on roles */}
               {policy.always_roles.map((role) => (
-                <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f3f3f8' }}>
-                  <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>{roleLabel(role)}</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 700, background: '#f3f0ff', color: '#6d28d9', border: '1px solid #ddd6fe' }}>
+                <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f4fb' }}>
+                  <span style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>{roleLabel(role)}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 20, fontSize: 11.5, fontWeight: 700, background: '#f3f0ff', color: '#1e2657', border: '1px solid #d5deef' }}>
                     🔒 {isNl ? 'Altijd verplicht' : 'Always required'}
                   </span>
                 </div>
@@ -759,8 +759,8 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
               {policy.configurable_roles.map((role) => {
                 const on = selected.includes(role)
                 return (
-                  <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f3f3f8' }}>
-                    <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>{roleLabel(role)}</span>
+                  <div key={role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #f1f4fb' }}>
+                    <span style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>{roleLabel(role)}</span>
                     <button
                       type="button"
                       role="switch"
@@ -768,7 +768,7 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
                       onClick={() => toggleRole(role)}
                       style={{
                         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                        background: on ? '#7c3aed' : '#d1d5db', padding: 2, transition: 'background .15s',
+                        background: on ? '#293371' : '#d1d5db', padding: 2, transition: 'background .15s',
                         display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',
                       }}
                     >
@@ -790,7 +790,7 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
                   disabled={!dirty || save.isPending}
                   style={{
                     padding: '9px 20px', borderRadius: 10, border: 'none',
-                    background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+                    background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     opacity: (!dirty || save.isPending) ? 0.5 : 1,
                   }}
@@ -952,7 +952,7 @@ export default function UsersScreen() {
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
             {isNl ? 'Gebruikers' : 'Users'}
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -961,7 +961,7 @@ export default function UsersScreen() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
           {isNl ? 'Gebruiker aanmaken' : 'Create user'}
@@ -985,13 +985,13 @@ export default function UsersScreen() {
       {!isLoading && users && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 28, maxWidth: 580 }}>
           {[
-            { label: isNl ? 'Totaal gebruikers' : 'Total users', value: total,   color: '#7c3aed' },
+            { label: isNl ? 'Totaal gebruikers' : 'Total users', value: total,   color: '#293371' },
             { label: isNl ? 'Actief' : 'Active',                  value: active,  color: '#16a34a' },
             { label: isNl ? 'Met 2FA' : 'With 2FA',              value: with2fa, color: '#2563eb' },
           ].map((s) => (
-            <div key={s.label} style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+            <div key={s.label} style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: s.color, letterSpacing: '-0.5px' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -1001,7 +1001,7 @@ export default function UsersScreen() {
           Only rendered for actors who can manage users (super_admin,
           organisation_admin, store_manager). */}
       {canManageUsers && selectedIds.size > 0 && (
-        <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(124,58,237,.35)' }}>
+        <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#293371,#1f2a63)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(41,51,113,.35)' }}>
           <span style={{ fontSize: 13.5, fontWeight: 700 }}>
             {bulkProgress
               ? (isNl ? `Bezig… ${bulkProgress.done}/${bulkProgress.total}` : `Working… ${bulkProgress.done}/${bulkProgress.total}`)
@@ -1025,27 +1025,27 @@ export default function UsersScreen() {
       )}
 
       {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f3f3f8' }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f0f0f8' }} />
-                <div style={{ flex: 1, height: 14, borderRadius: 7, background: '#f0f0f8', maxWidth: 200 }} />
-                <div style={{ width: 120, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ width: 80, height: 22, borderRadius: 11, background: '#f0f0f8' }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f1f4fb' }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#eef2fb' }} />
+                <div style={{ flex: 1, height: 14, borderRadius: 7, background: '#eef2fb', maxWidth: 200 }} />
+                <div style={{ width: 120, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ width: 80, height: 22, borderRadius: 11, background: '#eef2fb' }} />
               </div>
             ))}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 {canManageUsers && (
                   <th style={{ padding: '12px 8px 12px 20px', width: 38 }}>
                     <input type="checkbox" checked={allSelected} disabled={selectableIds.length === 0}
                       onChange={toggleAll} title={isNl ? 'Alles selecteren' : 'Select all'}
-                      style={{ width: 16, height: 16, cursor: selectableIds.length ? 'pointer' : 'not-allowed', accentColor: '#7c3aed' }} />
+                      style={{ width: 16, height: 16, cursor: selectableIds.length ? 'pointer' : 'not-allowed', accentColor: '#293371' }} />
                   </th>
                 )}
                 {[
@@ -1064,9 +1064,9 @@ export default function UsersScreen() {
                 ].map((h) => (
                   <th key={h.label}
                     onClick={h.key ? () => toggle(h.key) : undefined}
-                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
@@ -1074,8 +1074,8 @@ export default function UsersScreen() {
             <tbody>
               {sortedUsers.map((user, i) => (
                 <tr key={user.id}
-                  style={{ borderBottom: i < sortedUsers.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                  style={{ borderBottom: i < sortedUsers.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >
                   {/* Bulk-select checkbox — only for rows the actor can manage
@@ -1084,7 +1084,7 @@ export default function UsersScreen() {
                     <td style={{ padding: '14px 8px 14px 20px' }}>
                       {canManage(user) ? (
                         <input type="checkbox" checked={selectedIds.has(user.id)} onChange={() => toggleOne(user.id)}
-                          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#7c3aed' }} />
+                          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#293371' }} />
                       ) : (
                         <span style={{ display: 'inline-block', width: 16 }} />
                       )}
@@ -1095,8 +1095,8 @@ export default function UsersScreen() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <Avatar name={user.name} />
                       <div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{user.name}</div>
-                        <div style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{user.name}</div>
+                        <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 1 }}>
                           {user.locale?.toUpperCase() ?? '—'}
                           {user.organisation_id
                             ? ` · ${orgMap[user.organisation_id] ?? user.organisation_id.slice(0, 8) + '…'}`
@@ -1162,12 +1162,12 @@ export default function UsersScreen() {
                         return (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <span style={{ fontWeight: 700, color: '#1c1c2e', textTransform: 'capitalize' }}>{lic.tier}</span>
+                              <span style={{ fontWeight: 700, color: '#16203a', textTransform: 'capitalize' }}>{lic.tier}</span>
                               <span style={{ padding: '1px 7px', borderRadius: 10, fontSize: 10.5, fontWeight: 700, background: c.bg, color: c.fg, border: `1px solid ${c.border}` }}>
                                 {sl[isNl ? 'nl' : 'en']}
                               </span>
                             </div>
-                            <div style={{ color: '#9090a0', fontSize: 11 }}>
+                            <div style={{ color: '#7e88a0', fontSize: 11 }}>
                               {lic.valid_from ?? '—'} → {lic.valid_until ?? '—'}
                             </div>
                           </div>
@@ -1196,7 +1196,7 @@ export default function UsersScreen() {
                     )}
                   </td>
                   {/* Last login */}
-                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#9090a0' }}>
+                  <td style={{ padding: '14px 20px', fontSize: 12.5, color: '#7e88a0' }}>
                     {user.last_login_at
                       ? new Date(user.last_login_at).toLocaleString(isNl ? 'nl-SR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
                       : <span style={{ color: '#d1d5db' }}>—</span>}
@@ -1213,7 +1213,7 @@ export default function UsersScreen() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       <button
                         onClick={() => setEditTarget(user)}
-                        style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #e0e0ed', background: '#f8f7ff', color: '#6d28d9', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #d9e1f1', background: '#f4f6fc', color: '#1e2657', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -1252,8 +1252,8 @@ export default function UsersScreen() {
 
         {/* Footer */}
         {!isLoading && total > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f3f3f8', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 12, color: '#9090a0' }}>
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {total} {isNl ? 'gebruikers in totaal' : 'users total'}
             </span>
           </div>

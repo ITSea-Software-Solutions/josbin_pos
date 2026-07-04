@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0a0e1a">
-<meta name="description" content="Josbin POS — enterprise kassa- en winkelbeheersysteem voor Suriname.">
 <title>Josbin POS — Feature Tour (NL/EN)</title>
 </head>
 <body>
@@ -12,8 +11,8 @@
   :root{
     --ink:#0a0e1a; --stage:#0c1322; --surface:#141d31; --surface2:#1b2640;
     --line:#25314e; --line-soft:#1a2440;
-    --em:#16c98d; --em-deep:#0f9d6f; --em-glow:rgba(22,201,141,.45);
-    --gold:#f5c542; --red:#e5484d; --sky:#5cc8ff;
+    --em:#1f9bde; --em-deep:#0a72ac; --em-glow:rgba(31,155,222,.45);
+    --gold:#ef6c00; --red:#e5484d; --sky:#5cc8ff;
     --text:#eef2fb; --muted:#94a2c2; --dim:#6b7a9c;
     --stack:-apple-system,"SF Pro Display","Segoe UI Variable","Segoe UI",system-ui,Roboto,sans-serif;
   }
@@ -22,8 +21,8 @@
     min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:16px; padding:22px 16px 26px;
     background:
-      radial-gradient(1200px 600px at 50% -10%, rgba(22,201,141,.10), transparent 60%),
-      radial-gradient(900px 500px at 110% 120%, rgba(245,197,66,.07), transparent 55%),
+      radial-gradient(1200px 600px at 50% -10%, rgba(31,155,222,.10), transparent 60%),
+      radial-gradient(900px 500px at 110% 120%, rgba(239,108,0,.07), transparent 55%),
       var(--ink);
     color:var(--text); font-family:var(--stack); -webkit-font-smoothing:antialiased;
   }
@@ -70,11 +69,11 @@
   .chips{display:flex; flex-wrap:wrap; gap:1.3cqi; margin-top:3cqi;}
   .chip{font-size:1.65cqi; font-weight:600; padding:1cqi 1.9cqi; border-radius:100px; background:var(--surface); border:1px solid var(--line); color:var(--text); display:flex; align-items:center; gap:.8cqi;}
   .chip .dot{width:1cqi;height:1cqi;border-radius:50%;background:var(--em);box-shadow:0 0 0 .5cqi var(--em-glow)}
-  .chip.gold .dot{background:var(--gold);box-shadow:0 0 0 .5cqi rgba(245,197,66,.3)}
+  .chip.gold .dot{background:var(--gold);box-shadow:0 0 0 .5cqi rgba(239,108,0,.3)}
 
   .brand{display:flex; align-items:center; gap:2cqi; margin-bottom:2.6cqi;}
   .logo{width:8.4cqi; height:8.4cqi; border-radius:2.2cqi; display:grid; place-items:center; font-weight:800; font-size:4cqi; color:#04140d;
-    background:linear-gradient(135deg,var(--em),#39e6a8); box-shadow:0 12px 30px -6px var(--em-glow), inset 0 0 0 1px rgba(255,255,255,.25);}
+    background:linear-gradient(135deg,var(--em),#5cc8ff); box-shadow:0 12px 30px -6px var(--em-glow), inset 0 0 0 1px rgba(255,255,255,.25);}
   .wordmark{font-size:7cqi; font-weight:800; letter-spacing:-.03em; line-height:1;}
   .wordmark b{color:var(--em)}
   .flag{display:flex;flex-direction:column;width:5.4cqi;height:3.6cqi;border-radius:.8cqi;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
@@ -120,11 +119,11 @@
   .field{background:var(--surface2);border:1px solid var(--line);border-radius:1cqi;padding:1cqi 1.3cqi}
   .field .k{font-size:1.15cqi;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
   .field .v{font-size:1.85cqi;font-weight:600;margin-top:.35cqi;color:var(--text);font-variant-numeric:tabular-nums}
-  .field.sel{border-color:rgba(22,201,141,.4);background:linear-gradient(90deg,rgba(22,201,141,.1),var(--surface2))}
+  .field.sel{border-color:rgba(31,155,222,.4);background:linear-gradient(90deg,rgba(31,155,222,.1),var(--surface2))}
   .field.sel .v{display:flex;justify-content:space-between;color:var(--em)}
   .field.sel .v span:last-child{color:var(--dim);font-size:1.4cqi}
   .variants{display:flex;gap:1cqi;flex-wrap:wrap;margin-top:.5cqi}
-  .vchip{font-size:1.5cqi;font-weight:600;padding:.75cqi 1.4cqi;border-radius:.9cqi;background:rgba(22,201,141,.1);border:1px solid rgba(22,201,141,.35);color:var(--em);display:flex;gap:.8cqi;align-items:center}
+  .vchip{font-size:1.5cqi;font-weight:600;padding:.75cqi 1.4cqi;border-radius:.9cqi;background:rgba(31,155,222,.1);border:1px solid rgba(31,155,222,.35);color:var(--em);display:flex;gap:.8cqi;align-items:center}
   .vchip .p{color:var(--muted);font-variant-numeric:tabular-nums}
 
   /* Payment */
@@ -149,7 +148,7 @@
   .pcigrid{display:flex;gap:3cqi;align-items:center;margin-top:.6cqi}
   .cardface{width:42cqi;height:25cqi;border-radius:2.4cqi;padding:2.8cqi;position:relative;color:#eaf6ff;
     background:linear-gradient(135deg,#173453,#0b1f38);border:1px solid #2c4a68;box-shadow:0 24px 60px -18px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.05);overflow:hidden}
-  .cardface::after{content:"";position:absolute;width:20cqi;height:20cqi;right:-6cqi;top:-8cqi;border-radius:50%;background:radial-gradient(closest-side,rgba(22,201,141,.35),transparent)}
+  .cardface::after{content:"";position:absolute;width:20cqi;height:20cqi;right:-6cqi;top:-8cqi;border-radius:50%;background:radial-gradient(closest-side,rgba(31,155,222,.35),transparent)}
   .cardchip{width:5cqi;height:3.6cqi;border-radius:.8cqi;background:linear-gradient(135deg,#e9c86b,#b8922f);margin-bottom:2.6cqi}
   .cardnum{font-size:3.2cqi;font-weight:700;letter-spacing:.15em;font-variant-numeric:tabular-nums;display:flex;gap:1.4cqi}
   .cardnum .mask{color:#54708f}
@@ -171,8 +170,8 @@
   .tree{display:flex;flex-direction:column;align-items:center;gap:.9cqi;margin-top:.6cqi}
   .node{background:var(--surface);border:1px solid var(--line);border-radius:1.3cqi;padding:1.2cqi 2.2cqi;font-size:1.9cqi;font-weight:700;display:flex;align-items:center;gap:1.2cqi}
   .node .b{font-size:1.35cqi;color:var(--dim);font-weight:500}
-  .node.top{border-color:var(--em);background:linear-gradient(90deg,rgba(22,201,141,.14),var(--surface))}
-  .node.gov{border-color:rgba(245,197,66,.4);background:linear-gradient(90deg,rgba(245,197,66,.1),var(--surface))}
+  .node.top{border-color:var(--em);background:linear-gradient(90deg,rgba(31,155,222,.14),var(--surface))}
+  .node.gov{border-color:rgba(239,108,0,.4);background:linear-gradient(90deg,rgba(239,108,0,.1),var(--surface))}
   .conn{width:2px;height:1.8cqi;background:var(--line)}
   .branch{display:flex;gap:2.4cqi;margin-top:.4cqi}
   .scene.is-active .node{animation:rise .5s both}
@@ -249,7 +248,7 @@
   .langcol .row{font-size:1.85cqi;padding:.6cqi 0;color:var(--text);border-bottom:1px solid var(--line-soft)}
   .langcol .row:last-child{border:0}
   .toggle{width:8cqi;height:4cqi;border-radius:100px;background:var(--surface2);border:1px solid var(--line);position:relative;flex:none;margin:0 auto}
-  .toggle::after{content:"";position:absolute;top:.45cqi;left:.45cqi;width:3cqi;height:3cqi;border-radius:50%;background:linear-gradient(135deg,var(--em),#3ee3a6);box-shadow:0 4px 10px -2px var(--em-glow)}
+  .toggle::after{content:"";position:absolute;top:.45cqi;left:.45cqi;width:3cqi;height:3cqi;border-radius:50%;background:linear-gradient(135deg,var(--em),#6fd0ff);box-shadow:0 4px 10px -2px var(--em-glow)}
   .scene.is-active .toggle::after{animation:tog 3.4s infinite}
   @keyframes tog{0%,42%{left:.45cqi}58%,100%{left:4.55cqi}}
 
@@ -262,7 +261,7 @@
   .store .big{font-size:3.2cqi;font-weight:800;font-variant-numeric:tabular-nums;margin-top:.9cqi;color:var(--text)}
   .store .d{font-size:1.35cqi;color:var(--dim);margin-top:.3cqi}
   .spark{display:flex;align-items:flex-end;gap:.7cqi;height:5.6cqi;margin-top:1.6cqi}
-  .spark i{flex:1;background:linear-gradient(180deg,var(--em),rgba(22,201,141,.15));border-radius:2px;transform-origin:bottom;transform:scaleY(0)}
+  .spark i{flex:1;background:linear-gradient(180deg,var(--em),rgba(31,155,222,.15));border-radius:2px;transform-origin:bottom;transform:scaleY(0)}
   .scene.is-active .spark i{animation:grow .6s both}
   .scene.is-active .spark i:nth-child(2){animation-delay:.06s}.scene.is-active .spark i:nth-child(3){animation-delay:.12s}
   .scene.is-active .spark i:nth-child(4){animation-delay:.18s}.scene.is-active .spark i:nth-child(5){animation-delay:.24s}
@@ -295,12 +294,12 @@
   .scene.is-active .check:nth-child(5){animation-delay:.4s}.scene.is-active .check:nth-child(6){animation-delay:.48s}
   .scene.is-active .check:nth-child(7){animation-delay:.56s}.scene.is-active .check:nth-child(8){animation-delay:.64s}
   .scene.is-active .check:nth-child(9){animation-delay:.72s}
-  .cta{display:inline-flex;align-items:center;gap:1.4cqi;background:linear-gradient(135deg,var(--em),#3ee3a6);color:#04140d;font-weight:800;font-size:2.1cqi;padding:1.5cqi 3cqi;border-radius:100px;box-shadow:0 16px 40px -10px var(--em-glow)}
+  .cta{display:inline-flex;align-items:center;gap:1.4cqi;background:linear-gradient(135deg,var(--em),#6fd0ff);color:#04140d;font-weight:800;font-size:2.1cqi;padding:1.5cqi 3cqi;border-radius:100px;box-shadow:0 16px 40px -10px var(--em-glow)}
 
   /* chrome */
   .kicker{font-size:1.35cqi;font-weight:700;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;position:absolute;top:5cqi;right:7.6cqi;z-index:3}
   .brandmini{position:absolute;top:4.6cqi;left:7.6cqi;z-index:3;display:flex;align-items:center;gap:1cqi;font-weight:800;font-size:1.9cqi;letter-spacing:-.02em}
-  .brandmini .d{width:1.5cqi;height:1.5cqi;border-radius:.5cqi;background:linear-gradient(135deg,var(--em),#3ee3a6)}
+  .brandmini .d{width:1.5cqi;height:1.5cqi;border-radius:.5cqi;background:linear-gradient(135deg,var(--em),#6fd0ff)}
   .brandmini b{color:var(--em)}
   .progress{position:absolute;left:0;right:0;bottom:0;height:.5cqi;background:rgba(255,255,255,.06);z-index:4}
   .progress .fill{height:100%;width:0;background:linear-gradient(90deg,var(--em),var(--gold));box-shadow:0 0 1cqi var(--em-glow)}
@@ -317,7 +316,7 @@
   .btn:hover{border-color:var(--em);color:var(--em)}
   .btn:focus-visible{outline:2px solid var(--em);outline-offset:2px}
   .btn[disabled]{opacity:.5;cursor:not-allowed}
-  .btn#lang{border-color:rgba(245,197,66,.4)}
+  .btn#lang{border-color:rgba(239,108,0,.4)}
   .hint{font-size:12px;color:var(--dim)}.hint b{color:var(--muted);font-weight:600}
   .credit{font-size:11.5px;color:var(--dim)}.credit b{color:var(--muted)}
 
@@ -513,7 +512,7 @@
             <div class="ft" style="color:#5a6b82" data-en='<span>Supermarket De Hoop</span><span>Receipt</span>'><span>Supermarkt De Hoop</span><span>Bon</span></div>
             <div class="frow" style="grid-template-columns:1fr;gap:.4cqi;margin-bottom:.4cqi">
               <div style="display:flex;justify-content:space-between;font-size:1.75cqi;padding:.5cqi 0;color:#2a3547" data-en='Subtotal<span>75,90</span>'>Subtotaal<span>75,90</span></div>
-              <div style="display:flex;justify-content:space-between;font-size:1.75cqi;padding:.9cqi 1cqi;margin:0 -1cqi;border-radius:.8cqi;background:rgba(22,201,141,.14);box-shadow:0 0 0 1px rgba(22,201,141,.4);color:#1a2230;font-weight:700" data-en='VAT 10%<span>7,60</span>'>BTW 10%<span>7,60</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:1.75cqi;padding:.9cqi 1cqi;margin:0 -1cqi;border-radius:.8cqi;background:rgba(31,155,222,.14);box-shadow:0 0 0 1px rgba(31,155,222,.4);color:#1a2230;font-weight:700" data-en='VAT 10%<span>7,60</span>'>BTW 10%<span>7,60</span></div>
               <div style="display:flex;justify-content:space-between;font-size:1.75cqi;padding:.5cqi 0;color:#2a3547" data-en='Exempt (basics)<span>0,00</span>'>Vrijgesteld (basis)<span>0,00</span></div>
               <div style="display:flex;justify-content:space-between;font-size:2.3cqi;font-weight:800;border-top:1px dashed #b9c3d1;margin-top:.6cqi;padding-top:1cqi;color:#111" data-en='Total SRD<span>83,50</span>'>Totaal SRD<span>83,50</span></div>
             </div>

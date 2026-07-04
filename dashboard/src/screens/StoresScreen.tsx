@@ -92,11 +92,11 @@ function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean;
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 520, boxShadow: '0 24px 64px rgba(0,0,0,.35)' }}>
-        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #f0f0f8' }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #eef2fb' }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#16203a' }}>
             {isNl ? 'Nieuwe vestiging' : 'New store'}
           </h3>
-          <p style={{ fontSize: 12, color: '#9090a0', marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 4 }}>
             {isNl ? 'De vestiging is meteen actief. Per-vestiging instellingen kunt u later in Vestigingsinstellingen aanpassen.' : 'The store is active immediately. Per-store settings can be tweaked in Store Settings later.'}
           </p>
         </div>
@@ -134,7 +134,7 @@ function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean;
             <div style={{ display: 'flex', gap: 8 }}>
               {(['native', 'external'] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setForm({ ...form, pos_type: t })}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: form.pos_type === t ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: form.pos_type === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: form.pos_type === t ? '#7c3aed' : '#6b7280', cursor: 'pointer' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: form.pos_type === t ? '2px solid #293371' : '1.5px solid #e5e7eb', background: form.pos_type === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: form.pos_type === t ? '#293371' : '#6b7280', cursor: 'pointer' }}>
                   {t === 'native' ? 'Josbin POS (native)' : 'External POS (API only)'}
                 </button>
               ))}
@@ -147,7 +147,7 @@ function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean;
               {isNl ? 'Annuleren' : 'Cancel'}
             </button>
             <button onClick={() => mutation.mutate()} disabled={!ok || mutation.isPending}
-              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!ok || mutation.isPending) ? 0.5 : 1 }}>
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!ok || mutation.isPending) ? 0.5 : 1 }}>
               {mutation.isPending ? '…' : (isNl ? 'Vestiging aanmaken' : 'Create store')}
             </button>
           </div>
@@ -169,7 +169,7 @@ function RenameStoreModal({ store, isNl, onClose }: { store: Store; isNl: boolea
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, boxShadow: '0 20px 60px rgba(0,0,0,.3)', padding: '22px 24px' }}>
-        <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 12 }}>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: 12 }}>
           {isNl ? 'Vestiging hernoemen' : 'Rename store'}
         </h3>
         <input value={name} onChange={(e) => setName(e.target.value)} autoFocus
@@ -180,7 +180,7 @@ function RenameStoreModal({ store, isNl, onClose }: { store: Store; isNl: boolea
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={name.trim().length < 2 || mutation.isPending}
-            style={{ flex: 2, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (name.trim().length < 2 || mutation.isPending) ? 0.5 : 1 }}>
+            style={{ flex: 2, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (name.trim().length < 2 || mutation.isPending) ? 0.5 : 1 }}>
             {mutation.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -277,7 +277,7 @@ export default function StoresScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
             {isNl ? 'Vestigingen' : 'Stores'}
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -288,17 +288,17 @@ export default function StoresScreen() {
         </div>
         <button onClick={() => setAddOpen(true)} disabled={!canCreate}
           title={blockReason ?? undefined}
-          style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5, boxShadow: '0 4px 12px rgba(124,58,237,.3)', whiteSpace: 'nowrap' }}>
+          style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5, boxShadow: '0 4px 12px rgba(41,51,113,.3)', whiteSpace: 'nowrap' }}>
           + {isNl ? 'Nieuwe vestiging' : 'New store'}
         </button>
       </div>
 
       {/* Super-Admin org dropdown */}
       {isSuperAdmin && (
-        <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f9f7ff', border: '1px solid #ede9fe', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed' }}>{isNl ? 'Organisatie' : 'Organisation'}:</span>
+        <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f4f6fc', border: '1px solid #e6ebf7', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#293371' }}>{isNl ? 'Organisatie' : 'Organisation'}:</span>
           <select value={selectedOrgId} onChange={(e) => setSelectedOrgId(e.target.value)}
-            style={{ flex: 1, height: 32, borderRadius: 8, border: '1.5px solid #ddd6fe', padding: '0 10px', fontSize: 13, background: '#fff' }}>
+            style={{ flex: 1, height: 32, borderRadius: 8, border: '1.5px solid #d5deef', padding: '0 10px', fontSize: 13, background: '#fff' }}>
             <option value="">{isNl ? '— kies een organisatie —' : '— pick an organisation —'}</option>
             {(orgs as Organisation[]).map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}
           </select>
@@ -307,13 +307,13 @@ export default function StoresScreen() {
 
       {/* Read-only org context for OA / SM */}
       {!isSuperAdmin && headerOrg && (
-        <div style={{ marginBottom: 16, padding: '14px 18px', background: '#fff', border: '1px solid #e9e9ef', borderRadius: 12 }}>
+        <div style={{ marginBottom: 16, padding: '14px 18px', background: '#fff', border: '1px solid #e6ecf5', borderRadius: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+              <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                 {isNl ? 'Organisatie' : 'Organisation'}
               </div>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#1c1c2e', marginTop: 2 }}>{headerOrg.name}</div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#16203a', marginTop: 2 }}>{headerOrg.name}</div>
             </div>
             <div style={{ display: 'flex', gap: 24, marginLeft: 'auto', fontSize: 12, color: '#6b7280' }}>
               <span><strong>BTW:</strong> {headerOrg.btw_number || '—'}</span>
@@ -321,14 +321,14 @@ export default function StoresScreen() {
               <span><strong>{isNl ? 'Taal' : 'Locale'}:</strong> {headerOrg.locale.toUpperCase()}</span>
             </div>
           </div>
-          <p style={{ marginTop: 8, fontSize: 11, color: '#9090a0' }}>
+          <p style={{ marginTop: 8, fontSize: 11, color: '#7e88a0' }}>
             {isNl
               ? `Organisatiegegevens worden door ${vendor.name} (uw Josbin POS leverancier) beheerd en zijn alleen-lezen. Voor wijzigingen: e-mail `
               : `Organisation details are managed by ${vendor.name} (your Josbin POS vendor) and are read-only. For changes, email `}
             <a href={`mailto:${vendor.email}?subject=${encodeURIComponent(`[${headerOrg.name}] Organisation details change request`)}`}
-               style={{ color: '#7c3aed', fontWeight: 700 }}>{vendor.email}</a>
+               style={{ color: '#293371', fontWeight: 700 }}>{vendor.email}</a>
             {isNl ? ' of bel ' : ' or call '}
-            <a href={`tel:${vendor.phone.replace(/\s/g, '')}`} style={{ color: '#7c3aed', fontWeight: 700 }}>{vendor.phone}</a>.
+            <a href={`tel:${vendor.phone.replace(/\s/g, '')}`} style={{ color: '#293371', fontWeight: 700 }}>{vendor.phone}</a>.
           </p>
         </div>
       )}
@@ -397,10 +397,10 @@ export default function StoresScreen() {
             <div style={{ marginBottom: 16, padding: '14px 18px', background: '#fff', border: `1px solid ${c.border}`, borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <div>
-                  <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
+                  <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
                     {isNl ? 'Licentie' : 'Licence'}
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: '#1c1c2e', marginTop: 2, textTransform: 'capitalize' }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: '#16203a', marginTop: 2, textTransform: 'capitalize' }}>
                     {lic.tier}
                     <span style={{ marginLeft: 8, padding: '2px 9px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: c.bg, color: c.fg, border: `1px solid ${c.border}`, textTransform: 'none' }}>
                       {lic.renewal_status === 'active' ? (isNl ? 'Actief' : 'Active') :
@@ -431,13 +431,13 @@ export default function StoresScreen() {
       )}
 
       {/* Stores list */}
-      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef', overflow: 'hidden' }}>
+      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5', overflow: 'hidden' }}>
         {!activeOrgId ? (
-          <div style={{ padding: '40px 24px', textAlign: 'center', color: '#9090a0', fontSize: 13 }}>
+          <div style={{ padding: '40px 24px', textAlign: 'center', color: '#7e88a0', fontSize: 13 }}>
             {isNl ? 'Kies eerst een organisatie hierboven.' : 'Pick an organisation above first.'}
           </div>
         ) : isLoading ? (
-          <div style={{ padding: '40px 24px', textAlign: 'center', color: '#9090a0', fontSize: 13 }}>{isNl ? 'Laden…' : 'Loading…'}</div>
+          <div style={{ padding: '40px 24px', textAlign: 'center', color: '#7e88a0', fontSize: 13 }}>{isNl ? 'Laden…' : 'Loading…'}</div>
         ) : stores.length === 0 ? (
           <EmptyState
             icon="🏬"
@@ -454,7 +454,7 @@ export default function StoresScreen() {
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#f8f7ff', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: '#f4f6fc', borderBottom: '1px solid #e9eef9' }}>
                 {[
                   { key: 'name',   label: isNl ? 'Naam' : 'Name' },
                   { key: 'city',   label: isNl ? 'Stad' : 'City' },
@@ -464,20 +464,20 @@ export default function StoresScreen() {
                 ].map((h) => (
                   <th key={h.label || 'actions'}
                     onClick={h.key ? () => toggle(h.key) : undefined}
-                    style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sortedStores.map((s) => (
-                <tr key={s.id} style={{ borderBottom: '1px solid #f3f3f8' }}>
-                  <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{s.name}</td>
+                <tr key={s.id} style={{ borderBottom: '1px solid #f1f4fb' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#16203a' }}>{s.name}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>{s.city || '—'}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: s.pos_type === 'native' ? '#eef2ff' : '#fef9c3', color: s.pos_type === 'native' ? '#4338ca' : '#92400e' }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: s.pos_type === 'native' ? '#eef2ff' : '#fef9c3', color: s.pos_type === 'native' ? '#1a234f' : '#92400e' }}>
                       {s.pos_type === 'native' ? 'Josbin' : 'External'}
                     </span>
                   </td>
@@ -497,7 +497,7 @@ export default function StoresScreen() {
         )}
       </div>
 
-      <p style={{ marginTop: 14, fontSize: 11.5, color: '#9090a0' }}>
+      <p style={{ marginTop: 14, fontSize: 11.5, color: '#7e88a0' }}>
         💡 {isNl
           ? 'Bonopmaak (header, footer, logo, BTW-nummer) per vestiging: ga naar Vestigingsinstellingen in het zijmenu en kies de vestiging.'
           : 'Per-store receipt template (header, footer, logo, BTW number): go to Store Settings in the sidebar and pick the store.'}
@@ -513,7 +513,7 @@ export default function StoresScreen() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setConfirmDeactivate(null) }}>
           <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 10 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: 10 }}>
               {isNl ? 'Vestiging deactiveren?' : 'Deactivate store?'}
             </h3>
             <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>

@@ -48,7 +48,7 @@ function OnboardingCard({ isNl, onNavigate }: { isNl: boolean; onNavigate?: (s: 
   const doneCount = steps.filter((s) => s.done).length
 
   return (
-    <div style={{ background: 'linear-gradient(135deg,#faf9ff,#f3f0ff)', border: '1px solid #e3dcff', borderRadius: 16, padding: '20px 24px', marginBottom: 24, boxShadow: '0 2px 12px rgba(124,58,237,.08)' }}>
+    <div style={{ background: 'linear-gradient(135deg,#faf9ff,#f3f0ff)', border: '1px solid #e3dcff', borderRadius: 16, padding: '20px 24px', marginBottom: 24, boxShadow: '0 2px 12px rgba(41,51,113,.08)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
           <div style={{ fontSize: 15, fontWeight: 800, color: '#4c1d95' }}>
@@ -67,7 +67,7 @@ function OnboardingCard({ isNl, onNavigate }: { isNl: boolean; onNavigate?: (s: 
         {steps.map((s) => (
           <button key={s.screen} onClick={() => onNavigate?.(s.screen)}
             style={{ display: 'flex', alignItems: 'center', gap: 10, textAlign: 'left', background: '#fff', border: `1px solid ${s.done ? '#bbf7d0' : '#e5e0f5'}`, borderRadius: 10, padding: '11px 13px', cursor: 'pointer' }}>
-            <span style={{ width: 22, height: 22, flexShrink: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: s.done ? '#22c55e' : '#ede9fe', color: s.done ? '#fff' : '#7c3aed' }}>
+            <span style={{ width: 22, height: 22, flexShrink: 0, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, background: s.done ? '#22c55e' : '#e6ebf7', color: s.done ? '#fff' : '#293371' }}>
               {s.done ? '✓' : ''}
             </span>
             <span style={{ fontSize: 13, fontWeight: 600, color: s.done ? '#15803d' : '#3d3d50', textDecoration: s.done ? 'line-through' : 'none' }}>{s.label}</span>
@@ -101,9 +101,9 @@ function KpiCard({
         {icon}
       </div>
       <div style={{ minWidth: 0 }}>
-        <p style={{ fontSize: 12, fontWeight: 600, color: '#9090a0', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
-        <p style={{ fontSize: 22, fontWeight: 800, color: '#1c1c2e', lineHeight: 1.1, letterSpacing: '-0.5px' }}>{value}</p>
-        <p style={{ fontSize: 12, color: '#9090a0', marginTop: 3 }}>{sub}</p>
+        <p style={{ fontSize: 12, fontWeight: 600, color: '#7e88a0', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.5px' }}>{label}</p>
+        <p style={{ fontSize: 22, fontWeight: 800, color: '#16203a', lineHeight: 1.1, letterSpacing: '-0.5px' }}>{value}</p>
+        <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 3 }}>{sub}</p>
       </div>
     </div>
   )
@@ -128,8 +128,8 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
       onMouseLeave={() => setHovered(false)}
       style={{
         background: '#fff', borderRadius: 16, overflow: 'hidden', cursor: 'pointer',
-        border: hovered ? '1px solid #7c3aed' : '1px solid #ebebf0',
-        boxShadow: hovered ? '0 8px 32px rgba(124,58,237,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
+        border: hovered ? '1px solid #293371' : '1px solid #ebebf0',
+        boxShadow: hovered ? '0 8px 32px rgba(41,51,113,0.15)' : '0 2px 8px rgba(0,0,0,0.05)',
         transform: hovered ? 'translateY(-2px)' : 'none',
         transition: 'all 0.2s ease',
         outline: 'none',
@@ -139,7 +139,7 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
       <div style={{
         height: 4,
         background: store.is_online
-          ? 'linear-gradient(90deg, #7c3aed, #4f46e5, #06b6d4)'
+          ? 'linear-gradient(90deg, #293371, #1f2a63, #06b6d4)'
           : '#e5e7eb',
       }} />
 
@@ -149,24 +149,24 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-              background: store.is_online ? 'rgba(124,58,237,0.08)' : '#f5f5f8',
+              background: store.is_online ? 'rgba(41,51,113,0.08)' : '#f2f5fb',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} style={{ width: 20, height: 20, stroke: store.is_online ? '#7c3aed' : '#9090a0' }}>
+              <svg viewBox="0 0 24 24" fill="none" strokeWidth={1.8} style={{ width: 20, height: 20, stroke: store.is_online ? '#293371' : '#7e88a0' }}>
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path d="M9 22V12h6v10" />
               </svg>
             </div>
             <div>
-              <p style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{store.store_name}</p>
-              <p style={{ fontSize: 12, color: '#9090a0', marginTop: 1 }}>{store.city}</p>
+              <p style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{store.store_name}</p>
+              <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 1 }}>{store.city}</p>
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5 }}>
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 20,
               fontSize: 11, fontWeight: 700,
-              background: store.is_online ? '#ecfdf5' : '#f5f5f8',
-              color: store.is_online ? '#15803d' : '#9090a0',
+              background: store.is_online ? '#ecfdf5' : '#f2f5fb',
+              color: store.is_online ? '#15803d' : '#7e88a0',
               border: `1px solid ${store.is_online ? '#bbf7d0' : '#e5e7eb'}`,
             }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: store.is_online ? '#22c55e' : '#d1d5db', display: 'inline-block' }} />
@@ -186,10 +186,10 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
 
         {/* Revenue */}
         <div style={{ marginBottom: 14 }}>
-          <p style={{ fontSize: 26, fontWeight: 800, color: '#1c1c2e', letterSpacing: '-0.5px', lineHeight: 1 }}>
+          <p style={{ fontSize: 26, fontWeight: 800, color: '#16203a', letterSpacing: '-0.5px', lineHeight: 1 }}>
             {formatSRD(store.today_revenue_srd)}
           </p>
-          <p style={{ fontSize: 12, color: '#9090a0', marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 4 }}>
             {isNl ? 'Omzet vandaag' : "Today's revenue"}
           </p>
         </div>
@@ -202,8 +202,8 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
             { label: 'BTW', value: formatSRD(store.today_btw_srd) },
           ].map(item => (
             <div key={item.label} style={{ background: '#f8f8fb', borderRadius: 10, padding: '8px 10px', textAlign: 'center' }}>
-              <p style={{ fontSize: 13, fontWeight: 800, color: '#1c1c2e' }}>{item.value}</p>
-              <p style={{ fontSize: 10, color: '#9090a0', marginTop: 2, fontWeight: 500 }}>{item.label}</p>
+              <p style={{ fontSize: 13, fontWeight: 800, color: '#16203a' }}>{item.value}</p>
+              <p style={{ fontSize: 10, color: '#7e88a0', marginTop: 2, fontWeight: 500 }}>{item.label}</p>
             </div>
           ))}
         </div>
@@ -211,11 +211,11 @@ function StoreCard({ store, onClick }: { store: StoreOverview; onClick: () => vo
         {/* Top product */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10,
-          background: store.top_product_name ? 'rgba(124,58,237,0.05)' : '#f8f8fb',
-          border: `1px solid ${store.top_product_name ? 'rgba(124,58,237,0.12)' : 'transparent'}`,
+          background: store.top_product_name ? 'rgba(41,51,113,0.05)' : '#f8f8fb',
+          border: `1px solid ${store.top_product_name ? 'rgba(41,51,113,0.12)' : 'transparent'}`,
         }}>
           <span style={{ fontSize: 14 }}>⭐</span>
-          <p style={{ fontSize: 12, fontWeight: 600, color: store.top_product_name ? '#7c3aed' : '#c0c0cc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <p style={{ fontSize: 12, fontWeight: 600, color: store.top_product_name ? '#293371' : '#c0c0cc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {store.top_product_name ?? (isNl ? 'Geen verkopen vandaag' : 'No sales yet today')}
           </p>
         </div>
@@ -289,7 +289,7 @@ export default function DashboardOverview({
   if (isLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 300 }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #ede9fe', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 36, height: 36, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite' }} />
       </div>
     )
   }
@@ -330,10 +330,10 @@ export default function DashboardOverview({
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
-        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#1c1c2e', letterSpacing: '-0.3px' }}>
+        <h2 style={{ fontSize: 22, fontWeight: 800, color: '#16203a', letterSpacing: '-0.3px' }}>
           {greeting}, {user?.name?.split(' ')[0]} 👋
         </h2>
-        <p style={{ fontSize: 13, color: '#9090a0', marginTop: 4 }}>
+        <p style={{ fontSize: 13, color: '#7e88a0', marginTop: 4 }}>
           {isNl
             ? `Hier is een overzicht van al uw winkels voor vandaag, ${new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}`
             : `Here's your platform overview for ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`}
@@ -346,7 +346,7 @@ export default function DashboardOverview({
           label={isNl ? 'Omzet vandaag' : "Today's Revenue"}
           value={formatSRD(data.today_revenue_srd)}
           sub={`BTW: ${formatSRD(data.today_btw_srd)}`}
-          gradient={['#7c3aed', '#4f46e5']}
+          gradient={['#293371', '#1f2a63']}
           icon={<svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} style={{ width: 24, height: 24 }}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm.5 14.5v1h-1v-1.07c-.99-.21-1.87-.8-2.32-1.77l1.1-.63c.27.56.78.96 1.43.96.66 0 1.3-.35 1.3-1.08 0-.64-.37-1-1.53-1.35-1.45-.43-2.2-1.07-2.2-2.33 0-1.03.7-1.85 1.72-2.1V7h1v1.12c.97.24 1.65.95 1.9 1.84l-1.08.6c-.2-.64-.69-1.06-1.32-1.06-.59 0-1.12.3-1.12.95 0 .56.33.9 1.49 1.24 1.52.46 2.25 1.14 2.25 2.46 0 1.18-.82 2.07-1.92 2.35z" /></svg>}
         />
         <KpiCard
@@ -393,9 +393,9 @@ export default function DashboardOverview({
               style={{
                 padding: '7px 16px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 600,
                 transition: 'all 0.15s',
-                background: selectedOrg === tab.id ? 'linear-gradient(135deg, #7c3aed, #4f46e5)' : '#fff',
-                color: selectedOrg === tab.id ? '#fff' : '#6d6d80',
-                boxShadow: selectedOrg === tab.id ? '0 3px 10px rgba(124,58,237,0.35)' : '0 1px 4px rgba(0,0,0,0.07)',
+                background: selectedOrg === tab.id ? 'linear-gradient(135deg, #293371, #1f2a63)' : '#fff',
+                color: selectedOrg === tab.id ? '#fff' : '#5f6a84',
+                boxShadow: selectedOrg === tab.id ? '0 3px 10px rgba(41,51,113,0.35)' : '0 1px 4px rgba(0,0,0,0.07)',
               }}
             >{tab.label}</button>
           ))}
@@ -413,27 +413,27 @@ export default function DashboardOverview({
             border: '1px solid #ebebf0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(124,58,237,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth={2} style={{ width: 18, height: 18 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(41,51,113,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="#293371" strokeWidth={2} style={{ width: 18, height: 18 }}>
                   <path d="M3 21h18M4 21V7l8-4 8 4v14M9 21v-5h6v5" />
                 </svg>
               </div>
               <div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: '#1c1c2e' }}>{org.organisation_name}</p>
-                <p style={{ fontSize: 12, color: '#9090a0', marginTop: 1 }}>
+                <p style={{ fontSize: 15, fontWeight: 700, color: '#16203a' }}>{org.organisation_name}</p>
+                <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 1 }}>
                   {org.online_stores}/{org.store_count} {isNl ? 'winkels online' : 'stores online'}
                 </p>
               </div>
             </div>
             <div style={{ display: 'flex', gap: 24 }}>
               {[
-                { label: isNl ? 'Omzet' : 'Revenue', value: formatSRD(org.today_revenue_srd), color: '#7c3aed' },
+                { label: isNl ? 'Omzet' : 'Revenue', value: formatSRD(org.today_revenue_srd), color: '#293371' },
                 { label: 'BTW', value: formatSRD(org.today_btw_srd), color: '#d97706' },
-                { label: isNl ? 'Transacties' : 'Txns', value: org.today_transaction_count.toString(), color: '#1c1c2e' },
+                { label: isNl ? 'Transacties' : 'Txns', value: org.today_transaction_count.toString(), color: '#16203a' },
               ].map(stat => (
                 <div key={stat.label} style={{ textAlign: 'right' }}>
                   <p style={{ fontSize: 16, fontWeight: 800, color: stat.color }}>{stat.value}</p>
-                  <p style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>{stat.label}</p>
+                  <p style={{ fontSize: 11, color: '#7e88a0', marginTop: 1 }}>{stat.label}</p>
                 </div>
               ))}
             </div>
@@ -506,7 +506,7 @@ function StockAlertTile({
         <p style={{ fontSize: 13, fontWeight: 700, color: hasAlerts ? '#92400e' : '#15803d', marginBottom: 2 }}>
           {t('stock.alerts.tileTitle')}
         </p>
-        <p style={{ fontSize: 14, fontWeight: 600, color: hasAlerts ? '#1c1c2e' : '#15803d' }}>
+        <p style={{ fontSize: 14, fontWeight: 600, color: hasAlerts ? '#16203a' : '#15803d' }}>
           {hasAlerts
             ? t('stock.alerts.tileSub', { low: summary.low_count, out: summary.out_count })
             : t('stock.alerts.tileNone')}
@@ -560,12 +560,12 @@ function AiWidgets({ isNl }: { isNl: boolean }) {
       {/* Weekly AI summary */}
       <div style={{ background: '#fff', borderRadius: 18, border: '1px solid #ebebf0', padding: '22px 24px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #293371, #1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: 16 }}>✨</span>
           </div>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? 'Weekoverzicht' : 'Weekly Summary'}</p>
-            {summary && <p style={{ fontSize: 11, color: '#9090a0' }}>{summary.week_start}</p>}
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{isNl ? 'Weekoverzicht' : 'Weekly Summary'}</p>
+            {summary && <p style={{ fontSize: 11, color: '#7e88a0' }}>{summary.week_start}</p>}
           </div>
         </div>
 
@@ -582,13 +582,13 @@ function AiWidgets({ isNl }: { isNl: boolean }) {
                   color={summary.stats.revenue_change_pct >= 0 ? '#059669' : '#ef4444'}
                 />
                 {summary.stats.this_week && (
-                  <Chip label={isNl ? 'Transacties' : 'Transactions'} value={String(summary.stats.this_week.count)} color="#7c3aed" />
+                  <Chip label={isNl ? 'Transacties' : 'Transactions'} value={String(summary.stats.this_week.count)} color="#293371" />
                 )}
               </div>
             )}
           </>
         ) : (
-          <p style={{ fontSize: 13, color: '#9090a0', fontStyle: 'italic' }}>
+          <p style={{ fontSize: 13, color: '#7e88a0', fontStyle: 'italic' }}>
             {isNl ? 'Beschikbaar elke maandag om 08:00 AST.' : 'Available every Monday at 08:00 AST.'}
           </p>
         )}
@@ -601,15 +601,15 @@ function AiWidgets({ isNl }: { isNl: boolean }) {
             <span style={{ fontSize: 16 }}>⚠️</span>
           </div>
           <div>
-            <p style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? 'Anomalieën (7 dagen)' : 'Anomalies (7 days)'}</p>
-            <p style={{ fontSize: 11, color: recentAnomalies.length > 0 ? '#ef4444' : '#9090a0' }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{isNl ? 'Anomalieën (7 dagen)' : 'Anomalies (7 days)'}</p>
+            <p style={{ fontSize: 11, color: recentAnomalies.length > 0 ? '#ef4444' : '#7e88a0' }}>
               {recentAnomalies.length} {isNl ? 'gemarkeerd' : 'flagged'}
             </p>
           </div>
         </div>
 
         {recentAnomalies.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#9090a0', fontStyle: 'italic' }}>
+          <p style={{ fontSize: 13, color: '#7e88a0', fontStyle: 'italic' }}>
             {isNl ? 'Geen verdachte transacties in de afgelopen 7 dagen.' : 'No suspicious transactions in the last 7 days.'}
           </p>
         ) : (
@@ -617,8 +617,8 @@ function AiWidgets({ isNl }: { isNl: boolean }) {
             {recentAnomalies.map(a => (
               <div key={a.id} style={{ padding: '10px 14px', background: '#fef2f2', borderRadius: 10, border: '1px solid #fecaca' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: '#1c1c2e', fontFamily: 'monospace' }}>{a.sale_number}</span>
-                  <span style={{ fontSize: 11, color: '#9090a0' }}>{a.store} · {a.cashier}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: '#16203a', fontFamily: 'monospace' }}>{a.sale_number}</span>
+                  <span style={{ fontSize: 11, color: '#7e88a0' }}>{a.store} · {a.cashier}</span>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {a.flags.slice(0, 2).map((f, i) => (
@@ -637,7 +637,7 @@ function AiWidgets({ isNl }: { isNl: boolean }) {
 function Chip({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div style={{ background: `${color}10`, borderRadius: 8, padding: '6px 10px' }}>
-      <p style={{ fontSize: 10, color: '#9090a0', marginBottom: 2 }}>{label}</p>
+      <p style={{ fontSize: 10, color: '#7e88a0', marginBottom: 2 }}>{label}</p>
       <p style={{ fontSize: 14, fontWeight: 800, color }}>{value}</p>
     </div>
   )

@@ -130,7 +130,7 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: numbe
         gap: 12,
         alignItems: 'flex-start',
         fontSize: 13,
-        color: '#1c1c2e',
+        color: '#16203a',
         animation: 'josbin-toast-in 0.18s ease-out',
       }}
     >
@@ -152,7 +152,7 @@ function ToastCard({ item, onDismiss }: { item: ToastItem; onDismiss: (id: numbe
         aria-label="Dismiss"
         style={{
           background: 'none', border: 'none', cursor: 'pointer',
-          color: '#9090a0', fontSize: 16, lineHeight: 1, padding: 0,
+          color: '#7e88a0', fontSize: 16, lineHeight: 1, padding: 0,
           marginLeft: 4,
         }}
       >

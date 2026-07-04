@@ -18,7 +18,7 @@ function Numpad({ value, onChange }: { value: string; onChange: (v: string) => v
       {['7','8','9','4','5','6','1','2','3','C','0','.'].map(k => (
         <button key={k} onClick={() => press(k)} style={{
           height: 46, borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 17, fontWeight: 700,
-          background: k === 'C' ? '#fef2f2' : '#f9fafb', color: k === 'C' ? '#dc2626' : '#1c1c2e',
+          background: k === 'C' ? '#fef2f2' : '#f9fafb', color: k === 'C' ? '#dc2626' : '#16203a',
           cursor: 'pointer', fontFamily: 'inherit', transition: 'all .1s',
         }}
           onMouseDown={e => (e.currentTarget.style.transform = 'scale(.95)')}
@@ -27,7 +27,7 @@ function Numpad({ value, onChange }: { value: string; onChange: (v: string) => v
       ))}
       <button onClick={() => press('⌫')} style={{
         height: 46, borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 17, fontWeight: 700,
-        background: '#f5f5ff', color: '#7c3aed', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .1s',
+        background: '#f5f5ff', color: '#293371', cursor: 'pointer', fontFamily: 'inherit', transition: 'all .1s',
       }}
         onMouseDown={e => (e.currentTarget.style.transform = 'scale(.95)')}
         onMouseUp={e => (e.currentTarget.style.transform = 'scale(1)')}
@@ -39,9 +39,9 @@ function Numpad({ value, onChange }: { value: string; onChange: (v: string) => v
 function SRDRow({ label, value, highlight, discrepancy }: { label: string; value: string; highlight?: boolean; discrepancy?: boolean }) {
   const color = discrepancy
     ? (parseFloat(value) < 0 ? '#dc2626' : parseFloat(value) > 0 ? '#16a34a' : '#6b7280')
-    : highlight ? '#7c3aed' : '#374151'
+    : highlight ? '#293371' : '#374151'
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f3f3f8' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f1f4fb' }}>
       <span style={{ fontSize: 13, color: '#6b7280' }}>{label}</span>
       <span style={{ fontSize: 14, fontWeight: highlight ? 800 : 600, color }}>{value === null ? '—' : `SRD ${value}`}</span>
     </div>
@@ -126,21 +126,21 @@ export default function CloseRegisterModal({ onClose }: Props) {
       <div style={{ background: '#fff', borderRadius: 22, width: '100%', maxWidth: 480, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 32px 80px rgba(0,0,0,.35)' }}>
 
         {/* Header */}
-        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid #f0f0f8', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '22px 26px 18px', borderBottom: '1px solid #eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: '#16203a' }}>
               {step === 'closed'   ? (isNl ? 'Kassa gesloten' : 'Register closed') :
                step === 'reopen_request' ? (isNl ? 'Heropening aanvragen' : 'Request re-open') :
                step === 'reopen_sent'    ? (isNl ? 'Verzoek ingediend' : 'Request submitted') :
                (isNl ? 'Kassa sluiten' : 'Close register')}
             </h3>
-            <p style={{ fontSize: 12, color: '#9090a0', marginTop: 2 }}>
+            <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 2 }}>
               {session.register_name ?? `Register ${session.register_number}`} · {session.cashier_name}
             </p>
           </div>
           {(step === 'closed' || step === 'reopen_sent') ? (
             <button onClick={() => { if (step === 'closed') clearSession(); onClose() }}
-              style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
+              style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', color: '#6b7280' }}>
               {isNl ? 'Sluiten' : 'Close'}
             </button>
           ) : (
@@ -150,7 +150,7 @@ export default function CloseRegisterModal({ onClose }: Props) {
             <button onClick={onClose} disabled={busy}
               aria-label={isNl ? 'Annuleren' : 'Cancel'}
               title={isNl ? 'Annuleren — kassa blijft open' : 'Cancel — register stays open'}
-              style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 18, lineHeight: 1, cursor: busy ? 'not-allowed' : 'pointer', color: '#6b7280', opacity: busy ? 0.4 : 1 }}>
+              style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, fontSize: 18, lineHeight: 1, cursor: busy ? 'not-allowed' : 'pointer', color: '#6b7280', opacity: busy ? 0.4 : 1 }}>
               ✕
             </button>
           )}
@@ -169,13 +169,13 @@ export default function CloseRegisterModal({ onClose }: Props) {
             <>
               {loadingReport ? (
                 <div style={{ textAlign: 'center', padding: '32px 0' }}>
-                  <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e0e0ed', borderTopColor: '#7c3aed', animation: 'spin .8s linear infinite', margin: '0 auto' }} />
+                  <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #d9e1f1', borderTopColor: '#293371', animation: 'spin .8s linear infinite', margin: '0 auto' }} />
                 </div>
               ) : report && (
                 <>
                   {/* ── Sales summary (gross → discounts → refunds → net) ── */}
-                  <div style={{ background: '#f9f7ff', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
+                  <div style={{ background: '#f4f6fc', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
                       {isNl ? 'Verkoopsamenvatting' : 'Sales summary'}
                     </p>
                     <SRDRow label={isNl ? 'Bruto verkoop' : 'Gross sales'} value={report.gross_sales} />
@@ -203,8 +203,8 @@ export default function CloseRegisterModal({ onClose }: Props) {
                   </div>
 
                   {/* ── Payment methods ── */}
-                  <div style={{ background: '#f9f7ff', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
+                  <div style={{ background: '#f4f6fc', borderRadius: 14, padding: '16px 18px', marginBottom: 14 }}>
+                    <p style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 12 }}>
                       {isNl ? 'Betaalwijzen' : 'Payment methods'}
                     </p>
                     <SRDRow label={isNl ? 'Contant' : 'Cash'} value={report.payment_breakdown.cash} />
@@ -227,7 +227,7 @@ export default function CloseRegisterModal({ onClose }: Props) {
                     <SRDRow label={isNl ? 'Verwacht in lade' : 'Expected in drawer'} value={report.cash_drawer.expected} highlight />
                   </div>
 
-                  <button onClick={() => setStep('count')} style={{ width: '100%', padding: '13px 0', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}>
+                  <button onClick={() => setStep('count')} style={{ width: '100%', padding: '13px 0', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: 'pointer', boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
                     {isNl ? 'Ga verder met kassasluiting' : 'Proceed to close register'} →
                   </button>
                 </>
@@ -238,11 +238,11 @@ export default function CloseRegisterModal({ onClose }: Props) {
           {/* ── Step: Count cash ── */}
           {step === 'count' && (
             <>
-              <div style={{ background: '#f9f7ff', borderRadius: 14, padding: '14px 18px', marginBottom: 20 }}>
-                <p style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
+              <div style={{ background: '#f4f6fc', borderRadius: 14, padding: '14px 18px', marginBottom: 20 }}>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>
                   {isNl ? 'Verwacht in la' : 'Expected in drawer'}
                 </p>
-                <p style={{ fontSize: 26, fontWeight: 900, color: '#7c3aed' }}>SRD {report?.expected_cash ?? '—'}</p>
+                <p style={{ fontSize: 26, fontWeight: 900, color: '#293371' }}>SRD {report?.expected_cash ?? '—'}</p>
               </div>
 
               <p style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 10 }}>
@@ -250,8 +250,8 @@ export default function CloseRegisterModal({ onClose }: Props) {
               </p>
 
               <div style={{ background: '#f9fafb', borderRadius: 12, padding: '12px 16px', textAlign: 'center', marginBottom: 16, border: `2px solid ${discrepancy && parseFloat(discrepancy) !== 0 ? '#fecaca' : '#e5e7eb'}` }}>
-                <p style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>SRD</p>
-                <p style={{ fontSize: 32, fontWeight: 900, color: '#1c1c2e', fontFamily: 'monospace' }}>{parseFloat(counted).toFixed(2)}</p>
+                <p style={{ fontSize: 11, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 4 }}>SRD</p>
+                <p style={{ fontSize: 32, fontWeight: 900, color: '#16203a', fontFamily: 'monospace' }}>{parseFloat(counted).toFixed(2)}</p>
               </div>
 
               <Numpad value={counted} onChange={setCounted} />
@@ -286,12 +286,12 @@ export default function CloseRegisterModal({ onClose }: Props) {
                     </div>
 
                     <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
-                      <button onClick={() => setStep('report')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #e0e0ed', background: '#f5f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                      <button onClick={() => setStep('report')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #d9e1f1', background: '#f2f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                         {isNl ? 'Terug' : 'Back'}
                       </button>
                       <button onClick={() => setStep('confirm')} disabled={noteMissing}
                         title={noteMissing ? (isNl ? 'Vul een reden in voor het verschil' : 'Please enter a reason for the discrepancy') : undefined}
-                        style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: noteMissing ? '#cbd5e1' : 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: noteMissing ? 'not-allowed' : 'pointer', boxShadow: noteMissing ? 'none' : '0 4px 14px rgba(124,58,237,.35)' }}>
+                        style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: noteMissing ? '#cbd5e1' : 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: noteMissing ? 'not-allowed' : 'pointer', boxShadow: noteMissing ? 'none' : '0 4px 14px rgba(41,51,113,.35)' }}>
                         {isNl ? 'Controleer en sluit' : 'Review and close'} →
                       </button>
                     </div>
@@ -325,7 +325,7 @@ export default function CloseRegisterModal({ onClose }: Props) {
               </p>
 
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setStep('count')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #e0e0ed', background: '#f5f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={() => setStep('count')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #d9e1f1', background: '#f2f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   {isNl ? 'Terug' : 'Back'}
                 </button>
                 <button onClick={handleClose} disabled={busy} style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#dc2626,#b91c1c)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, boxShadow: '0 4px 14px rgba(220,38,38,.35)' }}>
@@ -341,7 +341,7 @@ export default function CloseRegisterModal({ onClose }: Props) {
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#f0fdf4', border: '2px solid #bbf7d0', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
-              <h4 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e', marginBottom: 6 }}>
+              <h4 style={{ fontSize: 17, fontWeight: 800, color: '#16203a', marginBottom: 6 }}>
                 {isNl ? 'Kassa gesloten' : 'Register closed'}
               </h4>
               <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
@@ -356,18 +356,18 @@ export default function CloseRegisterModal({ onClose }: Props) {
                   {parseFloat(session.discrepancy) < 0 ? (isNl ? ' tekort' : ' short') : (isNl ? ' overschot' : ' surplus')}
                 </div>
               )}
-              <p style={{ fontSize: 12, color: '#9090a0', marginBottom: 20 }}>
+              <p style={{ fontSize: 12, color: '#7e88a0', marginBottom: 20 }}>
                 {isNl
                   ? 'Wilt u de kassa heropenen? Vraag uw beheerder om goedkeuring.'
                   : 'Need to re-open the register? Request manager approval.'}
               </p>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button onClick={() => setStep('reopen_request')}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: '1px solid #e0e0ed', background: '#f5f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: '1px solid #d9e1f1', background: '#f2f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   {isNl ? 'Heropening aanvragen' : 'Request re-open'}
                 </button>
                 <button onClick={() => { clearSession(); onClose() }}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
                   {isNl ? 'Uitloggen' : 'Log out'}
                 </button>
               </div>
@@ -386,11 +386,11 @@ export default function CloseRegisterModal({ onClose }: Props) {
                 placeholder={isNl ? 'Reden voor heropening…' : 'Reason for re-opening…'}
                 style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', padding: '10px 12px', fontSize: 13, resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', marginBottom: 14 }} />
               <div style={{ display: 'flex', gap: 10 }}>
-                <button onClick={() => setStep('closed')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #e0e0ed', background: '#f5f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                <button onClick={() => setStep('closed')} style={{ flex: 1, padding: '11px 0', borderRadius: 12, border: '1px solid #d9e1f1', background: '#f2f5fb', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
                   {isNl ? 'Terug' : 'Back'}
                 </button>
                 <button onClick={handleReopenRequest} disabled={busy || !reopenReason.trim()}
-                  style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: busy || !reopenReason.trim() ? 'not-allowed' : 'pointer', opacity: busy || !reopenReason.trim() ? 0.5 : 1 }}>
+                  style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: busy || !reopenReason.trim() ? 'not-allowed' : 'pointer', opacity: busy || !reopenReason.trim() ? 0.5 : 1 }}>
                   {busy ? '…' : (isNl ? 'Verzoek indienen' : 'Submit request')}
                 </button>
               </div>
@@ -401,7 +401,7 @@ export default function CloseRegisterModal({ onClose }: Props) {
           {step === 'reopen_sent' && (
             <div style={{ textAlign: 'center', padding: '8px 0' }}>
               <div style={{ fontSize: 40, marginBottom: 14 }}>⏳</div>
-              <h4 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 8 }}>
+              <h4 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: 8 }}>
                 {isNl ? 'Verzoek ingediend' : 'Request submitted'}
               </h4>
               <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 20 }}>
@@ -409,7 +409,7 @@ export default function CloseRegisterModal({ onClose }: Props) {
                   ? 'Uw beheerder heeft een melding ontvangen. U wordt op de hoogte gebracht zodra het verzoek is goedgekeurd.'
                   : 'Your manager has been notified. You will be informed once the request is approved.'}
               </p>
-              <button onClick={onClose} style={{ padding: '11px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+              <button onClick={onClose} style={{ padding: '11px 28px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 {isNl ? 'Sluiten' : 'Close'}
               </button>
             </div>

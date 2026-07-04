@@ -185,13 +185,13 @@ export default function DashboardLayout() {
   // Machine accounts (API integrations) have no business in the dashboard UI.
   if (user?.role === 'api_integration') {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f8', padding: 32 }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f2f5fb', padding: 32 }}>
         <div style={{ background: '#fff', borderRadius: 18, padding: 36, maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,.12)', textAlign: 'center' }}>
           <h2 style={{ margin: '0 0 12px', fontSize: 20, fontWeight: 800 }}>{isNl ? 'API-account' : 'API account'}</h2>
           <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
             {isNl ? 'Dit account heeft geen toegang tot de dashboard-UI.' : 'This account has no access to the dashboard UI.'}
           </p>
-          <button onClick={logout} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={logout} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
             {isNl ? 'Uitloggen' : 'Log out'}
           </button>
         </div>
@@ -416,21 +416,21 @@ export default function DashboardLayout() {
         toggleShadow: '0 2px 8px rgba(15,58,34,.5)',
       }
     : {
-        sidebarBg: '#1c1c2e',
-        logoGrad: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-        logoShadow: '0 4px 14px rgba(124,58,237,0.45)',
+        sidebarBg: '#16203a',
+        logoGrad: 'linear-gradient(135deg, #293371, #1f2a63)',
+        logoShadow: '0 4px 14px rgba(41,51,113,0.45)',
         brand: 'Josbin POS',
         portal: isNl ? 'Beheerportaal' : 'Management Portal',
-        portalColor: '#7c3aed',
-        activeBg: 'linear-gradient(90deg, rgba(124,58,237,0.25), rgba(79,70,229,0.15))',
-        activeText: '#a78bfa',
-        activeBar: '#7c3aed',
-        toggleGrad: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-        toggleShadow: '0 2px 8px rgba(124,58,237,0.4)',
+        portalColor: '#293371',
+        activeBg: 'linear-gradient(90deg, rgba(41,51,113,0.25), rgba(31,42,99,0.15))',
+        activeText: '#8f9ac9',
+        activeBar: '#293371',
+        toggleGrad: 'linear-gradient(135deg, #293371, #1f2a63)',
+        toggleShadow: '0 2px 8px rgba(41,51,113,0.4)',
       }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f5f5f8' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: '#f2f5fb' }}>
 
       {/* ══ SIDEBAR ══════════════════════════════════════════════════════════ */}
       <aside style={{
@@ -571,14 +571,14 @@ export default function DashboardLayout() {
           background: '#fff', flexShrink: 0, height: 64,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 28px',
-          boxShadow: '0 1px 0 #e9e9ef',
+          boxShadow: '0 1px 0 #e6ecf5',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {screen === 'store' && (
               <button
                 onClick={() => go('overview')}
-                style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6d6d80', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, padding: '6px 10px', borderRadius: 8, marginRight: 4 }}
-                onMouseEnter={e => e.currentTarget.style.background = '#f5f5f8'}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#5f6a84', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 500, padding: '6px 10px', borderRadius: 8, marginRight: 4 }}
+                onMouseEnter={e => e.currentTarget.style.background = '#f2f5fb'}
                 onMouseLeave={e => e.currentTarget.style.background = 'none'}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} style={{ width: 16, height: 16 }}>
@@ -590,9 +590,9 @@ export default function DashboardLayout() {
             {/* Breadcrumb */}
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: '#9090a0', fontSize: 12 }}>Josbin POS</span>
+                <span style={{ color: '#7e88a0', fontSize: 12 }}>Josbin POS</span>
                 <span style={{ color: '#c0c0cc', fontSize: 12 }}>/</span>
-                <span style={{ color: '#1c1c2e', fontSize: 14, fontWeight: 700 }}>{currentLabel}</span>
+                <span style={{ color: '#16203a', fontSize: 14, fontWeight: 700 }}>{currentLabel}</span>
               </div>
             </div>
           </div>
@@ -600,7 +600,7 @@ export default function DashboardLayout() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
             {/* In-app notification bell — BTW disputes/accepts/resubmits */}
             <NotificationBell
-              accent={isTaxInspector ? '#1f6b3b' : '#6366f1'}
+              accent={isTaxInspector ? '#1f6b3b' : '#3a4a8f'}
               onNavigate={(n) => {
                 if (n.data.submission_id) openSubmissionDetail(n.data.submission_id)
                 else go('btw-submissions')
@@ -618,12 +618,12 @@ export default function DashboardLayout() {
               <span style={{ fontSize: 12, fontWeight: 600, color: '#15803d' }}>Live</span>
             </div>
             {/* Date */}
-            <span style={{ fontSize: 12, color: '#9090a0', display: 'none' }} className="sm:!inline">
+            <span style={{ fontSize: 12, color: '#7e88a0', display: 'none' }} className="sm:!inline">
               {new Date().toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
             </span>
             {/* User chip */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 6px', borderRadius: 24, background: '#f5f5f8', border: '1px solid #e9e9ef', cursor: 'default' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 6px', borderRadius: 24, background: '#f2f5fb', border: '1px solid #e6ecf5', cursor: 'default' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #293371, #1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>
                 {initials}
               </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#3d3d50' }}>{user?.name?.split(' ')[0]}</span>

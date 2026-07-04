@@ -48,8 +48,8 @@ const URGENCY_CFG = {
 }
 
 const TIER_CFG: Record<string, { bg: string; color: string }> = {
-  standard:     { bg: '#eef2ff', color: '#4338ca' },
-  professional: { bg: '#f3f0ff', color: '#6d28d9' },
+  standard:     { bg: '#eef2ff', color: '#1a234f' },
+  professional: { bg: '#f3f0ff', color: '#1e2657' },
   enterprise:   { bg: '#eff6ff', color: '#1d4ed8' },
 }
 
@@ -144,7 +144,7 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
             <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
               {isNl ? 'U wordt binnen 1 werkdag gecontacteerd.' : 'You will be contacted within 1 business day.'}
             </p>
-            <button onClick={onClose} style={{ padding: '11px 32px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={onClose} style={{ padding: '11px 32px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               {isNl ? 'Sluiten' : 'Close'}
             </button>
           </div>
@@ -152,26 +152,26 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', marginBottom: 3 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#16203a', marginBottom: 3 }}>
                   {isNl ? 'Licentie vernieuwen' : 'Renew license'}
                 </h3>
-                <p style={{ fontSize: 13, color: '#9090a0' }}>
+                <p style={{ fontSize: 13, color: '#7e88a0' }}>
                   {license.organisation_name} · <span style={{ textTransform: 'capitalize' }}>{license.tier}</span>
                 </p>
               </div>
-              <button onClick={onClose} style={{ background: '#f5f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>×</button>
+              <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>×</button>
             </div>
 
             {/* License info card */}
-            <div style={{ background: '#f5f5fb', borderRadius: 12, padding: '14px 16px', marginBottom: 20, display: 'flex', gap: 20 }}>
+            <div style={{ background: '#f2f5fb', borderRadius: 12, padding: '14px 16px', marginBottom: 20, display: 'flex', gap: 20 }}>
               {[
                 { label: isNl ? 'Geldig tot' : 'Valid until', value: new Date(license.valid_until).toLocaleDateString(isNl ? 'nl-SR' : 'en-US') },
                 { label: isNl ? 'Vestigingen' : 'Stores',    value: `${license.max_stores}` },
                 { label: isNl ? 'Terminals' : 'Terminals',   value: `${license.max_terminals}` },
               ].map((item) => (
                 <div key={item.label}>
-                  <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 3 }}>{item.label}</div>
-                  <div style={{ fontSize: 14, fontWeight: 800, color: '#1c1c2e' }}>{item.value}</div>
+                  <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 3 }}>{item.label}</div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: '#16203a' }}>{item.value}</div>
                 </div>
               ))}
             </div>
@@ -185,7 +185,7 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder={isNl ? 'Bijv. verlenging voor 12 maanden, zelfde tier…' : 'E.g. renewal for 12 months, same tier…'}
                 rows={3}
-                style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, resize: 'none', outline: 'none', lineHeight: 1.5 }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, resize: 'none', outline: 'none', lineHeight: 1.5 }}
               />
             </div>
 
@@ -196,13 +196,13 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
             )}
 
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+              <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
               <button
                 onClick={() => mutation.mutate()}
                 disabled={mutation.isPending}
-                style={{ flex: 1, padding: '11px 0', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '11px 0', background: 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.6 : 1 }}
               >
                 {mutation.isPending ? (isNl ? 'Versturen...' : 'Sending...') : (isNl ? 'Aanvraag versturen' : 'Submit request')}
               </button>
@@ -255,12 +255,12 @@ function LicenseFormModal({
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 540, boxShadow: '0 24px 64px rgba(0,0,0,.35)' }}>
-        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #f0f0f8' }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #eef2fb' }}>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#16203a' }}>
             {isNew ? (isNl ? 'Nieuwe licentie uitgeven' : 'Issue new license')
                    : (isNl ? 'Licentie bewerken' : 'Edit license')}
           </h3>
-          <p style={{ fontSize: 12, color: '#9090a0', marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 4 }}>
             {isNew
               ? (isNl ? 'In-dashboard licentie. Voor on-prem IonCube-installaties: gebruik de Licence Server (zie hoofdstuk 16).' : 'In-dashboard licence. For on-prem IonCube installs use the Licence Server (see ch 16).')
               : (typeof license !== 'string' ? license.organisation_name : '')}
@@ -285,7 +285,7 @@ function LicenseFormModal({
             <div style={{ display: 'flex', gap: 8 }}>
               {(['standard', 'professional', 'enterprise'] as const).map((t) => (
                 <button key={t} onClick={() => setTier(t)} type="button"
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: tier === t ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: tier === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: tier === t ? '#7c3aed' : '#6b7280', cursor: 'pointer', textTransform: 'capitalize' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: tier === t ? '2px solid #293371' : '1.5px solid #e5e7eb', background: tier === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: tier === t ? '#293371' : '#6b7280', cursor: 'pointer', textTransform: 'capitalize' }}>
                   {t}
                 </button>
               ))}
@@ -325,7 +325,7 @@ function LicenseFormModal({
             </label>
           )}
 
-          <p style={{ fontSize: 11, color: '#9090a0', marginBottom: 14, lineHeight: 1.5 }}>
+          <p style={{ fontSize: 11, color: '#7e88a0', marginBottom: 14, lineHeight: 1.5 }}>
             {isNl
               ? 'De vestiging-limiet (max. vestigingen) wordt afgedwongen op het moment dat de Org Admin probeert een nieuwe vestiging aan te maken (409 LICENSE_STORE_LIMIT_REACHED).'
               : 'The store limit (max. stores) is enforced when an Org Admin tries to create a new store (409 LICENSE_STORE_LIMIT_REACHED).'}
@@ -337,7 +337,7 @@ function LicenseFormModal({
               {isNl ? 'Annuleren' : 'Cancel'}
             </button>
             <button onClick={() => mutation.mutate()} disabled={!canSubmit || mutation.isPending}
-              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!canSubmit || mutation.isPending) ? 0.5 : 1 }}>
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!canSubmit || mutation.isPending) ? 0.5 : 1 }}>
               {mutation.isPending ? '…' : (isNew ? (isNl ? 'Licentie uitgeven' : 'Issue license') : (isNl ? 'Opslaan' : 'Save'))}
             </button>
           </div>
@@ -404,7 +404,7 @@ export default function LicenseScreen() {
       {/* Page header */}
       <div style={{ marginBottom: 28, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
             {isNl ? 'Licentiebeheer' : 'License Management'}
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -415,7 +415,7 @@ export default function LicenseScreen() {
         </div>
         {isSuperAdmin && (
           <button onClick={() => setFormTarget('new')}
-            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,.3)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(41,51,113,.3)', whiteSpace: 'nowrap', flexShrink: 0 }}>
             + {isNl ? 'Nieuwe licentie' : 'Issue license'}
           </button>
         )}
@@ -425,17 +425,17 @@ export default function LicenseScreen() {
       {!isLoading && licenses && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24, maxWidth: 720 }}>
           {[
-            { label: isNl ? 'Totaal'    : 'Total',    value: total,         color: '#7c3aed' },
+            { label: isNl ? 'Totaal'    : 'Total',    value: total,         color: '#293371' },
             { label: isNl ? 'Actief'    : 'Active',   value: activeCount,   color: '#16a34a' },
             { label: isNl ? 'Verlopen'  : 'Expiring', value: highCount,     color: '#d97706' },
             { label: isNl ? 'Kritiek'   : 'Critical', value: criticalCount, color: '#dc2626' },
           ].map((s) => (
             <div key={s.label} style={{
-              background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+              background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
               padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
             }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: s.color, letterSpacing: '-0.5px' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -481,23 +481,23 @@ export default function LicenseScreen() {
       )}
 
       {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 24 }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 24 }}>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f3f3f8' }}>
-                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#f0f0f8', flexShrink: 0 }} />
-                <div style={{ flex: 1, height: 13, borderRadius: 7, background: '#f0f0f8', maxWidth: 200 }} />
-                <div style={{ width: 70, height: 20, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ width: 100, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ width: 60, height: 22, borderRadius: 11, background: '#f0f0f8' }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f1f4fb' }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, background: '#eef2fb', flexShrink: 0 }} />
+                <div style={{ flex: 1, height: 13, borderRadius: 7, background: '#eef2fb', maxWidth: 200 }} />
+                <div style={{ width: 70, height: 20, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ width: 100, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ width: 60, height: 22, borderRadius: 11, background: '#eef2fb' }} />
               </div>
             ))}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 {[
                   isNl ? 'Organisatie' : 'Organisation',
                   isNl ? 'Tier' : 'Tier',
@@ -508,7 +508,7 @@ export default function LicenseScreen() {
                   isNl ? 'Status' : 'Status',
                   '',
                 ].map((h) => (
-                  <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
+                  <th key={h} style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px' }}>
                     {h}
                   </th>
                 ))}
@@ -520,20 +520,20 @@ export default function LicenseScreen() {
                 return (
                   <tr
                     key={lic.id}
-                    style={{ borderBottom: i < (licenses?.length ?? 0) - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                    style={{ borderBottom: i < (licenses?.length ?? 0) - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                   >
                     <td style={{ padding: '14px 20px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                         <OrgAvatar name={lic.organisation_name} />
                         <div>
-                          <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{lic.organisation_name}</div>
-                          <div style={{ fontSize: 11.5, color: '#7c3aed', marginTop: 2, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600, letterSpacing: '0.3px' }}>
+                          <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{lic.organisation_name}</div>
+                          <div style={{ fontSize: 11.5, color: '#293371', marginTop: 2, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600, letterSpacing: '0.3px' }}>
                             {lic.reference}
                           </div>
                           {lic.issued_at && (
-                            <div style={{ fontSize: 10.5, color: '#9090a0', marginTop: 1 }}>
+                            <div style={{ fontSize: 10.5, color: '#7e88a0', marginTop: 1 }}>
                               {isNl ? 'Uitgegeven' : 'Issued'}: {new Date(lic.issued_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-GB')}
                             </div>
                           )}
@@ -547,12 +547,12 @@ export default function LicenseScreen() {
                       <div style={{ fontSize: 12.5, color: '#374151', fontWeight: 600 }}>
                         {lic.max_stores} {isNl ? 'vestig.' : 'stores'}
                       </div>
-                      <div style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>
+                      <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 1 }}>
                         {lic.max_terminals} {isNl ? 'terminals' : 'terminals'}
                       </div>
                     </td>
                     <td style={{ padding: '14px 20px', whiteSpace: 'nowrap' }}>
-                      <div style={{ fontSize: 13.5, fontWeight: expired ? 700 : 600, color: expired ? '#dc2626' : '#1c1c2e' }}>
+                      <div style={{ fontSize: 13.5, fontWeight: expired ? 700 : 600, color: expired ? '#dc2626' : '#16203a' }}>
                         {new Date(lic.valid_until).toLocaleDateString(isNl ? 'nl-SR' : 'en-US')}
                       </div>
                       {lic.grace_period_ends_at && (
@@ -565,7 +565,7 @@ export default function LicenseScreen() {
                     <td style={{ padding: '14px 20px' }}>
                       <DaysGauge days={lic.days_remaining} isNl={isNl} />
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: 12, color: '#9090a0' }}>
+                    <td style={{ padding: '14px 20px', fontSize: 12, color: '#7e88a0' }}>
                       {lic.last_validated_at
                         ? new Date(lic.last_validated_at).toLocaleString(isNl ? 'nl-SR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
                         : '—'}
@@ -598,7 +598,7 @@ export default function LicenseScreen() {
                         </button>
                         {lic.renewal_status !== 'renewal_pending' && lic.urgency !== 'ok' && (
                           <button onClick={() => setRenewTarget(lic)}
-                            style={{ padding: '6px 12px', borderRadius: 8, background: lic.urgency === 'critical' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            style={{ padding: '6px 12px', borderRadius: 8, background: lic.urgency === 'critical' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             {isNl ? 'Vernieuwen' : 'Renew'}
                           </button>
                         )}
@@ -632,8 +632,8 @@ export default function LicenseScreen() {
 
         {/* Footer */}
         {!isLoading && total > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f3f3f8', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 12, color: '#9090a0' }}>
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {total} {isNl ? 'licenties in totaal' : 'licenses total'}
             </span>
           </div>
@@ -641,7 +641,7 @@ export default function LicenseScreen() {
       </div>
 
       {/* Timeline legend */}
-      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef', padding: '18px 22px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+      <div style={{ background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5', padding: '18px 22px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
         <p style={{ fontSize: 12, fontWeight: 800, color: '#374151', marginBottom: 14, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {isNl ? 'Verlooptijdlijn' : 'Expiry timeline'}
         </p>
@@ -676,7 +676,7 @@ export default function LicenseScreen() {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 60, padding: 16, backdropFilter: 'blur(4px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setDeleteTarget(null) }}>
           <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 420, padding: '22px 24px', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: 10 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: 10 }}>
               {isNl ? `Licentie deactiveren?` : `Deactivate license?`}
             </h3>
             <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>

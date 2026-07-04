@@ -19,7 +19,7 @@ function SkeletonRow({ cols }: { cols: number }) {
     <tr>
       {Array.from({ length: cols }).map((_, i) => (
         <td key={i} style={{ padding: '16px 20px' }}>
-          <div style={{ height: 13, borderRadius: 6, background: '#f0f0f8', maxWidth: i === 0 ? 180 : 100 }} />
+          <div style={{ height: 13, borderRadius: 6, background: '#eef2fb', maxWidth: i === 0 ? 180 : 100 }} />
         </td>
       ))}
     </tr>
@@ -180,7 +180,7 @@ export default function ReportsScreen() {
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Rapporten' : 'Reports'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -200,13 +200,13 @@ export default function ReportsScreen() {
               padding: '9px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', transition: 'all 0.12s',
               background: tab === t.id
-                ? 'linear-gradient(135deg, #7c3aed, #4f46e5)'
+                ? 'linear-gradient(135deg, #293371, #1f2a63)'
                 : '#fff',
               color: tab === t.id ? '#fff' : '#6b7280',
               boxShadow: tab === t.id
-                ? '0 2px 10px rgba(124,58,237,.35)'
+                ? '0 2px 10px rgba(41,51,113,.35)'
                 : '0 1px 4px rgba(0,0,0,.06)',
-              border: tab === t.id ? 'none' : '1px solid #e9e9ef',
+              border: tab === t.id ? 'none' : '1px solid #e6ecf5',
             }}
           >
             {isNl ? t.nl : t.en}
@@ -216,37 +216,37 @@ export default function ReportsScreen() {
 
       {/* Filter bar */}
       <div style={{
-        background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef',
+        background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5',
         padding: '16px 20px', marginBottom: 24,
         display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 12,
         boxShadow: '0 1px 4px rgba(0,0,0,.04)',
       }}>
         {/* Date From */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
             {isNl ? 'Van' : 'From'}
           </label>
           <input
             type="date" value={dateFrom} max={dateTo}
             onChange={(e) => setDateFrom(e.target.value)}
             style={{
-              padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0ed',
-              fontSize: 13, color: '#1c1c2e', outline: 'none',
+              padding: '8px 12px', borderRadius: 8, border: '1px solid #d9e1f1',
+              fontSize: 13, color: '#16203a', outline: 'none',
             }}
           />
         </div>
 
         {/* Date To */}
         <div>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
             {isNl ? 'Tot' : 'To'}
           </label>
           <input
             type="date" value={dateTo} min={dateFrom} max={today()}
             onChange={(e) => setDateTo(e.target.value)}
             style={{
-              padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0ed',
-              fontSize: 13, color: '#1c1c2e', outline: 'none',
+              padding: '8px 12px', borderRadius: 8, border: '1px solid #d9e1f1',
+              fontSize: 13, color: '#16203a', outline: 'none',
             }}
           />
         </div>
@@ -255,15 +255,15 @@ export default function ReportsScreen() {
             Hidden when org has zero/one store (auto-selected). */}
         {stores.length > 1 && (
           <div>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 5 }}>
               {isNl ? 'Vestiging' : 'Store'}
             </label>
             <select
               value={storeId}
               onChange={(e) => setStoreId(e.target.value)}
               style={{
-                padding: '8px 12px', borderRadius: 8, border: '1px solid #e0e0ed',
-                fontSize: 13, color: '#1c1c2e', outline: 'none', minWidth: 200, background: '#fff',
+                padding: '8px 12px', borderRadius: 8, border: '1px solid #d9e1f1',
+                fontSize: 13, color: '#16203a', outline: 'none', minWidth: 200, background: '#fff',
               }}
               title={isNl ? 'Beperk rapporten tot één vestiging' : 'Limit reports to one store'}
             >
@@ -282,7 +282,7 @@ export default function ReportsScreen() {
           ].map((r) => (
             <button key={r.label} onClick={r.fn} style={{
               padding: '8px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600,
-              background: '#f5f5fb', color: '#6d6d80', border: '1px solid #eeeef8',
+              background: '#f2f5fb', color: '#5f6a84', border: '1px solid #e9eef9',
               cursor: 'pointer',
             }}>
               {r.label}
@@ -298,8 +298,8 @@ export default function ReportsScreen() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: '#f5f5fb', color: '#7c3aed',
-              border: '1px solid #ddd6fe', fontSize: 12, fontWeight: 600,
+              background: '#f2f5fb', color: '#293371',
+              border: '1px solid #d5deef', fontSize: 12, fontWeight: 600,
               cursor: isFetching ? 'not-allowed' : 'pointer',
               opacity: isFetching ? 0.6 : 1,
             }}
@@ -313,10 +313,10 @@ export default function ReportsScreen() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               padding: '8px 18px', borderRadius: 8,
-              background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+              background: 'linear-gradient(135deg, #293371, #1f2a63)',
               color: '#fff', border: 'none', fontSize: 13, fontWeight: 700,
               cursor: exporting ? 'not-allowed' : 'pointer',
-              boxShadow: '0 2px 8px rgba(124,58,237,.35)',
+              boxShadow: '0 2px 8px rgba(41,51,113,.35)',
               opacity: exporting ? 0.7 : 1,
             }}
           >
@@ -339,17 +339,17 @@ export default function ReportsScreen() {
           {!cLoading && consolidated && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
               {[
-                { label: isNl ? 'Totale omzet'  : 'Total revenue',  value: formatSRD(consolidated.total_sales),        color: '#7c3aed' },
+                { label: isNl ? 'Totale omzet'  : 'Total revenue',  value: formatSRD(consolidated.total_sales),        color: '#293371' },
                 { label: isNl ? 'Transacties'   : 'Transactions',   value: consolidated.transaction_count.toString(),   color: '#2563eb' },
                 { label: isNl ? 'Gemiddelde bon' : 'Avg basket',     value: formatSRD(consolidated.avg_basket),          color: '#0891b2' },
                 { label: 'BTW',                                       value: formatSRD(consolidated.total_btw),           color: '#059669' },
               ].map((s) => (
                 <div key={s.label} style={{
-                  background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+                  background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
                   padding: '18px 22px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
                 }}>
                   <div style={{ fontSize: 26, fontWeight: 900, color: s.color, letterSpacing: '-0.5px' }}>{s.value}</div>
-                  <div style={{ fontSize: 12, color: '#9090a0', marginTop: 4, fontWeight: 500 }}>{s.label}</div>
+                  <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 4, fontWeight: 500 }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -358,21 +358,21 @@ export default function ReportsScreen() {
           {/* Payment breakdown */}
           {!cLoading && consolidated && (
             <div style={{
-              background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+              background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
               padding: '18px 24px', marginBottom: 24,
               display: 'flex', gap: 32, alignItems: 'center',
               boxShadow: '0 1px 4px rgba(0,0,0,.04)',
             }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: 8 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: 8 }}>
                 {isNl ? 'Betaalmethoden' : 'Payment methods'}
               </span>
               {[
                 { label: isNl ? 'Contant'    : 'Cash',     value: consolidated.payment_breakdown.cash,  color: '#16a34a' },
                 { label: isNl ? 'PIN/Kaart'  : 'Card/PIN', value: consolidated.payment_breakdown.card,  color: '#2563eb' },
-                { label: isNl ? 'Gemengd'    : 'Mixed',    value: consolidated.payment_breakdown.mixed, color: '#9333ea' },
+                { label: isNl ? 'Gemengd'    : 'Mixed',    value: consolidated.payment_breakdown.mixed, color: '#293371' },
               ].map((p) => (
                 <div key={p.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span style={{ fontSize: 11, color: '#9090a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{p.label}</span>
+                  <span style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{p.label}</span>
                   <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{formatSRD(p.value)}</span>
                 </div>
               ))}
@@ -380,15 +380,15 @@ export default function ReportsScreen() {
           )}
 
           {/* Per-store table */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 24 }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 24 }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e9eef9' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
                 {isNl ? 'Per vestiging' : 'By store'}
               </span>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                   {[
                     { key: 'store',        label: isNl ? 'Vestiging' : 'Store' },
                     { key: 'city',         label: isNl ? 'Stad' : 'City' },
@@ -397,9 +397,9 @@ export default function ReportsScreen() {
                     { key: 'transactions', label: isNl ? 'Transacties' : 'Transactions' },
                   ].map((h) => (
                     <th key={h.key} onClick={() => perStoreSort.toggle(h.key)}
-                      style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                      style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                       {h.label}
-                      <span style={{ marginLeft: 5, fontSize: 9, color: perStoreSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{perStoreSort.indicator(h.key)}</span>
+                      <span style={{ marginLeft: 5, fontSize: 9, color: perStoreSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{perStoreSort.indicator(h.key)}</span>
                     </th>
                   ))}
                 </tr>
@@ -410,13 +410,13 @@ export default function ReportsScreen() {
                   : perStoreSort.sorted.map((row, i) => (
                     <tr
                       key={row.store_id}
-                      style={{ borderBottom: i < perStoreSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                      style={{ borderBottom: i < perStoreSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
-                      <td style={{ padding: '14px 20px', fontWeight: 700, color: '#1c1c2e', fontSize: 14 }}>{row.store_name}</td>
+                      <td style={{ padding: '14px 20px', fontWeight: 700, color: '#16203a', fontSize: 14 }}>{row.store_name}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13, color: '#6b7280' }}>{row.city ?? '—'}</td>
-                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 700, color: '#7c3aed' }}>{formatSRD(row.total_sales)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 700, color: '#293371' }}>{formatSRD(row.total_sales)}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#059669', fontWeight: 600 }}>{formatSRD(row.total_btw)}</td>
                       <td style={{ padding: '14px 20px', fontSize: 14, color: '#374151', fontWeight: 600 }}>{row.transaction_count}</td>
                     </tr>
@@ -428,15 +428,15 @@ export default function ReportsScreen() {
 
           {/* Top products */}
           {!isLoading && (consolidated?.top_products.length ?? 0) > 0 && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #e9eef9' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
                   {isNl ? 'Top producten' : 'Top products'}
                 </span>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                  <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                     {[
                       { key: null,        label: '#' },
                       { key: 'product',   label: isNl ? 'Product' : 'Product' },
@@ -444,9 +444,9 @@ export default function ReportsScreen() {
                       { key: 'revenue',   label: isNl ? 'Omzet' : 'Revenue' },
                     ].map((h) => (
                       <th key={h.label} onClick={h.key ? () => topProductsSort.toggle(h.key!) : undefined}
-                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                         {h.label}
-                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: topProductsSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{topProductsSort.indicator(h.key)}</span>}
+                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: topProductsSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{topProductsSort.indicator(h.key)}</span>}
                       </th>
                     ))}
                   </tr>
@@ -455,8 +455,8 @@ export default function ReportsScreen() {
                   {topProductsSort.sorted.map((p, i) => (
                     <tr
                       key={p.name}
-                      style={{ borderBottom: i < topProductsSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                      style={{ borderBottom: i < topProductsSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '14px 20px', width: 40 }}>
@@ -467,9 +467,9 @@ export default function ReportsScreen() {
                           color: i === 0 ? '#92400e' : i === 1 ? '#475569' : '#9ca3af',
                         }}>{i + 1}</span>
                       </td>
-                      <td style={{ padding: '14px 20px', fontWeight: 700, color: '#1c1c2e', fontSize: 14 }}>{p.name}</td>
+                      <td style={{ padding: '14px 20px', fontWeight: 700, color: '#16203a', fontSize: 14 }}>{p.name}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#6b7280', fontWeight: 600 }}>{parseFloat(p.qty).toFixed(0)}</td>
-                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#7c3aed' }}>{formatSRD(p.revenue)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#293371' }}>{formatSRD(p.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -486,32 +486,32 @@ export default function ReportsScreen() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
               {[
                 { label: isNl ? 'Totale BTW te betalen' : 'Total BTW payable',   value: formatSRD(btwReport.total_btw),   sub: `${dateFrom} → ${dateTo}`, color: '#dc2626' },
-                { label: isNl ? 'Totale bruto omzet'   : 'Total gross revenue',  value: formatSRD(btwReport.total_gross), sub: btwReport.format,           color: '#7c3aed' },
+                { label: isNl ? 'Totale bruto omzet'   : 'Total gross revenue',  value: formatSRD(btwReport.total_gross), sub: btwReport.format,           color: '#293371' },
               ].map((s) => (
                 <div key={s.label} style={{
-                  background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+                  background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
                   padding: '22px 24px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
                 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#9090a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>{s.label}</div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>{s.label}</div>
                   <div style={{ fontSize: 34, fontWeight: 900, color: s.color, letterSpacing: '-1px' }}>{s.value}</div>
-                  <div style={{ fontSize: 12, color: '#9090a0', marginTop: 6 }}>{s.sub}</div>
+                  <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 6 }}>{s.sub}</div>
                 </div>
               ))}
             </div>
           )}
 
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e9eef9' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
                 {isNl ? 'Uitgesplitst per BTW-tarief' : 'Breakdown by BTW rate'}
               </span>
-              <span style={{ fontSize: 12, color: '#9090a0', marginLeft: 10 }}>
+              <span style={{ fontSize: 12, color: '#7e88a0', marginLeft: 10 }}>
                 {isNl ? 'Belastingdienst Suriname formaat' : 'Belastingdienst Suriname format'}
               </span>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                   {[
                     { key: 'rate',   label: isNl ? 'Tarief' : 'Rate' },
                     { key: 'exempt', label: isNl ? 'Vrijgesteld' : 'Exempt' },
@@ -521,9 +521,9 @@ export default function ReportsScreen() {
                     { key: 'sales',  label: isNl ? 'Verkopen' : 'Sales' },
                   ].map((h) => (
                     <th key={h.key} onClick={() => btwBreakdownSort.toggle(h.key)}
-                      style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                      style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                       {h.label}
-                      <span style={{ marginLeft: 5, fontSize: 9, color: btwBreakdownSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{btwBreakdownSort.indicator(h.key)}</span>
+                      <span style={{ marginLeft: 5, fontSize: 9, color: btwBreakdownSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{btwBreakdownSort.indicator(h.key)}</span>
                     </th>
                   ))}
                 </tr>
@@ -534,11 +534,11 @@ export default function ReportsScreen() {
                   : btwBreakdownSort.sorted.map((row, i) => (
                     <tr
                       key={i}
-                      style={{ borderBottom: i < btwBreakdownSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                      style={{ borderBottom: i < btwBreakdownSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
-                      <td style={{ padding: '14px 20px', fontWeight: 800, fontSize: 15, color: '#1c1c2e' }}>{row.btw_rate}%</td>
+                      <td style={{ padding: '14px 20px', fontWeight: 800, fontSize: 15, color: '#16203a' }}>{row.btw_rate}%</td>
                       <td style={{ padding: '14px 20px' }}>
                         {row.btw_exempt ? (
                           <span style={{
@@ -573,7 +573,7 @@ export default function ReportsScreen() {
           {!pLoading && profitReport && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14, marginBottom: 20 }}>
               {[
-                { label: isNl ? 'Omzet'           : 'Revenue',       value: formatSRD(profitReport.revenue_srd), accent: '#7c3aed' },
+                { label: isNl ? 'Omzet'           : 'Revenue',       value: formatSRD(profitReport.revenue_srd), accent: '#293371' },
                 { label: isNl ? 'Inkoopkosten'    : 'Cost of goods', value: formatSRD(profitReport.cost_srd),    accent: '#dc2626' },
                 { label: isNl ? 'Winst'           : 'Profit',        value: formatSRD(profitReport.profit_srd),  accent: '#16a34a', big: true },
                 { label: isNl ? 'Marge %'         : 'Margin %',
@@ -582,13 +582,13 @@ export default function ReportsScreen() {
                 { label: isNl ? 'Transacties'     : 'Transactions',  value: profitReport.transactions.toString(), accent: '#6b7280' },
               ].map((s) => (
                 <div key={s.label} style={{
-                  background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+                  background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
                   padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
                   position: 'relative', overflow: 'hidden',
                 }}>
                   <div style={{ position: 'absolute', top: 0, left: 0, width: 4, height: '100%', background: s.accent }} />
                   <div style={{ fontSize: s.big ? 28 : 22, fontWeight: 900, color: s.accent, letterSpacing: '-0.5px' }}>{s.value}</div>
-                  <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{s.label}</div>
+                  <div style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -606,21 +606,21 @@ export default function ReportsScreen() {
 
           {/* 30-day trend chart */}
           {!pLoading && profitReport && profitReport.daily.length > 1 && (
-            <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '18px 22px', marginBottom: 20 }}>
+            <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '18px 22px', marginBottom: 20 }}>
               <h3 style={{ fontSize: 13, fontWeight: 700, color: '#374151', marginBottom: 10 }}>
                 {isNl ? 'Dagelijkse winst (trend)' : 'Daily profit (trend)'}
               </h3>
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={profitReport.daily} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f8" vertical={false} />
-                  <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), 'd MMM')} fontSize={11} stroke="#9090a0" />
-                  <YAxis fontSize={11} stroke="#9090a0" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v.toString()} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#eef2fb" vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={(d) => format(new Date(d), 'd MMM')} fontSize={11} stroke="#7e88a0" />
+                  <YAxis fontSize={11} stroke="#7e88a0" tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v.toString()} />
                   <Tooltip
                     formatter={(v: number | string, key) => [formatSRD(String(v)), key === 'revenue_srd' ? (isNl ? 'Omzet' : 'Revenue') : (isNl ? 'Winst' : 'Profit')]}
                     labelFormatter={(d) => format(new Date(d), 'EEE d MMM yyyy')}
                     contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
                   />
-                  <Line type="monotone" dataKey="revenue_srd" stroke="#7c3aed" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="revenue_srd" stroke="#293371" strokeWidth={2} dot={{ r: 2 }} />
                   <Line type="monotone" dataKey="profit_srd"  stroke="#16a34a" strokeWidth={2.5} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -629,13 +629,13 @@ export default function ReportsScreen() {
 
           {/* Per-store breakdown */}
           {!pLoading && profitReport && profitReport.per_store.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? 'Per vestiging' : 'By store'}</span>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #e9eef9' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{isNl ? 'Per vestiging' : 'By store'}</span>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                  <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                     {[
                       { key: 'store',        label: isNl ? 'Vestiging' : 'Store' },
                       { key: 'revenue',      label: isNl ? 'Omzet'     : 'Revenue' },
@@ -645,17 +645,17 @@ export default function ReportsScreen() {
                       { key: 'transactions', label: isNl ? 'Transacties' : 'Txns' },
                     ].map((h) => (
                       <th key={h.key} onClick={() => profitPerStoreSort.toggle(h.key)}
-                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                         {h.label}
-                        <span style={{ marginLeft: 5, fontSize: 9, color: profitPerStoreSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{profitPerStoreSort.indicator(h.key)}</span>
+                        <span style={{ marginLeft: 5, fontSize: 9, color: profitPerStoreSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{profitPerStoreSort.indicator(h.key)}</span>
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {profitPerStoreSort.sorted.map((s, i) => (
-                    <tr key={s.store_id} style={{ borderBottom: i < profitPerStoreSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
-                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#1c1c2e' }}>{s.store_name}<div style={{ fontSize: 11, color: '#9090a0', fontWeight: 400 }}>{s.city}</div></td>
+                    <tr key={s.store_id} style={{ borderBottom: i < profitPerStoreSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}>
+                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#16203a' }}>{s.store_name}<div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 400 }}>{s.city}</div></td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(s.revenue_srd)}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{formatSRD(s.cost_srd)}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: parseFloat(s.profit_srd) >= 0 ? '#16a34a' : '#dc2626' }}>{formatSRD(s.profit_srd)}</td>
@@ -670,14 +670,14 @@ export default function ReportsScreen() {
 
           {/* Top 10 products by PROFIT (not revenue — different ranking) */}
           {!pLoading && profitReport && profitReport.top_products_by_profit.length > 0 && (
-            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
-              <div style={{ padding: '14px 20px', borderBottom: '1px solid #eeeef8' }}>
-                <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? 'Top 10 producten op winst' : 'Top 10 products by profit'}</span>
-                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#9090a0' }}>{isNl ? '(andere ranking dan op omzet)' : '(different ranking than by revenue)'}</span>
+            <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
+              <div style={{ padding: '14px 20px', borderBottom: '1px solid #e9eef9' }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{isNl ? 'Top 10 producten op winst' : 'Top 10 products by profit'}</span>
+                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#7e88a0' }}>{isNl ? '(andere ranking dan op omzet)' : '(different ranking than by revenue)'}</span>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                  <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                     {[
                       { key: null,      label: '#' },
                       { key: 'product', label: isNl ? 'Product' : 'Product' },
@@ -687,18 +687,18 @@ export default function ReportsScreen() {
                       { key: 'margin',  label: isNl ? 'Marge' : 'Margin' },
                     ].map((h) => (
                       <th key={h.label} onClick={h.key ? () => profitTopSort.toggle(h.key!) : undefined}
-                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                        style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                         {h.label}
-                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: profitTopSort.sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{profitTopSort.indicator(h.key)}</span>}
+                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: profitTopSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{profitTopSort.indicator(h.key)}</span>}
                       </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {profitTopSort.sorted.map((p, i) => (
-                    <tr key={i} style={{ borderBottom: i < profitTopSort.sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
-                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#9090a0', width: 32 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</td>
-                      <td style={{ padding: '12px 20px', fontWeight: 600, color: '#1c1c2e' }}>{p.name}</td>
+                    <tr key={i} style={{ borderBottom: i < profitTopSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}>
+                      <td style={{ padding: '12px 20px', fontWeight: 700, color: '#7e88a0', width: 32 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}</td>
+                      <td style={{ padding: '12px 20px', fontWeight: 600, color: '#16203a' }}>{p.name}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', color: '#6b7280' }}>{parseFloat(p.qty).toFixed(0)}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(p.revenue_srd)}</td>
                       <td style={{ padding: '12px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: '#16a34a' }}>{formatSRD(p.profit_srd)}</td>
@@ -715,21 +715,21 @@ export default function ReportsScreen() {
             <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #fecaca', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)', marginBottom: 20 }}>
               <div style={{ padding: '14px 20px', borderBottom: '1px solid #fee2e2', background: '#fef2f2' }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>⚠️ {isNl ? 'Verlies-verkopen' : 'Loss-making sales'}</span>
-                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#9090a0' }}>{isNl ? '(verkocht onder inkoopprijs)' : '(sold below cost)'}</span>
+                <span style={{ marginLeft: 8, fontSize: 11.5, color: '#7e88a0' }}>{isNl ? '(verkocht onder inkoopprijs)' : '(sold below cost)'}</span>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#fafbff', borderBottom: '1px solid #eeeef8' }}>
+                  <tr style={{ background: '#fafbff', borderBottom: '1px solid #e9eef9' }}>
                     {[isNl ? 'Tijd' : 'Time', isNl ? 'Bon' : 'Sale #', isNl ? 'Vestiging' : 'Store', isNl ? 'Omzet' : 'Revenue', isNl ? 'Verlies' : 'Loss'].map((h) => (
-                      <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
+                      <th key={h} style={{ padding: '10px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {profitReport.loss_makers.map((s) => (
-                    <tr key={s.sale_id} style={{ borderBottom: '1px solid #f3f3f8' }}>
+                    <tr key={s.sale_id} style={{ borderBottom: '1px solid #f1f4fb' }}>
                       <td style={{ padding: '10px 20px', fontSize: 12, color: '#6b7280' }}>{format(new Date(s.occurred_at), 'd MMM HH:mm')}</td>
-                      <td style={{ padding: '10px 20px', fontFamily: 'monospace', fontSize: 12, color: '#4338ca' }}>{s.sale_number}</td>
+                      <td style={{ padding: '10px 20px', fontFamily: 'monospace', fontSize: 12, color: '#1a234f' }}>{s.sale_number}</td>
                       <td style={{ padding: '10px 20px' }}>{s.store_name}</td>
                       <td style={{ padding: '10px 20px', fontVariantNumeric: 'tabular-nums' }}>{formatSRD(s.revenue_srd)}</td>
                       <td style={{ padding: '10px 20px', fontVariantNumeric: 'tabular-nums', fontWeight: 800, color: '#dc2626' }}>{formatSRD(s.profit_srd)}</td>
@@ -741,7 +741,7 @@ export default function ReportsScreen() {
           )}
 
           {!pLoading && profitReport && profitReport.transactions === 0 && (
-            <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '40px 20px', textAlign: 'center', color: '#9090a0' }}>
+            <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '40px 20px', textAlign: 'center', color: '#7e88a0' }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>📊</div>
               {isNl ? 'Geen verkopen in deze periode.' : 'No sales in this period.'}
             </div>

@@ -58,7 +58,7 @@ function ConfirmModal({ sale, isNl, onClose }: { sale: PendingPaymentSale; isNl:
         {error && <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={mut.isPending}
@@ -103,7 +103,7 @@ export default function PendingPaymentsScreen() {
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ marginBottom: 24 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Openstaande betalingen' : 'Pending Payments'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -115,35 +115,35 @@ export default function PendingPaymentsScreen() {
 
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24, maxWidth: 600 }}>
-        <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '16px 20px' }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#7c3aed' }}>{rows.length}</div>
-          <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'In afwachting' : 'Pending'}</div>
+        <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#293371' }}>{rows.length}</div>
+          <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'In afwachting' : 'Pending'}</div>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '16px 20px' }}>
-          <div style={{ fontSize: 22, fontWeight: 900, color: '#1c1c2e' }}>SRD {fmtSrd(totalPending)}</div>
-          <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'Totaal openstaand' : 'Total pending'}</div>
+        <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
+          <div style={{ fontSize: 22, fontWeight: 900, color: '#16203a' }}>SRD {fmtSrd(totalPending)}</div>
+          <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'Totaal openstaand' : 'Total pending'}</div>
         </div>
-        <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '16px 20px' }}>
+        <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
           <div style={{ fontSize: 28, fontWeight: 900, color: rows.some((s) => daysAgo(s.occurred_at) > 7) ? '#dc2626' : '#16a34a' }}>
             {rows.filter((s) => daysAgo(s.occurred_at) > 7).length}
           </div>
-          <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'Ouder dan 7 dagen' : 'Older than 7 days'}</div>
+          <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'Ouder dan 7 dagen' : 'Older than 7 days'}</div>
         </div>
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#9090a0' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#7e88a0' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
         ) : rows.length === 0 ? (
-          <div style={{ padding: 60, textAlign: 'center', color: '#9090a0' }}>
+          <div style={{ padding: 60, textAlign: 'center', color: '#7e88a0' }}>
             <div style={{ fontSize: 40, marginBottom: 8 }}>✅</div>
             {isNl ? 'Alles bevestigd — er staan geen overschrijvingen open.' : 'All clear — no pending transfers.'}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 {[
                   { key: 'sale_number', label: isNl ? 'Bon nr.' : 'Sale no.' },
                   { key: 'method',      label: isNl ? 'Methode' : 'Method' },
@@ -154,28 +154,28 @@ export default function PendingPaymentsScreen() {
                   { key: 'date',        label: isNl ? 'Datum' : 'Date' },
                 ].map((h) => (
                   <th key={h.key} onClick={() => toggle(h.key)}
-                    style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
+                    style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{isNl ? 'Actie' : 'Action'}</th>
+                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{isNl ? 'Actie' : 'Action'}</th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((s, i) => {
                 const age = daysAgo(s.occurred_at)
-                const ageColor = age > 14 ? '#dc2626' : age > 7 ? '#f59e0b' : '#9090a0'
+                const ageColor = age > 14 ? '#dc2626' : age > 7 ? '#f59e0b' : '#7e88a0'
                 return (
-                  <tr key={s.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}>
-                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#1c1c2e', fontWeight: 600 }}>{s.sale_number}</td>
+                  <tr key={s.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}>
+                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#16203a', fontWeight: 600 }}>{s.sale_number}</td>
                     <td style={{ padding: '14px 16px', fontSize: 13 }}>
                       {METHOD_ICON[s.payment_method] ?? '•'} {s.payment_method === 'bank_transfer' ? (isNl ? 'Overschrijving' : 'Bank transfer') : (isNl ? 'Mobiel' : 'Mobile')}
                     </td>
                     <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151', fontWeight: 600 }}>{s.payment_provider ?? '—'}</td>
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12, color: '#374151' }}>{s.payment_reference ?? '—'}</td>
                     <td style={{ padding: '14px 16px', fontSize: 12.5, color: '#374151' }}>{s.payment_sender_name ?? '—'}</td>
-                    <td style={{ padding: '14px 16px', fontSize: 13.5, color: '#1c1c2e', fontWeight: 700 }}>SRD {fmtSrd(s.total_srd)}</td>
+                    <td style={{ padding: '14px 16px', fontSize: 13.5, color: '#16203a', fontWeight: 700 }}>SRD {fmtSrd(s.total_srd)}</td>
                     <td style={{ padding: '14px 16px', fontSize: 12, color: ageColor }}>
                       {fmtDate(s.occurred_at)}
                       <div style={{ fontSize: 11, fontWeight: 600 }}>{age} {isNl ? 'd geleden' : 'd ago'}</div>

@@ -61,11 +61,11 @@ function daysUntil(s: string): number {
 }
 
 const TILE_BASE: React.CSSProperties = {
-  background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '18px 20px',
+  background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '18px 20px',
   boxShadow: '0 1px 4px rgba(0,0,0,.04)',
 }
 const TILE_BIG_NUM: React.CSSProperties = { fontSize: 28, fontWeight: 900, letterSpacing: '-.5px' }
-const TILE_LABEL: React.CSSProperties = { fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }
+const TILE_LABEL: React.CSSProperties = { fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }
 
 export default function PlatformOverviewPanel() {
   const { i18n } = useTranslation()
@@ -77,7 +77,7 @@ export default function PlatformOverviewPanel() {
     refetchInterval: 60_000, // platform-level — fresher than per-store live, slower than per-sale WS
   })
 
-  if (isLoading) return <div style={{ padding: 24, color: '#9090a0' }}>{isNl ? 'Platform-overzicht laden…' : 'Loading platform overview…'}</div>
+  if (isLoading) return <div style={{ padding: 24, color: '#7e88a0' }}>{isNl ? 'Platform-overzicht laden…' : 'Loading platform overview…'}</div>
   if (error || !data) return null
 
   const health = data.orgs.license_health
@@ -88,10 +88,10 @@ export default function PlatformOverviewPanel() {
   return (
     <section style={{ marginBottom: 28 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', margin: 0 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 800, color: '#16203a', margin: 0 }}>
           🌐 {isNl ? 'Platform-overzicht' : 'Platform Overview'}
         </h2>
-        <span style={{ fontSize: 11, color: '#9090a0', background: '#f5f5fb', padding: '2px 8px', borderRadius: 12 }}>
+        <span style={{ fontSize: 11, color: '#7e88a0', background: '#f2f5fb', padding: '2px 8px', borderRadius: 12 }}>
           {isNl ? 'Super Admin' : 'Super Admin'}
         </span>
       </div>
@@ -99,9 +99,9 @@ export default function PlatformOverviewPanel() {
       {/* Top row — 4 headline tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
         <div style={TILE_BASE}>
-          <div style={{ ...TILE_BIG_NUM, color: '#7c3aed' }}>{data.orgs.total}</div>
+          <div style={{ ...TILE_BIG_NUM, color: '#293371' }}>{data.orgs.total}</div>
           <div style={TILE_LABEL}>{isNl ? 'Organisaties totaal' : 'Organisations'}</div>
-          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 4 }}>
             ✅ {data.orgs.active} {isNl ? 'actief' : 'active'}
             {data.orgs.inactive > 0 && <> · ⏸ {data.orgs.inactive} {isNl ? 'inactief' : 'inactive'}</>}
           </div>
@@ -110,7 +110,7 @@ export default function PlatformOverviewPanel() {
         <div style={TILE_BASE}>
           <div style={{ ...TILE_BIG_NUM, color: '#16a34a' }}>SRD {fmtSrd(data.revenue_srd.today)}</div>
           <div style={TILE_LABEL}>{isNl ? 'Vandaag (netwerk)' : 'Today (network)'}</div>
-          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 4 }}>
             {data.transactions_today} {isNl ? 'transacties' : 'transactions'}
           </div>
         </div>
@@ -118,17 +118,17 @@ export default function PlatformOverviewPanel() {
         <div style={TILE_BASE}>
           <div style={{ ...TILE_BIG_NUM, color: '#2563eb' }}>SRD {fmtSrd(data.revenue_srd.month)}</div>
           <div style={TILE_LABEL}>{isNl ? 'Deze maand (netwerk)' : 'This month (network)'}</div>
-          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 4 }}>
             {isNl ? '7-dag:' : '7-day:'} SRD {fmtSrd(data.revenue_srd.week)}
           </div>
         </div>
 
         <div style={TILE_BASE}>
           <div style={{ ...TILE_BIG_NUM, color: data.terminals.active_24h === 0 ? '#dc2626' : '#16a34a' }}>
-            {data.terminals.active_24h}<span style={{ fontSize: 18, color: '#9090a0' }}> / {data.terminals.total}</span>
+            {data.terminals.active_24h}<span style={{ fontSize: 18, color: '#7e88a0' }}> / {data.terminals.total}</span>
           </div>
           <div style={TILE_LABEL}>{isNl ? 'Actieve kassa\'s (24u)' : 'Active terminals (24h)'}</div>
-          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 4 }}>
             {Math.round(data.terminals.total > 0 ? (data.terminals.active_24h / data.terminals.total) * 100 : 0)}% {isNl ? 'in gebruik' : 'in use'}
           </div>
         </div>
@@ -147,7 +147,7 @@ export default function PlatformOverviewPanel() {
             <HealthBadge label={isNl ? 'Grace' : 'Grace'} count={health.grace} color="#b91c1c" bg="#fef2f2" border="#fecaca" />
             <HealthBadge label={isNl ? 'Soft-lock' : 'Soft-lock'} count={health.soft_lock} color="#991b1b" bg="#fef2f2" border="#fca5a5" />
             <HealthBadge label={isNl ? 'Hard-lock' : 'Hard-lock'} count={health.hard_lock} color="#fff" bg="#1f1f1f" border="#7f1d1d" />
-            {health.no_license > 0 && <HealthBadge label={isNl ? 'Geen licentie' : 'No licence'} count={health.no_license} color="#374151" bg="#f5f5fb" border="#d1d5db" />}
+            {health.no_license > 0 && <HealthBadge label={isNl ? 'Geen licentie' : 'No licence'} count={health.no_license} color="#374151" bg="#f2f5fb" border="#d1d5db" />}
           </div>
           {(warning + danger) > 0 && (
             <div style={{ marginTop: 12, padding: '8px 12px', background: '#fef3c7', border: '1px solid #fde68a', borderRadius: 8, fontSize: 12, color: '#92400e' }}>
@@ -161,7 +161,7 @@ export default function PlatformOverviewPanel() {
             {data.btw.filings_pending_inspector_review}
           </div>
           <div style={TILE_LABEL}>{isNl ? 'BTW-aangiftes wachten op inspecteur' : 'BTW filings awaiting inspector'}</div>
-          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 6, lineHeight: 1.4 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 6, lineHeight: 1.4 }}>
             {isNl
               ? 'Belastingdienst inspecteur logt in en accepteert / betwist via BTW-aangiftes.'
               : 'Belastingdienst inspector logs in and accepts / disputes via BTW Submissions.'}
@@ -176,7 +176,7 @@ export default function PlatformOverviewPanel() {
             {isNl ? 'Volgende verlopende licenties' : 'Next expiring licences'}
           </div>
           {data.next_expiring_licenses.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9090a0', margin: 0 }}>{isNl ? 'Geen verlopende licenties in de komende weken.' : 'No licences expiring soon.'}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0', margin: 0 }}>{isNl ? 'Geen verlopende licenties in de komende weken.' : 'No licences expiring soon.'}</p>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {data.next_expiring_licenses.map((l) => {
@@ -184,13 +184,13 @@ export default function PlatformOverviewPanel() {
                 const color = days <= 0 ? '#dc2626' : days < 14 ? '#c2410c' : days < 30 ? '#a16207' : '#16a34a'
                 return (
                   <li key={l.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #f3f4f6', fontSize: 13 }}>
-                    <span style={{ color: '#1c1c2e' }}>
+                    <span style={{ color: '#16203a' }}>
                       <strong>{l.organisation?.name ?? l.organisation_id.slice(0, 8) + '…'}</strong>
-                      <span style={{ color: '#9090a0', marginLeft: 6, textTransform: 'uppercase', fontSize: 10, fontWeight: 700 }}>{l.tier}</span>
+                      <span style={{ color: '#7e88a0', marginLeft: 6, textTransform: 'uppercase', fontSize: 10, fontWeight: 700 }}>{l.tier}</span>
                     </span>
                     <span style={{ color, fontWeight: 700, fontSize: 12 }}>
                       {fmtDate(l.valid_until)}
-                      <span style={{ color: '#9090a0', fontWeight: 500, marginLeft: 8 }}>
+                      <span style={{ color: '#7e88a0', fontWeight: 500, marginLeft: 8 }}>
                         {days >= 0 ? `${days}d` : `${Math.abs(days)}d ${isNl ? 'verlopen' : 'overdue'}`}
                       </span>
                     </span>
@@ -206,13 +206,13 @@ export default function PlatformOverviewPanel() {
             {isNl ? 'Recente Super Admin acties' : 'Recent Super Admin actions'}
           </div>
           {data.recent_sa_actions.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9090a0', margin: 0 }}>{isNl ? 'Geen recente acties.' : 'No recent actions.'}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0', margin: 0 }}>{isNl ? 'Geen recente acties.' : 'No recent actions.'}</p>
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
               {data.recent_sa_actions.map((a) => (
                 <li key={a.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid #f3f4f6', fontSize: 12 }}>
-                  <span style={{ color: '#1c1c2e', fontFamily: 'monospace' }}>{a.event}</span>
-                  <span style={{ color: '#9090a0' }}>{new Date(a.created_at).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                  <span style={{ color: '#16203a', fontFamily: 'monospace' }}>{a.event}</span>
+                  <span style={{ color: '#7e88a0' }}>{new Date(a.created_at).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })}</span>
                 </li>
               ))}
             </ul>
@@ -220,7 +220,7 @@ export default function PlatformOverviewPanel() {
         </div>
       </div>
 
-      <p style={{ fontSize: 11, color: '#9090a0', margin: '4px 0 0', textAlign: 'right' }}>
+      <p style={{ fontSize: 11, color: '#7e88a0', margin: '4px 0 0', textAlign: 'right' }}>
         {isNl ? 'Bijgewerkt:' : 'Updated:'} {new Date(data.generated_at).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })} · {isNl ? 'auto-ververst elke 60s' : 'auto-refresh 60s'}
       </p>
     </section>

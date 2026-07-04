@@ -72,7 +72,7 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 20, padding: '28px 32px', width: '100%', maxWidth: 440, boxShadow: '0 24px 64px rgba(0,0,0,.2)' }}>
-        <h3 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+        <h3 style={{ margin: '0 0 4px', fontSize: 17, fontWeight: 800, color: '#16203a' }}>
           {isNl ? 'Voorraad aanpassen' : 'Adjust stock'}
         </h3>
         <p style={{ margin: '0 0 20px', fontSize: 13, color: '#6b7280' }}>
@@ -151,7 +151,7 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
           <button
             onClick={() => mut.mutate()}
             disabled={!qtyChange || isNaN(parseFloat(qtyChange)) || parseFloat(qtyChange) === 0 || !storeId || mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !qtyChange ? 0.5 : 1 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !qtyChange ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -181,40 +181,40 @@ function MovementHistory({ product, isNl, onClose }: { product: Product; isNl: b
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 20, padding: '24px 28px', width: '100%', maxWidth: 560, maxHeight: '85vh', display: 'flex', flexDirection: 'column', boxShadow: '0 24px 64px rgba(0,0,0,.2)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#1c1c2e' }}>
+          <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#16203a' }}>
             {isNl ? 'Voorraadhistorie' : 'Stock history'} — {isNl ? product.name_nl : product.name_en}
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9090a0' }}>×</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#7e88a0' }}>×</button>
         </div>
         <div style={{ overflowY: 'auto', flex: 1 }}>
           {isLoading ? (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9090a0' }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+            <p style={{ textAlign: 'center', padding: 40, color: '#7e88a0' }}>{isNl ? 'Laden…' : 'Loading…'}</p>
           ) : (data?.data ?? []).length === 0 ? (
-            <p style={{ textAlign: 'center', padding: 40, color: '#9090a0' }}>{isNl ? 'Geen bewegingen gevonden.' : 'No movements found.'}</p>
+            <p style={{ textAlign: 'center', padding: 40, color: '#7e88a0' }}>{isNl ? 'Geen bewegingen gevonden.' : 'No movements found.'}</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ background: '#f8f7ff' }}>
+                <tr style={{ background: '#f4f6fc' }}>
                   {[isNl ? 'Datum' : 'Date', isNl ? 'Reden' : 'Reason', isNl ? 'Wijziging' : 'Change', isNl ? 'Voorraad' : 'Stock', isNl ? 'Door' : 'By'].map((h, i) => (
-                    <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase' }}>{h}</th>
+                    <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {(data?.data ?? []).map((m) => (
-                  <tr key={m.id} style={{ borderBottom: '1px solid #f3f3f8' }}>
+                  <tr key={m.id} style={{ borderBottom: '1px solid #f1f4fb' }}>
                     <td style={{ padding: '9px 12px', color: '#6b7280', whiteSpace: 'nowrap' }}>
                       {new Date(m.created_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { day: 'numeric', month: 'short' })}
                     </td>
                     <td style={{ padding: '9px 12px' }}>
                       <span style={{ fontSize: 12, fontWeight: 600 }}>{reasonLabel(m.reason)}</span>
-                      {m.notes && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9090a0' }}>{m.notes}</p>}
+                      {m.notes && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e88a0' }}>{m.notes}</p>}
                     </td>
                     <td style={{ padding: '9px 12px', fontWeight: 700, color: m.qty_change > 0 ? '#16a34a' : '#dc2626' }}>
                       {m.qty_change > 0 ? '+' : ''}{m.qty_change.toFixed(0)}
                     </td>
                     <td style={{ padding: '9px 12px', fontWeight: 700, color: '#374151' }}>{m.qty_after.toFixed(0)}</td>
-                    <td style={{ padding: '9px 12px', fontSize: 12, color: '#9090a0' }}>{m.user?.name ?? '—'}</td>
+                    <td style={{ padding: '9px 12px', fontSize: 12, color: '#7e88a0' }}>{m.user?.name ?? '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -290,7 +290,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Voorraadbeheer' : 'Stock Management'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -333,7 +333,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid #e9e9ef' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid #e6ecf5' }}>
         {([
           { key: 'all', nl: 'Alle producten', en: 'All products' },
           { key: 'low', nl: `Lage voorraad${lowStockData.length > 0 ? ` (${lowStockData.length})` : ''}`, en: `Low stock${lowStockData.length > 0 ? ` (${lowStockData.length})` : ''}` },
@@ -342,8 +342,8 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
             style={{
               padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
               fontSize: 14, fontWeight: activeTab === tab.key ? 700 : 500,
-              color: activeTab === tab.key ? (tab.key === 'low' ? '#dc2626' : '#7c3aed') : '#6b7280',
-              borderBottom: activeTab === tab.key ? `2px solid ${tab.key === 'low' ? '#dc2626' : '#7c3aed'}` : '2px solid transparent',
+              color: activeTab === tab.key ? (tab.key === 'low' ? '#dc2626' : '#293371') : '#6b7280',
+              borderBottom: activeTab === tab.key ? `2px solid ${tab.key === 'low' ? '#dc2626' : '#293371'}` : '2px solid transparent',
               marginBottom: -2,
             }}>
             {isNl ? tab.nl : tab.en}
@@ -395,17 +395,17 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
           />
         )}
         {filterStoreId && stores.length > 1 && (
-          <span style={{ fontSize: 12, color: '#7c3aed', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: '#293371', fontWeight: 600 }}>
             ↳ {isNl ? 'voorraad per vestiging' : 'per-store stock'}
           </span>
         )}
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+            <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
               {[
                 { key: 'name',      label: isNl ? 'Product' : 'Product' },
                 { key: 'category',  label: isNl ? 'Categorie' : 'Category' },
@@ -413,21 +413,21 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
                 { key: 'threshold', label: isNl ? 'Min. drempel' : 'Min. threshold' },
               ].map((h) => (
                 <th key={h.key} onClick={() => toggle(h.key)}
-                  style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', cursor: 'pointer', userSelect: 'none' }}>
+                  style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', cursor: 'pointer', userSelect: 'none' }}>
                   {h.label}
-                  <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                  <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
                 </th>
               ))}
-              <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px' }}></th>
+              <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px' }}></th>
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f3f3f8' }}>
+                <tr key={i} style={{ borderBottom: '1px solid #f1f4fb' }}>
                   {Array.from({ length: 5 }).map((_, j) => (
                     <td key={j} style={{ padding: '14px 16px' }}>
-                      <div style={{ height: 13, borderRadius: 6, background: '#f0f0f8', width: j === 0 ? 160 : 80 }} />
+                      <div style={{ height: 13, borderRadius: 6, background: '#eef2fb', width: j === 0 ? 160 : 80 }} />
                     </td>
                   ))}
                 </tr>
@@ -451,17 +451,17 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
               // Pastel backgrounds — strong enough to scan a busy table,
               // weak enough not to drown out the row text.
               const baseBg = isOut ? 'rgba(220,38,38,.06)' : isLow ? 'rgba(245,158,11,.08)' : undefined
-              const hoverBg = isOut ? 'rgba(220,38,38,.10)' : isLow ? 'rgba(245,158,11,.13)' : 'rgba(124,58,237,.025)'
+              const hoverBg = isOut ? 'rgba(220,38,38,.10)' : isLow ? 'rgba(245,158,11,.13)' : 'rgba(41,51,113,.025)'
 
               return (
                 <tr key={p.id}
-                  style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none', background: baseBg }}
+                  style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', background: baseBg }}
                   onMouseEnter={e => (e.currentTarget.style.background = hoverBg)}
                   onMouseLeave={e => (e.currentTarget.style.background = baseBg ?? '')}
                 >
                   <td style={{ padding: '12px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{isNl ? p.name_nl : p.name_en}</p>
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#16203a' }}>{isNl ? p.name_nl : p.name_en}</p>
                       {isOut && (
                         <span style={{
                           fontSize: 10, fontWeight: 800, letterSpacing: '0.5px',
@@ -477,7 +477,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
                         }}>{t('stock.alerts.lowBadge')}</span>
                       )}
                     </div>
-                    {p.barcode && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9090a0', fontFamily: 'monospace' }}>{p.barcode}</p>}
+                    {p.barcode && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e88a0', fontFamily: 'monospace' }}>{p.barcode}</p>}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>
                     {p.category ? (isNl ? p.category.name_nl : p.category.name_en) : '—'}
@@ -499,7 +499,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button
                         onClick={() => setAdjustProduct(p)}
-                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#293371', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
                         {isNl ? '+ Aanpassen' : '+ Adjust'}
                       </button>
@@ -518,7 +518,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
         </table>
 
         {activeTab === 'all' && lastPage > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', borderTop: '1px solid #f3f3f8', background: '#fafafa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa' }}>
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
               style={{ height: 32, padding: '0 14px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.4 : 1, fontSize: 13 }}>‹</button>
             <span style={{ fontSize: 13, color: '#6b7280' }}>{page} / {lastPage}</span>

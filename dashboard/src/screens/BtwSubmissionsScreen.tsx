@@ -14,10 +14,10 @@ import { BelastingdienstHeader } from '@/components/shared/BelastingdienstHeader
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 const STATUS_STYLE: Record<BtwSubmissionStatus, { bg: string; fg: string; border: string; label: { nl: string; en: string } }> = {
-  filed:      { bg: '#eef2ff', fg: '#4338ca', border: '#c7d2fe', label: { nl: 'Ingediend',    en: 'Filed' } },
+  filed:      { bg: '#eef2ff', fg: '#1a234f', border: '#c7d2fe', label: { nl: 'Ingediend',    en: 'Filed' } },
   accepted:   { bg: '#f0fdf4', fg: '#15803d', border: '#bbf7d0', label: { nl: 'Geaccepteerd', en: 'Accepted' } },
   disputed:   { bg: '#fef2f2', fg: '#b91c1c', border: '#fecaca', label: { nl: 'Betwist',      en: 'Disputed' } },
-  superseded: { bg: '#f5f5fb', fg: '#6b7280', border: '#e5e7eb', label: { nl: 'Vervangen',    en: 'Superseded' } },
+  superseded: { bg: '#f2f5fb', fg: '#6b7280', border: '#e5e7eb', label: { nl: 'Vervangen',    en: 'Superseded' } },
 }
 
 function fmtSrd(n: string | number) { return Number(n).toLocaleString('nl-SR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }
@@ -104,20 +104,20 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
       <div style={{ background: '#fff', borderRadius: 18, padding: 28, width: '100%', maxWidth: 560, boxShadow: '0 24px 64px rgba(0,0,0,.25)', maxHeight: '92vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
           <div>
-            <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 800, color: '#16203a' }}>
               {isNl ? 'BTW-aangifte indienen' : 'File a BTW submission'}
             </h3>
-            <p style={{ fontSize: 12, color: '#9090a0', marginTop: 2 }}>
+            <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 2 }}>
               {isNl ? 'Aan Belastingdienst Suriname' : 'To Belastingdienst Suriname'}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
         </div>
 
         {/* Filing scope — store (Store Manager) vs whole organisation (OA) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: filingStoreId ? '#eff6ff' : '#f5f3ff', border: `1px solid ${filingStoreId ? '#bfdbfe' : '#ddd6fe'}`, borderRadius: 10, padding: '9px 12px', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: filingStoreId ? '#eff6ff' : '#f2f5fc', border: `1px solid ${filingStoreId ? '#bfdbfe' : '#d5deef'}`, borderRadius: 10, padding: '9px 12px', marginBottom: 14 }}>
           <span style={{ fontSize: 15 }}>{filingStoreId ? '🏪' : '🏢'}</span>
-          <span style={{ fontSize: 12.5, fontWeight: 700, color: filingStoreId ? '#1d4ed8' : '#6d28d9' }}>{scopeLabel}</span>
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: filingStoreId ? '#1d4ed8' : '#1e2657' }}>{scopeLabel}</span>
         </div>
 
         {/* Period type toggle */}
@@ -128,12 +128,12 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
             ['monthly', isNl ? '📆 Maandelijks' : '📆 Monthly',  setMonthly],
           ] as const).map(([pt, label, fn]) => (
             <button key={pt} onClick={fn}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === pt ? '2px solid #7c3aed' : '1.5px solid #e5e7eb', background: periodType === pt ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === pt ? '#7c3aed' : '#6b7280', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === pt ? '2px solid #293371' : '1.5px solid #e5e7eb', background: periodType === pt ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === pt ? '#293371' : '#6b7280', cursor: 'pointer' }}>
               {label}
             </button>
           ))}
         </div>
-        <p style={{ fontSize: 11, color: '#9090a0', marginBottom: 14 }}>
+        <p style={{ fontSize: 11, color: '#7e88a0', marginBottom: 14 }}>
           {isNl ? 'Maandelijks is de formele Belastingdienst-aangifte; dagelijks/wekelijks zijn tussentijds.' : 'Monthly is the formal Belastingdienst filing; daily/weekly are interim.'}
         </p>
 
@@ -151,23 +151,23 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
 
         {/* Preview button */}
         <button onClick={() => previewMut.mutate()} disabled={previewMut.isPending || !start || !end}
-          style={{ width: '100%', padding: '10px 0', border: '1.5px solid #ddd6fe', borderRadius: 10, background: '#f5f3ff', color: '#6d28d9', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 14 }}>
+          style={{ width: '100%', padding: '10px 0', border: '1.5px solid #d5deef', borderRadius: 10, background: '#f2f5fc', color: '#1e2657', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginBottom: 14 }}>
           {previewMut.isPending ? (isNl ? 'Berekenen…' : 'Computing…') : (isNl ? '🔍 Bereken totalen' : '🔍 Compute totals')}
         </button>
 
         {/* Preview result */}
         {preview && (
-          <div style={{ background: '#f9f7ff', border: '1px solid #ede9fe', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#7c3aed', marginBottom: 8 }}>
+          <div style={{ background: '#f4f6fc', border: '1px solid #e6ebf7', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#293371', marginBottom: 8 }}>
               {isNl ? '📊 Voorbeeld — totalen voor deze periode' : '📊 Preview — totals for this period'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
-              <div><strong style={{ color: '#1c1c2e' }}>{preview.totals.sales_count}</strong> <span style={{ color: '#6b7280' }}>{isNl ? 'verkopen' : 'sales'}</span></div>
+              <div><strong style={{ color: '#16203a' }}>{preview.totals.sales_count}</strong> <span style={{ color: '#6b7280' }}>{isNl ? 'verkopen' : 'sales'}</span></div>
               <div>{isNl ? 'Totaal omzet:' : 'Total sales:'} <strong>SRD {fmtSrd(preview.totals.total_sales_srd)}</strong></div>
               <div>{isNl ? 'Belastbaar:' : 'Taxable:'} <strong>SRD {fmtSrd(preview.totals.btw_taxable_srd)}</strong></div>
               <div>{isNl ? 'Vrijgesteld:' : 'Exempt:'} <strong>SRD {fmtSrd(preview.totals.btw_exempt_srd)}</strong></div>
-              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #ede9fe', paddingTop: 8, marginTop: 4 }}>
-                {isNl ? 'BTW te betalen:' : 'BTW due:'} <strong style={{ color: '#7c3aed', fontSize: 15 }}>SRD {fmtSrd(preview.totals.total_btw_srd)}</strong>
+              <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e6ebf7', paddingTop: 8, marginTop: 4 }}>
+                {isNl ? 'BTW te betalen:' : 'BTW due:'} <strong style={{ color: '#293371', fontSize: 15 }}>SRD {fmtSrd(preview.totals.total_btw_srd)}</strong>
               </div>
             </div>
             {preview.existing && (
@@ -195,11 +195,11 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
         )}
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || !preview || !!preview.existing}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitMut.isPending || !preview || !!preview.existing) ? 0.5 : 1, boxShadow: '0 4px 12px rgba(124,58,237,.3)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitMut.isPending || !preview || !!preview.existing) ? 0.5 : 1, boxShadow: '0 4px 12px rgba(41,51,113,.3)' }}>
             {submitMut.isPending ? (isNl ? 'Indienen…' : 'Filing…') : (isNl ? '✓ Indienen bij Belastingdienst' : '✓ File with Belastingdienst')}
           </button>
         </div>
@@ -231,7 +231,7 @@ function ReviewModal({ submission, action, isNl, onClose }: { submission: BtwSub
         <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 4 }}>
           {isAccept ? (isNl ? 'Aangifte accepteren' : 'Accept submission') : (isNl ? 'Aangifte betwisten' : 'Dispute submission')}
         </h3>
-        <p style={{ fontSize: 12.5, color: '#9090a0', marginBottom: 16 }}>
+        <p style={{ fontSize: 12.5, color: '#7e88a0', marginBottom: 16 }}>
           {submission.reference} · {submission.organisation?.name} · SRD {fmtSrd(submission.total_btw_srd)} BTW
         </p>
 
@@ -247,7 +247,7 @@ function ReviewModal({ submission, action, isNl, onClose }: { submission: BtwSub
         {error && <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={mut.isPending || (!isAccept && note.length < 5)}
@@ -299,11 +299,11 @@ function ResubmitModal({ submission, isNl, onClose, onResubmitted }: { submissio
         {error && <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
 
         <div style={{ display: 'flex', gap: 10 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={mut.isPending}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mut.isPending ? 0.5 : 1 }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mut.isPending ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? '↺ Opnieuw indienen' : '↺ Resubmit')}
           </button>
         </div>
@@ -444,7 +444,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
       ) : (
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, gap: 16, flexWrap: 'wrap' }}>
           <div>
-            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
               {isNl ? 'BTW-aangiftes' : 'BTW Submissions'}
             </h1>
             <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -453,7 +453,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
           </div>
           {canSubmit && (
             <button onClick={() => setShowSubmit(true)}
-              style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(124,58,237,.3)' }}>
+              style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(41,51,113,.3)' }}>
               + {isNl ? 'Nieuwe aangifte' : 'New submission'}
             </button>
           )}
@@ -591,17 +591,17 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
       )}
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#9090a0' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
+          <div style={{ padding: 40, textAlign: 'center', color: '#7e88a0' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
         ) : (page?.data ?? []).length === 0 ? (
-          <div style={{ padding: 40, textAlign: 'center', color: '#9090a0' }}>
+          <div style={{ padding: 40, textAlign: 'center', color: '#7e88a0' }}>
             {isNl ? 'Geen aangiftes gevonden.' : 'No submissions found.'}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: isInspector ? BD.greenSoft : 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: `1px solid ${isInspector ? BD.greenLine : '#eeeef8'}` }}>
+              <tr style={{ background: isInspector ? BD.greenSoft : 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: `1px solid ${isInspector ? BD.greenLine : '#e9eef9'}` }}>
                 {canReview && (
                   <th style={{ padding: '12px 8px 12px 16px', width: 38 }}>
                     <input type="checkbox" checked={allFiledSelected} disabled={filedIds.length === 0}
@@ -619,7 +619,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                   isNl ? 'Ingediend' : 'Submitted',
                   isNl ? 'Acties' : 'Actions',
                 ].filter(Boolean).map((h) => (
-                  <th key={h as string} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
+                  <th key={h as string} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -629,8 +629,8 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                 return (
                   <tr key={s.id}
                     onClick={() => onOpenDetail?.(s.id)}
-                    style={{ borderBottom: i < (page!.data.length - 1) ? '1px solid #f3f3f8' : 'none', cursor: onOpenDetail ? 'pointer' : 'default', transition: 'background .12s' }}
-                    onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = isInspector ? BD.greenSoft : 'rgba(124,58,237,.03)' }}
+                    style={{ borderBottom: i < (page!.data.length - 1) ? '1px solid #f1f4fb' : 'none', cursor: onOpenDetail ? 'pointer' : 'default', transition: 'background .12s' }}
+                    onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = isInspector ? BD.greenSoft : 'rgba(41,51,113,.03)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
                     {canReview && (
                       <td style={{ padding: '14px 8px 14px 16px' }} onClick={(e) => e.stopPropagation()}>
@@ -642,7 +642,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                         )}
                       </td>
                     )}
-                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#1c1c2e', fontWeight: 600 }}>{s.reference}</td>
+                    <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#16203a', fontWeight: 600 }}>{s.reference}</td>
                     {(isInspector || role === 'super_admin') && (
                       <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>
                         {s.organisation?.name ?? '—'}
@@ -650,12 +650,12 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                     )}
                     <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>
                       <div>{fmtDate(s.period_start)}{s.period_start !== s.period_end ? ` → ${fmtDate(s.period_end)}` : ''}</div>
-                      <div style={{ fontSize: 11, color: '#9090a0' }}>{s.period_type === 'daily' ? (isNl ? 'dagelijks' : 'daily') : (isNl ? 'maandelijks' : 'monthly')}</div>
+                      <div style={{ fontSize: 11, color: '#7e88a0' }}>{s.period_type === 'daily' ? (isNl ? 'dagelijks' : 'daily') : (isNl ? 'maandelijks' : 'monthly')}</div>
                     </td>
                     <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151' }}>{s.sales_count}</td>
-                    <td style={{ padding: '14px 16px', fontSize: 13.5, color: '#1c1c2e', fontWeight: 700 }}>
+                    <td style={{ padding: '14px 16px', fontSize: 13.5, color: '#16203a', fontWeight: 700 }}>
                       {fmtSrd(s.total_btw_srd)}
-                      <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 500 }}>
+                      <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 500 }}>
                         {isNl ? 'van' : 'of'} {fmtSrd(s.total_sales_srd)}
                       </div>
                     </td>
@@ -665,7 +665,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                         {ss.label[isNl ? 'nl' : 'en']}
                       </span>
                     </td>
-                    <td style={{ padding: '14px 16px', fontSize: 12, color: '#9090a0' }}>
+                    <td style={{ padding: '14px 16px', fontSize: 12, color: '#7e88a0' }}>
                       {new Date(s.submitted_at).toLocaleString(isNl ? 'nl-NL' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}
                       <div style={{ fontSize: 11 }}>{s.submitter?.name}</div>
                     </td>
@@ -686,7 +686,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                         {canResubmit(s) && (
                           <button onClick={(e) => { e.stopPropagation(); setResubmitTarget(s) }}
                             title={isNl ? 'Markeer als vervangen en dien een correctie in.' : 'Mark superseded and file a correction.'}
-                            style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid #ddd6fe', background: '#f5f3ff', color: '#6d28d9', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
+                            style={{ padding: '5px 10px', borderRadius: 7, border: '1px solid #d5deef', background: '#f2f5fc', color: '#1e2657', fontSize: 11.5, fontWeight: 700, cursor: 'pointer' }}>
                             ↺ {isNl ? 'Corrigeer' : 'Resubmit'}
                           </button>
                         )}

@@ -22,18 +22,18 @@ const STYLES = `
     font-family:inherit; box-sizing:border-box;
   }
   .login-input::placeholder{color:rgba(148,163,184,0.45)}
-  .login-input:focus{border-color:#7c3aed;background:rgba(124,58,237,0.09);box-shadow:0 0 0 4px rgba(124,58,237,0.2)}
+  .login-input:focus{border-color:#293371;background:rgba(41,51,113,0.09);box-shadow:0 0 0 4px rgba(41,51,113,0.2)}
   .login-input:disabled{opacity:.4;cursor:not-allowed}
   .login-btn {
     width:100%; height:54px; border:none; border-radius:14px;
     font-size:16px; font-weight:700; letter-spacing:.3px; cursor:pointer;
     color:#fff; font-family:inherit;
-    background:linear-gradient(135deg,#7c3aed 0%,#4f46e5 50%,#7c3aed 100%);
+    background:linear-gradient(135deg,#ef6c00 0%,#d95f00 50%,#ef6c00 100%);
     background-size:200% auto;
-    box-shadow:0 6px 28px rgba(124,58,237,0.5);
+    box-shadow:0 6px 28px rgba(239,108,0,0.45);
     transition:opacity .2s,transform .15s,box-shadow .2s;
   }
-  .login-btn:not(:disabled):hover{animation:shimmer-btn 1.3s linear infinite;box-shadow:0 8px 36px rgba(124,58,237,0.65);transform:translateY(-1px)}
+  .login-btn:not(:disabled):hover{animation:shimmer-btn 1.3s linear infinite;box-shadow:0 8px 36px rgba(239,108,0,0.6);transform:translateY(-1px)}
   .login-btn:not(:disabled):active{transform:translateY(0)}
   .login-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
   .lang-pill {
@@ -47,7 +47,7 @@ const STYLES = `
     border:none; cursor:pointer; font-family:inherit; transition:all .15s;
     color:rgba(248,250,252,.6); background:transparent;
   }
-  .lang-pill button.active{background:rgba(124,58,237,.5);color:#fff}
+  .lang-pill button.active{background:rgba(41,51,113,.5);color:#fff}
   .lang-pill button:hover:not(.active){background:rgba(255,255,255,.07);color:#fff}
   .feat-row{display:flex;align-items:flex-start;gap:12px;animation:fade-rise .5s ease both}
 `
@@ -103,8 +103,8 @@ export default function LoginScreen() {
     }}>
       {/* ── Orbs ── */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-8%', left: '-6%', width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,.32) 0%, transparent 68%)', animation: 'orb-a 20s ease-in-out infinite', filter: 'blur(3px)' }} />
-        <div style={{ position: 'absolute', bottom: '-12%', right: '-5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(79,70,229,.26) 0%, transparent 68%)', animation: 'orb-b 25s ease-in-out infinite', filter: 'blur(3px)' }} />
+        <div style={{ position: 'absolute', top: '-8%', left: '-6%', width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(circle, rgba(41,51,113,.32) 0%, transparent 68%)', animation: 'orb-a 20s ease-in-out infinite', filter: 'blur(3px)' }} />
+        <div style={{ position: 'absolute', bottom: '-12%', right: '-5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(31,42,99,.26) 0%, transparent 68%)', animation: 'orb-b 25s ease-in-out infinite', filter: 'blur(3px)' }} />
         <div style={{ position: 'absolute', top: '35%', left: '42%', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,.1) 0%, transparent 70%)', animation: 'orb-c 16s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)', backgroundSize: '52px 52px' }} />
       </div>
@@ -127,9 +127,9 @@ export default function LoginScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 56 }}>
           <div style={{
             width: 56, height: 56, borderRadius: 16, flexShrink: 0,
-            background: 'linear-gradient(135deg,#7c3aed,#4f46e5)',
+            background: 'linear-gradient(135deg,#293371,#1f2a63)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 10px 30px rgba(124,58,237,.55)',
+            boxShadow: '0 10px 30px rgba(41,51,113,.55)',
           }}>
             <svg viewBox="0 0 28 28" fill="none" style={{ width: 28, height: 28 }}>
               <rect x="3" y="3" width="10" height="10" rx="3" fill="white" fillOpacity=".9" />
@@ -140,7 +140,7 @@ export default function LoginScreen() {
           </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#f8fafc', letterSpacing: '-0.5px', lineHeight: 1.1 }}>Josbin POS</div>
-            <div style={{ fontSize: 11, color: 'rgba(167,139,250,.8)', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: 'rgba(143,154,201,.8)', fontWeight: 700, letterSpacing: '2.5px', textTransform: 'uppercase', marginTop: 2 }}>
               {isNl ? 'Beheerportaal' : 'Management Portal'}
             </div>
           </div>
@@ -150,7 +150,7 @@ export default function LoginScreen() {
         <h1 style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.1, letterSpacing: '-1.5px', marginBottom: 20 }}>
           <span style={{ color: '#f8fafc' }}>{isNl ? 'Volledig zicht.' : 'Full control.'}</span>
           <br />
-          <span style={{ background: 'linear-gradient(90deg,#a78bfa,#60a5fa,#a78bfa)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200%' }}>
+          <span style={{ background: 'linear-gradient(90deg,#8f9ac9,#60a5fa,#8f9ac9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundSize: '200%' }}>
             {isNl ? 'Elke vestiging.' : 'Every location.'}
           </span>
         </h1>
@@ -167,10 +167,10 @@ export default function LoginScreen() {
             <div key={i} className="feat-row" style={{ animationDelay: `${i * 0.1}s` }}>
               <div style={{
                 width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 1,
-                background: 'rgba(124,58,237,.2)', border: '1px solid rgba(124,58,237,.4)',
+                background: 'rgba(41,51,113,.2)', border: '1px solid rgba(41,51,113,.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8f9ac9" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
@@ -189,7 +189,7 @@ export default function LoginScreen() {
               borderRadius: 14, padding: '14px 12px', textAlign: 'center',
               animation: `badge-pop .5s ease both`, animationDelay: `${i * 0.08 + 0.3}s`,
             }}>
-              <div style={{ fontSize: 24, fontWeight: 900, color: '#a78bfa', letterSpacing: '-0.5px' }}>{s.n}</div>
+              <div style={{ fontSize: 24, fontWeight: 900, color: '#8f9ac9', letterSpacing: '-0.5px' }}>{s.n}</div>
               <div style={{ fontSize: 11, color: 'rgba(148,163,184,.6)', marginTop: 3, lineHeight: 1.3 }}>{s.sub}</div>
             </div>
           ))}
@@ -292,7 +292,7 @@ export default function LoginScreen() {
                 <button
                   type="button" tabIndex={-1}
                   onClick={() => setShowPw((v) => !v)}
-                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: showPw ? '#a78bfa' : 'rgba(148,163,184,.45)', transition: 'color .15s', display: 'flex' }}
+                  style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: showPw ? '#8f9ac9' : 'rgba(148,163,184,.45)', transition: 'color .15s', display: 'flex' }}
                 >
                   {showPw
                     ? <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>

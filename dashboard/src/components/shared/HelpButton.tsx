@@ -49,22 +49,22 @@ export default function HelpButton({ topic }: { topic: string }) {
             display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 30px rgba(0,0,0,0.2)',
             animation: 'dash-help-slide .18s ease-out',
           }}>
-            <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid #eeeef8' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: '#7c3aed' }}>
+            <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid #e9eef9' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: '#293371' }}>
                 {isNl ? 'Hulp' : 'Help'}
               </span>
               <button onClick={() => setOpen(false)} aria-label={isNl ? 'Sluiten' : 'Close'}
-                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#9090a0', lineHeight: 1 }}>✕</button>
+                style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: '#7e88a0', lineHeight: 1 }}>✕</button>
             </header>
 
             <div style={{ flex: 1, overflowY: 'auto', padding: '18px 22px' }}>
-              <h2 style={{ margin: '0 0 6px', fontSize: 18, color: '#1c1c2e' }}>{c.title}</h2>
+              <h2 style={{ margin: '0 0 6px', fontSize: 18, color: '#16203a' }}>{c.title}</h2>
               {c.intro && <p style={{ margin: '0 0 14px', fontSize: 13.5, color: '#6b7280' }}>{c.intro}</p>}
               <ol style={{ margin: 0, padding: 0, listStyle: 'none' }}>
                 {c.steps.map((s, i) => (
-                  <li key={i} style={{ display: 'flex', gap: 12, marginBottom: 12, fontSize: 14, lineHeight: 1.5, color: '#1c1c2e' }}>
+                  <li key={i} style={{ display: 'flex', gap: 12, marginBottom: 12, fontSize: 14, lineHeight: 1.5, color: '#16203a' }}>
                     <span style={{
-                      flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: '#7c3aed',
+                      flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: '#293371',
                       color: '#fff', fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}>{i + 1}</span>
                     <span>{s}</span>
@@ -73,9 +73,9 @@ export default function HelpButton({ topic }: { topic: string }) {
               </ol>
             </div>
 
-            <footer style={{ padding: '14px 22px', borderTop: '1px solid #eeeef8' }}>
+            <footer style={{ padding: '14px 22px', borderTop: '1px solid #e9eef9' }}>
               <a href={`${DOCS_URL}/${entry.guide}`} target="_blank" rel="noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#7c3aed', textDecoration: 'none' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#293371', textDecoration: 'none' }}>
                 {isNl ? 'Open volledige handleiding' : 'Open full guide'} →
               </a>
             </footer>

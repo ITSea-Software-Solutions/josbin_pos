@@ -23,7 +23,7 @@ function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: bool
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16 }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 20, padding: '28px 32px', width: '100%', maxWidth: 440, boxShadow: '0 24px 64px rgba(0,0,0,.2)' }}>
-        <h3 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+        <h3 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 800, color: '#16203a' }}>
           {isNl ? 'Klant bewerken' : 'Edit customer'}
         </h3>
         {[
@@ -47,7 +47,7 @@ function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: bool
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -108,7 +108,7 @@ export default function CustomersScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Klantenbeheer' : 'Customer Management'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -127,10 +127,10 @@ export default function CustomersScreen() {
       </div>
 
       {/* Table */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+            <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
               {[
                 { key: 'name',   label: isNl ? 'Naam' : 'Name' },
                 { key: 'phone',  label: isNl ? 'Telefoon' : 'Phone' },
@@ -142,9 +142,9 @@ export default function CustomersScreen() {
               ].map((h, i) => (
                 <th key={i}
                   onClick={h.key ? () => toggle(h.key) : undefined}
-                  style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                  style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                   {h.label}
-                  {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                  {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                 </th>
               ))}
             </tr>
@@ -152,10 +152,10 @@ export default function CustomersScreen() {
           <tbody>
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f3f3f8' }}>
+                <tr key={i} style={{ borderBottom: '1px solid #f1f4fb' }}>
                   {Array.from({ length: 7 }).map((_, j) => (
                     <td key={j} style={{ padding: '14px 16px' }}>
-                      <div style={{ height: 13, borderRadius: 6, background: '#f0f0f8', width: j === 0 ? 120 : j === 3 ? 80 : 90 }} />
+                      <div style={{ height: 13, borderRadius: 6, background: '#eef2fb', width: j === 0 ? 120 : j === 3 ? 80 : 90 }} />
                     </td>
                   ))}
                 </tr>
@@ -175,21 +175,21 @@ export default function CustomersScreen() {
               </td></tr>
             ) : sorted.map((c, i) => (
               <tr key={c.id}
-                style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .1s' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .1s' }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                 onMouseLeave={e => (e.currentTarget.style.background = '')}
               >
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#293371,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                       {c.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{c.name}</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{c.name}</span>
                   </div>
                 </td>
                 <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{c.phone ?? '—'}</td>
                 <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{c.email ?? '—'}</td>
-                <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#7c3aed' }}>
+                <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#293371' }}>
                   SRD {parseFloat(c.total_spend_srd).toFixed(2)}
                 </td>
                 <td style={{ padding: '12px 16px' }}>
@@ -197,7 +197,7 @@ export default function CustomersScreen() {
                     {c.visit_count}
                   </span>
                 </td>
-                <td style={{ padding: '12px 16px', fontSize: 12, color: '#9090a0' }}>
+                <td style={{ padding: '12px 16px', fontSize: 12, color: '#7e88a0' }}>
                   {new Date(c.created_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </td>
                 <td style={{ padding: '12px 16px' }}>
@@ -226,7 +226,7 @@ export default function CustomersScreen() {
 
         {/* Pagination */}
         {lastPage > 1 && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', borderTop: '1px solid #f3f3f8', background: '#fafafa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa' }}>
             <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
               style={{ height: 32, padding: '0 14px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.4 : 1, fontSize: 13 }}>
               ‹

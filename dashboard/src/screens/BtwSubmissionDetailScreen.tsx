@@ -32,7 +32,7 @@ function fmtDateTime(s: string) {
 }
 
 const TILE: React.CSSProperties = {
-  background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '20px 22px',
+  background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '20px 22px',
   boxShadow: '0 1px 4px rgba(0,0,0,.04)',
 }
 
@@ -77,7 +77,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
   })
 
   if (isLoading || !data) {
-    return <div style={{ padding: 40, color: '#9090a0', textAlign: 'center' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
+    return <div style={{ padding: 40, color: '#7e88a0', textAlign: 'center' }}>{isNl ? 'Laden…' : 'Loading…'}</div>
   }
 
   const s = data.submission
@@ -87,7 +87,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
   return (
     <div style={{ padding: '28px 32px', maxWidth: '100%', background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
       {/* Back */}
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: isInspector ? BD.green : '#7c3aed', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: isInspector ? BD.green : '#293371', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
         ← {isNl ? 'Terug naar lijst' : 'Back to list'}
       </button>
 
@@ -126,7 +126,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
         </div>
 
         <div style={TILE}>
-          <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 8 }}>
             {isNl ? 'Status' : 'Status'}
           </div>
           <StatusBadge status={s.status} isNl={isNl} large />
@@ -155,7 +155,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
             )}
             {canResubmitThis && (
               <button onClick={() => { setAction('resubmit'); setError('') }}
-                style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #ddd6fe', background: '#f5f3ff', color: '#6d28d9', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid #d5deef', background: '#f2f5fc', color: '#1e2657', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                 ↺ {isNl ? 'Corrigeer' : 'Resubmit'}
               </button>
             )}
@@ -168,18 +168,18 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
         <div style={{ ...TILE, marginBottom: 22 }}>
           {s.submitter_note && (
             <div style={{ marginBottom: s.inspector_note ? 12 : 0 }}>
-              <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px' }}>
+              <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px' }}>
                 💬 {isNl ? 'Opmerking belastingplichtige' : 'Submitter note'}
               </div>
-              <p style={{ fontSize: 13, color: '#1c1c2e', marginTop: 4, whiteSpace: 'pre-wrap' }}>{s.submitter_note}</p>
+              <p style={{ fontSize: 13, color: '#16203a', marginTop: 4, whiteSpace: 'pre-wrap' }}>{s.submitter_note}</p>
             </div>
           )}
           {s.inspector_note && (
             <div>
-              <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px' }}>
+              <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.7px' }}>
                 🔍 {isNl ? 'Opmerking inspecteur' : 'Inspector note'}
               </div>
-              <p style={{ fontSize: 13, color: '#1c1c2e', marginTop: 4, whiteSpace: 'pre-wrap' }}>{s.inspector_note}</p>
+              <p style={{ fontSize: 13, color: '#16203a', marginTop: 4, whiteSpace: 'pre-wrap' }}>{s.inspector_note}</p>
             </div>
           )}
         </div>
@@ -192,7 +192,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
             🏬 {isNl ? 'Per vestiging' : 'Per store'}
           </div>
           {data.breakdown.per_store.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9090a0' }}>{isNl ? 'Geen verkopen in deze periode.' : 'No sales in this period.'}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>{isNl ? 'Geen verkopen in deze periode.' : 'No sales in this period.'}</p>
           ) : (
             <BreakdownTable rows={data.breakdown.per_store.map((r) => ({
               key: r.store_id, label: r.store_name, sub: `${r.tx_count} tx`, total: r.total_btw_srd, gross: r.total_sales_srd,
@@ -205,14 +205,14 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
             💻 {isNl ? 'Per POS-bron' : 'Per source POS'}
           </div>
           {data.breakdown.per_source.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9090a0' }}>{isNl ? 'Geen verkopen.' : 'No sales.'}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>{isNl ? 'Geen verkopen.' : 'No sales.'}</p>
           ) : (
             <>
               <BreakdownTable rows={data.breakdown.per_source.map((r) => ({
                 key: r.source, label: r.source_label, sub: `${r.tx_count} tx`, total: r.total_btw_srd, gross: r.total_sales_srd,
                 colour: SOURCE_COLOUR[r.source],
               }))} isNl={isNl} />
-              <p style={{ fontSize: 11, color: '#9090a0', marginTop: 8, lineHeight: 1.4 }}>
+              <p style={{ fontSize: 11, color: '#7e88a0', marginTop: 8, lineHeight: 1.4 }}>
                 {isNl
                   ? 'POS-bron geeft aan welk verkoopsysteem de gegevens heeft aangeleverd. Externe POS via onze Open Integration API (Layer 3) tellen volledig mee in de BTW-aangifte.'
                   : 'Source POS shows which sales system delivered the data. External POS via our Open Integration API (Layer 3) contribute fully to the BTW filing.'}
@@ -226,7 +226,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
             💳 {isNl ? 'Per betaalwijze' : 'Per payment method'}
           </div>
           {data.breakdown.per_payment_method.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9090a0' }}>—</p>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>—</p>
           ) : (
             <BreakdownTable rows={data.breakdown.per_payment_method.map((r) => ({
               key: r.method, label: r.method, sub: `${r.tx_count} tx`, total: r.total_srd,
@@ -239,7 +239,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
             🧾 {isNl ? 'Per BTW-tarief' : 'Per BTW rate'}
           </div>
           {data.breakdown.per_btw_rate.length === 0 ? (
-            <p style={{ fontSize: 13, color: '#9090a0' }}>{isNl ? 'Geen lijnregels in deze aangifte (snapshot-only).' : 'No line items in this filing (snapshot-only).'}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0' }}>{isNl ? 'Geen lijnregels in deze aangifte (snapshot-only).' : 'No line items in this filing (snapshot-only).'}</p>
           ) : (
             <BreakdownTable rows={data.breakdown.per_btw_rate.map((r) => ({
               key: `${r.rate}-${r.exempt}`, label: r.exempt ? (isNl ? 'BTW-vrij' : 'Exempt') : `${r.rate}%`,
@@ -255,15 +255,15 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
           🕒 {isNl ? 'Tijdlijn' : 'Timeline'}
         </div>
         {data.timeline.length === 0 ? (
-          <p style={{ fontSize: 13, color: '#9090a0' }}>—</p>
+          <p style={{ fontSize: 13, color: '#7e88a0' }}>—</p>
         ) : (
           <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
             {data.timeline.map((evt) => (
               <li key={evt.id} style={{ display: 'flex', gap: 12, padding: '8px 0', borderBottom: '1px solid #f3f4f6' }}>
-                <span style={{ fontSize: 12, color: '#9090a0', fontFamily: 'monospace', width: 130, flexShrink: 0 }}>
+                <span style={{ fontSize: 12, color: '#7e88a0', fontFamily: 'monospace', width: 130, flexShrink: 0 }}>
                   {fmtDateTime(evt.created_at)}
                 </span>
-                <span style={{ fontSize: 13, color: '#1c1c2e', fontWeight: 600 }}>{evt.event}</span>
+                <span style={{ fontSize: 13, color: '#16203a', fontWeight: 600 }}>{evt.event}</span>
               </li>
             ))}
           </ul>
@@ -290,7 +290,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
               style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e5e7eb', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box', resize: 'vertical', marginBottom: 14 }} />
             {error && <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, fontSize: 12, color: '#b91c1c', marginBottom: 12 }}>{error}</div>}
             <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setAction(null)} style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+              <button onClick={() => setAction(null)} style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
               <button onClick={() => mut.mutate()} disabled={mut.isPending || (action === 'dispute' && note.length < 5)}
@@ -298,7 +298,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
                   flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mut.isPending ? 0.5 : 1,
                   background: action === 'accept' ? 'linear-gradient(135deg,#16a34a,#15803d)' :
                               action === 'dispute' ? 'linear-gradient(135deg,#dc2626,#b91c1c)' :
-                              'linear-gradient(135deg,#7c3aed,#4f46e5)',
+                              'linear-gradient(135deg,#293371,#1f2a63)',
                 }}>
                 {mut.isPending ? '…' :
                   action === 'accept'  ? '✓ ' + (isNl ? 'Accepteer' : 'Accept') :
@@ -316,8 +316,8 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', marginTop: 4 }}>{value}</div>
+      <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#16203a', marginTop: 4 }}>{value}</div>
     </div>
   )
 }
@@ -333,13 +333,13 @@ function BreakdownTable({ rows, isNl }: {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {r.colour && <span style={{ width: 8, height: 8, borderRadius: '50%', background: r.colour }} />}
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: '#1c1c2e' }}>{r.label}</div>
-              <div style={{ fontSize: 11, color: '#9090a0' }}>{r.sub}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: '#16203a' }}>{r.label}</div>
+              <div style={{ fontSize: 11, color: '#7e88a0' }}>{r.sub}</div>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#1c1c2e' }}>SRD {Number(r.total).toLocaleString('nl-SR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-            {r.gross && <div style={{ fontSize: 11, color: '#9090a0' }}>{isNl ? 'van' : 'of'} SRD {Number(r.gross).toLocaleString('nl-SR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>SRD {Number(r.total).toLocaleString('nl-SR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            {r.gross && <div style={{ fontSize: 11, color: '#7e88a0' }}>{isNl ? 'van' : 'of'} SRD {Number(r.gross).toLocaleString('nl-SR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
           </div>
         </li>
       ))}
@@ -349,10 +349,10 @@ function BreakdownTable({ rows, isNl }: {
 
 function StatusBadge({ status, isNl, large = false }: { status: string; isNl: boolean; large?: boolean }) {
   const style: Record<string, { bg: string; fg: string; nl: string; en: string }> = {
-    filed:      { bg: '#eef2ff', fg: '#4338ca', nl: 'Ingediend',    en: 'Filed' },
+    filed:      { bg: '#eef2ff', fg: '#1a234f', nl: 'Ingediend',    en: 'Filed' },
     accepted:   { bg: '#f0fdf4', fg: '#15803d', nl: 'Geaccepteerd', en: 'Accepted' },
     disputed:   { bg: '#fef2f2', fg: '#b91c1c', nl: 'Betwist',      en: 'Disputed' },
-    superseded: { bg: '#f5f5fb', fg: '#6b7280', nl: 'Vervangen',    en: 'Superseded' },
+    superseded: { bg: '#f2f5fb', fg: '#6b7280', nl: 'Vervangen',    en: 'Superseded' },
   }
   const s = style[status] ?? { bg: '#f9fafb', fg: '#374151', nl: status, en: status }
   return (

@@ -45,9 +45,9 @@ const STYLES = `
   }
   .jpos-login-input::placeholder { color: rgba(148,163,184,0.55); }
   .jpos-login-input:focus {
-    border-color: #7c3aed;
-    background: rgba(124,58,237,0.08);
-    box-shadow: 0 0 0 4px rgba(124,58,237,0.18);
+    border-color: #293371;
+    background: rgba(41,51,113,0.08);
+    box-shadow: 0 0 0 4px rgba(41,51,113,0.18);
   }
   .jpos-login-input:disabled { opacity: 0.45; cursor: not-allowed; }
   .jpos-submit-btn {
@@ -64,13 +64,13 @@ const STYLES = `
     transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
     font-family: inherit;
     color: #fff;
-    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 50%, #7c3aed 100%);
+    background: linear-gradient(135deg, #ef6c00 0%, #d95f00 50%, #ef6c00 100%);
     background-size: 200% auto;
-    box-shadow: 0 4px 24px rgba(124,58,237,0.45);
+    box-shadow: 0 4px 24px rgba(239,108,0,0.42);
   }
   .jpos-submit-btn:not(:disabled):hover {
     animation: shimmer 1.4s linear infinite;
-    box-shadow: 0 6px 32px rgba(124,58,237,0.6);
+    box-shadow: 0 6px 32px rgba(239,108,0,0.58);
     transform: translateY(-1px);
   }
   .jpos-submit-btn:not(:disabled):active { transform: translateY(0); }
@@ -98,7 +98,7 @@ const STYLES = `
     font-family: inherit;
     z-index: 10;
   }
-  .jpos-lang-btn:hover { background: rgba(124,58,237,0.3); color: #fff; }
+  .jpos-lang-btn:hover { background: rgba(41,51,113,0.3); color: #fff; }
 `
 
 // ─── Icons ─────────────────────────────────────────────────────────────────
@@ -222,7 +222,7 @@ export default function LoginScreen() {
         <div style={{
           position: 'absolute', top: '-10%', left: '-5%',
           width: 560, height: 560,
-          background: 'radial-gradient(circle, rgba(124,58,237,0.35) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(41,51,113,0.35) 0%, transparent 70%)',
           borderRadius: '50%',
           animation: 'orb-drift-1 18s ease-in-out infinite',
           filter: 'blur(2px)',
@@ -231,7 +231,7 @@ export default function LoginScreen() {
         <div style={{
           position: 'absolute', bottom: '-15%', right: '-8%',
           width: 480, height: 480,
-          background: 'radial-gradient(circle, rgba(79,70,229,0.3) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(31,42,99,0.3) 0%, transparent 70%)',
           borderRadius: '50%',
           animation: 'orb-drift-2 22s ease-in-out infinite',
           filter: 'blur(2px)',
@@ -275,10 +275,10 @@ export default function LoginScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
           <div style={{
             width: 52, height: 52,
-            background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+            background: 'linear-gradient(135deg, #293371, #1f2a63)',
             borderRadius: 14,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(124,58,237,0.5)',
+            boxShadow: '0 8px 24px rgba(41,51,113,0.5)',
             flexShrink: 0,
           }}>
             {/* Abstract POS icon */}
@@ -311,7 +311,7 @@ export default function LoginScreen() {
           {isNl ? 'Welkom terug.' : 'Welcome back.'}
           <br />
           <span style={{
-            background: 'linear-gradient(90deg, #a78bfa, #60a5fa)',
+            background: 'linear-gradient(90deg, #8f9ac9, #60a5fa)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
@@ -342,11 +342,11 @@ export default function LoginScreen() {
             >
               <div style={{
                 width: 28, height: 28,
-                background: 'rgba(124,58,237,0.2)',
-                border: '1px solid rgba(124,58,237,0.4)',
+                background: 'rgba(41,51,113,0.2)',
+                border: '1px solid rgba(41,51,113,0.4)',
                 borderRadius: 8,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#a78bfa',
+                color: '#8f9ac9',
                 flexShrink: 0,
                 marginTop: 1,
               }}>
@@ -459,7 +459,7 @@ export default function LoginScreen() {
               <div style={{ position: 'relative' }}>
                 <div style={{
                   position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)',
-                  color: focusField === 'email' ? '#a78bfa' : 'rgba(148,163,184,0.5)',
+                  color: focusField === 'email' ? '#8f9ac9' : 'rgba(148,163,184,0.5)',
                   transition: 'color 0.2s',
                   pointerEvents: 'none',
                 }}>
@@ -488,7 +488,7 @@ export default function LoginScreen() {
               <div style={{ position: 'relative' }}>
                 <div style={{
                   position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)',
-                  color: focusField === 'pw' ? '#a78bfa' : 'rgba(148,163,184,0.5)',
+                  color: focusField === 'pw' ? '#8f9ac9' : 'rgba(148,163,184,0.5)',
                   transition: 'color 0.2s',
                   pointerEvents: 'none',
                 }}>
@@ -513,7 +513,7 @@ export default function LoginScreen() {
                   style={{
                     position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
                     background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                    color: showPw ? '#a78bfa' : 'rgba(148,163,184,0.45)',
+                    color: showPw ? '#8f9ac9' : 'rgba(148,163,184,0.45)',
                     transition: 'color 0.15s',
                     display: 'flex', alignItems: 'center',
                   }}

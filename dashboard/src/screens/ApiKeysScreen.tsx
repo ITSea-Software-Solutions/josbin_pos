@@ -81,7 +81,7 @@ function PingStatus({ lastPingAt, isNl }: { lastPingAt: string | null; isNl: boo
           {isRecent ? (isNl ? 'Online' : 'Online') : (isNl ? 'Inactief' : 'Idle')}
         </span>
       </div>
-      <div style={{ fontSize: 11, color: '#9090a0', marginTop: 2 }}>
+      <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 2 }}>
         {new Date(lastPingAt).toLocaleString(isNl ? 'nl-SR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })}
       </div>
     </div>
@@ -225,7 +225,7 @@ export default function ApiKeysScreen() {
       {/* Page header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
             {isNl ? 'API Integraties' : 'API Integrations'}
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -239,9 +239,9 @@ export default function ApiKeysScreen() {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             padding: '10px 20px', borderRadius: 10,
-            background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+            background: 'linear-gradient(135deg, #293371, #1f2a63)',
             color: '#fff', border: 'none', fontSize: 13, fontWeight: 700,
-            cursor: 'pointer', boxShadow: '0 2px 10px rgba(124,58,237,.35)',
+            cursor: 'pointer', boxShadow: '0 2px 10px rgba(41,51,113,.35)',
           }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -255,16 +255,16 @@ export default function ApiKeysScreen() {
       {!isLoading && keys && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 28, maxWidth: 580 }}>
           {[
-            { label: isNl ? 'Totaal sleutels' : 'Total keys', value: total,  color: '#7c3aed' },
+            { label: isNl ? 'Totaal sleutels' : 'Total keys', value: total,  color: '#293371' },
             { label: isNl ? 'Actief' : 'Active',              value: active, color: '#16a34a' },
             { label: isNl ? 'Ingetrokken' : 'Revoked',        value: total - active, color: '#9ca3af' },
           ].map((s) => (
             <div key={s.label} style={{
-              background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14,
+              background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
               padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
             }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: s.color, letterSpacing: '-0.5px' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -329,14 +329,14 @@ export default function ApiKeysScreen() {
           <div style={{ background: '#fff', borderRadius: 20, padding: 32, width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,0.22)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', marginBottom: 3 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#16203a', marginBottom: 3 }}>
                   {isNl ? 'Nieuwe API-integratie' : 'New API Integration'}
                 </h3>
-                <p style={{ fontSize: 13, color: '#9090a0' }}>
+                <p style={{ fontSize: 13, color: '#7e88a0' }}>
                   {isNl ? 'Genereer een sleutel voor een extern POS-systeem.' : 'Generate a key for an external POS system.'}
                 </p>
               </div>
-              <button onClick={() => setShowCreate(false)} style={{ background: '#f5f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>
+              <button onClick={() => setShowCreate(false)} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>
                 ×
               </button>
             </div>
@@ -351,7 +351,7 @@ export default function ApiKeysScreen() {
                   value={form.store_id}
                   onChange={(e) => setForm((f) => ({ ...f, store_id: e.target.value }))}
                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #d9e1f1', fontSize: 13, outline: 'none' }}
                 />
               </div>
 
@@ -364,20 +364,20 @@ export default function ApiKeysScreen() {
                   value={form.pos_system}
                   onChange={(e) => setForm((f) => ({ ...f, pos_system: e.target.value }))}
                   placeholder={isNl ? 'bijv. Lightspeed, Square, Aangepast' : 'e.g. Lightspeed, Square, Custom'}
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #d9e1f1', fontSize: 13, outline: 'none' }}
                 />
               </div>
 
               {/* Webhook URL */}
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-                  Webhook URL <span style={{ fontWeight: 400, color: '#9090a0' }}>({isNl ? 'optioneel' : 'optional'})</span>
+                  Webhook URL <span style={{ fontWeight: 400, color: '#7e88a0' }}>({isNl ? 'optioneel' : 'optional'})</span>
                 </label>
                 <input
                   value={form.webhook_url}
                   onChange={(e) => setForm((f) => ({ ...f, webhook_url: e.target.value }))}
                   placeholder="https://your-system.com/webhook"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none', fontFamily: 'monospace' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #d9e1f1', fontSize: 13, outline: 'none', fontFamily: 'monospace' }}
                 />
               </div>
 
@@ -396,7 +396,7 @@ export default function ApiKeysScreen() {
                         style={{
                           padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
                           cursor: 'pointer', transition: 'all 0.12s',
-                          background: on ? (ec?.bg ?? '#f5f5fb') : '#f9fafb',
+                          background: on ? (ec?.bg ?? '#f2f5fb') : '#f9fafb',
                           color: on ? (ec?.color ?? '#6b7280') : '#9ca3af',
                           border: `1px solid ${on ? (ec?.border ?? '#e5e7eb') : '#e5e7eb'}`,
                         }}
@@ -418,7 +418,7 @@ export default function ApiKeysScreen() {
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
               <button
                 onClick={() => setShowCreate(false)}
-                style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
               >
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
@@ -427,7 +427,7 @@ export default function ApiKeysScreen() {
                 disabled={!form.store_id || !form.pos_system || create.isPending}
                 style={{
                   flex: 1, padding: '11px 0',
-                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                  background: 'linear-gradient(135deg, #293371, #1f2a63)',
                   color: '#fff', border: 'none', borderRadius: 10,
                   fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   opacity: (!form.store_id || !form.pos_system || create.isPending) ? 0.5 : 1,
@@ -449,12 +449,12 @@ export default function ApiKeysScreen() {
           <div style={{ background: '#fff', borderRadius: 20, padding: 32, width: '100%', maxWidth: 480, boxShadow: '0 24px 64px rgba(0,0,0,0.22)', maxHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
               <div>
-                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1c1c2e', marginBottom: 3 }}>
+                <h3 style={{ fontSize: 18, fontWeight: 800, color: '#16203a', marginBottom: 3 }}>
                   {isNl ? 'Webhook-configuratie' : 'Webhook configuration'}
                 </h3>
-                <p style={{ fontSize: 13, color: '#9090a0' }}>{editTarget.store_name}</p>
+                <p style={{ fontSize: 13, color: '#7e88a0' }}>{editTarget.store_name}</p>
               </div>
-              <button onClick={() => setEditTarget(null)} style={{ background: '#f5f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>
+              <button onClick={() => setEditTarget(null)} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 16, color: '#6b7280' }}>
                 ×
               </button>
             </div>
@@ -468,22 +468,22 @@ export default function ApiKeysScreen() {
                 <input
                   value={editForm.pos_system}
                   onChange={(e) => setEditForm((f) => ({ ...f, pos_system: e.target.value }))}
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #d9e1f1', fontSize: 13, outline: 'none' }}
                 />
               </div>
 
               {/* Webhook URL */}
               <div>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
-                  Webhook URL <span style={{ fontWeight: 400, color: '#9090a0' }}>({isNl ? 'optioneel' : 'optional'})</span>
+                  Webhook URL <span style={{ fontWeight: 400, color: '#7e88a0' }}>({isNl ? 'optioneel' : 'optional'})</span>
                 </label>
                 <input
                   value={editForm.webhook_url}
                   onChange={(e) => setEditForm((f) => ({ ...f, webhook_url: e.target.value }))}
                   placeholder="https://your-system.com/webhook"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #e0e0ed', fontSize: 13, outline: 'none', fontFamily: 'monospace' }}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 14px', borderRadius: 10, border: '1px solid #d9e1f1', fontSize: 13, outline: 'none', fontFamily: 'monospace' }}
                 />
-                <p style={{ fontSize: 11, color: '#9090a0', marginTop: 5 }}>
+                <p style={{ fontSize: 11, color: '#7e88a0', marginTop: 5 }}>
                   {isNl
                     ? 'Laat leeg om uitgaande webhooks uit te schakelen.'
                     : 'Leave empty to disable outbound webhooks.'}
@@ -505,7 +505,7 @@ export default function ApiKeysScreen() {
                         style={{
                           padding: '6px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700,
                           cursor: 'pointer', transition: 'all 0.12s',
-                          background: on ? (ec?.bg ?? '#f5f5fb') : '#f9fafb',
+                          background: on ? (ec?.bg ?? '#f2f5fb') : '#f9fafb',
                           color: on ? (ec?.color ?? '#6b7280') : '#9ca3af',
                           border: `1px solid ${on ? (ec?.border ?? '#e5e7eb') : '#e5e7eb'}`,
                         }}
@@ -518,7 +518,7 @@ export default function ApiKeysScreen() {
               </div>
 
               {/* Rotate webhook secret */}
-              <div style={{ borderTop: '1px solid #f0f0f8', paddingTop: 16 }}>
+              <div style={{ borderTop: '1px solid #eef2fb', paddingTop: 16 }}>
                 <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
                   {isNl ? 'Webhook-handtekeningsleutel' : 'Webhook signing secret'}
                 </label>
@@ -557,7 +557,7 @@ export default function ApiKeysScreen() {
             <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
               <button
                 onClick={() => setEditTarget(null)}
-                style={{ flex: 1, padding: '11px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '11px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}
               >
                 {isNl ? 'Annuleren' : 'Cancel'}
               </button>
@@ -566,7 +566,7 @@ export default function ApiKeysScreen() {
                 disabled={!editForm.pos_system || update.isPending}
                 style={{
                   flex: 1, padding: '11px 0',
-                  background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
+                  background: 'linear-gradient(135deg, #293371, #1f2a63)',
                   color: '#fff', border: 'none', borderRadius: 10,
                   fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   opacity: (!editForm.pos_system || update.isPending) ? 0.5 : 1,
@@ -580,22 +580,22 @@ export default function ApiKeysScreen() {
       )}
 
       {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f3f3f8' }}>
-                <div style={{ width: 120, height: 13, borderRadius: 7, background: '#f0f0f8' }} />
-                <div style={{ width: 100, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ flex: 1, height: 12, borderRadius: 6, background: '#f5f5fb' }} />
-                <div style={{ width: 80, height: 22, borderRadius: 11, background: '#f0f0f8' }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f1f4fb' }}>
+                <div style={{ width: 120, height: 13, borderRadius: 7, background: '#eef2fb' }} />
+                <div style={{ width: 100, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ flex: 1, height: 12, borderRadius: 6, background: '#f2f5fb' }} />
+                <div style={{ width: 80, height: 22, borderRadius: 11, background: '#eef2fb' }} />
               </div>
             ))}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 {[
                   { key: 'store',    label: isNl ? 'Vestiging' : 'Store' },
                   { key: 'system',   label: isNl ? 'Systeem' : 'System' },
@@ -606,9 +606,9 @@ export default function ApiKeysScreen() {
                   { key: null,       label: '' },
                 ].map((h) => (
                   <th key={h.label || 'actions'} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
-                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
@@ -617,20 +617,20 @@ export default function ApiKeysScreen() {
               {sortedKeys.map((key, i) => (
                 <tr
                   key={key.id}
-                  style={{ borderBottom: i < sortedKeys.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                  style={{ borderBottom: i < sortedKeys.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >
                   <td style={{ padding: '14px 20px' }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{key.store_name}</div>
-                    <div style={{ fontSize: 11, color: '#9090a0', marginTop: 2, fontFamily: 'monospace' }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{key.store_name}</div>
+                    <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 2, fontFamily: 'monospace' }}>
                       {key.id.slice(0, 8)}…
                     </div>
                   </td>
                   <td style={{ padding: '14px 20px' }}>
                     <span style={{
                       padding: '4px 10px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-                      background: '#f5f5fb', color: '#4338ca', border: '1px solid #e0e0ff',
+                      background: '#f2f5fb', color: '#1a234f', border: '1px solid #e0e0ff',
                     }}>
                       {key.pos_system}
                     </span>
@@ -684,7 +684,7 @@ export default function ApiKeysScreen() {
                           onClick={() => openEdit(key)}
                           style={{
                             padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-                            background: '#f5f5fb', color: '#4338ca', border: '1px solid #e0e0ff',
+                            background: '#f2f5fb', color: '#1a234f', border: '1px solid #e0e0ff',
                             cursor: 'pointer',
                           }}
                         >
@@ -724,8 +724,8 @@ export default function ApiKeysScreen() {
 
         {/* Footer */}
         {!isLoading && total > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f3f3f8', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 12, color: '#9090a0' }}>
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {total} {isNl ? 'sleutels in totaal' : 'keys total'}
             </span>
           </div>

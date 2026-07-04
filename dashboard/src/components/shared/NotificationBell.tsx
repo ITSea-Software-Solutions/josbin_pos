@@ -33,10 +33,10 @@ function dotColor(type?: string): string {
   if (type === 'btw_disputed') return '#c8102e'
   if (type === 'btw_accepted') return '#1f9d55'
   if (type === 'btw_resubmitted') return '#d97706'
-  return '#6366f1'
+  return '#3a4a8f'
 }
 
-export default function NotificationBell({ accent = '#6366f1', onNavigate }: Props) {
+export default function NotificationBell({ accent = '#3a4a8f', onNavigate }: Props) {
   const { i18n } = useTranslation()
   const nl = i18n.language === 'nl'
   const qc = useQueryClient()
@@ -91,12 +91,12 @@ export default function NotificationBell({ accent = '#6366f1', onNavigate }: Pro
         onClick={() => setOpen(o => !o)}
         style={{
           position: 'relative', width: 38, height: 38, borderRadius: 10,
-          border: '1px solid #e9e9ef', background: open ? '#f5f5f8' : '#fff',
+          border: '1px solid #e6ecf5', background: open ? '#f2f5fb' : '#fff',
           cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
           color: '#4b4b5e',
         }}
-        onMouseEnter={e => { e.currentTarget.style.background = '#f5f5f8' }}
-        onMouseLeave={e => { e.currentTarget.style.background = open ? '#f5f5f8' : '#fff' }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#f2f5fb' }}
+        onMouseLeave={e => { e.currentTarget.style.background = open ? '#f2f5fb' : '#fff' }}
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} style={{ width: 19, height: 19 }}>
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -115,14 +115,14 @@ export default function NotificationBell({ accent = '#6366f1', onNavigate }: Pro
       {open && (
         <div style={{
           position: 'absolute', right: 0, top: 46, width: 360, maxWidth: '90vw',
-          background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef',
+          background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5',
           boxShadow: '0 12px 40px rgba(0,0,0,0.16)', zIndex: 1000, overflow: 'hidden',
         }}>
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             padding: '13px 16px', borderBottom: '1px solid #f0f0f4',
           }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
               {nl ? 'Meldingen' : 'Notifications'}
             </span>
             {unread > 0 && (
@@ -138,7 +138,7 @@ export default function NotificationBell({ accent = '#6366f1', onNavigate }: Pro
 
           <div style={{ maxHeight: 420, overflowY: 'auto' }}>
             {items.length === 0 && (
-              <div style={{ padding: '36px 16px', textAlign: 'center', color: '#9090a0', fontSize: 13 }}>
+              <div style={{ padding: '36px 16px', textAlign: 'center', color: '#7e88a0', fontSize: 13 }}>
                 {nl ? 'Geen meldingen' : 'No notifications'}
               </div>
             )}
@@ -163,7 +163,7 @@ export default function NotificationBell({ accent = '#6366f1', onNavigate }: Pro
                     background: unreadItem ? dotColor(n.data.type) : '#d4d4dd',
                   }} />
                   <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#1c1c2e' }}>{title}</span>
+                    <span style={{ display: 'block', fontSize: 13, fontWeight: 700, color: '#16203a' }}>{title}</span>
                     <span style={{ display: 'block', fontSize: 12.5, color: '#5b5b6e', marginTop: 2, lineHeight: 1.4 }}>{message}</span>
                     <span style={{ display: 'block', fontSize: 11, color: '#9b9bab', marginTop: 4 }}>{relTime(n.created_at, nl)}</span>
                   </span>

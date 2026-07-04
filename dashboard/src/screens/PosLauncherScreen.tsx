@@ -79,7 +79,7 @@ export default function PosLauncherScreen() {
 
         {/* Electron installer */}
         <div style={card()}>
-          <span style={{ ...pill('unknown'), background: '#eef2ff', color: '#4338ca', borderColor: '#c7d2fe' }}>
+          <span style={{ ...pill('unknown'), background: '#eef2ff', color: '#1a234f', borderColor: '#c7d2fe' }}>
             {isNl ? '📦 Voor kassaterminals' : '📦 For till terminals'}
           </span>
           <h3 style={cardH()}>{isNl ? 'Windows-installer' : 'Windows installer'}</h3>
@@ -89,7 +89,7 @@ export default function PosLauncherScreen() {
               : 'The official installer for Windows till terminals. After first launch, Josbin POS opens automatically when the till boots.'}
           </p>
           <p style={mono()}>Josbin POS-{`{version}`}-Setup.exe</p>
-          <p style={{ fontSize: 12, color: '#9090a0', marginBottom: 12 }}>
+          <p style={{ fontSize: 12, color: '#7e88a0', marginBottom: 12 }}>
             {isNl
               ? 'Vraag uw Josbin POS-contactpersoon om de actuele installer voor uw licentie.'
               : 'Ask your Josbin POS contact for the current installer for your license.'}
@@ -118,7 +118,7 @@ export default function PosLauncherScreen() {
             ? 'Volledige stap-voor-stap handleiding voor de kassamedewerker: ' :
               'Full step-by-step guide for the cashier: '}
           <a href="http://localhost:5180/user_manual/" target="_blank" rel="noopener"
-            style={{ color: '#4f46e5', fontWeight: 700, textDecoration: 'none' }}>
+            style={{ color: '#1f2a63', fontWeight: 700, textDecoration: 'none' }}>
             {isNl ? 'POS Gebruikershandleiding ↗' : 'POS User Manual ↗'}
           </a>
         </p>
@@ -131,11 +131,11 @@ const card = (): React.CSSProperties => ({
   background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14,
   padding: 24, display: 'flex', flexDirection: 'column', gap: 10,
 })
-const cardH = (): React.CSSProperties => ({ margin: '6px 0 0', fontSize: 17, fontWeight: 800, color: '#1c1c2e' })
+const cardH = (): React.CSSProperties => ({ margin: '6px 0 0', fontSize: 17, fontWeight: 800, color: '#16203a' })
 const cardP = (): React.CSSProperties => ({ margin: 0, fontSize: 13, color: '#6b7280', lineHeight: 1.55 })
 const mono = (): React.CSSProperties => ({
   margin: '6px 0', fontFamily: 'ui-monospace, SFMono-Regular, monospace',
-  fontSize: 13, color: '#1c1c2e', background: '#f9fafb',
+  fontSize: 13, color: '#16203a', background: '#f9fafb',
   padding: '8px 12px', borderRadius: 8, border: '1px solid #e5e7eb',
 })
 const pill = (r: Reachability): React.CSSProperties => ({
@@ -148,12 +148,12 @@ const pill = (r: Reachability): React.CSSProperties => ({
 })
 const primaryBtn = (enabled: boolean): React.CSSProperties => ({
   padding: '10px 16px', borderRadius: 10, border: 'none',
-  background: enabled ? 'linear-gradient(135deg,#7c3aed,#4f46e5)' : '#cbd5e1',
+  background: enabled ? 'linear-gradient(135deg,#293371,#1f2a63)' : '#cbd5e1',
   color: '#fff', fontSize: 14, fontWeight: 700,
   cursor: enabled ? 'pointer' : 'not-allowed',
-  boxShadow: enabled ? '0 4px 14px rgba(124,58,237,.35)' : 'none',
+  boxShadow: enabled ? '0 4px 14px rgba(41,51,113,.35)' : 'none',
 })
 const secondaryBtn = (): React.CSSProperties => ({
   padding: '10px 16px', borderRadius: 10, border: '1px solid #c7d2fe',
-  background: '#eef2ff', color: '#4338ca', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+  background: '#eef2ff', color: '#1a234f', fontSize: 13, fontWeight: 700, cursor: 'pointer',
 })

@@ -65,14 +65,14 @@ function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSessi
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e', marginBottom: 4 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 800, color: '#16203a', marginBottom: 4 }}>
               {isNl ? 'Heropening beoordelen' : 'Review re-open request'}
             </h3>
-            <p style={{ fontSize: 12.5, color: '#9090a0' }}>
+            <p style={{ fontSize: 12.5, color: '#7e88a0' }}>
               {session.register_name ?? `Register ${session.register_number}`} · {session.cashier_name}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
         </div>
 
         {/* Request details */}
@@ -80,8 +80,8 @@ function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSessi
           <p style={{ fontSize: 11, fontWeight: 700, color: '#92400e', textTransform: 'uppercase', letterSpacing: '0.7px', marginBottom: 8 }}>
             {isNl ? 'Reden van verzoek' : 'Reason for request'}
           </p>
-          <p style={{ fontSize: 13.5, color: '#1c1c2e', lineHeight: 1.5 }}>"{session.reopen_reason}"</p>
-          <p style={{ fontSize: 11, color: '#9090a0', marginTop: 8 }}>
+          <p style={{ fontSize: 13.5, color: '#16203a', lineHeight: 1.5 }}>"{session.reopen_reason}"</p>
+          <p style={{ fontSize: 11, color: '#7e88a0', marginTop: 8 }}>
             {isNl ? 'Ingediend om' : 'Submitted at'} {fmtTime(session.reopen_requested_at, isNl)}
           </p>
         </div>
@@ -96,8 +96,8 @@ function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSessi
               { label: isNl ? 'Verschil' : 'Discrepancy', value: session.discrepancy ? fmt(session.discrepancy) : '—' },
             ].map(({ label, value }) => (
               <div key={label}>
-                <p style={{ fontSize: 10.5, color: '#9090a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{label}</p>
-                <p style={{ fontSize: 13, fontWeight: 700, color: '#1c1c2e' }}>{value}</p>
+                <p style={{ fontSize: 10.5, color: '#7e88a0', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 2 }}>{label}</p>
+                <p style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>{value}</p>
               </div>
             ))}
           </div>
@@ -130,7 +130,7 @@ function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSessi
           <button
             onClick={() => mutation.mutate({ approved: true })}
             disabled={mutation.isPending}
-            style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.5 : 1, boxShadow: '0 4px 14px rgba(124,58,237,.35)' }}>
+            style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.5 : 1, boxShadow: '0 4px 14px rgba(41,51,113,.35)' }}>
             {mutation.isPending ? '…' : (isNl ? 'Goedkeuren' : 'Approve')}
           </button>
         </div>
@@ -169,11 +169,11 @@ function ReopenRegisterModal({
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16, backdropFilter: 'blur(4px)' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 460, boxShadow: '0 24px 64px rgba(0,0,0,.35)' }}>
-        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #f0f0f8' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e' }}>
+        <div style={{ padding: '20px 24px 14px', borderBottom: '1px solid #eef2fb' }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#16203a' }}>
             {isNl ? 'Kassa heropenen voor volgende ploeg' : 'Reopen register for next shift'}
           </h3>
-          <p style={{ fontSize: 12, color: '#9090a0', marginTop: 4 }}>{register.name}</p>
+          <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 4 }}>{register.name}</p>
         </div>
         <div style={{ padding: '18px 24px 20px' }}>
           <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '12px 14px', marginBottom: 16, fontSize: 12.5, color: '#92400e', lineHeight: 1.55 }}>
@@ -212,7 +212,7 @@ function ReopenRegisterModal({
             placeholder={isNl ? 'Bijv.: Sandra (avondploeg)' : 'E.g.: Sandra (evening shift)'}
             style={{ width: '100%', height: 36, borderRadius: 8, border: '1.5px solid #e5e7eb', padding: '0 12px', fontSize: 13, boxSizing: 'border-box' }}
           />
-          <p style={{ fontSize: 11, color: '#9090a0', marginTop: 6 }}>
+          <p style={{ fontSize: 11, color: '#7e88a0', marginTop: 6 }}>
             {isNl
               ? 'Wordt vastgelegd in het auditlogboek samen met uw naam en het tijdstip.'
               : 'Recorded in the audit log together with your name and the timestamp.'}
@@ -225,7 +225,7 @@ function ReopenRegisterModal({
             </button>
             <button onClick={() => mutation.mutate()}
               disabled={reason.trim().length < 3 || mutation.isPending}
-              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (reason.trim().length < 3 || mutation.isPending) ? 0.5 : 1 }}>
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (reason.trim().length < 3 || mutation.isPending) ? 0.5 : 1 }}>
               {mutation.isPending ? '…' : (isNl ? 'Heropenen' : 'Reopen')}
             </button>
           </div>
@@ -247,14 +247,14 @@ function NotePrompt({
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16, backdropFilter: 'blur(4px)' }}
       onClick={e => { if (e.target === e.currentTarget) onCancel() }}>
       <div style={{ background: '#fff', borderRadius: 18, width: '100%', maxWidth: 440, boxShadow: '0 24px 64px rgba(0,0,0,.35)', padding: '22px 24px' }}>
-        <h3 style={{ fontSize: 16, fontWeight: 800, color: '#1c1c2e', marginBottom: body ? 6 : 14 }}>{title}</h3>
+        <h3 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', marginBottom: body ? 6 : 14 }}>{title}</h3>
         {body && <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 14, lineHeight: 1.5 }}>{body}</p>}
         <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 6 }}>
           {required ? (isNl ? 'Reden *' : 'Reason *') : (isNl ? 'Reden (optioneel)' : 'Reason (optional)')}
         </label>
         <textarea value={note} onChange={e => setNote(e.target.value)} rows={3} placeholder={placeholder}
           style={{ width: '100%', borderRadius: 10, border: '1.5px solid #e5e7eb', padding: '10px 12px', fontSize: 13, resize: 'none', fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }} />
-        <p style={{ fontSize: 11, color: '#9090a0', marginTop: 6 }}>
+        <p style={{ fontSize: 11, color: '#7e88a0', marginTop: 6 }}>
           {isNl ? 'Wordt vastgelegd in het auditlogboek.' : 'Recorded in the audit log.'}
         </p>
         <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
@@ -316,8 +316,8 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Add new register */}
-      <div style={{ background: '#f8f7ff', border: '1px solid #ede9fe', borderRadius: 14, padding: '18px 20px' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#7c3aed', marginBottom: 12 }}>
+      <div style={{ background: '#f4f6fc', border: '1px solid #e6ebf7', borderRadius: 14, padding: '18px 20px' }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#293371', marginBottom: 12 }}>
           {isNl ? '+ Nieuwe kassa toevoegen' : '+ Add new register'}
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -330,12 +330,12 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
           <button
             onClick={() => setCreateNoteOpen(true)}
             disabled={newName.trim().length < 2 || createMut.isPending}
-            style={{ height: 38, padding: '0 18px', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 13, fontWeight: 700, cursor: newName.trim().length < 2 ? 'not-allowed' : 'pointer', opacity: newName.trim().length < 2 ? 0.5 : 1 }}
+            style={{ height: 38, padding: '0 18px', borderRadius: 8, border: 'none', background: '#293371', color: '#fff', fontSize: 13, fontWeight: 700, cursor: newName.trim().length < 2 ? 'not-allowed' : 'pointer', opacity: newName.trim().length < 2 ? 0.5 : 1 }}
           >
             {createMut.isPending ? '…' : (isNl ? 'Toevoegen' : 'Add')}
           </button>
         </div>
-        <p style={{ margin: '8px 0 0', fontSize: 11, color: '#9090a0' }}>
+        <p style={{ margin: '8px 0 0', fontSize: 11, color: '#7e88a0' }}>
           {isNl
             ? 'De volgende stap vraagt een korte reden (optioneel) voor het auditlogboek.'
             : 'Next step asks for a short reason (optional) for the audit log.'}
@@ -345,12 +345,12 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
 
       {/* Register list */}
       {isLoading ? (
-        <p style={{ fontSize: 13, color: '#9090a0', textAlign: 'center', padding: 20 }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+        <p style={{ fontSize: 13, color: '#7e88a0', textAlign: 'center', padding: 20 }}>{isNl ? 'Laden…' : 'Loading…'}</p>
       ) : registers.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fff', borderRadius: 14, border: '1px solid #e9e9ef' }}>
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5' }}>
           <div style={{ fontSize: 36, marginBottom: 10 }}>🏧</div>
           <p style={{ fontSize: 14, fontWeight: 600, color: '#6b7280' }}>{isNl ? 'Nog geen kassas aangemaakt' : 'No registers yet'}</p>
-          <p style={{ fontSize: 12, color: '#9090a0' }}>{isNl ? 'Voeg een kassa toe om te beginnen.' : 'Add a register above to get started.'}</p>
+          <p style={{ fontSize: 12, color: '#7e88a0' }}>{isNl ? 'Voeg een kassa toe om te beginnen.' : 'Add a register above to get started.'}</p>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -363,8 +363,8 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
               ? (isNl ? `In gebruik door ${r.session.cashier_name ?? '—'}` : `In use by ${r.session.cashier_name ?? '—'}`)
               : null
             return (
-              <div key={r.id} style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f0f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#7c3aed', flexShrink: 0 }}>
+              <div key={r.id} style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#293371', flexShrink: 0 }}>
                   {r.number}
                 </div>
                 {editId === r.id ? (
@@ -372,12 +372,12 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                     value={editName}
                     onChange={e => setEditName(e.target.value)}
                     autoFocus
-                    style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 7, border: '1.5px solid #7c3aed', fontSize: 13 }}
+                    style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 7, border: '1.5px solid #293371', fontSize: 13 }}
                   />
                 ) : (
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{r.name}</div>
-                    {closedSub && <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 2 }}>{closedSub}</div>}
+                    <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{r.name}</div>
+                    {closedSub && <div style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 2 }}>{closedSub}</div>}
                   </div>
                 )}
                 <StatusBadge status={r.status} isNl={isNl} />
@@ -386,7 +386,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                     <button
                       onClick={() => updateMut.mutate({ id: r.id, name: editName })}
                       disabled={editName.trim().length < 1}
-                      style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#293371', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                     >
                       {isNl ? 'Opslaan' : 'Save'}
                     </button>
@@ -403,7 +403,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                       <button
                         onClick={() => setReopenTarget(r)}
                         title={isNl ? 'Heropenen voor volgende ploeg' : 'Reopen for next shift'}
-                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
                         ↻ {isNl ? 'Heropenen' : 'Reopen'}
                       </button>
@@ -443,7 +443,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
             : 'Short note — e.g. why you\'re adding this register or where it sits.'}
           placeholder={isNl ? 'Bijv.: extra kassa voor zaterdagdrukte' : 'E.g.: extra register for Saturday rush'}
           confirmLabel={isNl ? 'Kassa toevoegen' : 'Add register'}
-          confirmColor="#7c3aed"
+          confirmColor="#293371"
           isNl={isNl}
           onCancel={() => setCreateNoteOpen(false)}
           onConfirm={(note) => createMut.mutate(note || undefined)}
@@ -549,7 +549,7 @@ export default function RegistersScreen() {
 
       {/* Page header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Kassabeheer' : 'Register Management'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -558,7 +558,7 @@ export default function RegistersScreen() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #e9e9ef' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 24, borderBottom: '2px solid #e6ecf5' }}>
         {([
           { key: 'sessions', nl: 'Kassasessies', en: 'Register Sessions' },
           { key: 'manage',   nl: 'Kassas beheren', en: 'Manage Registers' },
@@ -567,8 +567,8 @@ export default function RegistersScreen() {
             style={{
               padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
               fontSize: 14, fontWeight: activeTab === t.key ? 700 : 500,
-              color: activeTab === t.key ? '#7c3aed' : '#6b7280',
-              borderBottom: activeTab === t.key ? '2px solid #7c3aed' : '2px solid transparent',
+              color: activeTab === t.key ? '#293371' : '#6b7280',
+              borderBottom: activeTab === t.key ? '2px solid #293371' : '2px solid transparent',
               marginBottom: -2,
             }}
           >
@@ -578,7 +578,7 @@ export default function RegistersScreen() {
       </div>
 
       {/* Shared org + store selector (visible on both tabs, for every role) */}
-      <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+      <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '14px 18px', marginBottom: 20, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
         {isSuperAdmin && (
           <select value={selectedOrgId} onChange={e => { setSelectedOrgId(e.target.value); setSelectedStoreId('') }}
             style={{ padding: '8px 32px 8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none', minWidth: 200 }}>
@@ -593,7 +593,7 @@ export default function RegistersScreen() {
           {(stores as Store[]).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         {!selectedStoreId && (
-          <span style={{ fontSize: 12, color: '#9090a0' }}>
+          <span style={{ fontSize: 12, color: '#7e88a0' }}>
             {isNl ? 'Kies een vestiging om kassas te beheren of sessies te bekijken.' : 'Pick a store to manage registers or view sessions.'}
           </span>
         )}
@@ -609,7 +609,7 @@ export default function RegistersScreen() {
       {activeTab === 'sessions' && (<>
 
       {/* Date + pending banner (org/store selector is now above the tabs) */}
-      <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '14px 18px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+      <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '14px 18px', marginBottom: 24, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
         <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
           style={{ padding: '8px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', outline: 'none' }} />
         {pendingCount > 0 && (
@@ -640,12 +640,12 @@ export default function RegistersScreen() {
 
       {/* No store selected */}
       {noStore && (
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', padding: '64px 24px', textAlign: 'center' }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', padding: '64px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 12 }}>🏪</div>
-          <p style={{ fontSize: 15, fontWeight: 700, color: '#1c1c2e', marginBottom: 6 }}>
+          <p style={{ fontSize: 15, fontWeight: 700, color: '#16203a', marginBottom: 6 }}>
             {isNl ? 'Kies een vestiging' : 'Choose a store'}
           </p>
-          <p style={{ fontSize: 13, color: '#9090a0' }}>
+          <p style={{ fontSize: 13, color: '#7e88a0' }}>
             {isNl ? 'Selecteer een organisatie en vestiging om kassasessies te bekijken.' : 'Select an organisation and store to view register sessions.'}
           </p>
         </div>
@@ -653,22 +653,22 @@ export default function RegistersScreen() {
 
       {/* Sessions table */}
       {!noStore && (
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
           {isLoading ? (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid #f3f3f8' }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f0f8' }} />
-                  <div style={{ flex: 1, height: 13, borderRadius: 7, background: '#f0f0f8', maxWidth: 180 }} />
-                  <div style={{ width: 90, height: 22, borderRadius: 11, background: '#f5f5fb' }} />
-                  <div style={{ width: 70, height: 22, borderRadius: 11, background: '#f0f0f8' }} />
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 20px', borderBottom: '1px solid #f1f4fb' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eef2fb' }} />
+                  <div style={{ flex: 1, height: 13, borderRadius: 7, background: '#eef2fb', maxWidth: 180 }} />
+                  <div style={{ width: 90, height: 22, borderRadius: 11, background: '#f2f5fb' }} />
+                  <div style={{ width: 70, height: 22, borderRadius: 11, background: '#eef2fb' }} />
                 </div>
               ))}
             </div>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+                <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                   {[
                     { key: 'register',    label: isNl ? 'Kassa' : 'Register' },
                     { key: 'cashier',     label: isNl ? 'Kassier' : 'Cashier' },
@@ -682,9 +682,9 @@ export default function RegistersScreen() {
                     { key: null,          label: isNl ? 'Actie' : 'Action' },
                   ].map(h => (
                     <th key={h.label} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
-                      style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                      style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                       {h.label}
-                      {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                      {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                     </th>
                   ))}
                 </tr>
@@ -695,21 +695,21 @@ export default function RegistersScreen() {
                   const discColor = disc === null ? '#6b7280' : disc < 0 ? '#dc2626' : disc > 0 ? '#16a34a' : '#6b7280'
                   return (
                     <tr key={s.id}
-                      style={{ borderBottom: i < sortedSessions.length - 1 ? '1px solid #f3f3f8' : 'none', transition: 'background .12s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                      style={{ borderBottom: i < sortedSessions.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 9, background: '#f0f0f8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#7c3aed' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#293371' }}>
                             {s.register_number ?? '?'}
                           </div>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: '#1c1c2e' }}>{s.register_name ?? `Register ${s.register_number}`}</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>{s.register_name ?? `Register ${s.register_number}`}</span>
                         </div>
                       </td>
                       <td style={{ padding: '12px 14px' }}>
-                        <p style={{ fontSize: 13, fontWeight: 600, color: '#1c1c2e' }}>{s.cashier_name}</p>
-                        <p style={{ fontSize: 11, color: '#9090a0' }}>{s.cashier_email}</p>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: '#16203a' }}>{s.cashier_name}</p>
+                        <p style={{ fontSize: 11, color: '#7e88a0' }}>{s.cashier_email}</p>
                       </td>
                       <td style={{ padding: '12px 14px' }}><StatusBadge status={s.status} isNl={isNl} /></td>
                       <td style={{ padding: '12px 14px', fontSize: 13, fontWeight: 600, color: '#374151' }}>{fmt(s.opening_float)}</td>
@@ -747,8 +747,8 @@ export default function RegistersScreen() {
             </table>
           )}
           {sessions.length > 0 && (
-            <div style={{ padding: '11px 20px', borderTop: '1px solid #f3f3f8', background: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: 12, color: '#9090a0' }}>{sessions.length} {isNl ? 'sessies' : 'sessions'}</span>
+            <div style={{ padding: '11px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
+              <span style={{ fontSize: 12, color: '#7e88a0' }}>{sessions.length} {isNl ? 'sessies' : 'sessions'}</span>
             </div>
           )}
         </div>

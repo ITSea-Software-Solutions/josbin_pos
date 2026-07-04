@@ -10,8 +10,8 @@
   :root{
     --ink:#0a0e1a; --stage:#0c1322; --surface:#141d31; --surface2:#1b2640;
     --line:#25314e; --line-soft:#1a2440;
-    --em:#16c98d; --em-glow:rgba(22,201,141,.45);
-    --gold:#f5c542; --gold-glow:rgba(245,197,66,.4);
+    --em:#1f9bde; --em-glow:rgba(31,155,222,.45);
+    --gold:#ef6c00; --gold-glow:rgba(239,108,0,.4);
     --text:#eef2fb; --muted:#94a2c2; --dim:#6b7a9c;
     --stack:-apple-system,"SF Pro Display","Segoe UI Variable","Segoe UI",system-ui,Roboto,sans-serif;
   }
@@ -20,8 +20,8 @@
   body{
     font-family:var(--stack); color:var(--text); -webkit-font-smoothing:antialiased;
     background:
-      radial-gradient(1100px 560px at 50% -8%, rgba(22,201,141,.12), transparent 60%),
-      radial-gradient(900px 500px at 108% 8%, rgba(245,197,66,.08), transparent 55%),
+      radial-gradient(1100px 560px at 50% -8%, rgba(31,155,222,.12), transparent 60%),
+      radial-gradient(900px 500px at 108% 8%, rgba(239,108,0,.08), transparent 55%),
       var(--ink);
     min-height:100dvh;
   }
@@ -31,7 +31,7 @@
   .nav{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:clamp(28px,6vw,64px)}
   .brand{display:flex;align-items:center;gap:14px}
   .logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;font-weight:800;font-size:22px;color:#04140d;
-    background:linear-gradient(135deg,var(--em),#39e6a8);box-shadow:0 10px 24px -6px var(--em-glow),inset 0 0 0 1px rgba(255,255,255,.25)}
+    background:linear-gradient(135deg,var(--em),#5cc8ff);box-shadow:0 10px 24px -6px var(--em-glow),inset 0 0 0 1px rgba(255,255,255,.25)}
   .wordmark{font-size:26px;font-weight:800;letter-spacing:-.02em}
   .wordmark b{color:var(--em)}
   .flag{display:flex;flex-direction:column;width:30px;height:20px;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
@@ -39,7 +39,7 @@
   .flag .g{height:26%;background:#377e3f}.flag .w{height:12%;background:#fff}
   .flag .r{height:24%;background:#b40a2d;position:relative}
   .flag .r::after{content:"★";position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);font-size:11px;line-height:0}
-  .langbtn{display:inline-flex;align-items:center;gap:7px;background:var(--surface);color:var(--text);border:1px solid rgba(245,197,66,.4);
+  .langbtn{display:inline-flex;align-items:center;gap:7px;background:var(--surface);color:var(--text);border:1px solid rgba(239,108,0,.4);
     border-radius:100px;padding:9px 16px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:.2s}
   .langbtn:hover{border-color:var(--gold);color:var(--gold)}
   .langbtn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
@@ -59,8 +59,8 @@
   @media (max-width:760px){ .cards{grid-template-columns:1fr} }
   .vcard{background:linear-gradient(180deg,var(--surface),#111a2c);border:1px solid var(--line);border-radius:20px;overflow:hidden;
     display:flex;flex-direction:column;transition:transform .25s ease,border-color .25s ease,box-shadow .25s ease}
-  .vcard:hover{transform:translateY(-3px);border-color:rgba(22,201,141,.5);box-shadow:0 24px 60px -30px rgba(0,0,0,.8)}
-  .vcard.tez:hover{border-color:rgba(245,197,66,.5)}
+  .vcard:hover{transform:translateY(-3px);border-color:rgba(31,155,222,.5);box-shadow:0 24px 60px -30px rgba(0,0,0,.8)}
+  .vcard.tez:hover{border-color:rgba(239,108,0,.5)}
 
   /* poster */
   .poster{position:relative;aspect-ratio:16/9;cursor:pointer;overflow:hidden;
@@ -72,12 +72,12 @@
     background:radial-gradient(closest-side,var(--em-glow),transparent 70%)}
   .tez .glow{background:radial-gradient(closest-side,var(--gold-glow),transparent 70%)}
   .poster .pbrand{position:absolute;left:24px;top:22px;display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.02em}
-  .poster .pbrand .m{width:16px;height:16px;border-radius:5px;background:linear-gradient(135deg,var(--em),#3ee3a6)}
+  .poster .pbrand .m{width:16px;height:16px;border-radius:5px;background:linear-gradient(135deg,var(--em),#6fd0ff)}
   .poster .pbrand b{color:var(--em)}
   .ptitle{position:absolute;left:24px;right:24px;bottom:64px;font-size:clamp(19px,2.6vw,26px);font-weight:800;letter-spacing:-.01em;line-height:1.08;text-wrap:balance}
   .ptitle .a{color:var(--em)}.tez .ptitle .a{color:var(--gold)}
   .play{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:74px;height:74px;border-radius:50%;
-    display:grid;place-items:center;background:linear-gradient(135deg,var(--em),#3ee3a6);color:#04140d;font-size:28px;padding-left:5px;
+    display:grid;place-items:center;background:linear-gradient(135deg,var(--em),#6fd0ff);color:#04140d;font-size:28px;padding-left:5px;
     box-shadow:0 14px 40px -8px var(--em-glow);transition:transform .2s ease}
   .tez .play{background:linear-gradient(135deg,var(--gold),#ffd766);box-shadow:0 14px 40px -8px var(--gold-glow)}
   .poster:hover .play{transform:translate(-50%,-50%) scale(1.08)}
@@ -92,7 +92,7 @@
   .vbody p{margin:0;color:var(--muted);font-size:15px;line-height:1.5}
   .vactions{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
   .btn{display:inline-flex;align-items:center;gap:8px;border-radius:100px;padding:11px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;transition:.2s;border:1px solid var(--line)}
-  .btn.primary{background:linear-gradient(135deg,var(--em),#3ee3a6);color:#04140d;border-color:transparent}
+  .btn.primary{background:linear-gradient(135deg,var(--em),#6fd0ff);color:#04140d;border-color:transparent}
   .btn.primary:hover{filter:brightness(1.05)}
   .tez .btn.primary{background:linear-gradient(135deg,var(--gold),#ffd766)}
   .btn.ghost{background:var(--surface2);color:var(--text)}

@@ -56,7 +56,7 @@ function RuleModal({ rule, isNl, onClose }: { rule: DiscountRule | null; isNl: b
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: 16, overflowY: 'auto' }}
       onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{ background: '#fff', borderRadius: 20, padding: '28px 32px', width: '100%', maxWidth: 500, boxShadow: '0 24px 64px rgba(0,0,0,.2)', margin: 'auto' }}>
-        <h3 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>
+        <h3 style={{ margin: '0 0 20px', fontSize: 17, fontWeight: 800, color: '#16203a' }}>
           {rule ? (isNl ? 'Regel bewerken' : 'Edit rule') : (isNl ? 'Nieuwe kortingsregel' : 'New discount rule')}
         </h3>
 
@@ -128,7 +128,7 @@ function RuleModal({ rule, isNl, onClose }: { rule: DiscountRule | null; isNl: b
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={!form.name || mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !form.name ? 0.5 : 1 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !form.name ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -258,7 +258,7 @@ export default function DiscountRulesScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
             {isNl ? 'Kortingsregels' : 'Discount Rules'}
           </h1>
           <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -266,17 +266,17 @@ export default function DiscountRulesScreen() {
           </p>
         </div>
         <button onClick={() => setEditRule('new')}
-          style={{ height: 42, padding: '0 20px', borderRadius: 10, border: 'none', background: '#7c3aed', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          style={{ height: 42, padding: '0 20px', borderRadius: 10, border: 'none', background: '#293371', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           {isNl ? '+ Nieuwe regel' : '+ New rule'}
         </button>
       </div>
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #ede9fe', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : rules.length === 0 ? (
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef' }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5' }}>
           <EmptyState
             icon="🎁"
             isNl={isNl}
@@ -289,7 +289,7 @@ export default function DiscountRulesScreen() {
         <>
         {/* Sticky bulk-action bar — appears when rows are selected. */}
         {selectedIds.size > 0 && (
-          <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(124,58,237,.35)' }}>
+          <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#293371,#1f2a63)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(41,51,113,.35)' }}>
             <span style={{ fontSize: 13.5, fontWeight: 700 }}>
               {bulkProgress
                 ? (isNl ? `Bezig… ${bulkProgress.done}/${bulkProgress.total}` : `Working… ${bulkProgress.done}/${bulkProgress.total}`)
@@ -315,14 +315,14 @@ export default function DiscountRulesScreen() {
             </div>
           </div>
         )}
-        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+        <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 <th style={{ padding: '11px 8px 11px 16px', width: 38 }}>
                   <input type="checkbox" checked={allSelected} onChange={toggleAll}
                     title={isNl ? 'Alles selecteren' : 'Select all'}
-                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#7c3aed' }} />
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#293371' }} />
                 </th>
                 {[
                   { key: 'name',     label: isNl ? 'Naam' : 'Name' },
@@ -333,32 +333,32 @@ export default function DiscountRulesScreen() {
                   { key: 'status',   label: 'Status' },
                 ].map((h) => (
                   <th key={h.key} onClick={() => toggle(h.key)}
-                    style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
+                    style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
-                <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}></th>
+                <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}></th>
               </tr>
             </thead>
             <tbody>
               {sorted.map((r, i) => (
                 <tr key={r.id}
-                  style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none', opacity: r.is_active ? 1 : 0.5 }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                  style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', opacity: r.is_active ? 1 : 0.5 }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}
                 >
                   <td style={{ padding: '12px 8px 12px 16px' }}>
                     <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleOne(r.id)}
-                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#7c3aed' }} />
+                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#293371' }} />
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{r.name}</p>
-                    {r.stackable && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7c3aed' }}>{isNl ? 'Stapelbaar' : 'Stackable'}</p>}
+                    <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#16203a' }}>{r.name}</p>
+                    {r.stackable && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#293371' }}>{isNl ? 'Stapelbaar' : 'Stackable'}</p>}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: '#7c3aed' }}>{typeLabel(r)}</span>
-                    {r.max_discount_srd && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9090a0' }}>max SRD {r.max_discount_srd.toFixed(2)}</p>}
+                    <span style={{ fontSize: 15, fontWeight: 800, color: '#293371' }}>{typeLabel(r)}</span>
+                    {r.max_discount_srd && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e88a0' }}>max SRD {r.max_discount_srd.toFixed(2)}</p>}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{appliesToLabel(r)}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>{r.min_qty ?? '—'}</td>

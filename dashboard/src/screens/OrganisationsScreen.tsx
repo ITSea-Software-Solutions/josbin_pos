@@ -27,7 +27,7 @@ const TYPE_CFG: Record<string, { bg: string; color: string; border: string; icon
 
 const TIER_CFG: Record<string, { bg: string; color: string }> = {
   starter:      { bg: '#f3f4f6', color: '#4b5563' },
-  professional: { bg: '#ede9fe', color: '#6d28d9' },
+  professional: { bg: '#e6ebf7', color: '#1e2657' },
   enterprise:   { bg: '#dbeafe', color: '#1e40af' },
 }
 
@@ -38,8 +38,8 @@ const inputSt: React.CSSProperties = {
 }
 
 function focusIn(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-  e.currentTarget.style.borderColor = '#7c3aed'
-  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(124,58,237,.12)'
+  e.currentTarget.style.borderColor = '#293371'
+  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(41,51,113,.12)'
 }
 function focusOut(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = '#e5e7eb'
@@ -114,8 +114,8 @@ function OrgRow({
   const pushLabel = { idle: isNl ? 'Push catalogus' : 'Push catalogue', sending: '…', done: isNl ? 'Verstuurd ✓' : 'Sent ✓', error: isNl ? 'Mislukt' : 'Failed' }[pushState]
 
   return (
-    <tr style={{ borderBottom: '1px solid #f3f3f8', transition: 'background .12s' }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+    <tr style={{ borderBottom: '1px solid #f1f4fb', transition: 'background .12s' }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
     >
       {/* Name */}
@@ -129,13 +129,13 @@ function OrgRow({
               {org.is_government && (
                 <span style={{ padding: '1px 7px', background: '#dbeafe', color: '#1e40af', borderRadius: 6, fontSize: 10, fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase' }}>GOV</span>
               )}
-              <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{org.name}</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{org.name}</span>
             </div>
             {org.btw_number && (
-              <div style={{ fontSize: 11, color: '#9090a0', marginTop: 2, fontFamily: 'monospace' }}>BTW: {org.btw_number}</div>
+              <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 2, fontFamily: 'monospace' }}>BTW: {org.btw_number}</div>
             )}
             {org.admin_user && (
-              <div style={{ fontSize: 11, color: '#9090a0', marginTop: 1 }}>
+              <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 1 }}>
                 👤 {org.admin_user.name}
               </div>
             )}
@@ -147,11 +147,11 @@ function OrgRow({
       {/* Stores */}
       <td style={{ padding: '15px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9090a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#7e88a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 21h18M4 21V7l8-4 8 4v14M9 21v-5h6v5"/>
           </svg>
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{org.store_count}</span>
-          <span style={{ fontSize: 12, color: '#9090a0' }}>{isNl ? 'vestiging(en)' : 'store(s)'}</span>
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{org.store_count}</span>
+          <span style={{ fontSize: 12, color: '#7e88a0' }}>{isNl ? 'vestiging(en)' : 'store(s)'}</span>
         </div>
       </td>
       {/* Status */}
@@ -169,7 +169,7 @@ function OrgRow({
           <button
             onClick={() => onView(org)}
             title={isNl ? 'Bekijken' : 'View'}
-            style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #e0e0ed', background: '#f8f7ff', color: '#6d28d9', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #d9e1f1', background: '#f4f6fc', color: '#1e2657', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
@@ -180,7 +180,7 @@ function OrgRow({
           <button
             onClick={() => onEdit(org)}
             title={isNl ? 'Bewerken' : 'Edit'}
-            style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #e0e0ed', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+            style={{ padding: '5px 10px', borderRadius: 8, border: '1px solid #d9e1f1', background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -194,8 +194,8 @@ function OrgRow({
               padding: '5px 10px', borderRadius: 8, border: '1px solid', cursor: 'pointer', fontSize: 12, fontWeight: 600, transition: 'all .15s', whiteSpace: 'nowrap',
               ...(pushState === 'done'    ? { background: '#f0fdf4', color: '#15803d', borderColor: '#bbf7d0' }
                 : pushState === 'error'   ? { background: '#fef2f2', color: '#dc2626', borderColor: '#fecaca' }
-                : pushState === 'sending' ? { background: '#f5f3ff', color: '#c4b5fd', borderColor: '#ddd6fe', cursor: 'wait' }
-                :                           { background: '#f5f3ff', color: '#6d28d9', borderColor: '#ddd6fe' }),
+                : pushState === 'sending' ? { background: '#f2f5fc', color: '#b9c1de', borderColor: '#d5deef', cursor: 'wait' }
+                :                           { background: '#f2f5fc', color: '#1e2657', borderColor: '#d5deef' }),
             }}
           >
             {pushLabel}
@@ -288,24 +288,24 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
       <div style={{ width: '100%', maxWidth: 520, height: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 40px rgba(0,0,0,.18)' }}>
 
         {/* Header */}
-        <div style={{ padding: '24px 28px 0', borderBottom: '1px solid #eeeef8' }}>
+        <div style={{ padding: '24px 28px 0', borderBottom: '1px solid #e9eef9' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               {org && (
-                <div style={{ width: 42, height: 42, borderRadius: 12, background: TYPE_CFG[org.type]?.bg ?? '#f5f5fb', border: `1px solid ${TYPE_CFG[org.type]?.border ?? '#e0e0ed'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 12, background: TYPE_CFG[org.type]?.bg ?? '#f2f5fb', border: `1px solid ${TYPE_CFG[org.type]?.border ?? '#d9e1f1'}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0 }}>
                   {TYPE_CFG[org.type]?.icon ?? '🏢'}
                 </div>
               )}
               <div>
                 {orgLoading ? (
-                  <div style={{ width: 180, height: 16, borderRadius: 8, background: '#f0f0f8' }} />
+                  <div style={{ width: 180, height: 16, borderRadius: 8, background: '#eef2fb' }} />
                 ) : (
                   <>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {org?.is_government && <span style={{ padding: '1px 7px', background: '#dbeafe', color: '#1e40af', borderRadius: 6, fontSize: 10, fontWeight: 800, letterSpacing: '.5px', textTransform: 'uppercase' }}>GOV</span>}
-                      <span style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>{org?.name}</span>
+                      <span style={{ fontSize: 17, fontWeight: 800, color: '#16203a' }}>{org?.name}</span>
                     </div>
-                    <div style={{ fontSize: 12, color: '#9090a0', marginTop: 2 }}>
+                    <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 2 }}>
                       {org && <TypeBadge type={org.type} isNl={isNl} />}
                     </div>
                   </>
@@ -315,11 +315,11 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={onEdit}
-                style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #ddd6fe', background: '#f5f3ff', color: '#6d28d9', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                style={{ padding: '7px 14px', borderRadius: 8, border: '1px solid #d5deef', background: '#f2f5fc', color: '#1e2657', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
               >
                 {isNl ? 'Bewerken' : 'Edit'}
               </button>
-              <button onClick={onClose} style={{ width: 32, height: 32, background: '#f5f5f8', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#6b7280', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+              <button onClick={onClose} style={{ width: 32, height: 32, background: '#f2f5fb', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#6b7280', fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
             </div>
           </div>
 
@@ -331,8 +331,8 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                 style={{
                   padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer',
                   fontSize: 13, fontWeight: 700,
-                  color: tab === t.id ? '#7c3aed' : '#9090a0',
-                  borderBottom: tab === t.id ? '2px solid #7c3aed' : '2px solid transparent',
+                  color: tab === t.id ? '#293371' : '#7e88a0',
+                  borderBottom: tab === t.id ? '2px solid #293371' : '2px solid transparent',
                   marginBottom: -1,
                 }}
               >
@@ -351,7 +351,7 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
               {orgLoading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <div key={i} style={{ height: 14, borderRadius: 7, background: '#f0f0f8', maxWidth: i % 2 === 0 ? '80%' : '60%' }} />
+                    <div key={i} style={{ height: 14, borderRadius: 7, background: '#eef2fb', maxWidth: i % 2 === 0 ? '80%' : '60%' }} />
                   ))}
                 </div>
               ) : org ? (
@@ -366,33 +366,33 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                       { label: isNl ? 'Vestigingen'  : 'Stores',       value: String(org.store_count) },
                       { label: isNl ? 'Aangemaakt'   : 'Created',      value: new Date(org.created_at).toLocaleDateString(isNl ? 'nl-SR' : 'en-US') },
                     ].map((item) => (
-                      <div key={item.label} style={{ background: '#f8f7ff', borderRadius: 10, padding: '12px 14px' }}>
-                        <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4 }}>{item.label}</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e', textTransform: item.capitalize ? 'capitalize' : 'none' }}>{item.value}</div>
+                      <div key={item.label} style={{ background: '#f4f6fc', borderRadius: 10, padding: '12px 14px' }}>
+                        <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 4 }}>{item.label}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a', textTransform: item.capitalize ? 'capitalize' : 'none' }}>{item.value}</div>
                       </div>
                     ))}
                   </div>
 
                   {/* Status + admin user */}
                   <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-                    <div style={{ flex: 1, background: '#f8f7ff', borderRadius: 10, padding: '14px' }}>
-                      <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>{isNl ? 'Status' : 'Status'}</div>
+                    <div style={{ flex: 1, background: '#f4f6fc', borderRadius: 10, padding: '14px' }}>
+                      <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>{isNl ? 'Status' : 'Status'}</div>
                       <StatusBadge active={org.is_active} isNl={isNl} />
                     </div>
                     {org.admin_user && (
-                      <div style={{ flex: 1, background: '#f8f7ff', borderRadius: 10, padding: '14px' }}>
-                        <div style={{ fontSize: 11, color: '#9090a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>{isNl ? 'Beheerder' : 'Admin'}</div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1c1c2e' }}>{org.admin_user.name}</div>
-                        <div style={{ fontSize: 11, color: '#9090a0', marginTop: 2, fontFamily: 'monospace' }}>{org.admin_user.email}</div>
+                      <div style={{ flex: 1, background: '#f4f6fc', borderRadius: 10, padding: '14px' }}>
+                        <div style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: 6 }}>{isNl ? 'Beheerder' : 'Admin'}</div>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>{org.admin_user.name}</div>
+                        <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 2, fontFamily: 'monospace' }}>{org.admin_user.email}</div>
                       </div>
                     )}
                   </div>
 
                   {/* Impersonation section */}
-                  <div style={{ background: org.is_government ? '#fffbeb' : '#f8f7ff', borderRadius: 12, border: `1px solid ${org.is_government ? '#fde68a' : '#e0e0ff'}`, padding: '16px 18px' }}>
+                  <div style={{ background: org.is_government ? '#fffbeb' : '#f4f6fc', borderRadius: 12, border: `1px solid ${org.is_government ? '#fde68a' : '#e0e0ff'}`, padding: '16px 18px' }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: '#1c1c2e', marginBottom: 4 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: '#16203a', marginBottom: 4 }}>
                           {isNl ? 'Super Admin inloggen als Org' : 'Super Admin Impersonation'}
                         </div>
                         <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5 }}>
@@ -415,7 +415,7 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                           disabled={toggleImpersonation.isPending}
                           style={{
                             position: 'relative', width: 44, height: 24, borderRadius: 12, border: 'none',
-                            background: org.allow_impersonation ? '#7c3aed' : '#d1d5db',
+                            background: org.allow_impersonation ? '#293371' : '#d1d5db',
                             cursor: 'pointer', transition: 'background .2s', flexShrink: 0,
                           }}
                         >
@@ -442,7 +442,7 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                 </span>
                 <button
                   onClick={() => setShowAddStore(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                   {isNl ? 'Vestiging toevoegen' : 'Add store'}
@@ -452,7 +452,7 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
               {storesLoading ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                   {Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} style={{ height: 68, borderRadius: 12, background: '#f0f0f8' }} />
+                    <div key={i} style={{ height: 68, borderRadius: 12, background: '#eef2fb' }} />
                   ))}
                 </div>
               ) : (stores ?? []).length === 0 ? (
@@ -487,21 +487,21 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
 // ─── StoreCard ────────────────────────────────────────────────────────────────
 function StoreCard({ store, isNl }: { store: Store; isNl: boolean }) {
   return (
-    <div style={{ background: '#f8f7ff', borderRadius: 12, border: '1px solid #e0e0ff', padding: '14px 16px' }}>
+    <div style={{ background: '#f4f6fc', borderRadius: 12, border: '1px solid #e0e0ff', padding: '14px 16px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: '#1c1c2e' }}>{store.name}</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{store.name}</span>
             <span style={{
               padding: '1px 8px', borderRadius: 6, fontSize: 10, fontWeight: 700,
-              background: store.pos_type === 'native' ? '#ede9fe' : '#fff7ed',
-              color: store.pos_type === 'native' ? '#6d28d9' : '#c2410c',
+              background: store.pos_type === 'native' ? '#e6ebf7' : '#fff7ed',
+              color: store.pos_type === 'native' ? '#1e2657' : '#c2410c',
             }}>
               {store.pos_type === 'native' ? 'Josbin POS' : 'External'}
             </span>
           </div>
           {store.city && <div style={{ fontSize: 12, color: '#6b7280' }}>📍 {store.city}{store.address ? ` — ${store.address}` : ''}</div>}
-          <div style={{ fontSize: 11, color: '#9090a0', marginTop: 3 }}>
+          <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 3 }}>
             BTW: {store.default_btw_rate}%
           </div>
         </div>
@@ -540,8 +540,8 @@ function AddStoreModal({ orgId, isNl, onClose, onCreated }: {
     >
       <div style={{ background: '#fff', borderRadius: 18, padding: '28px 28px 24px', width: '100%', maxWidth: 440, boxShadow: '0 24px 64px rgba(0,0,0,.22)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
-          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#1c1c2e' }}>{isNl ? 'Vestiging toevoegen' : 'Add store'}</h3>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
+          <h3 style={{ fontSize: 17, fontWeight: 800, color: '#16203a' }}>{isNl ? 'Vestiging toevoegen' : 'Add store'}</h3>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {[
@@ -574,11 +574,11 @@ function AddStoreModal({ orgId, isNl, onClose, onCreated }: {
           </p>
         )}
         <div style={{ display: 'flex', gap: 10, marginTop: 22 }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', background: '#f5f5fb', border: '1px solid #e0e0ed', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px 0', background: '#f2f5fb', border: '1px solid #d9e1f1', borderRadius: 10, fontSize: 13, fontWeight: 600, color: '#6b7280', cursor: 'pointer' }}>
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name}
-            style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1 }}>
+            style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1 }}>
             {mutation.isPending ? '…' : (isNl ? 'Aanmaken' : 'Create')}
           </button>
         </div>
@@ -622,12 +622,12 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 500, padding: '32px 32px 28px', boxShadow: '0 32px 80px rgba(0,0,0,.25)', maxHeight: '90vh', overflowY: 'auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-.3px' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#16203a', letterSpacing: '-.3px' }}>
               {isNl ? 'Organisatie bewerken' : 'Edit organisation'}
             </h2>
-            <p style={{ fontSize: 13, color: '#9090a0', marginTop: 3 }}>{org.name}</p>
+            <p style={{ fontSize: 13, color: '#7e88a0', marginTop: 3 }}>{org.name}</p>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -704,10 +704,10 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
               <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
                 <input type="checkbox" checked={(form[field] as boolean) ?? false}
                   onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.checked }))}
-                  style={{ width: 16, height: 16, accentColor: '#7c3aed', cursor: 'pointer' }} />
+                  style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }} />
                 <div>
-                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>{title}</div>
-                  <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 1 }}>{desc}</div>
+                  <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>{title}</div>
+                  <div style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 1 }}>{desc}</div>
                 </div>
               </label>
             ))}
@@ -719,7 +719,7 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
             {mutation.isPending ? (isNl ? 'Opslaan…' : 'Saving…') : (isNl ? 'Opslaan' : 'Save changes')}
           </button>
         </div>
@@ -748,14 +748,14 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
       <div style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 480, padding: '32px 32px 28px', boxShadow: '0 32px 80px rgba(0,0,0,.25)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28 }}>
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-.3px' }}>
+            <h2 style={{ fontSize: 20, fontWeight: 900, color: '#16203a', letterSpacing: '-.3px' }}>
               {isNl ? 'Nieuwe organisatie' : 'New organisation'}
             </h2>
-            <p style={{ fontSize: 13, color: '#9090a0', marginTop: 3 }}>
+            <p style={{ fontSize: 13, color: '#7e88a0', marginTop: 3 }}>
               {isNl ? 'Vul de gegevens in om een organisatie aan te maken' : 'Fill in the details to create an organisation'}
             </p>
           </div>
-          <button onClick={onClose} style={{ background: '#f5f5f8', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
           </button>
         </div>
@@ -811,12 +811,12 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
             <input type="checkbox" checked={form.is_government ?? false}
               onChange={(e) => setForm((f) => ({ ...f, is_government: e.target.checked }))}
-              style={{ width: 16, height: 16, accentColor: '#7c3aed', cursor: 'pointer' }} />
+              style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }} />
             <div>
-              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#1c1c2e' }}>
+              <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>
                 {isNl ? 'Overheidsinstelling' : 'Government organisation'}
               </div>
-              <div style={{ fontSize: 11.5, color: '#9090a0', marginTop: 1 }}>
+              <div style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 1 }}>
                 {isNl ? 'Verplicht 2FA, Rekenkamer-export, aparte database' : 'Mandatory 2FA, Rekenkamer export, isolated database'}
               </div>
             </div>
@@ -828,7 +828,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate(form)} disabled={mutation.isPending || !form.name}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(124,58,237,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
             {mutation.isPending ? (isNl ? 'Aanmaken…' : 'Creating…') : (isNl ? 'Aanmaken' : 'Create')}
           </button>
         </div>
@@ -880,7 +880,7 @@ export default function OrganisationsScreen() {
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-.5px', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-.5px', marginBottom: 4 }}>
             {isSuperAdmin
               ? (isNl ? 'Organisaties' : 'Organisations')
               : (isNl ? 'Mijn organisatie' : 'My organisation')}
@@ -895,9 +895,9 @@ export default function OrganisationsScreen() {
           <button onClick={() => setShowCreate(true)} style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '10px 20px', border: 'none', borderRadius: 12,
-            background: 'linear-gradient(135deg,#7c3aed,#4f46e5)', color: '#fff',
+            background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff',
             fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(124,58,237,.35)',
+            boxShadow: '0 4px 16px rgba(41,51,113,.35)',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             {isNl ? 'Nieuwe organisatie' : 'New organisation'}
@@ -909,27 +909,27 @@ export default function OrganisationsScreen() {
       {!isLoading && orgs && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24, maxWidth: 580 }}>
           {[
-            { label: isNl ? 'Totaal'     : 'Total',       value: total,    color: '#7c3aed' },
+            { label: isNl ? 'Totaal'     : 'Total',       value: total,    color: '#293371' },
             { label: isNl ? 'Actief'     : 'Active',      value: active,   color: '#16a34a' },
             { label: isNl ? 'Overheid'   : 'Government',  value: govCount, color: '#1d4ed8' },
           ].map((s) => (
-            <div key={s.label} style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+            <div key={s.label} style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px', boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
               <div style={{ fontSize: 28, fontWeight: 900, color: s.color, letterSpacing: '-.5px' }}>{s.value}</div>
-              <div style={{ fontSize: 12, color: '#9090a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
+              <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{s.label}</div>
             </div>
           ))}
         </div>
       )}
 
       {/* Search bar */}
-      <div style={{ background: '#fff', border: '1px solid #e9e9ef', borderRadius: 14, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9090a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '14px 18px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 1px 4px rgba(0,0,0,.04)' }}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7e88a0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <input type="search" placeholder={isNl ? 'Zoeken op naam of BTW-nummer…' : 'Search by name or BTW number…'}
           value={search} onChange={(e) => setSearch(e.target.value)}
-          style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#1c1c2e', background: 'transparent', fontFamily: 'inherit' }} />
-        {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9090a0', fontSize: 16, lineHeight: 1 }}>×</button>}
+          style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#16203a', background: 'transparent', fontFamily: 'inherit' }} />
+        {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7e88a0', fontSize: 16, lineHeight: 1 }}>×</button>}
       </div>
 
       {/* Empty-store hint for OA: their single org has zero stores yet. */}
@@ -954,23 +954,23 @@ export default function OrganisationsScreen() {
       )}
 
       {/* Table card */}
-      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
         {isLoading ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f3f3f8' }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0f0f8' }} />
-                <div style={{ flex: 1, height: 14, borderRadius: 7, background: '#f0f0f8', maxWidth: 220 }} />
-                <div style={{ width: 80, height: 22, borderRadius: 11, background: '#f5f5fb' }} />
-                <div style={{ width: 60, height: 14, borderRadius: 7, background: '#f5f5fb' }} />
-                <div style={{ width: 200, height: 28, borderRadius: 8, background: '#f0f0f8' }} />
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 24px', borderBottom: '1px solid #f1f4fb' }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eef2fb' }} />
+                <div style={{ flex: 1, height: 14, borderRadius: 7, background: '#eef2fb', maxWidth: 220 }} />
+                <div style={{ width: 80, height: 22, borderRadius: 11, background: '#f2f5fb' }} />
+                <div style={{ width: 60, height: 14, borderRadius: 7, background: '#f2f5fb' }} />
+                <div style={{ width: 200, height: 28, borderRadius: 8, background: '#eef2fb' }} />
               </div>
             ))}
           </div>
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: 'linear-gradient(to right,#f8f7ff,#f5f5fb)', borderBottom: '1px solid #eeeef8' }}>
+              <tr style={{ background: 'linear-gradient(to right,#f4f6fc,#f2f5fb)', borderBottom: '1px solid #e9eef9' }}>
                 {[
                   { key: 'name',   label: isNl ? 'Organisatie' : 'Organisation' },
                   { key: 'type',   label: isNl ? 'Type' : 'Type' },
@@ -981,9 +981,9 @@ export default function OrganisationsScreen() {
                 ].map((h) => (
                   <th key={h.label}
                     onClick={h.key ? () => toggle(h.key) : undefined}
-                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
+                    style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#7c3aed' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
@@ -1008,8 +1008,8 @@ export default function OrganisationsScreen() {
           </table>
         )}
         {!isLoading && (filtered ?? []).length > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f3f3f8', background: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
-            <span style={{ fontSize: 12, color: '#9090a0' }}>
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {filtered?.length} {isNl ? 'van' : 'of'} {total} {isNl ? 'organisaties' : 'organisations'}
             </span>
           </div>

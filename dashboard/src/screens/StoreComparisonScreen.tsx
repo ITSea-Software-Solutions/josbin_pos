@@ -3,10 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getPlatformSummary, type StoreOverview } from '@/api/dashboard'
 
-function Bar({ value, max, color = '#7c3aed' }: { value: number; max: number; color?: string }) {
+function Bar({ value, max, color = '#293371' }: { value: number; max: number; color?: string }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0
   return (
-    <div style={{ height: 8, borderRadius: 4, background: '#f0f0f8', overflow: 'hidden' }}>
+    <div style={{ height: 8, borderRadius: 4, background: '#eef2fb', overflow: 'hidden' }}>
       <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: 4, transition: 'width 0.5s ease' }} />
     </div>
   )
@@ -55,7 +55,7 @@ export default function StoreComparisonScreen() {
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#1c1c2e', letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 900, color: '#16203a', letterSpacing: '-0.5px', marginBottom: 4 }}>
           {isNl ? 'Vestigingsvergelijking' : 'Store Comparison'}
         </h1>
         <p style={{ fontSize: 14, color: '#6b7280' }}>
@@ -65,14 +65,14 @@ export default function StoreComparisonScreen() {
 
       {/* Controls */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap', alignItems: 'center' }}>
-        <div style={{ display: 'flex', background: '#f5f5f8', borderRadius: 10, padding: 3, gap: 2 }}>
+        <div style={{ display: 'flex', background: '#f2f5fb', borderRadius: 10, padding: 3, gap: 2 }}>
           {metricOptions.map(m => (
             <button key={m.key}
               onClick={() => setMetric(m.key)}
               style={{
                 padding: '6px 14px', borderRadius: 8, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600,
                 background: metric === m.key ? '#fff' : 'transparent',
-                color: metric === m.key ? '#1c1c2e' : '#6b7280',
+                color: metric === m.key ? '#16203a' : '#6b7280',
                 boxShadow: metric === m.key ? '0 1px 4px rgba(0,0,0,.1)' : 'none',
                 transition: 'all .15s',
               }}
@@ -91,17 +91,17 @@ export default function StoreComparisonScreen() {
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 80 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #ede9fe', borderTopColor: '#7c3aed', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : allStores.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef' }}>
+        <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5' }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>🏪</p>
           <p style={{ fontSize: 15, fontWeight: 700, color: '#6b7280' }}>{isNl ? 'Geen vestigingen gevonden' : 'No stores found'}</p>
         </div>
       ) : (
         <>
           {/* Bar chart view */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', padding: '24px 28px', marginBottom: 24, boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', padding: '24px 28px', marginBottom: 24, boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               {sorted.map((s, i) => {
                 const v = metricValue(s)
@@ -112,7 +112,7 @@ export default function StoreComparisonScreen() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
                       <div style={{
                         width: 24, height: 24, borderRadius: 6, flexShrink: 0,
-                        background: isTop ? 'linear-gradient(135deg,#f59e0b,#d97706)' : '#f0f0f8',
+                        background: isTop ? 'linear-gradient(135deg,#f59e0b,#d97706)' : '#eef2fb',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 11, fontWeight: 800,
                         color: isTop ? '#fff' : '#6b7280',
@@ -122,22 +122,22 @@ export default function StoreComparisonScreen() {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: 13, fontWeight: 700, color: '#1c1c2e' }}>{s.store_name}</span>
-                            <span style={{ fontSize: 11, color: '#9090a0' }}>{s.city}</span>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>{s.store_name}</span>
+                            <span style={{ fontSize: 11, color: '#7e88a0' }}>{s.city}</span>
                             <span style={{
                               fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 8,
                               background: s.is_online ? '#f0fdf4' : '#f9fafb',
-                              color: s.is_online ? '#15803d' : '#9090a0',
+                              color: s.is_online ? '#15803d' : '#7e88a0',
                               border: `1px solid ${s.is_online ? '#bbf7d0' : '#e5e7eb'}`,
                             }}>
                               {s.is_online ? (isNl ? 'Online' : 'Online') : (isNl ? 'Offline' : 'Offline')}
                             </span>
                           </div>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: isTop ? '#f59e0b' : '#7c3aed' }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: isTop ? '#f59e0b' : '#293371' }}>
                             {metricLabel(v)}
                           </span>
                         </div>
-                        <Bar value={v} max={maxValue} color={isTop ? '#f59e0b' : '#7c3aed'} />
+                        <Bar value={v} max={maxValue} color={isTop ? '#f59e0b' : '#293371'} />
                       </div>
                     </div>
                   </div>
@@ -147,14 +147,14 @@ export default function StoreComparisonScreen() {
           </div>
 
           {/* Side-by-side detail table */}
-          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e9e9ef', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
-            <div style={{ padding: '16px 24px', borderBottom: '1px solid #f3f3f8', fontWeight: 800, fontSize: 14, color: '#1c1c2e' }}>
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+            <div style={{ padding: '16px 24px', borderBottom: '1px solid #f1f4fb', fontWeight: 800, fontSize: 14, color: '#16203a' }}>
               {isNl ? 'Gedetailleerd overzicht' : 'Detailed comparison'}
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
-                  <tr style={{ background: '#f8f7ff', borderBottom: '1px solid #eeeef8' }}>
+                  <tr style={{ background: '#f4f6fc', borderBottom: '1px solid #e9eef9' }}>
                     {[
                       isNl ? 'Vestiging' : 'Store',
                       isNl ? 'Organisatie' : 'Organisation',
@@ -165,23 +165,23 @@ export default function StoreComparisonScreen() {
                       isNl ? 'Topprod.' : 'Top product',
                       isNl ? 'Status' : 'Status',
                     ].map((h, i) => (
-                      <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#6d6d80', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
+                      <th key={i} style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {sorted.map((s, i) => (
                     <tr key={s.store_id}
-                      style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f3f3f8' : 'none' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(124,58,237,.025)')}
+                      style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '12px 16px' }}>
-                        <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#1c1c2e' }}>{s.store_name}</p>
-                        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#9090a0' }}>{s.city}</p>
+                        <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: '#16203a' }}>{s.store_name}</p>
+                        <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e88a0' }}>{s.city}</p>
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280' }}>{s.organisation_name}</td>
-                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#7c3aed' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#293371' }}>
                         SRD {parseFloat(s.today_revenue_srd).toFixed(2)}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#374151' }}>
