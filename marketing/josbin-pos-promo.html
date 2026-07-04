@@ -190,6 +190,48 @@
   .scene.is-active .fstep{animation:pop .5s both}
   .scene.is-active .fstep:nth-child(3){animation-delay:.15s}.scene.is-active .outcome{animation:rise .6s .3s both}
 
+  /* Tax inspector — Belastingdienst portal window (official light theme) */
+  .bdwin{width:100%;flex-shrink:0;margin-top:.5cqi;border-radius:1.3cqi;overflow:hidden;color:#0e1a14;background:#f4f7f5;
+    box-shadow:0 22px 52px -22px rgba(0,0,0,.72),0 0 0 1px #cfe0d5}
+  .bdbar{display:flex;align-items:center;gap:.9cqi;padding:.65cqi 1.2cqi;background:#e9efe9;border-bottom:1px solid #d8e2db}
+  .bddots{display:flex;gap:.5cqi}
+  .bddots i{width:.9cqi;height:.9cqi;border-radius:50%;display:block}
+  .bdurl{margin-left:.5cqi;font-size:1.1cqi;color:#5b6b62;background:#fff;border:1px solid #d8e2db;border-radius:100px;padding:.28cqi 1.1cqi}
+  .bdbody{padding:1cqi 1.3cqi 1.2cqi}
+  .bdhead{display:flex;align-items:center;justify-content:space-between;gap:1.2cqi;background:linear-gradient(135deg,#1f6b3b,#0c3a22);color:#fff;border-radius:.85cqi;padding:.85cqi 1.4cqi;position:relative;overflow:hidden}
+  .bdhead .star{position:absolute;right:1.1cqi;bottom:-2.2cqi;font-size:6.4cqi;color:rgba(244,196,48,.14);line-height:1}
+  .bdhead .ov{font-size:.9cqi;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(244,196,48,.92)}
+  .bdhead .ti{font-size:1.8cqi;font-weight:900;letter-spacing:-.01em;margin-top:.08cqi}
+  .bdhead .updated{font-size:.92cqi;color:rgba(234,242,236,.8);text-align:right;position:relative;z-index:1;line-height:1.35}
+  .bdkpis{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:.85cqi;margin-top:.9cqi}
+  .bdk{background:#fff;border:1px solid #d8e2db;border-radius:.85cqi;padding:.75cqi 1cqi;position:relative;overflow:hidden}
+  .bdk.hero{background:linear-gradient(140deg,#1f6b3b,#0c3a22);color:#fff;border:0}
+  .bdk .kl{font-size:.88cqi;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b62}
+  .bdk.hero .kl{color:rgba(244,196,48,.92)}
+  .bdk .kv{font-size:2.1cqi;font-weight:900;letter-spacing:-.02em;margin-top:.18cqi;font-variant-numeric:tabular-nums;color:#0e1a14;line-height:1.05}
+  .bdk.hero .kv{color:#fff}.bdk.hero .kv small{font-size:1.1cqi;font-weight:700;opacity:.82;margin-right:.3cqi}
+  .bdk .kv.amber{color:#a16207}.bdk .kv.red{color:#c8102e}.bdk .kv.green{color:#1f6b3b}
+  .bdk .kh{font-size:.82cqi;color:#5b6b62;margin-top:.12cqi}.bdk.hero .kh{color:rgba(234,242,236,.72)}
+  .bddelta{display:inline-flex;align-items:center;gap:.3cqi;font-size:.95cqi;font-weight:800;background:rgba(244,196,48,.22);color:#f4c430;border-radius:100px;padding:.1cqi .65cqi;margin-top:.35cqi}
+  .bdlist{background:#fff;border:1px solid #d8e2db;border-radius:.85cqi;margin-top:.85cqi;overflow:hidden}
+  .bdrow{display:grid;grid-template-columns:2.6fr 1fr 1.2fr 1.25fr;align-items:center;gap:1cqi;padding:.58cqi 1.3cqi;border-bottom:1px solid #eef2ef}
+  .bdrow:last-child{border-bottom:0}
+  .bdrow.h{background:#f4f7f5;font-size:.85cqi;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b62;padding-top:.5cqi;padding-bottom:.5cqi}
+  .bdrow .org{font-size:1.25cqi;font-weight:700;color:#0e1a14}
+  .bdrow .sub{font-size:.9cqi;color:#5b6b62;font-weight:500;margin-top:.06cqi;display:flex;align-items:center;gap:.5cqi}
+  .srcchip{font-size:.8cqi;font-weight:800;border-radius:100px;padding:.08cqi .6cqi;background:#e6efe9;color:#1f6b3b;letter-spacing:.02em}
+  .srcchip.ext{background:#eef1f4;color:#64748b}
+  .bdrow .per{font-size:1.12cqi;color:#5b6b62;font-variant-numeric:tabular-nums}
+  .bdrow .amt{font-size:1.25cqi;font-weight:800;color:#1f6b3b;font-variant-numeric:tabular-nums;text-align:right}
+  .pill{justify-self:start;font-size:1cqi;font-weight:800;border-radius:100px;padding:.25cqi .85cqi;white-space:nowrap}
+  .pill.ok{background:#e6efe9;color:#1f6b3b}
+  .pill.filed{background:#fff8e6;color:#a16207}
+  .pill.dis{background:#fdecec;color:#c8102e}
+  .scene.is-active .bdk{animation:pop .5s both}
+  .scene.is-active .bdk:nth-child(2){animation-delay:.06s}.scene.is-active .bdk:nth-child(3){animation-delay:.12s}.scene.is-active .bdk:nth-child(4){animation-delay:.18s}
+  .scene.is-active .bdlist .bdrow{animation:slideIn .45s both}
+  .scene.is-active .bdlist .bdrow:nth-child(3){animation-delay:.14s}.scene.is-active .bdlist .bdrow:nth-child(4){animation-delay:.26s}
+
   /* Currency */
   .ratewrap{display:flex;gap:3cqi;align-items:center;margin-top:.6cqi}
   .ratecard{width:44cqi;background:linear-gradient(180deg,var(--surface),#111a2c);border:1px solid var(--line);border-radius:2cqi;padding:2.6cqi}
@@ -498,6 +540,73 @@
       <p class="subline r3" style="max-width:none;text-align:center;margin-top:2.4cqi" data-en='🔔 The store is notified instantly (in-app + email) · every step in an immutable audit trail.'>🔔 De winkel krijgt direct bericht (in-app + e-mail) · elke stap in een onveranderlijk auditspoor.</p>
     </section>
 
+    <!-- 8b · Tax inspector — Belastingdienst BTW-oversight dashboard -->
+    <section class="scene" data-dur="6200">
+      <span class="brandmini"><span class="d"></span>Josbin&nbsp;<b>POS</b></span>
+      <h1 class="headline r1" style="font-size:3.5cqi;margin-bottom:.5cqi" data-en='What the <span class="gold">inspector</span> sees.'>Wat de <span class="gold">inspecteur</span> ziet.</h1>
+      <div class="bdwin r2">
+        <div class="bdbar">
+          <div class="bddots"><i style="background:#e56a63"></i><i style="background:#e6b950"></i><i style="background:#5bbd7a"></i></div>
+          <div class="bdurl">🔒 belastingdienst.josbin.sr / btw-toezicht</div>
+        </div>
+        <div class="bdbody">
+          <div class="bdhead">
+            <div>
+              <div class="ov" data-en='Republic of Suriname · Tax Authority'>Republiek Suriname · Belastingdienst</div>
+              <div class="ti" data-en='BTW Oversight'>BTW-toezicht</div>
+            </div>
+            <div class="updated" data-en='Network-wide · all organisations<br>auto-refresh 60s'>Netwerk-breed · alle organisaties<br>auto-ververst elke 60s</div>
+            <span class="star" aria-hidden="true">★</span>
+          </div>
+          <div class="bdkpis">
+            <div class="bdk hero">
+              <div class="kl" data-en='BTW this month'>BTW deze maand</div>
+              <div class="kv"><small>SRD</small>248.900</div>
+              <div class="bddelta">▲ +6,2%&nbsp;<span style="opacity:.85;font-weight:600" data-en='vs last month'>vs vorige maand</span></div>
+            </div>
+            <div class="bdk">
+              <div class="kl" data-en='Pending review'>Wacht op review</div>
+              <div class="kv amber">7</div>
+              <div class="kh" data-en='To accept or dispute'>Te accepteren of betwisten</div>
+            </div>
+            <div class="bdk">
+              <div class="kl" data-en='Open disputes'>Open disputen</div>
+              <div class="kv red">2</div>
+              <div class="kh" data-en='Awaiting correction'>Wacht op correctie</div>
+            </div>
+            <div class="bdk">
+              <div class="kl" data-en='Accepted'>Geaccepteerd</div>
+              <div class="kv green">34</div>
+              <div class="kh" data-en='This month'>Deze maand</div>
+            </div>
+          </div>
+          <div class="bdlist">
+            <div class="bdrow h">
+              <span data-en='Organisation'>Organisatie</span><span data-en='Period'>Periode</span><span style="text-align:right">BTW (SRD)</span><span>Status</span>
+            </div>
+            <div class="bdrow">
+              <div><div class="org">Supermarkt De Hoop</div><div class="sub"><span class="srcchip">Josbin POS</span> Paramaribo · 3 <span data-en='stores'>vestigingen</span></div></div>
+              <div class="per">jun 2026</div>
+              <div class="amt">42.180</div>
+              <span class="pill ok" data-en='✓ Accepted'>✓ Geaccepteerd</span>
+            </div>
+            <div class="bdrow">
+              <div><div class="org">Ministerie van Financiën</div><div class="sub"><span class="srcchip">Josbin POS</span> <span data-en='Government'>Overheid</span></div></div>
+              <div class="per">jun 2026</div>
+              <div class="amt">96.500</div>
+              <span class="pill dis" data-en='⚠ Disputed'>⚠ Betwist</span>
+            </div>
+            <div class="bdrow">
+              <div><div class="org">Nickerie Retail N.V.</div><div class="sub"><span class="srcchip ext" data-en='External POS'>Externe POS</span> via API</div></div>
+              <div class="per">jun 2026</div>
+              <div class="amt">18.740</div>
+              <span class="pill filed" data-en='Filed'>Ingediend</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- 9 · Live currency conversion -->
     <section class="scene" data-dur="4800">
       <span class="brandmini"><span class="d"></span>Josbin&nbsp;<b>POS</b></span>
@@ -580,7 +689,7 @@
       <span class="cta r4" data-en='Request a demo →'>Vraag een demo aan →</span>
     </section>
 
-    <div class="kicker" id="kicker">01 / 14</div>
+    <div class="kicker" id="kicker">01 / 15</div>
     <div class="progress"><div class="fill" id="fill"></div></div>
   </div>
 
@@ -636,6 +745,7 @@
     "Van hoofdkantoor tot kassa: heldere rollen voor uw hele team.",
     "B T W wordt automatisch berekend en netjes apart op de bon getoond.",
     "Dien de B T W direct in bij de Belastingdienst, met terugkoppeling bij een geschil.",
+    "De inspecteur ziet alle aangiftes van alle organisaties in één overzicht, en accepteert of betwist ze met één klik.",
     "Werk altijd met de actuele, dagelijks vergrendelde wisselkoers.",
     "Volledig tweetalig: Nederlands en Engels, direct wisselen zonder herstart.",
     "Internet weg? De verkoop gaat gewoon door, en synct later automatisch.",
@@ -652,6 +762,7 @@
     "From head office to the register: clear roles for your whole team.",
     "VAT is calculated automatically and shown separately on the receipt.",
     "File VAT directly with the Tax Office, with feedback when there is a dispute.",
+    "The inspector sees every filing from every organisation in one overview, and accepts or disputes each with a single click.",
     "Always work with the current, daily locked exchange rate.",
     "Fully bilingual: Dutch and English, switch instantly without a restart.",
     "Internet down? Sales simply continue, and sync later automatically.",
