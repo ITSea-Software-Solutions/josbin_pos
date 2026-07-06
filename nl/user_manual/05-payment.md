@@ -69,6 +69,8 @@ Zodra alle producten in de winkelwagen staan, laat dit hoofdstuk u zien hoe u de
 
 ### Een pinapparaat koppelen (pinterminal)
 
+> 🎬 **Visuele gids voor niet-technische lezers:** [Kaartbetalingen — stap voor stap](/card-payments.html) — geanimeerde walkthrough van de kassaflow, de ingebouwde oefenterminal, en live gaan met een echt bankapparaat.
+
 Drie modi, in te stellen onder **Instellingen → Pinterminal (kaartbetalingen)**:
 
 1. **Losse bankterminal (standaard — zo werkt Suriname vandaag).** Het

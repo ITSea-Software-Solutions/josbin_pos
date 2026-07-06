@@ -77,7 +77,9 @@ het ECR-terminalprotocol van de acquiring bank nodig, en geen Surinaamse bank
 stelt dat vandaag publiek beschikbaar. De kassa heeft het koppelpunt al klaar
 (inclusief een gesimuleerde terminal voor demo's en training — zie
 kassahandleiding §5.3); biedt uw bank ECR-integratie aan, neem dan contact op
-met ITSea om het te activeren.
+met ITSea om het te activeren. Een visuele, niet-technische walkthrough
+(dagelijkse flow, oefenterminal, live gaan) staat op
+[Kaartbetalingen — stap voor stap](/card-payments.html).
 
 ## 22.6 Verdieping
 

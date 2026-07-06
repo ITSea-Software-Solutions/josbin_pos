@@ -75,7 +75,9 @@ There is deliberately **no direct cable between POS and terminal** yet: that
 requires the acquiring bank's ECR terminal protocol, which no Surinamese bank
 exposes publicly today. The POS has the integration slot ready (including a
 simulated terminal mode for demos and training — see POS manual §5.3); when
-your bank offers ECR integration, contact ITSea to activate it.
+your bank offers ECR integration, contact ITSea to activate it. A visual,
+non-technical walkthrough (daily flow, practice terminal, going live) is at
+[Card payments — step by step](/card-payments.html).
 
 ## 22.6 Deep dive
 

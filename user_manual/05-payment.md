@@ -69,6 +69,8 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ### Connecting a card machine (PIN terminal)
 
+> 🎬 **Visual guide for non-technical readers:** [Card payments — step by step](/card-payments.html) — animated walkthrough of the till flow, the built-in practice terminal, and going live with a real bank machine.
+
 Three modes, set under **Settings → Card / PIN terminal**:
 
 1. **Standalone bank terminal (default — how Suriname works today).** The

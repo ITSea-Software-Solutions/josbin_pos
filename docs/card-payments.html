@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kaartbetalingen — stap voor stap | Josbin POS</title>
+<style>
+  :root{
+    --navy:#293371; --navy-deep:#1f2a63; --orange:#ef6c00; --orange-soft:#fff3e6;
+    --ink:#16203a; --muted:#5f6a84; --line:#e6ecf5; --bg:#f6f8fc; --card:#ffffff;
+    --green:#16a34a; --green-soft:#eafaf0; --amber:#b45309; --amber-soft:#fff8e6;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{font-family:-apple-system,"Segoe UI",system-ui,Roboto,sans-serif;color:var(--ink);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px}
+
+  header.top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:8px}
+  .brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;letter-spacing:-.01em}
+  .brand .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--navy),#3a4a8f);color:#fff;display:grid;place-items:center;font-size:19px}
+  .brand b{color:var(--navy)}
+  .lang{display:flex;border:1px solid var(--line);border-radius:100px;overflow:hidden;background:#fff}
+  .lang button{border:0;background:transparent;padding:8px 16px;font:inherit;font-size:13px;font-weight:700;cursor:pointer;color:var(--muted)}
+  .lang button.active{background:var(--navy);color:#fff}
+
+  h1{font-size:clamp(26px,5vw,38px);line-height:1.1;letter-spacing:-.02em;margin:18px 0 10px}
+  h1 .o{color:var(--orange)}
+  .lead{font-size:17px;color:var(--muted);max-width:62ch;margin:0 0 14px}
+  .keyfacts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:22px 0 8px}
+  .fact{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--orange);border-radius:12px;padding:14px 16px}
+  .fact b{display:block;font-size:14.5px;margin-bottom:4px}
+  .fact span{font-size:13.5px;color:var(--muted)}
+
+  section{margin-top:44px}
+  .sec-eyebrow{font-size:12px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--orange)}
+  h2{font-size:24px;letter-spacing:-.01em;margin:6px 0 6px}
+  .sec-intro{color:var(--muted);margin:0 0 18px;max-width:64ch}
+
+  .step{display:grid;grid-template-columns:64px 1fr;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+  .step .num{width:44px;height:44px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800;font-size:19px}
+  .step h3{margin:2px 0 6px;font-size:17px}
+  .step p{margin:0;color:var(--muted);font-size:14.5px}
+  .step .tip{margin-top:8px;font-size:13px;background:var(--orange-soft);border-radius:8px;padding:8px 12px;color:#7c3b00}
+
+  /* animated illustration stage */
+  .illu{margin:10px 0 22px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;overflow:hidden}
+  .illu .cap{text-align:center;font-size:13px;color:var(--muted);margin-top:12px}
+  .scene-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .scene{position:relative;height:250px;width:640px;min-width:640px;margin:0 auto}
+  /* POS screen */
+  .pos{position:absolute;left:0;top:18px;width:250px;height:180px;border-radius:14px;background:#0e1730;border:6px solid #101a38;box-shadow:0 14px 30px -14px rgba(20,30,70,.5)}
+  .pos .bar{height:26px;border-radius:8px 8px 0 0;background:var(--navy);display:flex;align-items:center;padding:0 10px;color:#fff;font-size:10.5px;font-weight:700}
+  .pos .body{padding:10px;color:#eef2fb;font-size:11px}
+  .pos .total{font-size:22px;font-weight:800;color:#ffb36b;margin:6px 0}
+  .pos .btn{margin-top:8px;background:var(--orange);border-radius:7px;text-align:center;padding:7px 0;font-weight:800;font-size:11.5px;color:#fff}
+  /* PIN terminal */
+  .term{position:absolute;right:0;top:0;width:150px;height:226px;border-radius:18px;background:#20263a;box-shadow:0 16px 30px -14px rgba(20,30,70,.55);padding:12px}
+  .term .scr{height:58px;border-radius:8px;background:#0f2f1e;color:#7dffb1;font-family:ui-monospace,monospace;font-size:12px;display:flex;align-items:center;justify-content:center;text-align:center;padding:4px}
+  .term .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+  .term .keys i{height:20px;border-radius:5px;background:#3a4258;display:block}
+  .term .keys i.ok{background:var(--green)}
+  .term .slot{margin-top:10px;height:6px;border-radius:3px;background:#0b0f1d}
+  /* card + slip + arrows */
+  .card-chip{position:absolute;right:118px;top:110px;width:74px;height:48px;border-radius:8px;background:linear-gradient(135deg,#3a4a8f,var(--navy));box-shadow:0 8px 16px -8px rgba(20,30,70,.6);opacity:0}
+  .card-chip::after{content:"";position:absolute;left:9px;top:15px;width:16px;height:12px;border-radius:3px;background:#e9c86b}
+  .slip{position:absolute;right:52px;top:-6px;width:46px;height:0;background:repeating-linear-gradient(#fff,#fff 6px,#eef2f8 7px);border:1px solid var(--line);border-top:0;overflow:hidden;opacity:0}
+  .fly{position:absolute;left:262px;top:96px;font-size:26px;opacity:0}
+  .ok-badge{position:absolute;left:70px;top:-4px;background:var(--green-soft);color:var(--green);border:1.5px solid var(--green);font-size:12px;font-weight:800;border-radius:100px;padding:5px 12px;opacity:0}
+  /* animation timeline (12s loop) */
+  @keyframes typeAmt{0%,8%{opacity:0}12%,100%{opacity:1}}
+  @keyframes termAmt{0%,20%{color:#7dffb1}22%,100%{color:#7dffb1}}
+  @keyframes showCard{0%,30%{opacity:0;transform:translateY(16px)}36%,60%{opacity:1;transform:translateY(0)}66%,100%{opacity:0}}
+  @keyframes slipGrow{0%,58%{height:0;opacity:0}62%{opacity:1}74%,100%{height:64px;opacity:1}}
+  @keyframes flyArrow{0%,10%{opacity:0;transform:translateX(-8px)}14%,24%{opacity:1;transform:translateX(6px)}28%,100%{opacity:0}}
+  @keyframes okPop{0%,80%{opacity:0;transform:scale(.8)}86%,100%{opacity:1;transform:scale(1)}}
+  .scene .amt-on-term{animation:typeAmt 12s linear infinite}
+  .scene .card-chip{animation:showCard 12s linear infinite}
+  .scene .slip{animation:slipGrow 12s linear infinite}
+  .scene .fly{animation:flyArrow 12s linear infinite}
+  .scene .ok-badge{animation:okPop 12s linear infinite}
+  @media (prefers-reduced-motion:reduce){.scene *{animation:none!important;opacity:1!important;height:auto}}
+  /* On narrow screens the 640px scene scrolls sideways inside its own
+     container instead of squashing the two devices into each other. */
+
+  /* simulated demo stage */
+  .demo-pos{max-width:340px;margin:0 auto;border-radius:16px;background:#0e1730;border:6px solid #101a38;padding:0;box-shadow:0 14px 30px -14px rgba(20,30,70,.5)}
+  .demo-pos .bar{height:30px;border-radius:8px 8px 0 0;background:var(--navy);display:flex;align-items:center;padding:0 12px;color:#fff;font-size:11px;font-weight:700}
+  .demo-pos .body{padding:14px;color:#eef2fb;font-size:12.5px}
+  .demo-btn{margin-top:10px;border-radius:8px;text-align:center;padding:10px 0;font-weight:800;font-size:12.5px;color:#fff;background:var(--orange)}
+  .demo-wait,.demo-ok,.demo-fields{margin-top:10px;border-radius:8px;padding:9px 12px;font-size:12px;opacity:0}
+  .demo-wait{background:#1b2640;color:#b8c3de}
+  .demo-ok{background:var(--green-soft);color:var(--green);font-weight:800;border:1px solid var(--green)}
+  .demo-fields{background:#1b2640;color:#eef2fb;font-family:ui-monospace,monospace;font-size:11px;line-height:1.7}
+  @keyframes dPress{0%,12%{transform:scale(1)}15%{transform:scale(.96)}18%,100%{transform:scale(1)}}
+  @keyframes dWait{0%,18%{opacity:0}22%,48%{opacity:1}54%,100%{opacity:0}}
+  @keyframes dOk{0%,52%{opacity:0}58%,100%{opacity:1}}
+  @keyframes dFields{0%,60%{opacity:0}66%,100%{opacity:1}}
+  .demo-pos .demo-btn{animation:dPress 10s linear infinite}
+  .demo-pos .demo-wait{animation:dWait 10s linear infinite}
+  .demo-pos .demo-ok{animation:dOk 10s linear infinite}
+  .demo-pos .demo-fields{animation:dFields 10s linear infinite}
+
+  .faq{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 20px}
+  .faq details{border-bottom:1px solid var(--line);padding:14px 0}
+  .faq details:last-child{border-bottom:0}
+  .faq summary{font-weight:700;cursor:pointer;font-size:15px}
+  .faq p{color:var(--muted);font-size:14px;margin:8px 0 0}
+
+  .callout{border-radius:14px;padding:16px 18px;margin:16px 0;font-size:14.5px}
+  .callout.green{background:var(--green-soft);border:1px solid #bbe7cb}
+  .callout.amber{background:var(--amber-soft);border:1px solid #f3dfae;color:#6b4a09}
+  .callout b{display:block;margin-bottom:4px}
+
+  footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+  a{color:var(--navy)}
+  @media print{.lang{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="logo">J</span>Josbin&nbsp;<b>POS</b></div>
+    <div class="lang"><button id="btn-nl" class="active">NL</button><button id="btn-en">EN</button></div>
+  </header>
+
+  <h1 data-en='Card payments — <span class="o">step by step</span>'>Kaartbetalingen — <span class="o">stap voor stap</span></h1>
+  <p class="lead" data-en="How PIN/card payments work with Josbin POS, which machine you need, and how to test everything today — written for anyone, no technical background needed.">Hoe pin-/kaartbetalingen werken met Josbin POS, welk apparaat u nodig heeft, en hoe u alles vandaag al test — geschreven voor iedereen, geen technische kennis nodig.</p>
+
+  <div class="keyfacts">
+    <div class="fact"><b data-en="No cable between POS and machine">Geen kabel tussen kassa en apparaat</b><span data-en="The bank's PIN machine works on its own, next to the till. The POS records the sale.">Het pinapparaat van de bank werkt zelfstandig, naast de kassa. De kassa registreert de verkoop.</span></div>
+    <div class="fact"><b data-en="The machine comes from your bank">Het apparaat komt van uw bank</b><span data-en="DSB, Hakrinbank, Finabank, Republic… your bank issues the merchant terminal. Any of them works.">DSB, Hakrinbank, Finabank, Republic… uw bank levert de terminal. Elke bank werkt.</span></div>
+    <div class="fact"><b data-en="Testing needs NO machine">Testen kan ZONDER apparaat</b><span data-en="Josbin POS has a built-in practice terminal (simulation). Train and demo without hardware or real money.">Josbin POS heeft een ingebouwde oefenterminal (simulatie). Train en demonstreer zonder apparaat of echt geld.</span></div>
+  </div>
+
+  <!-- ═══════════ PART 1: how it works daily ═══════════ -->
+  <section>
+    <div class="sec-eyebrow" data-en="Part 1 · Daily use">Deel 1 · Dagelijks gebruik</div>
+    <h2 data-en="A card payment at the till — what actually happens">Een kaartbetaling aan de kassa — wat er echt gebeurt</h2>
+    <p class="sec-intro" data-en="In Suriname the card machine is a separate device from your bank. The animation shows the whole flow — it repeats every 12 seconds.">In Suriname is het pinapparaat een los apparaat van uw bank. De animatie toont de hele flow — hij herhaalt elke 12 seconden.</p>
+
+    <div class="illu">
+      <div class="scene-scroll"><div class="scene" aria-label="POS en pinterminal naast elkaar">
+        <div class="pos">
+          <div class="bar">Josbin POS — Kassa 1</div>
+          <div class="body">
+            <div data-en="Total to pay">Te betalen</div>
+            <div class="total">SRD 250,00</div>
+            <div class="btn">💳 <span data-en="Card / PIN">Pin / Kaart</span></div>
+          </div>
+          <div class="ok-badge">✓ <span data-en="Sale recorded">Verkoop geregistreerd</span></div>
+        </div>
+        <div class="fly">➜</div>
+        <div class="term">
+          <div class="scr"><span class="amt-on-term">SRD 250,00<br><small data-en="PRESENT CARD">BIED KAART AAN</small></span></div>
+          <div class="keys"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="ok"></i><i></i></div>
+          <div class="slot"></div>
+          <div class="slip"></div>
+        </div>
+        <div class="card-chip" title="klant betaalt"></div>
+      </div></div>
+      <div class="cap" data-en="Left: Josbin POS. Right: the bank's PIN machine. The cashier types the amount on the bank machine; the customer pays there; the slip prints; the POS records the sale.">Links: Josbin POS. Rechts: het pinapparaat van de bank. De kassier tikt het bedrag op het bankapparaat; de klant betaalt daar; de bon rolt eruit; de kassa registreert de verkoop.</div>
+    </div>
+
+    <div class="step"><div class="num">1</div><div>
+      <h3 data-en="Ring up the sale in Josbin POS">Sla de verkoop aan in Josbin POS</h3>
+      <p data-en="Scan or tap the products as normal. Press Pay and choose 💳 Card / PIN. The screen shows the exact amount, e.g. SRD 250.00.">Scan of tik de producten zoals altijd. Druk op Betalen en kies 💳 Pin / Kaart. Het scherm toont het exacte bedrag, bijv. SRD 250,00.</p>
+    </div></div>
+    <div class="step"><div class="num">2</div><div>
+      <h3 data-en="Type the SAME amount on the bank machine">Tik HETZELFDE bedrag op het bankapparaat</h3>
+      <p data-en="On the PIN terminal (the bank's device), key in 250.00 and press the green button.">Tik op de pinterminal (het apparaat van de bank) 250,00 in en druk op de groene knop.</p>
+      <div class="tip" data-en="💡 The Josbin screen keeps the amount big on purpose — copy it exactly, that prevents typing mistakes.">💡 Het Josbin-scherm houdt het bedrag bewust groot in beeld — neem het exact over, dat voorkomt tikfouten.</div>
+    </div></div>
+    <div class="step"><div class="num">3</div><div>
+      <h3 data-en="The customer pays on the bank machine">De klant betaalt op het bankapparaat</h3>
+      <p data-en="Insert or tap the card, PIN if asked. The machine says APPROVED and prints a slip.">Kaart insteken of tikken, zo nodig pincode. Het apparaat zegt GOEDGEKEURD en print een bon.</p>
+    </div></div>
+    <div class="step"><div class="num">4</div><div>
+      <h3 data-en="(Optional, 10 seconds) Copy the slip details into the POS">(Optioneel, 10 seconden) Neem de bongegevens over in de kassa</h3>
+      <p data-en="Bank name, approval code, last 4 digits, terminal reference — straight from the slip. You may also press 'Skip &amp; complete'; the sale completes either way.">Banknaam, autorisatiecode, laatste 4 cijfers, terminal-referentie — rechtstreeks van de bon. U mag ook 'Overslaan &amp; afronden' drukken; de verkoop wordt sowieso voltooid.</p>
+      <div class="tip" data-en="💡 Why bother? With these details your administrator can automatically match the day's card sales against the bank statement (Chapter 10 §10.5.6 of the manual).">💡 Waarom zou u? Met deze gegevens kan uw beheerder de pinverkopen van de dag automatisch matchen met het bankafschrift (hoofdstuk 10 §10.5.6 van de handleiding).</div>
+    </div></div>
+    <div class="step"><div class="num">5</div><div>
+      <h3 data-en="Done — receipt for the customer">Klaar — bon voor de klant</h3>
+      <p data-en="Josbin POS prints/emails its own receipt with BTW breakdown. The customer gets the bank slip plus your receipt. No change, no cash drawer.">Josbin POS print/mailt zijn eigen bon met BTW-specificatie. De klant krijgt de bankbon plus uw kassabon. Geen wisselgeld, geen kassalade.</p>
+    </div></div>
+  </section>
+
+  <!-- ═══════════ PART 2: testing without a machine ═══════════ -->
+  <section>
+    <div class="sec-eyebrow" data-en="Part 2 · Testing & training">Deel 2 · Testen & training</div>
+    <h2 data-en="Test today — no machine, no real money">Test vandaag — zonder apparaat, zonder echt geld</h2>
+    <p class="sec-intro" data-en="Josbin POS has a built-in practice terminal. It behaves like a connected card machine: you 'send' the amount, it approves after 2 seconds and fills in the slip details by itself. Perfect for training cashiers and demos.">Josbin POS heeft een ingebouwde oefenterminal. Die gedraagt zich als een gekoppeld pinapparaat: u 'stuurt' het bedrag, hij keurt na 2 seconden goed en vult de bongegevens zelf in. Perfect om kassiers te trainen en te demonstreren.</p>
+
+    <div class="illu">
+      <div class="demo-pos">
+        <div class="bar">Josbin POS — <span data-en="Card payment">Kaartbetaling</span></div>
+        <div class="body">
+          <div style="display:flex;justify-content:space-between"><span data-en="Card amount">Pinbedrag</span><b style="color:#ffb36b">SRD 250,00</b></div>
+          <div class="demo-btn">📡 <span data-en="Send SRD 250.00 to PIN terminal">Stuur SRD 250,00 naar pinterminal</span></div>
+          <div class="demo-wait">⏳ <span data-en="Waiting for PIN terminal — customer is paying…">Wacht op pinterminal — klant betaalt…</span></div>
+          <div class="demo-ok">✓ <span data-en="Approved by terminal — details filled in">Goedgekeurd door terminal — gegevens ingevuld</span></div>
+          <div class="demo-fields">Bank: DSB &nbsp;·&nbsp; Auth: A48291<br>•••• 7402 &nbsp;·&nbsp; TRM-55031</div>
+        </div>
+      </div>
+      <div class="cap" data-en="The practice terminal in action — this is exactly what you will see on screen.">De oefenterminal in actie — precies dit ziet u op het scherm.</div>
+    </div>
+
+    <div class="step"><div class="num">1</div><div>
+      <h3 data-en="Switch the POS to the practice terminal (one time)">Zet de kassa op de oefenterminal (eenmalig)</h3>
+      <p data-en="Open the POS → Settings (gear icon) → section '💳 Card / PIN terminal' → choose 'Simulated terminal (demo/training)'. Optionally pick which bank the practice approvals should mention.">Open de kassa → Instellingen (tandwiel) → sectie '💳 Pinterminal (kaartbetalingen)' → kies 'Gesimuleerde terminal (demo/training)'. Kies eventueel welke bank de oefen-goedkeuringen vermelden.</p>
+    </div></div>
+    <div class="step"><div class="num">2</div><div>
+      <h3 data-en="Make a card sale">Doe een kaartverkoop</h3>
+      <p data-en="Add products → Pay → 💳 Card / PIN. A new orange button appears: '📡 Send SRD … to PIN terminal'. Press it.">Producten toevoegen → Betalen → 💳 Pin / Kaart. Er verschijnt een nieuwe oranje knop: '📡 Stuur SRD … naar pinterminal'. Druk erop.</p>
+    </div></div>
+    <div class="step"><div class="num">3</div><div>
+      <h3 data-en="Watch the approval come back">Zie de goedkeuring binnenkomen</h3>
+      <p data-en="Two seconds of 'customer is paying…', then a green '✓ Approved by terminal' — and the bank, approval code, last 4 digits and terminal reference are filled in automatically. Complete the sale as normal.">Twee seconden 'klant betaalt…', daarna een groene '✓ Goedgekeurd door terminal' — en de bank, autorisatiecode, laatste 4 cijfers en terminal-referentie zijn automatisch ingevuld. Rond de verkoop normaal af.</p>
+      <div class="tip" data-en="💡 This is also the exact experience a future direct bank link (ECR) will give — see the FAQ below.">💡 Dit is ook precies de ervaring die een toekomstige directe bankkoppeling (ECR) zal geven — zie de FAQ hieronder.</div>
+    </div></div>
+    <div class="step"><div class="num">4</div><div>
+      <h3 data-en="Back to real life">Terug naar de praktijk</h3>
+      <p data-en="Before the store opens for real sales, set the mode back to 'Standalone bank terminal (default)'. Practice sales look like real card sales in the reports — do the training on the demo environment, or void the practice sales afterwards.">Zet vóór echte verkoop de modus terug op 'Losse bankterminal (standaard)'. Oefenverkopen zien er in de rapporten uit als echte pinverkopen — train dus op de demo-omgeving, of annuleer de oefenverkopen achteraf.</p>
+    </div></div>
+  </section>
+
+  <!-- ═══════════ PART 3: getting a real machine ═══════════ -->
+  <section>
+    <div class="sec-eyebrow" data-en="Part 3 · Going live">Deel 3 · Live gaan</div>
+    <h2 data-en="Getting a real machine for the store">Een echt apparaat regelen voor de winkel</h2>
+    <div class="step"><div class="num">1</div><div>
+      <h3 data-en="Ask your bank for a merchant PIN terminal">Vraag uw bank om een merchant-pinterminal</h3>
+      <p data-en="DSB, Hakrinbank, Finabank and Republic Bank all issue PIN terminals to businesses (usually rental plus a small fee per transaction). You need a business account with that bank.">DSB, Hakrinbank, Finabank en Republic Bank leveren allemaal pinterminals aan bedrijven (meestal huur plus kleine kosten per transactie). U heeft een zakelijke rekening bij die bank nodig.</p>
+    </div></div>
+    <div class="step"><div class="num">2</div><div>
+      <h3 data-en="Put it next to the till — that's the whole installation">Zet hem naast de kassa — dat is de hele installatie</h3>
+      <p data-en="The machine uses its own SIM card or Wi-Fi from the bank. There is nothing to connect to Josbin POS, nothing to configure in the software. Keep the POS setting on 'Standalone bank terminal (default)'.">Het apparaat gebruikt zijn eigen simkaart of wifi van de bank. Er hoeft niets aan Josbin POS gekoppeld of ingesteld te worden. Laat de kassa-instelling op 'Losse bankterminal (standaard)' staan.</p>
+    </div></div>
+    <div class="step"><div class="num">3</div><div>
+      <h3 data-en="Train the cashiers (15 minutes)">Train de kassiers (15 minuten)</h3>
+      <p data-en="Use the practice terminal from Part 2 for the POS side, and the bank's own quick guide for the machine side. The golden rule to teach: the amount on the bank machine must equal the amount on the POS screen.">Gebruik de oefenterminal uit Deel 2 voor de kassakant, en de snelgids van de bank voor de apparaatkant. De gouden regel om aan te leren: het bedrag op het bankapparaat moet gelijk zijn aan het bedrag op het kassascherm.</p>
+    </div></div>
+    <div class="callout green"><b data-en="✓ Checklist before the first real card sale">✓ Checklist vóór de eerste echte kaartverkoop</b>
+      <span data-en="① Bank terminal works (do a €0/SRD 1 test with the bank) · ② POS mode = 'Standalone bank terminal' · ③ Cashiers know: same amount on both screens · ④ Manager knows where the reconciliation report lives (Dashboard → Reports).">① Bankterminal werkt (doe een testbetaling met de bank) · ② Kassamodus = 'Losse bankterminal' · ③ Kassiers weten: zelfde bedrag op beide schermen · ④ Manager weet waar het reconciliatierapport staat (Dashboard → Rapporten).</span>
+    </div>
+  </section>
+
+  <!-- ═══════════ FAQ ═══════════ -->
+  <section>
+    <div class="sec-eyebrow">FAQ</div>
+    <h2 data-en="Frequently asked questions">Veelgestelde vragen</h2>
+    <div class="faq">
+      <details><summary data-en="Which machine should we buy for testing?">Welk apparaat moeten we kopen om te testen?</summary>
+        <p data-en="None. Testing and training use the built-in practice terminal (Part 2) — zero hardware, zero risk. You only need a real machine when a real store starts taking real cards, and that machine comes from the store's own bank.">Geen. Testen en trainen gaat met de ingebouwde oefenterminal (Deel 2) — geen apparaat, geen risico. Een echt apparaat is pas nodig wanneer een echte winkel echte kaarten gaat accepteren, en dat apparaat komt van de eigen bank van de winkel.</p></details>
+      <details><summary data-en="Can the POS send the amount to the machine automatically?">Kan de kassa het bedrag automatisch naar het apparaat sturen?</summary>
+        <p data-en="Not yet with real bank machines — that requires a technical protocol (called ECR) from the bank, and no Surinamese bank offers it publicly today. Josbin POS is already prepared for it: the moment a bank provides their protocol, we activate the direct link and the flow becomes exactly like the practice terminal — no typing, no mistakes. Ask your bank about 'ECR / kassakoppeling' and contact ITSea when they say yes.">Nog niet met echte bankapparaten — daarvoor is een technisch protocol (ECR) van de bank nodig, en geen Surinaamse bank biedt dat vandaag publiek aan. Josbin POS is er al op voorbereid: zodra een bank haar protocol levert, activeren wij de directe koppeling en werkt het precies zoals de oefenterminal — niets overtypen, geen fouten. Vraag uw bank naar 'ECR / kassakoppeling' en neem contact op met ITSea zodra zij ja zeggen.</p></details>
+      <details><summary data-en="What if the machine approves but the POS was never completed (or the other way round)?">Wat als het apparaat goedkeurt maar de kassa nooit is afgerond (of andersom)?</summary>
+        <p data-en="That's exactly what the daily reconciliation catches: Dashboard → Reports shows card totals per bank, which the administrator compares with the bank statement. A mismatch of one sale is found in minutes — especially when cashiers copy the approval code from the slip.">Precies daarvoor is de dagelijkse reconciliatie: Dashboard → Rapporten toont pintotalen per bank, die de beheerder vergelijkt met het bankafschrift. Eén afwijkende verkoop is in minuten gevonden — zeker als kassiers de autorisatiecode van de bon overnemen.</p></details>
+      <details><summary data-en="How do card refunds work?">Hoe werken terugbetalingen op kaart?</summary>
+        <p data-en="Two halves, same as the payment: the money goes back via the bank machine (or the bank), and Josbin POS records the refund (Manual chapter 5a) so stock, BTW and reports stay correct.">Twee helften, net als de betaling: het geld gaat terug via het bankapparaat (of de bank), en Josbin POS registreert de terugbetaling (handleiding hoofdstuk 5a) zodat voorraad, BTW en rapporten kloppen.</p></details>
+      <details><summary data-en="Can a customer pay part cash, part card?">Kan een klant deels contant, deels met kaart betalen?</summary>
+        <p data-en="Yes — choose 🔀 Mixed on the payment screen. The POS splits the amounts; only the card part goes onto the bank machine.">Ja — kies 🔀 Gemengd op het betaalscherm. De kassa splitst de bedragen; alleen het kaartdeel gaat op het bankapparaat.</p></details>
+    </div>
+  </section>
+
+  <footer>
+    <span><b>Josbin POS</b> — <span data-en="Card payments guide">Gids kaartbetalingen</span></span>
+    <span data-en='More detail: <a href="/user_manual/05-payment.html">Manual ch. 5</a> · <a href="/dashboard_manual/22-payment-methods-and-wallets.html">Dashboard ch. 22</a>'>Meer detail: <a href="/nl/user_manual/05-payment.html">Handleiding h. 5</a> · <a href="/nl/dashboard_manual/22-payment-methods-and-wallets.html">Dashboard h. 22</a></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var nl = document.getElementById('btn-nl'), en = document.getElementById('btn-en');
+  function apply(lang){
+    document.documentElement.lang = lang;
+    nl.classList.toggle('active', lang === 'nl');
+    en.classList.toggle('active', lang === 'en');
+    document.querySelectorAll('[data-en]').forEach(function(el){
+      if (el._nl == null) el._nl = el.innerHTML;
+      el.innerHTML = lang === 'en' ? el.getAttribute('data-en') : el._nl;
+    });
+  }
+  nl.addEventListener('click', function(){ apply('nl'); });
+  en.addEventListener('click', function(){ apply('en'); });
+})();
+</script>
+</body>
+</html>

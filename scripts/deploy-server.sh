@@ -52,7 +52,7 @@ log "Building docs site (manual + flow diagrams)"
 ( cd docs-site && npm ci --silent && npm run build ) || fail "docs build failed"
 # Fold the standalone diagram pages into the same web root so they are served
 # at /flows.html and /architecture.html alongside the VitePress manual.
-cp docs/flows.html docs/architecture.html docs-site/.vitepress/dist/ || fail "docs asset copy failed"
+cp docs/flows.html docs/architecture.html docs/card-payments.html docs-site/.vitepress/dist/ || fail "docs asset copy failed"
 # Marketing sizzle-reel + teaser + landing page (self-contained bilingual HTML)
 # → /promo.html, /teaser.html, /videos.html (the one link to share with clients).
 cp marketing/josbin-pos-promo.html  docs-site/.vitepress/dist/promo.html  || fail "promo copy failed"
