@@ -140,11 +140,15 @@ Once payment is accepted:
 QR wallets are the everyday scan-to-pay method in Suriname. The flow at the till:
 
 1. Tap **🔳 QR wallet (Mopé / Uni5Pay+)** on the payment screen.
-2. The customer scans your store's QR code (Mopé sticker / Uni5Pay+ static QR) and pays in their wallet app.
+2. Pick the wallet — **the store's QR appears on the POS screen** (when uploaded, see setup below) together with the amount due. The customer scans it straight from the screen — or from the physical sticker — and types the amount in their wallet app. *The QR is static: it identifies your store, so the amount is always entered by the customer.*
 3. Within seconds, **"payment received"** appears on your wallet device (the store phone/tablet with the merchant app).
 4. Pick the wallet (**Mopé** / **Uni5Pay+** / Other), optionally type the transaction ID from the merchant app, and leave **"Payment received — confirmed on the wallet device"** ticked.
 5. Tap **Complete QR payment** — the sale completes immediately, no cash drawer involved.
 
 > **Notification delayed?** Untick the confirmation box before completing. The sale is then recorded as *awaiting confirmation* and your administrator approves it later from **Dashboard → Pending payments** — same flow as a bank transfer.
+
+> **One-time setup — show the QR on the POS screen:** an Org Admin or Store Manager uploads the wallet QR (the image your bank/wallet provider issued) via **Dashboard → Stores → Settings → QR wallets**, once per wallet per store. Without it the flow still works — the customer scans the counter sticker instead.
+
+> **Full flow & edge cases** (delayed confirmation, refund rules, external POS, future automatic confirmation): see the developer doc *QR-wallet betalingen — flow & use cases* (`docs/qr-payment-flow.md`).
 
 > **Daily reconciliation tip for managers:** compare the day's **QR wallet** total on the Z-Report with the wallet's own merchant portal. The optional transaction ID on each sale makes matching individual payments easy.

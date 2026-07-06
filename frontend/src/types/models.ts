@@ -45,7 +45,7 @@ export interface Store {
   receipt_header: string
   receipt_footer: string
   receipt_logo_path?: string | null
-  settings?: { receipt_btw_number?: string } & Record<string, unknown>
+  settings?: { receipt_btw_number?: string; wallet_qrs?: Record<string, string> } & Record<string, unknown>
   organisation?: { id: string; name: string; btw_number?: string | null }
   is_active: boolean
   pos_type: 'native' | 'external'

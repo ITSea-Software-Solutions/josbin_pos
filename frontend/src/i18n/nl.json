@@ -132,6 +132,8 @@
       "foreignAmount": "Bedrag in vreemde valuta",
       "qrWallet": "QR-wallet (Mopé / Uni5Pay+)",
       "qrWalletHelp": "Klant scant de QR-code van de winkel en betaalt in de wallet-app. Zodra 'betaling ontvangen' op het wallet-apparaat verschijnt, rondt u af.",
+      "qrScanInstruction": "Scan met de wallet-app en voer dit bedrag in:",
+      "qrNoImage": "Geen {{wallet}}-QR ingesteld voor deze vestiging. Upload hem via Dashboard → Vestigingen → Instellingen → QR-wallets — of laat de klant de QR-sticker bij de kassa scannen.",
       "walletPick": "Wallet",
       "walletCustomPlaceholder": "Naam wallet",
       "walletReference": "Transactie-ID",

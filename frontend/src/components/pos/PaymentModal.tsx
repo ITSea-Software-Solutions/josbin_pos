@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
 import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { createSale } from '@/api/sales'
+import { getStore } from '@/api/stores'
 import { openCashDrawer } from '@/lib/hardware'
 import type { PaymentMethod } from '@/types/models'
 import type { CreateSalePayload } from '@/api/sales'
@@ -79,6 +80,21 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const [walletReference,      setWalletReference]      = useState('')
   const [walletConfirmed,      setWalletConfirmed]      = useState(true)
   const [showMore, setShowMore] = useState(false)
+
+  // Store settings carry the static merchant QR images (Mopé / Uni5Pay+)
+  // uploaded via Dashboard → Store settings. Fetched once per modal open so
+  // the QR step can show the code full-size for the customer to scan.
+  const { data: storeData } = useQuery({
+    queryKey: ['store', storeId],
+    queryFn: () => getStore(storeId),
+    enabled: isOpen,
+    staleTime: 5 * 60_000,
+  })
+  const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/api$/, '')
+  const walletQrPath = (storeData?.settings?.wallet_qrs ?? {})[walletProvider]
+  const walletQrUrl = walletQrPath
+    ? (walletQrPath.startsWith('http') ? walletQrPath : `${API_ORIGIN}/storage/${walletQrPath}`)
+    : null
 
   const effectiveTransferProvider = transferProvider === 'Other' ? transferProviderCustom.trim() : transferProvider
   const effectiveMobileProvider   = mobileProvider   === 'Other' ? mobileProviderCustom.trim()   : mobileProvider
@@ -573,6 +589,26 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
             {t('pos.payment.qrWalletHelp')}
           </p>
+
+          {/* The store's static merchant QR, shown once a wallet is picked so
+              the customer can scan straight from the POS screen. Static QRs
+              carry no amount — the shopper types the amount in the app, which
+              is why the total is repeated right under the code. */}
+          {walletProvider && walletProvider !== 'Other' && (
+            walletQrUrl ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '12px 0 4px', background: '#fff', borderRadius: 'var(--border-radius)' }}>
+                <img src={walletQrUrl} alt={`${walletProvider} QR`} style={{ width: 180, height: 180, objectFit: 'contain' }} />
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#16203a', paddingBottom: 8, textAlign: 'center' }}>
+                  {t('pos.payment.qrScanInstruction')}<br />
+                  <span style={{ fontSize: 18, fontWeight: 800 }}>SRD {totals.total}</span>
+                </div>
+              </div>
+            ) : (
+              <p style={{ fontSize: 11, color: 'var(--color-warning, #b45309)', margin: 0 }}>
+                {t('pos.payment.qrNoImage', { wallet: walletProvider })}
+              </p>
+            )
+          )}
 
           {/* Wallet picker — big touch chips, not a dropdown: two wallets
               cover the whole market so chips are one tap instead of three. */}

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
-import { getStore, updateStore, uploadStoreLogo, type Store } from '@/api/stores'
+import { getStore, updateStore, uploadStoreLogo, uploadWalletQr, deleteWalletQr, type Store, type WalletProvider } from '@/api/stores'
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') ?? 'http://localhost:8080'
 
@@ -49,6 +49,67 @@ interface FormState {
   receipt_header: string
   receipt_footer: string
   receipt_btw_number: string
+}
+
+/**
+ * One wallet provider tile: preview of the store's static merchant QR +
+ * upload / replace / remove. The POS shows this QR full-screen during a
+ * qr_payment so the customer can scan straight from the screen.
+ */
+function WalletQrCard({ store, provider, isNl }: { store: Store; provider: WalletProvider; isNl: boolean }) {
+  const qc = useQueryClient()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const existing = (store.settings?.wallet_qrs as Record<string, string> | undefined)?.[provider]
+  const [preview, setPreview] = useState<string | null>(logoUrl(existing))
+  const [status, setStatus] = useState<'idle' | 'busy' | 'ok' | 'error'>('idle')
+
+  useEffect(() => { setPreview(logoUrl((store.settings?.wallet_qrs as Record<string, string> | undefined)?.[provider])) }, [store, provider])
+
+  const upload = useMutation({
+    mutationFn: (file: File) => uploadWalletQr(store.id, provider, file),
+    onSuccess: (d) => { setPreview(d.wallet_qr_url); setStatus('ok'); qc.invalidateQueries({ queryKey: ['store', store.id] }) },
+    onError: () => setStatus('error'),
+  })
+  const remove = useMutation({
+    mutationFn: () => deleteWalletQr(store.id, provider),
+    onSuccess: () => { setPreview(null); setStatus('idle'); qc.invalidateQueries({ queryKey: ['store', store.id] }) },
+    onError: () => setStatus('error'),
+  })
+
+  return (
+    <div style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '12px 14px', border: '1px solid #e5e7eb', borderRadius: 12 }}>
+      {preview ? (
+        <img src={preview} alt={`${provider} QR`} style={{ width: 92, height: 92, objectFit: 'contain', borderRadius: 8, border: '1px solid #eef2fb', background: '#fff', flexShrink: 0 }} />
+      ) : (
+        <div style={{ width: 92, height: 92, borderRadius: 8, border: '2px dashed #e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 30, color: '#9ca3af', flexShrink: 0 }}>🔳</div>
+      )}
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 14, fontWeight: 800, color: '#16203a', marginBottom: 2 }}>{provider}</div>
+        <p style={{ margin: '0 0 8px', fontSize: 12, color: '#6b7280' }}>
+          {preview
+            ? (isNl ? 'Wordt op het kassascherm getoond bij een QR-betaling.' : 'Shown on the POS screen during a QR payment.')
+            : (isNl ? `Upload de ${provider}-QR die u van uw bank/wallet-aanbieder kreeg (sticker of PDF-afbeelding).` : `Upload the ${provider} QR your bank/wallet provider issued (sticker or PDF image).`)}
+        </p>
+        <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) { setStatus('busy'); upload.mutate(f) } e.target.value = '' }} />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => inputRef.current?.click()} disabled={status === 'busy'}
+            style={{ height: 32, padding: '0 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+            {preview ? (isNl ? 'Vervangen' : 'Replace') : (isNl ? 'QR uploaden' : 'Upload QR')}
+          </button>
+          {preview && (
+            <button onClick={() => { setStatus('busy'); remove.mutate() }} disabled={status === 'busy'}
+              style={{ height: 32, padding: '0 12px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 12 }}>
+              {isNl ? 'Verwijderen' : 'Remove'}
+            </button>
+          )}
+          {status === 'busy' && <span style={{ fontSize: 12, color: '#6b7280', lineHeight: '32px' }}>{isNl ? 'Bezig…' : 'Working…'}</span>}
+          {status === 'ok' && <span style={{ fontSize: 12, color: '#16a34a', lineHeight: '32px' }}>✓ {isNl ? 'Opgeslagen' : 'Saved'}</span>}
+          {status === 'error' && <span style={{ fontSize: 12, color: '#dc2626', lineHeight: '32px' }}>✗ {isNl ? 'Mislukt' : 'Failed'}</span>}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSaved: () => void }) {
@@ -215,6 +276,16 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
               </div>
             </div>
           </div>
+        </Section>
+
+        <Section title={isNl ? 'QR-wallets (Mopé / Uni5Pay+)' : 'QR wallets (Mopé / Uni5Pay+)'}>
+          <p style={{ margin: 0, fontSize: 12.5, color: '#6b7280', lineHeight: 1.5 }}>
+            {isNl
+              ? 'Upload per wallet de statische merchant-QR van uw winkel. De kassa toont hem groot op het scherm bij een QR-betaling, met het te betalen bedrag ernaast — de klant scant en typt het bedrag in de wallet-app.'
+              : "Upload your store's static merchant QR per wallet. The POS shows it large on screen during a QR payment, with the amount due next to it — the customer scans and types the amount in the wallet app."}
+          </p>
+          <WalletQrCard store={store} provider="Mopé" isNl={isNl} />
+          <WalletQrCard store={store} provider="Uni5Pay+" isNl={isNl} />
         </Section>
 
         {error && <p style={{ fontSize: 13, color: '#dc2626', margin: '0 0 12px' }}>{error}</p>}

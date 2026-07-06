@@ -140,11 +140,15 @@ Zodra de betaling is geaccepteerd:
 QR-wallets zijn dé alledaagse scan-en-betaal-methode in Suriname. Zo werkt het aan de kassa:
 
 1. Tik op **🔳 QR-wallet (Mopé / Uni5Pay+)** in het betaalscherm.
-2. De klant scant de QR-code van uw winkel (Mopé-sticker / statische Uni5Pay+-QR) en betaalt in de wallet-app.
+2. Kies de wallet — **de winkel-QR verschijnt op het kassascherm** (indien geüpload, zie inrichting hieronder) samen met het te betalen bedrag. De klant scant hem rechtstreeks van het scherm — of van de fysieke sticker — en typt het bedrag in de wallet-app. *De QR is statisch: hij identificeert uw winkel, dus het bedrag voert de klant altijd zelf in.*
 3. Binnen enkele seconden verschijnt **'betaling ontvangen'** op uw wallet-apparaat (de winkeltelefoon/-tablet met de merchant-app).
 4. Kies de wallet (**Mopé** / **Uni5Pay+** / Anders), typ eventueel het transactie-ID uit de merchant-app over, en laat **'Betaling ontvangen — bevestigd op het wallet-apparaat'** aangevinkt.
 5. Tik op **QR-betaling afronden** — de verkoop is direct voltooid, de kassalade blijft dicht.
 
 > **Melding vertraagd?** Vink het bevestigingsvakje uit vóór het afronden. De verkoop wordt dan geregistreerd als *wacht op bevestiging* en uw beheerder keurt hem later goed via **Dashboard → Openstaande betalingen** — dezelfde route als een bankoverschrijving.
+
+> **Eenmalige inrichting — QR op het kassascherm tonen:** een Org Admin of Vestigingsmanager uploadt de wallet-QR (de afbeelding die u van uw bank/wallet-aanbieder kreeg) via **Dashboard → Vestigingen → Instellingen → QR-wallets**, één keer per wallet per vestiging. Zonder upload werkt de flow ook — de klant scant dan de sticker bij de kassa.
+
+> **Volledige flow & randgevallen** (vertraagde bevestiging, terugbetaalregels, externe kassa's, toekomstige automatische bevestiging): zie het ontwikkeldocument *QR-wallet betalingen — flow & use cases* (`docs/qr-payment-flow.md`).
 
 > **Dagelijkse afstemtip voor managers:** vergelijk het dagtotaal **QR-wallet** op het Z-rapport met het merchant-portaal van de wallet zelf. Het optionele transactie-ID per verkoop maakt het matchen van individuele betalingen eenvoudig.

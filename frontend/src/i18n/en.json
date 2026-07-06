@@ -132,6 +132,8 @@
       "foreignAmount": "Amount in foreign currency",
       "qrWallet": "QR wallet (Mopé / Uni5Pay+)",
       "qrWalletHelp": "Customer scans the store QR code and pays in the wallet app. Complete once 'payment received' appears on the wallet device.",
+      "qrScanInstruction": "Scan with the wallet app and enter this amount:",
+      "qrNoImage": "No {{wallet}} QR configured for this store. Upload it via Dashboard → Stores → Settings → QR wallets — or have the customer scan the QR sticker at the counter.",
       "walletPick": "Wallet",
       "walletCustomPlaceholder": "Wallet name",
       "walletReference": "Transaction ID",

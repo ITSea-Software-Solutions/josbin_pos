@@ -171,6 +171,8 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::get('{store}',             [StoreController::class, 'show'])->name('show');
         Route::put('{store}',             [StoreController::class, 'update'])->name('update');
         Route::post('{store}/logo',       [StoreController::class, 'uploadLogo'])->name('logo');
+        Route::post('{store}/wallet-qr',   [StoreController::class, 'uploadWalletQr'])->name('wallet-qr');
+        Route::delete('{store}/wallet-qr', [StoreController::class, 'deleteWalletQr'])->name('wallet-qr.delete');
         Route::delete('{store}',          [StoreController::class, 'destroy'])->name('destroy');
     });
 
