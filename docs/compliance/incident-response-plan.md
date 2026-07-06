@@ -100,7 +100,7 @@ Bij een **datalek met persoonsgegevens** (klant: naam/telefoon/e-mail/ID-nummer 
 
 Binnen **[IN TE VULLEN — bv. 5 werkdagen]** na sluiting:
 - Tijdlijn, oorzaakanalyse (root cause), wat werkte / wat niet.
-- Concrete verbeteracties met eigenaar + deadline (voeg terugkerende risico's toe aan de gotcha-registry `CLAUDE_WORKING_GUIDE.md §4`).
+- Concrete verbeteracties met eigenaar + deadline (voeg terugkerende risico's toe aan het interne verbeterregister van de leverancier).
 - Bijwerken van dit plan indien nodig.
 - Vastleggen in het **incidentregister** (datum, ernst, betrokken data, melding ja/nee, acties).
 

@@ -18,7 +18,7 @@ Notes:
 
 - **Sale-time stock is *not* queued.** `StockMovementService::recordSale` runs synchronously inside the sale's DB transaction — a queue outage can no longer desync sale and stock. The queued job only covers the void/refund restore paths.
 - `DetectSaleAnomaly` runs heuristic rules (large discount > 30%, off-hours, oversized basket, >3 voids/hour by one cashier, >2σ from the 30-day store average) plus an optional GPT-4o narrative, and writes flagged sales to the audit log as `anomaly_detected`.
-- ⚠️ **Documented gap:** `DetectSaleAnomaly` is dispatched to the `ai` queue, but `config/horizon.php` defines only `supervisor-1` with `'queue' => ['default']` — nothing consumes `ai`, so anomaly jobs currently accumulate unprocessed. Fix is adding `ai` to the supervisor's queue list (then bounce the `horizon` container — G-026 below).
+- `DetectSaleAnomaly` runs on the dedicated `ai` queue; the Horizon supervisor consumes `['default', 'ai']`. (An earlier build listed only `default`, which left anomaly jobs unprocessed — fixed 2026-07-06; if anomaly alerts ever stop, verify the supervisor's queue list first, then bounce the `horizon` container — see the deploy note below.)
 
 ---
 
@@ -79,7 +79,7 @@ Frontend: `dashboard/src/components/shared/NotificationBell.tsx` — badge + dro
 
 Dashboard at `/horizon`, gated by the `viewHorizon` gate (`app/Providers/HorizonServiceProvider.php`). Failed jobs land on the Failed tab with payload + exception; webhook delivery failures from [ch 8](08-integration-api.md) show up here with their remaining retries.
 
-### G-026 — bounce the right container on deploy
+### Deploy note — bounce the right container on deploy
 
 Horizon runs in its **own `horizon` container**, not in `app`. So:
 
@@ -89,7 +89,7 @@ docker compose restart horizon                          # ✓ worker restarts wi
 # or: docker compose exec -T horizon php artisan horizon:terminate
 ```
 
-A stale worker keeps executing old code and **never sees newly added queued classes** — a deploy that adds or changes any job/notification above must bounce the `horizon` container, or filings will "succeed" while no notification ever materialises. (Gotcha registry: `CLAUDE_WORKING_GUIDE.md` §4, G-026. Demo and sandbox stacks have their own `horizon` containers — bounce each stack you deployed to.)
+A stale worker keeps executing old code and **never sees newly added queued classes** — a deploy that adds or changes any job/notification above must bounce the `horizon` container, or filings will "succeed" while no notification ever materialises. ( Demo and sandbox stacks have their own `horizon` containers — bounce each stack you deployed to.)
 
 ---
 

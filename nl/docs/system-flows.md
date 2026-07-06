@@ -64,7 +64,7 @@ Elke genummerde sectie hieronder pakt één van deze flows en loopt deze end-to-
    │
    └── Else (no 2FA needed):
        → handlePostLoginChecks() (geo-alert, single-device for govt)
-       → createToken(abilities: ['*'], expiresAt: now+12h)   ⟵ Task #74
+       → createToken(abilities: ['*'], expiresAt: now+12h)
        → return {token, expires_at, user}
 
 2. POST /api/auth/two-factor-challenge {pre_auth_token, code}
@@ -87,12 +87,12 @@ Elke genummerde sectie hieronder pakt één van deze flows en loopt deze end-to-
    ├── Controller's $this->authorize() → policy method
    │   → policy returns $user->can('permission.name')
    │   → spatie's Gate::before checks user's permissions table at request time
-   │   → FRESH read, never cached on the token (Task #74 — see G-019)
+   │   → FRESH read, never cached on the token (read fresh at request time)
    │
    └── Controller proceeds, writes to DB, optionally enqueues a job
 ```
 
-**Waarom dit belangrijk is:** vóór task #74 was de `abilities`-kolom van het token een *snapshot* van de permissions van de gebruiker op login-tijd. Permission-wijzigingen (rol-edit, seeder-re-run, nieuwe spatie-perm) vereisten een re-login. Nu laat `['*']` policy-checks verse permissions lezen op request-tijd. Pre-auth-tokens (`['two_factor_setup']`, `['two_factor_challenge']`) zijn nog steeds smal gescoped omdat ze identity-state zijn, geen permission-state. Zie `CLAUDE_WORKING_GUIDE.md` G-019.
+**Waarom dit belangrijk is:** in een eerder ontwerp was de `abilities`-kolom van het token een *snapshot* van de permissions van de gebruiker op login-tijd. Permission-wijzigingen (rol-edit, seeder-re-run, nieuwe spatie-perm) vereisten een re-login. Nu laat `['*']` policy-checks verse permissions lezen op request-tijd. Pre-auth-tokens (`['two_factor_setup']`, `['two_factor_challenge']`) zijn nog steeds smal gescoped omdat ze identity-state zijn, geen permission-state.
 
 ---
 
@@ -191,7 +191,7 @@ Mobile data fallback (Layer 1-2 path):
   only used for sync payload (50-200KB/day), not for POS operations.
 ```
 
-**Test-coverage:** Layer 1/2/3/5 zijn e2e-getest (task #43). Layer 4 (USB export/import) heeft unit-tests voor de encryptie + integratie-test voor de round-trip.
+**Test-coverage:** Layer 1/2/3/5 zijn e2e-getest. Layer 4 (USB export/import) heeft unit-tests voor de encryptie + integratie-test voor de round-trip.
 
 ---
 
@@ -280,7 +280,7 @@ Mobile data fallback (Layer 1-2 path):
 
 3. License status computation (License::computeRenewalStatus):
    │
-   ├── days_left = floor((valid_until - now()) / 86400)  [Carbon 3, cast to int — G-009]
+   ├── days_left = floor((valid_until - now()) / 86400)  [Carbon 3, cast to int]
    │
    ├── days_left >= 30           → 'active'
    ├── 14 <= days_left < 30      → 'warning_30'
@@ -289,7 +289,7 @@ Mobile data fallback (Layer 1-2 path):
    ├── -44 <= days_left < -14    → 'soft_lock'    — new sales blocked, data available
    └── days_left < -44           → 'hard_lock'    — login blocked except export tools
 
-4. Periodic validation (planned — LIC-06 in FEATURES_AND_FLOWS):
+4. Periodic validation (planned):
    │
    ├── Scheduler hits license-server at install boot + every 24h
    ├── 72-hour offline grace if license-server unreachable
@@ -334,7 +334,7 @@ Scoping per role (in policies + controllers):
   - auditor           → same as OA, READ-ONLY
   - api_integration   → store-scoped via api_integration.store_id
 
-User-to-store rule (G-008):
+User-to-store rule:
   Strict 1:1. cashier + store_manager MUST have store_id.
   Org-scoped roles (SA, OA, auditor, api_integration, tax_inspector)
   MUST NOT have store_id.
@@ -406,7 +406,7 @@ Outbound (us → third-party):
 | Partial unique indexes | `btw_submissions`, `sales.card_bank` | Status-aware uniqueness zonder geschiedenis te droppen |
 | Idempotency-keys | `external_sale_ref` op sales, `reference` op btw_submissions | Veilige retry vanaf offline POS / externe integrators |
 | Per-vestiging-voorraad via `product_stocks` | Alle inventory-queries | Vóór #21 hadden we `products.stock_qty` (enkele waarde); nu multi-vestiging-correct |
-| Wildcard `['*']` Sanctum-tokens + literal `'2fa_verified'`-flag | Sessie-tokens na Task #74 | Permissions verse lezen op request-tijd; 2FA-flag blijft expliciet |
+| Wildcard `['*']` Sanctum-tokens + literal `'2fa_verified'`-flag | Sessie-tokens current design | Permissions verse lezen op request-tijd; 2FA-flag blijft expliciet |
 | Discount-voor-tax BTW-calc | `BtwCalculationService` | Belastingdienst Suriname-wettelijke vereiste |
 | AST-tijdzone voor alle voor-mens-zichtbare timestamps | Bonnen, rapporten, audit log | Suriname is UTC-3; toon nooit UTC aan gebruikers |
 
@@ -414,9 +414,6 @@ Outbound (us → third-party):
 
 ## 10. Cross-references
 
-- [`CLAUDE.md`](../CLAUDE.md) — productspec, tech stack
-- [`CLAUDE_WORKING_GUIDE.md`](../CLAUDE_WORKING_GUIDE.md) — surfaces-checklist + gotcha-registry
-- [`FEATURES_AND_FLOWS.md`](../FEATURES_AND_FLOWS.md) — volledige feature-catalogus
 - [`docs/architecture.html`](architecture.html) — interactieve ER-diagrammen + use cases
 - [`docs/offline-fallback-verification.md`](offline-fallback-verification.md) — empirisch bewijs van de 5-laagse sync
 - [`docs/00-installation-and-setup.md`](00-installation-and-setup.md) — installatie-runbook

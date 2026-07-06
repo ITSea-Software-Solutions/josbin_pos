@@ -299,7 +299,7 @@ Other policies in the codebase follow the same pattern: `CustomerPolicy`, `Produ
 
 ## Session timeout — what's actually enforced
 
-The CLAUDE.md target is "15 min POS, 60 min dashboard". The reality is more modest:
+The product specification's target is "15 min POS, 60 min dashboard". The reality is more modest:
 
 - **Server side.** Tokens are issued with `expiresAt: now()->addHours(12)`. `SessionTimeout` middleware (`backend/app/Http/Middleware/SessionTimeout.php`) runs on every authenticated API request and returns `401 SESSION_EXPIRED` once `expires_at` is in the past, deleting the token at the same time. That's it — there is no server-side idle timer that revokes a token earlier than its declared expiry.
 - **Client side.** Neither `frontend/src/store/authStore.ts` nor `dashboard/src/store/authStore.ts` implements an idle-clock that calls `logout()` after N minutes of inactivity. Both stores rely solely on the server's `expires_at` returned at login.

@@ -18,7 +18,7 @@ Aantekeningen:
 
 - **Verkoop-voorraad is *niet* queued.** `StockMovementService::recordSale` draait synchroon binnen de DB-transactie van de verkoop — een queue-storing kan verkoop en voorraad niet meer desynchroniseren. De queued job dekt alleen de void/refund-herstelpaden.
 - `DetectSaleAnomaly` draait heuristische regels (korting > 30%, buiten openingstijden, buitensporige mand, >3 voids/uur door één kassier, >2σ van het 30-dagen-vestigingsgemiddelde) plus een optionele GPT-4o-narrative, en schrijft geflagde verkopen naar de audit log als `anomaly_detected`.
-- ⚠️ **Gedocumenteerde gap:** `DetectSaleAnomaly` wordt naar de `ai`-queue gedispatcht, maar `config/horizon.php` definieert alleen `supervisor-1` met `'queue' => ['default']` — niets consumeert `ai`, dus anomaly-jobs stapelen zich momenteel onverwerkt op. De fix is `ai` toevoegen aan de queue-lijst van de supervisor (en dan de `horizon`-container bouncen — G-026 hieronder).
+- `DetectSaleAnomaly` draait op de eigen `ai`-queue; de Horizon-supervisor consumeert `['default', 'ai']`. (Een eerdere build vermeldde alleen `default`, waardoor anomaly-jobs onverwerkt bleven — opgelost 2026-07-06; stoppen anomaly-meldingen ooit, controleer dan eerst de queue-lijst van de supervisor en bounce daarna de `horizon`-container — zie de deploy-notitie hieronder.)
 
 ---
 
@@ -79,7 +79,7 @@ Frontend: `dashboard/src/components/shared/NotificationBell.tsx` — badge + dro
 
 Dashboard op `/horizon`, gegate door de `viewHorizon`-gate (`app/Providers/HorizonServiceProvider.php`). Gefaalde jobs landen op de Failed-tab met payload + exception; webhook-leveringsfouten uit [h. 8](08-integration-api.md) verschijnen hier met hun resterende retries.
 
-### G-026 — bounce de juiste container bij deploy
+### Deploy note — bounce de juiste container bij deploy
 
 Horizon draait in zijn **eigen `horizon`-container**, niet in `app`. Dus:
 
@@ -89,7 +89,7 @@ docker compose restart horizon                          # ✓ worker herstart me
 # of: docker compose exec -T horizon php artisan horizon:terminate
 ```
 
-Een verouderde worker blijft oude code draaien en **ziet nieuw toegevoegde queued classes nooit** — een deploy die een job/notificatie hierboven toevoegt of wijzigt moet de `horizon`-container bouncen, anders "lukken" aangiften terwijl er nooit een notificatie materialiseert. (Gotcha-register: `CLAUDE_WORKING_GUIDE.md` §4, G-026. Demo- en sandbox-stacks hebben hun eigen `horizon`-containers — bounce elke stack waarnaar je gedeployed hebt.)
+Een verouderde worker blijft oude code draaien en **ziet nieuw toegevoegde queued classes nooit** — een deploy die een job/notificatie hierboven toevoegt of wijzigt moet de `horizon`-container bouncen, anders "lukken" aangiften terwijl er nooit een notificatie materialiseert. ( Demo- en sandbox-stacks hebben hun eigen `horizon`-containers — bounce elke stack waarnaar je gedeployed hebt.)
 
 ---
 

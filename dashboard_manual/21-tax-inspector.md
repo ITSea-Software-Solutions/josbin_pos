@@ -2,7 +2,7 @@
 
 This chapter covers the **tax_inspector** role — Belastingdienst Suriname's account on the platform. It's a cross-organisation, strictly read-only role limited to BTW submissions. This chapter is written for the inspector themselves (what they see), the Super Admin who creates the account, and the OA who's curious why someone outside their organisation can see their filings.
 
-> **Why a role, not a separate portal?** We considered building a separate Gov Portal app and decided against it. Reasoning is captured in [`CLAUDE_WORKING_GUIDE.md` G-018](../CLAUDE_WORKING_GUIDE.md): same identity system, same data, same theming, small feature surface — fits as a role inside the existing dashboard. Industry standard (Stripe, Shopify Plus, Datadog org-admin, Auth0 all do tax/regulator access via role-gating in the main app).
+> **Why a role, not a separate portal?** The inspector uses the same identity system, the same data and the same theming, with a deliberately small feature surface — so it fits naturally as a role inside the existing dashboard rather than a separate application. This mirrors industry practice: platforms such as Stripe, Shopify Plus and Auth0 also give regulators and external auditors role-gated access to the main product.
 
 ---
 
@@ -54,7 +54,7 @@ If you're working in the demo stack:
 
 After successful login (password + 2FA), the inspector is auto-routed **directly to the BTW Dashboard** — a KPI landing page giving them a network-wide snapshot before they drill into individual filings.
 
-Their sidebar nav (added in task #82) has exactly two sections:
+Their sidebar nav has exactly two sections:
 
 ```
 ─ COMPLIANCE ─
@@ -84,7 +84,7 @@ Then two side-by-side panels:
 
 Auto-refresh: every 60 seconds, no manual reload needed.
 
-### The Submissions list (now with rich filters — task #82)
+### The Submissions list
 
 | Filter | What it does |
 |---|---|
@@ -236,5 +236,3 @@ Standard recovery:
 - [Chapter 1 — Roles & Permissions](01-roles-and-permissions.md) — the full role matrix
 - [Chapter 13 — Audit Log](13-audit-log.md) — own action trail
 - [Chapter 17 — Security Policy](17-security-policy.md) — 2FA enforcement
-- [`FEATURES_AND_FLOWS.md §1.2b + §3.8`](../FEATURES_AND_FLOWS.md) — feature list + end-to-end journey
-- [`CLAUDE_WORKING_GUIDE.md` G-018](../CLAUDE_WORKING_GUIDE.md) — why a role, not a portal

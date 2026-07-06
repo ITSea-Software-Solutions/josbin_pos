@@ -95,7 +95,7 @@ Visibility is scoped by role. The same audit log is filtered at the database que
 
 > **The query scope is enforced server-side.** A Store Manager cannot reach the audit log even by typing the URL — the controller returns `403 Forbidden`.
 
-> **Government department gotcha.** When an organisation is flagged `is_government = true`, it lives in a separately-isolated tenant database (CLAUDE.md §"Layer 6"). The audit log for a government org is therefore physically separate from commercial orgs — even a Super Admin must point at the right tenant to read it. The dashboard handles this transparently in normal use; for direct DB queries (vendor support), pick the right connection.
+> **Government department gotcha.** When an organisation is flagged `is_government = true`, it lives in a separately-isolated tenant database (part of the government-grade security architecture). The audit log for a government org is therefore physically separate from commercial orgs — even a Super Admin must point at the right tenant to read it. The dashboard handles this transparently in normal use; for direct DB queries (vendor support), pick the right connection.
 
 ---
 

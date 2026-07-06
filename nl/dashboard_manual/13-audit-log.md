@@ -95,7 +95,7 @@ Zichtbaarheid wordt bepaald per rol. Hetzelfde auditlogboek wordt op database-qu
 
 > **De query-scope wordt server-side afgedwongen.** Een Vestigingsmanager kan het auditlogboek niet bereiken, zelfs niet door de URL in te typen — de controller retourneert `403 Forbidden`.
 
-> **Aandachtspunt overheidsafdeling.** Wanneer een organisatie als `is_government = true` is gemarkeerd, leeft deze in een apart geïsoleerde tenant-database (CLAUDE.md §"Laag 6"). Het auditlogboek voor een overheidsorganisatie is daarom fysiek gescheiden van commerciële organisaties — zelfs een Super Admin moet naar de juiste tenant verwijzen om het te lezen. Het dashboard handelt dit transparant af in normaal gebruik; voor directe DB-queries (leveranciersondersteuning) kies de juiste verbinding.
+> **Aandachtspunt overheidsafdeling.** Wanneer een organisatie als `is_government = true` is gemarkeerd, leeft deze in een apart geïsoleerde tenant-database (onderdeel van de beveiligingsarchitectuur voor overheidsklanten). Het auditlogboek voor een overheidsorganisatie is daarom fysiek gescheiden van commerciële organisaties — zelfs een Super Admin moet naar de juiste tenant verwijzen om het te lezen. Het dashboard handelt dit transparant af in normaal gebruik; voor directe DB-queries (leveranciersondersteuning) kies de juiste verbinding.
 
 ---
 

@@ -203,5 +203,3 @@ Filter by date range on the BTW Submissions screen. Or query the audit log (Audi
 - [Chapter 10 — Reports](10-reports.md) — the per-report BTW breakdown that informs what gets filed
 - [Chapter 13 — Audit Log](13-audit-log.md) — every BTW event is logged here
 - [Chapter 21 — Tax Inspector role](21-tax-inspector.md) — the role that reviews these filings
-- [`FEATURES_AND_FLOWS.md §1.2b`](../FEATURES_AND_FLOWS.md) — the feature inventory + journey §3.8
-- [`CLAUDE_WORKING_GUIDE.md` G-018](../CLAUDE_WORKING_GUIDE.md) — why we built this as a new role, not a separate portal

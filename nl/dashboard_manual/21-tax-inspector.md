@@ -2,7 +2,7 @@
 
 Dit hoofdstuk behandelt de **tax_inspector**-rol — het account van Belastingdienst Suriname op het platform. Het is een cross-organisatie, strikt alleen-lezen rol beperkt tot BTW-aangiftes. Dit hoofdstuk is geschreven voor de inspecteur zelf (wat zij zien), de Super Admin die het account aanmaakt, en de OA die nieuwsgierig is waarom iemand buiten hun organisatie hun aangiftes kan zien.
 
-> **Waarom een rol, geen apart portaal?** Wij overwogen het bouwen van een aparte Gov Portal-app en besloten daartegen. De redenering is vastgelegd in [`CLAUDE_WORKING_GUIDE.md` G-018](../CLAUDE_WORKING_GUIDE.md): hetzelfde identiteitssysteem, dezelfde data, dezelfde theming, klein feature-oppervlak — past als een rol binnen het bestaande dashboard. Industriestandaard (Stripe, Shopify Plus, Datadog org-admin, Auth0 doen allemaal belasting/regulator-toegang via rol-gating in de hoofdapp).
+> **Waarom een rol, geen apart portaal?** De inspecteur gebruikt hetzelfde identiteitssysteem, dezelfde data en dezelfde vormgeving, met een bewust klein feature-oppervlak — daarmee past het natuurlijk als rol binnen het bestaande dashboard in plaats van als aparte applicatie. Dit volgt de industriepraktijk: platforms als Stripe, Shopify Plus en Auth0 geven toezichthouders en externe auditors eveneens rol-gebaseerde toegang tot het hoofdproduct.
 
 ---
 
@@ -236,5 +236,3 @@ Standaardherstel:
 - [Hoofdstuk 1 — Rollen & Rechten](01-roles-and-permissions.md) — de volledige rolmatrix
 - [Hoofdstuk 13 — Auditlogboek](13-audit-log.md) — eigen actiespoor
 - [Hoofdstuk 17 — Beveiligingsbeleid](17-security-policy.md) — 2FA-handhaving
-- [`FEATURES_AND_FLOWS.md §1.2b + §3.8`](../FEATURES_AND_FLOWS.md) — feature-lijst + end-to-end journey
-- [`CLAUDE_WORKING_GUIDE.md` G-018](../CLAUDE_WORKING_GUIDE.md) — waarom een rol, geen portaal

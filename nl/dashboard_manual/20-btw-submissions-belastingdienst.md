@@ -203,5 +203,3 @@ Filter op datumbereik op het BTW-aangiftes-scherm. Of bevraag het auditlogboek (
 - [Hoofdstuk 10 — Rapporten](10-reports.md) — de per-rapport BTW-uitsplitsing die informeert wat wordt ingediend
 - [Hoofdstuk 13 — Auditlogboek](13-audit-log.md) — elke BTW-gebeurtenis wordt hier gelogd
 - [Hoofdstuk 21 — Belastinginspecteur-rol](21-tax-inspector.md) — de rol die deze aangiftes beoordeelt
-- [`FEATURES_AND_FLOWS.md §1.2b`](../FEATURES_AND_FLOWS.md) — de feature-inventaris + journey §3.8
-- [`CLAUDE_WORKING_GUIDE.md` G-018](../CLAUDE_WORKING_GUIDE.md) — waarom we dit als een nieuwe rol hebben gebouwd, niet als een apart portaal
