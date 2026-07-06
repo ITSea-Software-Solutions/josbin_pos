@@ -17,6 +17,7 @@ export default function SettingsScreen() {
     onScreenKeyboard, setOnScreenKeyboard,
     defaultBtwRate, setDefaultBtwRate,
     printer, setPrinter,
+    cardTerminal, setCardTerminal,
     autoPrintReceipt, setAutoPrintReceipt,
     embeddedBarcode, setEmbeddedBarcode,
   } = useSettingsStore()
@@ -375,6 +376,38 @@ export default function SettingsScreen() {
             {platform === 'electron'
               ? t('settings.printer.helpElectron')
               : t('settings.printer.helpAndroid')}
+          </div>
+        </div>
+
+        {/* ── Payments: card / PIN terminal ─────────────────────────────────── */}
+        <div style={{ ...sectionSt, gridColumn: '1 / -1' }}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>
+            💳 {t('settings.cardTerminal.title')}
+          </h3>
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)', margin: '6px 0 12px' }}>
+            {t('settings.cardTerminal.help')}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, maxWidth: 620 }}>
+            <div>
+              <label style={labelSt}>{t('settings.cardTerminal.mode')}</label>
+              <select value={cardTerminal.mode}
+                onChange={(e) => setCardTerminal({ mode: e.target.value as 'manual' | 'simulated' })}
+                style={selectSt}>
+                <option value="manual">{t('settings.cardTerminal.modeManual')}</option>
+                <option value="simulated">{t('settings.cardTerminal.modeSimulated')}</option>
+                <option value="ecr" disabled>{t('settings.cardTerminal.modeEcr')}</option>
+              </select>
+            </div>
+            {cardTerminal.mode === 'simulated' && (
+              <div>
+                <label style={labelSt}>{t('settings.cardTerminal.bank')}</label>
+                <select value={cardTerminal.defaultBank}
+                  onChange={(e) => setCardTerminal({ defaultBank: e.target.value })}
+                  style={selectSt}>
+                  {['DSB', 'Hakrinbank', 'Finabank', 'RBC', 'Republic'].map((b) => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 

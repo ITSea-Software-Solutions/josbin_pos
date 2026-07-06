@@ -67,6 +67,27 @@ Zodra alle producten in de winkelwagen staan, laat dit hoofdstuk u zien hoe u de
 
 ---
 
+### Een pinapparaat koppelen (pinterminal)
+
+Drie modi, in te stellen onder **Instellingen → Pinterminal (kaartbetalingen)**:
+
+1. **Losse bankterminal (standaard — zo werkt Suriname vandaag).** Het
+   pinapparaat van de bank staat naast de kassa en is *niet* met de kassa
+   verbonden. U tikt het bedrag op het bankapparaat in, de klant betaalt
+   daar, en u rondt de kaartverkoop in de kassa af — desgewenst met de
+   bongegevens (bank, autorisatiecode, laatste 4, terminal-referentie) zodat
+   de beheerder de pinverkopen kan matchen met het bankafschrift.
+2. **Gesimuleerde terminal (demo / training).** De kassa toont een knop
+   **"Stuur SRD … naar pinterminal"**; een virtuele terminal keurt na ±2
+   seconden goed en vult de reconciliatievelden automatisch. Voor het trainen
+   van kassiers of demonstraties — er beweegt geen echt geld.
+3. **Directe koppeling (ECR) — toekomst.** Een echte kabel-/netwerkkoppeling
+   waarbij de kassa het bedrag naar de terminal stuurt en de goedkeuring
+   automatisch terugkrijgt, vereist het ECR-terminalprotocol van de acquiring
+   bank. Geen Surinaamse bank biedt dit vandaag publiek aan; het koppelpunt
+   in de kassa is klaar. Biedt uw bank het aan, neem dan contact op met
+   ITSea om het te activeren.
+
 ## 5.4 Gemengde betaling (deels contant, deels pin)
 
 Gebruik dit wanneer een klant een deel van de rekening met pin betaalt en de rest contant.

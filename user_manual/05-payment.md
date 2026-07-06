@@ -67,6 +67,26 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ---
 
+### Connecting a card machine (PIN terminal)
+
+Three modes, set under **Settings → Card / PIN terminal**:
+
+1. **Standalone bank terminal (default — how Suriname works today).** The
+   bank's PIN device sits next to the till and is *not* cabled to the POS.
+   You key the amount into the bank device, the customer pays there, and you
+   complete the card sale in the POS — optionally copying the slip details
+   (bank, approval code, last 4, terminal ref) so the administrator can match
+   the day's card sales against the bank settlement statement.
+2. **Simulated terminal (demo / training).** The POS shows a
+   **"Send SRD … to PIN terminal"** button; a virtual terminal approves after
+   ~2 seconds and fills the reconciliation fields automatically. Use it to
+   train cashiers or demonstrate the integrated flow — no real money moves.
+3. **Direct link (ECR) — future.** A real cable/network link where the POS
+   sends the amount to the terminal and receives the approval automatically
+   requires the acquiring bank's ECR terminal protocol. No Surinamese bank
+   offers this publicly yet; the POS has the integration slot ready. When
+   your bank offers it, contact ITSea to activate.
+
 ## 5.4 Mixed payment (part cash, part card)
 
 Use this when a customer pays part of the bill by card and the rest in cash.

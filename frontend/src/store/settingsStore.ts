@@ -18,6 +18,17 @@ interface SettingsState {
   autoPrintReceipt: boolean
   /** Scale-printed weighed-goods barcode layout (off by default). */
   embeddedBarcode: EmbeddedBarcodeConfig
+  /**
+   * How the card / PIN terminal is wired to this till.
+   * - manual:    standalone bank terminal (Suriname default) — cashier keys
+   *              the amount into the bank's device and copies the slip.
+   * - simulated: training/demo — the POS "sends" the amount and a virtual
+   *              terminal approves after ~2s, auto-filling reconciliation.
+   * A real ECR link (POS→terminal over LAN/serial) needs the acquiring
+   * bank's terminal protocol — adapter slot exists, no SR bank exposes one
+   * publicly yet. See user manual §5.3.
+   */
+  cardTerminal: CardTerminalConfig
 
   setStoreId: (storeId: string | null) => void
   setProductDisplay: (display: ProductDisplay) => void
@@ -27,6 +38,13 @@ interface SettingsState {
   setPrinter: (config: PrinterConfig) => void
   setAutoPrintReceipt: (enabled: boolean) => void
   setEmbeddedBarcode: (config: Partial<EmbeddedBarcodeConfig>) => void
+  setCardTerminal: (config: Partial<CardTerminalConfig>) => void
+}
+
+export interface CardTerminalConfig {
+  mode: 'manual' | 'simulated'
+  /** Bank preset the simulated terminal reports on approvals. */
+  defaultBank: string
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -46,6 +64,7 @@ export const useSettingsStore = create<SettingsState>()(
       },
       autoPrintReceipt: false,
       embeddedBarcode: DEFAULT_EMBEDDED_BARCODE,
+      cardTerminal: { mode: 'manual', defaultBank: 'DSB' },
 
       setStoreId: (storeId) => set({ storeId: storeId ?? null }),
       setProductDisplay: (productDisplay) => set({ productDisplay }),
@@ -55,6 +74,7 @@ export const useSettingsStore = create<SettingsState>()(
       setPrinter: (printer) => set({ printer }),
       setAutoPrintReceipt: (autoPrintReceipt) => set({ autoPrintReceipt }),
       setEmbeddedBarcode: (config) => set((s) => ({ embeddedBarcode: { ...s.embeddedBarcode, ...config } })),
+      setCardTerminal: (config) => set((s) => ({ cardTerminal: { ...s.cardTerminal, ...config } })),
     }),
     { name: 'josbin_pos-settings' }
   )

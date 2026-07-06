@@ -32,6 +32,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const qc = useQueryClient()
 
   const printer = useSettingsStore((s) => s.printer)
+  const cardTerminal = useSettingsStore((s) => s.cardTerminal)
 
   const [step, setStep] = useState<Step>('method')
   const [cashInput, setCashInput] = useState('')
@@ -47,6 +48,11 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const [cardApproval,     setCardApproval]     = useState('')
   const [cardTerminalRef,  setCardTerminalRef]  = useState('')
   const [cardLastFour,     setCardLastFour]     = useState('')
+  // Integrated-terminal handshake state (simulated mode / future ECR link).
+  // 'waiting' = amount sent to the terminal, customer is paying;
+  // 'approved' = terminal answered, reconciliation fields auto-filled.
+  const [terminalStatus, setTerminalStatus] = useState<'idle' | 'waiting' | 'approved'>('idle')
+  const terminalTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const effectiveBank = cardBank === 'Other' ? cardBankCustom.trim() : cardBank
 
   // Common Surinamese card issuers + the international brands accepted at
@@ -113,6 +119,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       saleRefRef.current = ''
       // Wipe recon scratch so the next sale doesn't inherit yesterday's bank.
       setCardBank(''); setCardBankCustom(''); setCardApproval(''); setCardTerminalRef(''); setCardLastFour('')
+      setTerminalStatus('idle')
+      if (terminalTimer.current) { clearTimeout(terminalTimer.current); terminalTimer.current = null }
       setTransferProvider(''); setTransferProviderCustom(''); setTransferReference(''); setTransferSenderName('')
       setMobileProvider(''); setMobileProviderCustom(''); setMobileReference('')
       setForeignCurrency('USD'); setForeignAmount('')
@@ -237,6 +245,26 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     saleMutation.mutate(buildPayload(method, skipRecon))
   }
 
+  /**
+   * Simulated PIN terminal: the POS "sends" the amount, the virtual terminal
+   * approves ~2s later and the reconciliation fields fill themselves — the
+   * exact UX a real ECR link will have once an acquiring bank exposes its
+   * terminal protocol (the adapter slot; see manual §5.3). Demo/training only:
+   * the mode lives in Settings → Payments and defaults to manual.
+   */
+  function sendToTerminal() {
+    setTerminalStatus('waiting')
+    terminalTimer.current = setTimeout(() => {
+      const rand = (n: number) => String(Math.floor(Math.random() * 10 ** n)).padStart(n, '0')
+      setCardBank(cardTerminal.defaultBank || 'DSB')
+      setCardApproval(`A${rand(5)}`)
+      setCardLastFour(rand(4))
+      setCardTerminalRef(`TRM-${rand(5)}`)
+      setTerminalStatus('approved')
+      terminalTimer.current = null
+    }, 2000)
+  }
+
   function numpadPress(val: string) {
     const target = step === 'mixed' ? setCardAmount : setCashInput
     const current = step === 'mixed' ? cardAmount : cashInput
@@ -355,6 +383,28 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               SRD {totals.total}
             </span>
           </div>
+
+          {/* Integrated terminal (simulated / future ECR). Hidden in manual
+              mode — there the cashier keys the amount into the standalone
+              bank terminal themselves. */}
+          {cardTerminal.mode === 'simulated' && terminalStatus !== 'approved' && (
+            <button onClick={sendToTerminal} disabled={terminalStatus === 'waiting' || isProcessing}
+              style={{
+                height: 'var(--touch-target-xl)', borderRadius: 'var(--border-radius)', border: 'none',
+                background: terminalStatus === 'waiting' ? 'var(--bg-elevated)' : 'var(--color-primary)',
+                color: terminalStatus === 'waiting' ? 'var(--text-secondary)' : '#fff',
+                cursor: terminalStatus === 'waiting' ? 'wait' : 'pointer', fontWeight: 700, fontSize: 'var(--font-size-base)',
+              }}>
+              {terminalStatus === 'waiting'
+                ? `⏳ ${t('pos.payment.terminalWaiting')}`
+                : `📡 ${t('pos.payment.terminalSend', { amount: totals.total })}`}
+            </button>
+          )}
+          {cardTerminal.mode === 'simulated' && terminalStatus === 'approved' && (
+            <div style={{ padding: '10px 14px', borderRadius: 'var(--border-radius)', background: 'rgba(34,197,94,.12)', border: '1px solid #16a34a', color: '#15803d', fontSize: 'var(--font-size-sm)', fontWeight: 700, textAlign: 'center' }}>
+              ✓ {t('pos.payment.terminalApproved')}
+            </div>
+          )}
 
           {/* Reconciliation panel — optional. Helps OA reconcile the day's
               card sales against the bank settlement statement. Cashier can

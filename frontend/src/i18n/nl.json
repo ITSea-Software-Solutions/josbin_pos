@@ -112,6 +112,9 @@
       "cardTerminalRef": "Terminal-referentie",
       "cardConfirm": "Betaling afronden",
       "cardSkipDetails": "Overslaan & afronden",
+      "terminalSend": "Stuur SRD {{amount}} naar pinterminal",
+      "terminalWaiting": "Wacht op pinterminal — klant betaalt…",
+      "terminalApproved": "Goedgekeurd door terminal — gegevens ingevuld",
       "moreMethods": "Meer betaalwijzen",
       "lessMethods": "Minder betaalwijzen",
       "bankTransfer": "Overschrijving",
@@ -388,6 +391,15 @@
       "modeWeight": "Gewicht (prijs = catalogusprijs × kg)",
       "prefix": "Prefix",
       "help": "Weegschalen drukken een EAN-13 met prefix 2 die een artikelcode + prijs of gewicht bevat. Standaardindeling: 2 + 6 cijfers artikelcode + 5 cijfers waarde + controlecijfer. Bevestig de indeling met uw eigen weegschaal vóór ingebruikname — een verkeerde indeling beprijst gewogen artikelen verkeerd."
+    },
+    "cardTerminal": {
+      "title": "Pinterminal (kaartbetalingen)",
+      "help": "Hoe de pinterminal aan deze kassa gekoppeld is. Standaard staat hij los (Suriname-praktijk): u typt het bedrag zelf op het bankapparaat en neemt de bon over. De gesimuleerde terminal is voor training en demo’s. Een directe koppeling (ECR) vereist het terminalprotocol van uw bank — neem contact op met ITSea zodra uw bank dit aanbiedt.",
+      "mode": "Modus",
+      "modeManual": "Losse bankterminal (standaard)",
+      "modeSimulated": "Gesimuleerde terminal (demo/training)",
+      "modeEcr": "Directe koppeling (ECR) — vereist bankprotocol",
+      "bank": "Bank (voor demo-goedkeuringen)"
     }
   },
   "auth": {

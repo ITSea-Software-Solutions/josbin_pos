@@ -112,6 +112,9 @@
       "cardTerminalRef": "Terminal reference",
       "cardConfirm": "Complete payment",
       "cardSkipDetails": "Skip & complete",
+      "terminalSend": "Send SRD {{amount}} to PIN terminal",
+      "terminalWaiting": "Waiting for PIN terminal — customer is paying…",
+      "terminalApproved": "Approved by terminal — details filled in",
       "moreMethods": "More payment methods",
       "lessMethods": "Fewer payment methods",
       "bankTransfer": "Bank transfer",
@@ -388,6 +391,15 @@
       "modeWeight": "Weight (price = catalogue rate × kg)",
       "prefix": "Prefix",
       "help": "Scales print an EAN-13 with prefix 2 holding an item code + price or weight. Default layout: 2 + 6-digit item code + 5-digit value + check digit. Confirm the layout against your own scale before go-live — a wrong layout mis-prices weighed items."
+    },
+    "cardTerminal": {
+      "title": "Card / PIN terminal",
+      "help": "How the PIN terminal is connected to this till. Default is standalone (Suriname practice): you key the amount into the bank device and copy the slip. The simulated terminal is for training and demos. A direct (ECR) link requires your bank’s terminal protocol — contact ITSea once your bank offers it.",
+      "mode": "Mode",
+      "modeManual": "Standalone bank terminal (default)",
+      "modeSimulated": "Simulated terminal (demo/training)",
+      "modeEcr": "Direct link (ECR) — requires bank protocol",
+      "bank": "Bank (for demo approvals)"
     }
   },
   "auth": {

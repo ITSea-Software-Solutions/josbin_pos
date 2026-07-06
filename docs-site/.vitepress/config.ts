@@ -42,6 +42,13 @@ export default defineConfig({
   // GitHub-style README.md as their index. Map those so folder URLs resolve
   // to the README contents without renaming files.
   rewrites: {
+    // Site home — docs-site/index.md lives in the VitePress folder for
+    // ergonomic editing, but in the build it has to land at the root so
+    // /josbin-docs/ (or whatever the deploy URL is) resolves to the home
+    // page instead of 404'ing into /docs-site/.
+    'docs-site/index.md':             'index.md',
+    // Section index rewrites — each manual carries its README.md as the
+    // entry page so folder URLs resolve to the README contents.
     'docs/README.md':                 'docs/index.md',
     'user_manual/README.md':          'user_manual/index.md',
     'dashboard_manual/README.md':     'dashboard_manual/index.md',
@@ -110,6 +117,7 @@ export default defineConfig({
                 { text: '11. Licentie & oplevering',       link: '/nl/docs/11-license-and-delivery' },
                 { text: '12. Code-overzicht',              link: '/nl/docs/12-code-map' },
                 { text: '13. Ontwikkelworkflow',           link: '/nl/docs/13-dev-workflow' },
+                { text: 'QR-wallet betalingen (flow & use cases)', link: '/nl/docs/qr-payment-flow' },
               ],
             },
           ],
@@ -163,6 +171,8 @@ export default defineConfig({
                 { text: '19. Kassabeheer',                               link: '/nl/dashboard_manual/19-registers' },
                 { text: '20. BTW-aangiftes (Belastingdienst)',           link: '/nl/dashboard_manual/20-btw-submissions-belastingdienst' },
                 { text: '21. Belastinginspecteur',                       link: '/nl/dashboard_manual/21-tax-inspector' },
+                { text: '22. Betaalmethoden, QR-wallets & openstaande betalingen', link: '/nl/dashboard_manual/22-payment-methods-and-wallets' },
+                { text: '22. Payment methods, QR wallets & pending payments', link: '/dashboard_manual/22-payment-methods-and-wallets' },
               ],
             },
           ],
@@ -198,6 +208,24 @@ export default defineConfig({
   // dev. Doesn't run in `vitepress build` — there the file is just copied
   // verbatim out of `public/` into `dist/` as a static asset.
   vite: {
+    // srcDir is the repo root, so during build Rollup walks up from each
+    // markdown file looking for node_modules — and finds nothing, because
+    // vue + vitepress live ONLY under docs-site/node_modules. Pin absolute
+    // resolutions for the imports VitePress injects into compiled markdown
+    // SFCs (vue + vue/server-renderer) so Rollup can find them no matter
+    // where the source markdown file lives.
+    resolve: {
+      alias: [
+        {
+          find: /^vue\/server-renderer$/,
+          replacement: resolve(__dirname, '..', 'node_modules/vue/server-renderer/index.mjs'),
+        },
+        {
+          find: /^vue$/,
+          replacement: resolve(__dirname, '..', 'node_modules/vue/dist/vue.runtime.esm-bundler.js'),
+        },
+      ],
+    },
     plugins: [{
       name: 'josbin-serve-static-html',
       configureServer(server) {
@@ -244,7 +272,7 @@ export default defineConfig({
     siteTitle: 'Josbin POS',
 
     nav: [
-      { text: 'Home',            link: '/docs-site/' },
+      { text: 'Home',            link: '/' },
       { text: 'Architecture',    link: '/architecture.html', target: '_blank' },
       { text: 'Developer Docs',  link: '/docs/' },
       { text: 'User Manual',     link: '/user_manual/' },
@@ -280,6 +308,7 @@ export default defineConfig({
             { text: '11. License & delivery',      link: '/docs/11-license-and-delivery' },
             { text: '12. Code map',                link: '/docs/12-code-map' },
             { text: '13. Dev workflow',            link: '/docs/13-dev-workflow' },
+                { text: 'QR-wallet betalingen (flow & use cases)', link: '/docs/qr-payment-flow' },
           ],
         },
       ],
