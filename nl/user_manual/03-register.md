@@ -69,6 +69,38 @@ Als u midden in de dienst van terminal moet wisselen (bijv. printer kapot op Kas
 
 ---
 
+## 3.2a Contant geld toevoegen of uitnemen tijdens de dienst (kas in / kas uit)
+
+Er komt soms geld in of uit de lade **buiten een verkoop om**:
+
+| Richting | Heet | Typische redenen |
+|---|---|---|
+| Contant **in** de lade | **Kas in** | Wisselgeld / kleine biljetten midden in de dienst bijgevuld; eigenaar voegt extra beginsaldo toe |
+| Contant **uit** de lade | **Kas uit** | Leverancier contant betaald bij levering; kleine-kas-aankoop; geld naar de bank gebracht (afstorting) |
+
+Neem nooit geld uit de lade om het "gewoon te onthouden" — leg de mutatie vast, anders telt uw lade bij het sluiten een tekort.
+
+**Stappen:**
+
+1. Tik in de bovenbalk op de knop **💵 Kas**. Deze is alleen zichtbaar terwijl uw kassasessie open is.
+2. Het venster **Kas in / uit** opent. Kies **↓ Kas in** of **↑ Kas uit**.
+3. Voer het **bedrag** in SRD in (bijv. `100.00`).
+4. Typ een korte **reden** — verplicht. Voorbeelden: *"leverancier betaald"*, *"wisselgeld bijgevuld"*, *"afstorting bank"*. De knop **Vastleggen** blijft uitgeschakeld totdat u dit invult.
+5. Tik op **Vastleggen**. Het venster bevestigt **"Kasmutatie vastgelegd"** en toont het **nieuwe verwachte bedrag** in de lade.
+
+**Wat het verandert:**
+
+- De mutatie wordt opgeslagen op uw kassasessie en weggeschreven naar het auditspoor (event `register.cash_movement`) met uw naam, het bedrag en de reden.
+- Het **verwachte contant** bij uw afsluiting (§3.3) past zich automatisch aan:
+
+  > **Verwacht contant** = beginsaldo **+** contant uit verkopen (inclusief het contante deel van gemengde betalingen, minus gegeven wisselgeld) **−** contante terugbetalingen en retouren **+** kas-in **−** kas-uit
+
+- Het afsluitoverzicht toont uw mutaties als aparte regel, zodat u en de manager precies zien waarom er meer of minder in de lade zit dan verkopen alleen zouden verklaren.
+
+> **Wie mag dit vastleggen:** u (de kassier op de open sessie) of een manager. Leg de mutatie vast op het moment dat het geld beweegt — niet uit het geheugen aan het einde van de dienst.
+
+---
+
 ## 3.3 Uw kassa sluiten (einde van de dienst)
 
 Wanneer u klaar bent met verkopen voor de dag (of uw dienst), sluit de kassa zodat de volgende kassier (of het einde-dag Z-Rapport) een schoon bedrag heeft om af te stemmen.
@@ -89,7 +121,7 @@ Toont wat het systeem denkt dat er deze dienst is gebeurd:
 | Pin-verkopen | SRD-bedrag met pin betaald |
 | Totaal BTW | Geheven belasting |
 | Beginsaldo | Waarmee u bent begonnen |
-| **Verwacht contant** | Beginsaldo + contante verkopen (dit zou in de lade moeten zitten) |
+| **Verwacht contant** | Beginsaldo + contante verkopen − contante terugbetalingen + kas-in − kas-uit (§3.2a) — dit zou in de lade moeten zitten |
 
 Tik op **Volgende** om het contante geld te tellen.
 

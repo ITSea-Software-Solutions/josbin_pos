@@ -80,7 +80,7 @@ De pagina toont één doorzoekbare, gepagineerde tabel. De header-teller (`123 k
 | **Totaal besteed** | Levenslange SRD-besteding over de organisatie, opgehoogd bij elke voltooide verkoop. | Plat `DECIMAL(12,2)`. Over alle vestigingen binnen de org. |
 | **Bezoeken** | Levenslange bezoekcount over de organisatie. | Plat integer. Eén unieke verkoop = één bezoek. |
 | **Klant sinds** | Eerste keer dat de klant is aangemaakt (d.w.z. hun eerste POS-ontmoeting). | Gelocaliseerd: `26 mei 2026` (NL) / `May 26, 2026` (EN). |
-| **(actie)** | Knop **Bewerken**. | Opent het bewerk-modal — §9.5. |
+| **(actie)** | Knop **Bewerken**; voor organisatiebeheerder en Super Admin ook een rode knop **Wissen**. | Bewerken opent het modal — §9.5. Wissen is de WBP-S-wisactie — §9.5a. |
 
 ### De zoekbalk
 
@@ -129,7 +129,48 @@ Tik op **Opslaan**. De rij wordt direct bijgewerkt en de wijziging wordt geregis
 
 > **Wat u niet vanuit dit scherm kunt bewerken.** `id_number` (overheids-ID) is bewerkbaar via de API maar bewust niet zichtbaar in het dashboard-bewerk-modal — het is een *bijzonder persoonsgegeven* en mag niet casual worden gecorrigeerd door back-officestaff. Moet een overheids-ID worden bijgewerkt, dan is dat een leverancier-supportverzoek met een schriftelijke reden.
 
-> **Wat u helemaal niet kunt doen.** Er is geen Verwijderen-knop. Hard-verwijderen van een klant zou elke historische verkoop verwezen die ze ooit noemde en het auditspoor breken. De `customers`-tabel gebruikt `SoftDeletes`, dus een soft-delete is technisch mogelijk via API maar **niet zichtbaar in de UI**. Het juiste patroon, als een klant verzoekt om verwijdering van zijn data onder WBP-S "recht op wissing", is een leverancier-supportverzoek — we soft-deleten de rij, blanco de PII en houden de verkoopgeschiedenis wijzend naar een grafsteen-record.
+> **Verwijderen versus wissen.** Er is bewust geen hard-delete — de rij verwijderen zou elke historische verkoop die de klant ooit noemde verwezen en het auditspoor breken. Wat er *wel* is, is een WBP-S **wisactie** die de persoonsgegevens redigeert terwijl de verkoopgeschiedenis op een grafsteen-record blijft staan — zie §9.5a.
+
+---
+
+## 9.5a Persoonsgegevens van een klant wissen (WBP-S recht op vergetelheid)
+
+Beroept een klant zich op zijn WBP-S *recht op vergetelheid* ("wis alles wat u over mij heeft"), dan handelt een **organisatiebeheerder of Super Admin** dat direct af vanaf het Klanten-scherm — geen leverancier-ticket nodig.
+
+**Pad:** Klanten-scherm → vind de rij → **Wissen** (naast Bewerken).
+
+### Wie mag het
+
+| Rol | Toegestaan? |
+|---|---|
+| **Super Admin** | ✅ |
+| **Organisatiebeheerder** | ✅ — alleen eigen organisatie. |
+| **Vestigingsmanager / Kassier / Auditor** | ❌ — de knop wordt niet getoond en de API weigert (`CustomerPolicy::delete`). Wissen is een beslissing van de verwerkingsverantwoordelijke, geen winkelvloer-actie. |
+
+### Wat het doet — redigeren, geen verwijderen
+
+Dit is een **onomkeerbare redactie**, zo gebouwd dat het WBP-S-recht en de boekhoud-/auditverplichtingen niet botsen:
+
+| Veld | Na het wissen |
+|---|---|
+| **Naam** | Vervangen door de grafsteen-waarde `[verwijderd — WBP-S]`. |
+| **Telefoon / e-mail / ID-nummer** | Definitief gewist. |
+| **Zoekhashes** (`name_hash`, `phone_hash`) | Genuld — het grafsteen-record is nooit meer via zoeken te vinden. |
+| **`total_spend_srd` / `visit_count`** | **Blijven staan.** Geaggregeerde getallen zijn geen persoonsgegevens. |
+| **Verkoopgeschiedenis** | **Blijft staan.** Elke historische verkoop blijft wijzen naar het grafsteen-record, dus rapporten, BTW-aangiften en de Rekenkamer-export blijven onaangetast. |
+| **`is_active`** | Op `false` gezet. |
+
+Omdat de rij als grafsteen blijft bestaan, breekt er stroomafwaarts niets: het BTW-rapport van mei rendert de dag na een wissing hetzelfde als de dag ervoor.
+
+### Het bevestigingsdialoog
+
+Wissen is één klik verwijderd van permanent, dus het dialoog spelt het gevolg uit voordat u bevestigt: *"Naam, telefoon, e-mail en ID van … worden permanent gewist (WBP-S recht op vergetelheid). De verkoophistorie en totalen blijven bewaard. Dit kan niet ongedaan worden gemaakt."* — bevestig met **Definitief wissen**. Er is geen ongedaan-maken, geen respijtperiode, geen prullenbak.
+
+### Wat in het auditlogboek landt
+
+Een `customer.redacted`-gebeurtenis op het hash-geketende auditlogboek (Hoofdstuk 13): wie het deed, wanneer, vanaf welk IP, voor welk klant-id — en **geen enkele PII in platte tekst**, oud noch nieuw. De auditor kan bewijzen dat de wissing plaatsvond en geautoriseerd was, zonder dat het logboek een achterdeur-kopie wordt van de zojuist gewiste data.
+
+> **API-pad:** `DELETE /api/customers/{id}` — bron `backend/app/Http/Controllers/Api/CustomerController.php::destroy`. Zelfde policy-gate als de knop.
 
 ---
 
@@ -203,7 +244,9 @@ Dit is grotendeels onzichtbaar voor back-office-gebruikers — de enige reden om
 
 **"Ik wil een CSV van klanten exporteren voor onze nieuwsbrief."** Dit is **niet voorzien als één-klik export** per ontwerp — bulk-klantextractie is een WBP-S risico. Als het gestelde verwerkingsdoel van de klant (de *verwerkingsdoel* aangegeven in de Verwerkersovereenkomst) marketing omvat, kan de leverancier de export op schriftelijk verzoek produceren. Probeer het niet zelf via de API te scrapen op eigen initiatief — dat wordt gelogd.
 
-**"Ik heb een klant verwijderd maar ze zijn er nog steeds."** Er is geen verwijderknop in het dashboard. Heeft u de API direct gebruikt en een soft-delete getriggerd, dan is de `deleted_at` van de rij gezet maar de rij blijft voor verkoopgeschiedenis-integriteit. Om echt te zuiveren, zie leverancier-support — de operatie is een bewuste, geaudite, handmatige stap.
+**"Ik heb een klant gewist maar er staat nog een rij."** Klopt — wissen (§9.5a) is een *redactie*, geen rij-verwijdering. De grafsteen-rij (naam `[verwijderd — WBP-S]`, geen telefoon/e-mail) blijft achter zodat historische verkopen en rapporten blijven werken, maar de gegevens van de persoon zijn weg en de rij is niet meer via zoeken te vinden. Er is bewust geen manier om de rij zelf te verwijderen.
+
+**"Een vestigingsmanager moet een wisverzoek afhandelen."** Dat kan niet — de knop Wissen is alleen voor OA + Super Admin (§9.5a). Laat de manager het verzoek van de klant doorsturen naar de organisatiebeheerder; wissen is onder WBP-S een beslissing van de verwerkingsverantwoordelijke, geen vestigingsactie.
 
 **"Bewerk-modal toont het e-mailveld maar ik kan er niet in typen voor een bestaande klant."** U kunt dat wel. Zorg dat het veld niet wordt gerenderd achter een ander element (zeldzame browser-glitch — volledige paginaherlading repareert het). Is het veld letterlijk alleen-lezen en weigert het toetsaanslagen, dan is dit een bug — meld aan leverancier-support.
 
@@ -221,7 +264,7 @@ Elke actie op een klant maakt een entry in het auditlogboek (Hoofdstuk 13):
 |---|---|---|---|
 | Aangemaakt via POS snel toevoegen of import | `created` | `null` | De nieuwe veldwaarden — **maar** de PII-velden worden opgeslagen als hun *versleutelde* ciphertext in de audit. De auditor ziet dat een klant is aangemaakt, niet wie. |
 | Bewerkt via dashboard | `updated` | De vorige versleutelde ciphertext van elk gewijzigd veld | De nieuwe versleutelde ciphertext. De diff-viewer toont twee ondoorzichtige strings — per ontwerp. |
-| Soft-gedeleted via API (leverancier-support) | `updated` | (oude `deleted_at: null`) | (nieuwe `deleted_at: <timestamp>`) |
+| Gewist via dashboard (WBP-S, §9.5a) | `customer.redacted` | `null` | `null` — bewust geen waarden; alleen de actor, het klant-id, IP en tijdstempel. De gebeurtenis zelf is het bewijs. |
 
 Dit betekent dat de view van de auditor op de klantentabel is "**wanneer** een record veranderde, **wie** het veranderde, en **of** PII werd aangeraakt" — niet de PII zelf. Dat is WBP-S-correct: het auditlogboek zelf is geen achterdeur om versleutelde data te lezen.
 
@@ -248,7 +291,10 @@ BULKIMPORT             Nog niet in de dashboard-UI. Gebruik de API:
                        CSV-kolommen: name (verpl.), phone, email, id_number
                        Match-sleutel voor upsert: phone (HMAC)
 
-VERWIJDEREN            Niet zichtbaar. WBP-S "recht op wissing" → leverancier-support.
+WISSEN (WBP-S)         Rij → Wissen → bevestigen. Alleen OA + Super Admin.
+                       Onomkeerbaar: redigeert naam/telefoon/e-mail/ID, houdt
+                       verkoopgeschiedenis + bestedingstotalen op een
+                       grafsteen-record. Audit-event: customer.redacted.
 
 TOPBESTEDERS / BEZOEKEN  Rapporten → Top Klanten (Hoofdstuk 10)
 

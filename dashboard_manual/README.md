@@ -17,7 +17,7 @@ No technical knowledge is required. The dashboard does the heavy lifting; this g
 
 ## How to use this manual
 
-Each chapter covers one area of the dashboard. Read 1 → 18 if you're new to Josbin POS; or jump to the chapter you need.
+Each chapter covers one area of the dashboard. Read 1 → 22 if you're new to Josbin POS; or jump to the chapter you need.
 
 | # | Chapter | Who it's for |
 |---|---------|--------------|
@@ -42,8 +42,19 @@ Each chapter covers one area of the dashboard. Read 1 → 18 if you're new to Jo
 | 19 | [Kassabeheer / Registers — physical tills, sessions, reopen flow](19-registers.md) | Manager+ |
 | 20 | [BTW Submissions — formal filings to Belastingdienst Suriname](20-btw-submissions-belastingdienst.md) | OA, SM, Inspector, SA |
 | 21 | [Tax Inspector role — Belastingdienst cross-org access](21-tax-inspector.md) | SA (creating), Inspector (using) |
+| 22 | [Payment methods, QR wallets & pending payments](22-payment-methods-and-wallets.md) | Org Admin, Store Manager |
 
 All chapters are now written.
+
+---
+
+## What you see on first login
+
+Every role lands on the **Dashboard** home screen after logging in — except Cashiers, who only get [My Account](18-my-account.md), and the Tax Inspector, who lands on the BTW dashboard ([Chapter 21](21-tax-inspector.md)). Two cards on that home screen only appear for some people, so they're easy to miss in the chapters:
+
+- **Platform Overview (Super Admin only).** A cross-tenant panel pinned above the per-store cards: platform-wide KPI tiles (organisations active/inactive, today's and this month's network-wide revenue and transactions, active terminals in the last 24 h), **licence-health buckets** (healthy / expiring 30d / expiring 14d / grace / soft-lock / hard-lock) with an attention counter, the number of **BTW filings awaiting inspector review**, the **next expiring licences**, and the last **Super Admin actions**. It auto-refreshes every 60 seconds. This is the vendor's pulse across all tenants — Org Admins never see it; their dashboard starts at their own stores. Follow-ups live in [Chapter 15](15-license-management.md) (licences) and [Chapter 20](20-btw-submissions-belastingdienst.md) (filings).
+
+- **"Get started" checklist (fresh organisations).** Org Admins (and the Super Admin, who may still be setting an org up) see a first-run onboarding card while the org is empty: **Add a store → Create users → Add products → Ring a test sale**. Each step deep-links to the right screen and ticks itself off automatically as soon as the store / users / products actually exist; the card retires itself once the org is genuinely set up. **Dismiss** hides it manually — remembered per browser, so it can reappear on another PC. The steps map to [Chapter 2](02-organisation-and-store-setup.md), [Chapter 3](03-users.md) and [Chapter 4](04-catalogue-and-categories.md).
 
 ---
 

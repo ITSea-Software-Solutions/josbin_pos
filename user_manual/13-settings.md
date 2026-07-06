@@ -72,6 +72,15 @@ If it shows Error:
 - Try the other pin setting (Pin 2 vs Pin 5).
 - Make sure the printer is on and connected.
 
+### Step 5 — Auto-print receipts (optional)
+
+Below the drawer test sits the toggle **"Print receipt automatically after each sale"**.
+
+- **Off (default):** the cashier taps **Print** on the receipt screen whenever the customer wants paper.
+- **On:** the receipt prints by itself the moment each sale completes — exactly once per sale. With a thermal printer configured it prints silently; with connection type **None** the Windows print dialog opens after every sale instead (which gets old fast — configure the printer first).
+
+This is a per-terminal setting. See [Chapter 6 §6.2](06-receipts.md) for how it behaves on the receipt screen.
+
 ---
 
 ## 13.3 Language and date format
@@ -150,8 +159,10 @@ Managers can configure default BTW settings:
 | Printer IP | (empty) | Network printers only |
 | Printer port | 9100 | Do not change unless your printer uses a different port |
 | Cash drawer pin | Pin 2 | Change to Pin 5 if drawer doesn't open |
+| Auto-print receipt | Off | Per terminal; prints as soon as each sale completes — §13.2 Step 5 |
 | Language | Nederlands | Per-user setting |
 | Date format | DD-MM-YYYY | Per-user setting |
+| Scale barcodes (weighed goods) | Off | §13.9 — confirm the layout against your store's scale before go-live |
 | Auto-launch on system boot | Off | Manager+ — see §13.8 |
 | Close + Restart buttons | (Manager+) | Visible only to Store Manager and above |
 
@@ -187,6 +198,50 @@ A button (Manager+ only). Closes Josbin POS completely (Electron quits). Use at 
 > **Closing during an open register?** You'll get a warning. Close your register first (Chapter 3 §3.5) or the next opener won't be able to start a new session on the same register.
 
 Both Close + Restart are manager-gated because a cashier accidentally tapping them mid-line would lose state. The cashier sees no buttons here at all.
+
+---
+
+## 13.9 Weighed goods / scale barcodes
+
+For shops with a **labelling scale** (deli counter, meat, produce): the scale weighs the item and prints a barcode that carries a *value* — the price it calculated, or the weight — instead of identifying a fixed product. Josbin POS can read those labels, so the cashier just scans and the line comes out priced correctly.
+
+**Off by default.** Only enable it if your store actually uses scale labels.
+
+### The settings
+
+| Setting | What it means | Default |
+|---|---|---|
+| **Read scale barcodes** | Master toggle for the feature | Off |
+| **Embedded value** | **Price** — the scale already priced the item; the label carries the amount (SRD). **Weight** — the label carries the weight; the POS multiplies it by the product's catalogue price per kg. | Price |
+| **Prefix** | The leading digit(s) that mark a barcode as a scale label. Nearly all scales use **2** (the EAN-13 "in-store" range). | 2 |
+
+### How the label is read
+
+Scale labels are EAN-13 barcodes with this layout (the standard 6 + 5 split):
+
+```
+2  123456  01750  C
+│  │       │      └ check digit
+│  │       └ 5-digit value — price in cents (SRD 17.50) or weight in grams (1.750 kg)
+│  └ 6-digit item code — must match the product's barcode in the catalogue
+└ prefix (configurable, default 2)
+```
+
+Two things must be true for this to work:
+
+1. **The product exists in the catalogue with the 6-digit item code as its barcode** — e.g. barcode `123456` on "Kipfilet per kg", priced per kg. The scale and the catalogue must agree on that code.
+2. **The layout matches your scale.** The prefix and the value type (price/weight) are configurable here; the 6 + 5 digit split is fixed to the common standard. Scale brands (Bizerba, CAS, Avery, Digi, …) can be programmed differently — if your scale uses another split, contact your Josbin representative **before** enabling this.
+
+> ⚠️ **Standing rule — test before go-live, every store, every scale.** Print a few labels on the store's actual scale and scan them at the till. Check the product, the weight/price and the line total are exactly right. **A wrong layout does not produce an error — it silently mis-prices every weighed item.** Never switch this on for a store without confirming against that store's own scale, and re-test after anyone reprograms the scale.
+
+### What the cashier sees
+
+Nothing new — that's the point. Scan the label like any barcode ([Chapter 4 §4.1, Method D](04-making-a-sale.md)):
+
+- **Price mode:** the product is added with the label's embedded price as the line price for that weighed item.
+- **Weight mode:** the product is added with the weight as the quantity (e.g. `1.750`), priced at catalogue rate × kg.
+
+If the item code isn't found, the normal "product not found" message appears — add the product to the catalogue (with the item code as its barcode) and scan again. Like the other options on this screen, this is a **per-terminal** setting: enable it on every till of the store.
 
 ---
 

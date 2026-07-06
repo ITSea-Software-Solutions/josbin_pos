@@ -31,6 +31,7 @@ This screen manages the **registers** (per-till setup) and shows the **session h
 | Rename / deactivate a register | ✅ | ✅ | ✅ | ❌ | ❌ |
 | View open sessions (who's logged in where) | ✅ | ✅ | ✅ | ❌ | ✅ |
 | View session history | ✅ | ✅ | ✅ | ❌ (own only) | ✅ |
+| Record a cash in/out (pay-in / pay-out) on an open session | ✅ | ✅ | ✅ | ✅ (own session, at the POS) | ❌ |
 | **Reopen a closed session for the next shift** | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Approve a cashier's reopen request | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Force-close a register session (rare) | ✅ | ✅ | ✅ | ❌ | ❌ |
@@ -163,6 +164,42 @@ You provide:
 
 ---
 
+## 19.9a Cash in/out during a shift (pay-in / pay-out)
+
+Not every SRD that enters or leaves the drawer is a sale. The float runs out of coins and someone tops it up; a supplier gets paid cash on delivery; the manager takes SRD 2,000 to the bank mid-afternoon. If those movements aren't recorded, the drawer count at close time is wrong through no fault of the cashier.
+
+**Who records it:** the cashier on the open session, or a manager (SM / OA / SA) — always against an **open** register session. A closed session refuses the movement (`409`).
+
+**Where:** at the POS — top bar → **💵 Kas / Cash** → the *Cash in / out* modal. Pick a direction, enter the amount, and type the **mandatory reason** (minimum 2 characters):
+
+| Direction | Typical uses |
+|---|---|
+| **Pay-in (Kas in)** | Change / float top-up, owner adds cash to the drawer. |
+| **Pay-out (Kas uit)** | Bank drop mid-shift, supplier paid cash-on-delivery, petty-cash purchase (cleaning supplies, taxi). |
+
+**The effect on reconciliation** — this is the whole point. Every movement adjusts the session's expected cash, so the drawer still reconciles at close:
+
+```
+expected cash = opening float
+              + cash sales (incl. the cash portion of mixed payments)
+              − cash refunds
+              + pay-ins − pay-outs
+```
+
+A recorded SRD 2,000 bank drop keeps the close green. An **unrecorded** one shows up as `−SRD 2,000` cash short and triggers the mandatory discrepancy note — see [Chapter 11 §11.8](11-z-reports-and-end-of-day-sync.md#118-cash-discrepancy--how-it-lands-here).
+
+**Where you see it back:**
+
+- The **session-close summary** lists pay-in and pay-out as their own lines in the cash-drawer block, next to opening float and cash sales.
+- The **audit log** gets a `register.cash_movement` event per movement — direction, amount, reason, user, timestamp ([ch 13](13-audit-log.md)).
+- The POS echoes the **new expected cash** immediately after recording, so the cashier always knows what the drawer should hold.
+
+> **Coaching rule:** the reason field is free text, but it should name the counterparty or purpose (`Leverancier Fernandes — SRD 350 contant`), not `eruit`. The audit log keeps it forever; an auditor reading it in six months should not have to guess.
+
+The cashier-side walkthrough lives in [user_manual ch 3 — Your Register](../user_manual/03-register.md).
+
+---
+
 ## 19.10 Common situations
 
 ### "We just split Kassa 1 into two tills — how do I add the new one?"
@@ -176,6 +213,9 @@ You provide:
 
 ### "Z-Report won't close — 'open sessions remain'"
 §19.5 — Open Sessions tab tells you which. Either find the cashier or force-close.
+
+### "We took cash to the bank mid-shift — how do we keep the drawer count green?"
+§19.9a — record a pay-out with a reason at the moment the money leaves the drawer. Expected cash adjusts instantly and the close reconciles.
 
 ### "How do I know if anyone's currently selling?"
 §19.5 — Open Sessions tab is your live view. Cashier names + how long they've been open.

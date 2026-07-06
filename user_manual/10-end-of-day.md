@@ -40,6 +40,8 @@ If any number looks wrong, do not close the day yet. Review recent sales or cont
 
 Cash reconciliation is the process of comparing the cash in the drawer against what the system expects.
 
+> **What does the system expect?** The Z-Report's expected cash is the day's **net cash sales**: everything paid fully in cash, minus cash refunds and returns. It does **not** include your opening float (that's why you don't count it — see Step 1), the cash portion of mixed payments, or pay-ins/pay-outs recorded at a register during the day ([Chapter 3 §3.2a](03-register.md)). Those movements reconcile automatically when each cashier closes their **register session** — at day level you reference them in the note when they explain a difference.
+
 **Step 1 — Count the cash in the drawer**
 
 Count every note and coin in the cash drawer. Do not include:
@@ -63,6 +65,9 @@ Write down or remember the total.
 | SRD 500.00 | SRD 500.00 | SRD 0.00 ✓ | Perfect match |
 | SRD 500.00 | SRD 495.00 | − SRD 5.00 | Cash short (possible error or theft) |
 | SRD 500.00 | SRD 502.00 | + SRD 2.00 | Cash over (change error) |
+| SRD 500.00 | SRD 400.00 | − SRD 100.00 | A **recorded pay-out** (e.g. SRD 100 supplier paid from the drawer, Chapter 3 §3.2a) — not missing money. Name the movement in the note and the count is explained. |
+
+> **Pay-ins and pay-outs:** cash movements recorded during the shift auto-reconcile on each cashier's register-session close, but the day-level expected figure above does **not** subtract them — a recorded SRD 100 pay-out therefore still shows here as −100. That is fine: point to it in the note (*"pay-out leverancier, zie kassasessie Kassa 1"*) and the discrepancy is accounted for. An **unrecorded** pay-out, on the other hand, looks exactly like missing cash — which is why Chapter 3 §3.2a insists you record every movement the moment it happens.
 
 **Step 3 — If there is a discrepancy: add a note**
 
@@ -167,6 +172,7 @@ The X-Report is used by managers to check mid-day performance. It does not affec
 Before leaving for the night, go through this checklist:
 
 - [ ] All held bills have been completed or cleared
+- [ ] All cash pay-ins / pay-outs were recorded with a reason ([Chapter 3 §3.2a](03-register.md))
 - [ ] Actual cash in drawer has been counted
 - [ ] Cash reconciliation has been entered
 - [ ] Discrepancy note added if needed

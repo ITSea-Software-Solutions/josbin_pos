@@ -1,6 +1,6 @@
 # 3 — Auth & rollen
 
-Sanctum tokens, TOTP 2FA, zes RBAC-rollen, en de policies die cross-org reads stoppen. De hele flow zit in `backend/app/Http/Controllers/Api/AuthController.php` plus vier middlewares.
+Sanctum tokens, TOTP 2FA, zeven RBAC-rollen, en de policies die cross-org reads stoppen. De hele flow zit in `backend/app/Http/Controllers/Api/AuthController.php` plus vier middlewares.
 
 ---
 
@@ -108,13 +108,13 @@ Hij is geregistreerd als de `two_factor`-alias (`backend/bootstrap/app.php:35`),
 
 ## 2FA-policy via `AppSetting`
 
-Twee lagen bepalen of een gebruiker 2FA moet gebruiken:
+Drie lagen bepalen of een gebruiker 2FA moet gebruiken:
 
-1. **Always-on roles**: `User::TWO_FACTOR_ALWAYS_ROLES = ['super_admin']`. Hardcoded. Kan niet uitgeschakeld worden.
+1. **Always-on roles**: `User::TWO_FACTOR_ALWAYS_ROLES = ['super_admin', 'tax_inspector']`. Hardcoded. Kan niet uitgeschakeld worden — de tax inspector is per definitie overheid (Belastingdienst Suriname) en krijgt dus dezelfde behandeling als Super Admin.
 2. **Always-on voor government orgs**: `isGovernmentUser()` (elke rol binnen een `is_government`-organisatie). Kan niet uitgeschakeld worden.
 3. **Configureerbaar per rol**: Super Admin opteert rollen in voor verplichte 2FA via `AppSetting`.
 
-`User::requires2FA()` (`backend/app/Models/User.php:112-121`):
+`User::requires2FA()` (`backend/app/Models/User.php:210-219`):
 
 ```php
 public function requires2FA(): bool
@@ -147,40 +147,51 @@ private const CONFIGURABLE_ROLES = [
 ];
 ```
 
-`super_admin` is uitgesloten (altijd aan) en `api_integration` is uitgesloten (machine-account, API-key-auth, geen TOTP). De PUT-validator weigert waarden buiten deze lijst. `AppSetting` is `Auditable`, dus elke policy-wijziging staat in de immutable log.
+`super_admin` en `tax_inspector` zijn uitgesloten (altijd aan) en `api_integration` is uitgesloten (machine-account, API-key-auth, geen TOTP). De PUT-validator weigert waarden buiten deze lijst. `AppSetting` is `Auditable`, dus elke policy-wijziging staat in de immutable log.
+
+De always-on-regel wordt ook aan de admin-kant afgedwongen: het 2FA-reset-endpoint van `UserController` weigert 2FA te strippen van `TWO_FACTOR_ALWAYS_ROLES` en government-gebruikers (`403 MANDATORY_2FA`, `backend/app/Http/Controllers/Api/UserController.php:338-345`).
 
 ---
 
-## De zes rollen
+## De zeven rollen
 
-Gedefinieerd in `User::ROLES`-constants en geseed in `backend/database/seeders/RolesAndPermissionsSeeder.php`. Er zijn **44** permissions in de catalogus:
+Gedefinieerd in `User::ROLES`-constants en geseed in `backend/database/seeders/RolesAndPermissionsSeeder.php`. Er zijn **49** permissions in de catalogus:
 
 | Rol | Permissions | Scope |
 |---|---:|---|
-| `super_admin` | 44 (alle) | Platform-breed. Omzeilt elke policy via `before()`-hooks. |
-| `organisation_admin` | 39 | Alleen hun eigen organisatie. |
-| `store_manager` | 33 | Hun toegewezen vestiging(en). |
+| `super_admin` | 49 (alle) | Platform-breed. Omzeilt elke policy via `before()`-hooks. |
+| `organisation_admin` | 43 | Alleen hun eigen organisatie. |
+| `store_manager` | 36 | Hun toegewezen vestiging (`users.store_id`). |
 | `cashier` | 16 | POS-scherm + eigen-vestiging-rapporten. |
 | `auditor` | 13 | Read-only — voor govt-compliance-officers. |
 | `api_integration` | 4 | Machine-account, API-key-auth, geen UI. |
+| `tax_inspector` | 3 | Cross-organisatie, read-only, uitsluitend BTW-aangiften. |
 
 De vier `api_integration`-permissions zijn `sales.create`, `sales.view`, `products.view`, `reports.daily` — precies het oppervlak dat een POS-systeem van derden nodig heeft om verkopen te pushen en een daily total te pullen.
+
+De drie `tax_inspector`-permissions zijn `btw.view_submissions`, `btw.review_submission`, `audit.view` — aangiften lezen over elke organisatie heen, ze accepteren/betwisten, en het eigen actie-spoor zien. Verder niets: geen catalogus, geen verkoopdetails, geen klanten. Zie de eigen sectie hieronder.
 
 ### Permission-catalogus in één oogopslag
 
 | Groep | Permissions |
 |---|---|
 | Sales | `sales.create`, `sales.view`, `sales.void`, `sales.void.approve`, `sales.refund`, `sales.hold`, `sales.restore` |
-| Products | `products.view`, `products.create`, `products.edit`, `products.delete`, `products.import`, `products.sync` |
+| Products | `products.view`, `products.create`, `products.edit`, `products.delete`, `products.import`, `products.sync`, `products.set_btw`, `products.view_cost` |
 | Customers | `customers.view`, `customers.create`, `customers.edit` |
 | Reports | `reports.daily`, `reports.monthly`, `reports.custom`, `reports.top_products`, `reports.x_report`, `reports.z_report`, `reports.export`, `reports.btw`, `reports.rekenkamer` |
 | Rates | `rates.view`, `rates.lock`, `rates.override` |
 | Z-Report | `z_report.close`, `z_report.submit`, `z_report.view_history` |
 | Users | `users.view`, `users.create`, `users.edit`, `users.delete` |
 | Admin | `categories.manage`, `stores.manage`, `organisations.manage`, `api_integrations.manage`, `discount_rules.manage`, `settings.manage` |
+| BTW-aangiften | `btw.submit`, `btw.view_submissions`, `btw.review_submission` |
 | Other | `ai.insights`, `labels.print`, `audit.view` |
 
-`sales.void.approve` is de tweede-goedkeurder-permission die gebruikt wordt door government segregation-of-duties (zie hieronder).
+Aantekeningen bij de minder voor de hand liggende:
+
+- `sales.void.approve` is de tweede-goedkeurder-permission die gebruikt wordt door government segregation-of-duties (zie hieronder).
+- `products.set_btw` (alleen OA) gate het BTW-tarief / `btw_exempt`-veld op een product — misclassificatie heeft gevolgen voor de Belastingdienst-aangifte. SM heeft `products.edit`, maar deze twee velden worden stilzwijgend gestript door `ProductController::applyBtwGate`.
+- `products.view_cost` (SA/OA/SM) toont `cost_price` + marge op product-payloads en gate het winstrapport. Kassiers zien nooit kostprijzen op de kassa.
+- `btw.submit` (OA + SM) dient BTW-aangiften in; `btw.view_submissions` (OA, SM, tax_inspector, SA) toont ze; `btw.review_submission` (alleen tax_inspector, naast de `before()`-bypass van SA) accepteert/betwist ze. De aangifte-pijplijn is [hoofdstuk 5](05-btw-pipeline.md).
 
 ### Spatie-tabellen
 
@@ -189,8 +200,8 @@ De permission-engine is `spatie/laravel-permission`. Vier tabellen, allemaal met
 | Tabel | Bevat |
 |---|---|
 | `permissions` | `id`, `name`, `guard_name` — één rij per permission-string hierboven. |
-| `roles` | `id`, `name`, `guard_name` — zes rijen. |
-| `role_has_permissions` | `(permission_id, role_id)` — de matrix hierboven, ~109 rijen totaal. |
+| `roles` | `id`, `name`, `guard_name` — zeven rijen. |
+| `role_has_permissions` | `(permission_id, role_id)` — de matrix hierboven, ~164 rijen totaal. |
 | `model_has_roles` | `(role_id, model_type, model_id)` — koppelt een `User`-UUID aan een rol. |
 | `model_has_permissions` | Dezelfde vorm, voor ad-hoc per-user-grants. Vandaag ongebruikt. |
 
@@ -198,18 +209,38 @@ De vendor-migration gaat uit van een bigint user-PK; `2026_04_12_200014_fix_perm
 
 ---
 
+## De zevende rol — `tax_inspector` (Belastingdienst Suriname)
+
+Een belastingambtenaar van de Belastingdienst Suriname. Alles aan deze rol is bewust smal:
+
+- **Cross-organisatie by design.** De Belastingdienst reguleert elke belastingplichtige op het platform, dus de inspecteur leest BTW-aangiften over *alle* organisaties heen — naast Super Admin de enige rol die dat doet. `User::isCrossOrgRole()` (`backend/app/Models/User.php:158-164`) retourneert true voor exact `super_admin` en `tax_inspector`; controllers gebruiken het om de eigen-org-scoping `WHERE organisation_id = ?` over te slaan (`BtwSubmissionController::applyListFilters`, `OrganisationController::index`).
+- **Read-only, alleen BTW-aangiften.** `btw.view_submissions` + `btw.review_submission` + `audit.view` (eigen actie-spoor). `BtwSubmissionPolicy::create` vereist `organisation_id !== null`, dus een inspecteur kan nooit namens een belastingplichtige indienen; `supersede` is evenzeer buiten bereik — dat zou valsheid in geschrifte zijn.
+- **`organisation_id` is NULL.** Net als Super Admin hoort de inspecteur bij geen enkele tenant. Elk endpoint dat scoped met `where('organisation_id', $user->organisation_id)` retourneert voor deze rol *niets* — dat is de valkuil. Hij heeft al één keer gebeten: `OrganisationController::index` special-casede oorspronkelijk alleen `isSuperAdmin()`, waardoor de inspecteur in de eigen-org-branch belandde waar `where('id', null)` een leeg org-filter op het BTW-scherm opleverde. De fix stuurt elke cross-org-rol door de platform-brede branch (`OrganisationController.php:31-43`). Gebruik `isCrossOrgRole()` — niet `isSuperAdmin()` — zodra je cross-org leesoppervlak toevoegt.
+- **2FA verplicht, niet-omzeilbaar.** `tax_inspector` staat in `User::TWO_FACTOR_ALWAYS_ROLES` naast `super_admin`; de policy-`AppSetting` kan het niet uitschakelen en het admin-2FA-reset-endpoint weigert (`MANDATORY_2FA`).
+- **Alleen door Super Admin aan te maken.** `UserController::MANAGEABLE_ROLES` geeft OA/SM geen pad naar de rol (`backend/app/Http/Controllers/Api/UserController.php:21-32`).
+- **Overheids-gebrand login-portaal.** Het dashboard serveert een aparte Belastingdienst-login op `/belastingdienst` (ook `?belastingdienst` voor setups zonder SPA-path-fallback) — gedetecteerd in `dashboard/src/App.tsx:13-18`, gerenderd door `dashboard/src/screens/BelastingdienstLoginScreen.tsx`. Onderliggend dezelfde `POST /api/auth/login` + 2FA-challenge; alleen de chrome verschilt. Na login landt de inspecteur op `TaxInspectorDashboard.tsx`.
+
+Wat de inspecteur dag-in-dag-uit doet — review-queue, accepteren/betwisten, bulk-accept, CSV-export — staat bij de aangifte-pijplijn in [5 — BTW-pijplijn](05-btw-pipeline.md).
+
+---
+
 ## User-helpers
 
-Drie predicates in `backend/app/Models/User.php` houden policy-code leesbaar:
+Een handvol predicates in `backend/app/Models/User.php` houdt policy-code leesbaar:
 
 | Method | Retourneert true wanneer |
 |---|---|
 | `isSuperAdmin()` | `role === 'super_admin'` |
 | `isAtLeastManager()` | role in `[super_admin, organisation_admin, store_manager]` |
-| `requires2FA()` | always-on OF govt org OF geconfigureerd via AppSetting |
+| `isOrgScopedRole()` | role in `[super_admin, organisation_admin, auditor, api_integration, tax_inspector]` — org-niveau-rollen zonder eigen vestiging (`users.store_id` NULL) |
+| `isStoreBound()` | role in `[cashier, store_manager]` — hoort bij exact één vestiging, geen "alle vestigingen in de org"-bereik |
+| `isCrossOrgRole()` | role in `[super_admin, tax_inspector]` — kijkt over organisaties heen |
 | `isGovernmentUser()` | `organisation->is_government === true` |
+| `requires2FA()` | always-on-rol OF govt org OF geconfigureerd via AppSetting |
 
-`isAtLeastManager` is waar de meeste "toon me iets dat aggregeert over gebruikers"-checks op leunen. `isGovernmentUser` flipt de geo-alert, single-device-afdwinging en verplichte 2FA — hieronder besproken.
+`canAccessStore($storeId)` combineert ze tot de ene vraag die de meeste endpoints stellen: Super Admin → elke vestiging; org-scoped rollen → elke vestiging binnen hun organisatie; store-bound rollen → alleen `users.store_id === $storeId` (`backend/app/Models/User.php:177-187`).
+
+`isAtLeastManager` is waar de meeste "toon me iets dat aggregeert over gebruikers"-checks op leunen. `isGovernmentUser` flipt de geo-alert, single-device-afdwinging en verplichte 2FA — hieronder besproken. `isStoreBound` is wat de BTW-aangiften, rapporten en voorraadviews van een Store Manager op de eigen vestiging vastpint.
 
 ---
 

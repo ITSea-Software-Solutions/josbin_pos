@@ -69,6 +69,38 @@ If you need to switch terminals mid-shift (e.g. printer broke on Kassa 1), close
 
 ---
 
+## 3.2a Adding or removing cash mid-shift (pay-in / pay-out)
+
+Money sometimes enters or leaves the drawer **outside of a sale**:
+
+| Direction | Called | Typical reasons |
+|---|---|---|
+| Cash **into** the drawer | **Pay in** (Dutch: *Kas in*) | Change / small notes topped up mid-shift; owner adds extra float |
+| Cash **out of** the drawer | **Pay out** (Dutch: *Kas uit*) | Supplier paid cash on delivery; petty-cash purchase; cash taken to the bank (bank drop) |
+
+Never take money out and "just remember it" — record the movement, or your drawer will count short at close.
+
+**Steps:**
+
+1. In the top bar, tap the **💵 Cash** button (Dutch: *Kas*). It is only visible while your register session is open.
+2. The **Cash in / out** window opens. Pick **↓ Pay in** or **↑ Pay out**.
+3. Enter the **amount** in SRD (e.g. `100.00`).
+4. Type a short **reason** — required. Examples: *"leverancier betaald"* (supplier paid), *"wisselgeld bijgevuld"* (change topped up), *"afstorting bank"* (bank drop). The **Record** button stays disabled until you fill it in.
+5. Tap **Record**. The window confirms **"Cash movement recorded"** and shows the **new expected cash** in the drawer.
+
+**What it changes:**
+
+- The movement is saved on your register session and written to the audit trail (event `register.cash_movement`) with your name, the amount and the reason.
+- The **expected cash** for your close (§3.3) adjusts automatically:
+
+  > **Expected cash** = opening float **+** cash from sales (including the cash part of mixed payments, minus change given) **−** cash refunds and returns **+** pay-ins **−** pay-outs
+
+- The close summary lists your movements as their own line, so you and the manager can see exactly why the drawer holds more or less than sales alone would suggest.
+
+> **Who can record one:** you (the cashier on the open session) or a manager. Record the movement at the moment the cash moves — not from memory at the end of the shift.
+
+---
+
 ## 3.3 Closing your register (end of shift)
 
 When you've finished selling for the day (or your shift), close the register so the next cashier (or end-of-day Z-Report) has a clean number to reconcile.
@@ -89,7 +121,7 @@ Shows what the system thinks happened this shift:
 | Card sales | SRD amount paid by card |
 | Total BTW | Tax collected |
 | Opening float | What you started with |
-| **Expected cash** | Opening float + cash sales (this is what should be in the drawer) |
+| **Expected cash** | Opening float + cash sales − cash refunds + pay-ins − pay-outs (§3.2a) — what should be in the drawer |
 
 Tap **Next** to count the cash.
 

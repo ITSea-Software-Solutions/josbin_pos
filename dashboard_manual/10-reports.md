@@ -13,9 +13,9 @@
 ![10 reports overview](screenshots/10-reports-overview.png)
 ---
 
-## 10.1 The seven report types at a glance
+## 10.1 The nine report types at a glance
 
-Josbin POS exposes seven distinct report endpoints. Some live on the **dashboard Reports screen** (consolidated cross-store), others are per-store and only reachable through the API or the POS-side end-of-day flow.
+Josbin POS exposes nine distinct report endpoints. Some live on the **dashboard Reports screen** (consolidated cross-store), others are per-store and only reachable through the API or the POS-side end-of-day flow.
 
 | # | Report | Scope | Where | Permission | Output |
 |---|---|---|---|---|---|
@@ -27,8 +27,9 @@ Josbin POS exposes seven distinct report endpoints. Some live on the **dashboard
 | 6 | **BTW report** | one store *or* whole org | Dashboard → Reports → BTW | `reports.btw` | JSON, PDF |
 | 7 | **Rekenkamer export** | whole org (or one store filter) | API `GET /reports/rekenkamer` | `reports.rekenkamer` or Org Admin / Auditor | **Signed PDF** |
 | 8 | **Consolidated** (cross-store) | all stores in an org | Dashboard → Reports → Geconsolideerd | (Org Admin / Super Admin / Auditor) | JSON, PDF |
+| 9 | **Profit & margin** | one store *or* whole org | Dashboard → Reports → Winst & marge | `products.view_cost` (Super Admin / Org Admin / Store Mgr) | JSON |
 
-The dashboard's **Rapporten / Reports** screen wraps two of these (consolidated + BTW). The other five are reachable either from the POS-side report screen (for one store at a time) or from the API. The Rekenkamer export has no dedicated dashboard screen yet — it's triggered by URL or by a "Download audit export" button on the Audit Log screen ([Chapter 13](13-audit-log.md)).
+The dashboard's **Rapporten / Reports** screen wraps three of these (consolidated + BTW + profit & margin). The other five are reachable either from the POS-side report screen (for one store at a time) or from the API. The Rekenkamer export has no dedicated dashboard screen yet — it's triggered by URL or by a "Download audit export" button on the Audit Log screen ([Chapter 13](13-audit-log.md)).
 
 > The **Z-Report** is *not* in this chapter. It's the end-of-day register close — see [Chapter 11](11-z-reports-and-end-of-day-sync.md). What lands here are the analytical reports you read; Z-Report is the operational act of closing a day.
 
@@ -38,17 +39,19 @@ The dashboard's **Rapporten / Reports** screen wraps two of these (consolidated 
 
 **Path:** Dashboard → left sidebar → **Rapporten / Reports**.
 
-You land on a two-tab screen:
+You land on a three-tab screen:
 
 - **Geconsolideerd / Consolidated** — cross-store revenue, BTW, transactions, payment breakdown, per-store table, top 10 products.
 - **BTW-overzicht / BTW Report** — Belastingdienst-formatted VAT report aggregated across the same store scope.
+- **Winst & marge / Profit & margin** — revenue, cost of goods, profit and margin % for the same scope. This tab only exists for Super Admin, Org Admin and Store Manager — see §10.4a.
 
-Both tabs share one filter bar at the top:
+All three tabs share one filter bar at the top:
 
 | Filter | What it does | Default |
 |---|---|---|
 | **Van / From** | Start date (inclusive). | First day of current month. |
 | **Tot / To** | End date (inclusive). | Today. |
+| **Vestiging / Store** dropdown | Limits whichever tab you're on to one store. Only rendered when your org has more than one store. | All stores. |
 | **Vandaag / Today** quick pill | Sets from = to = today. | — |
 | **Gisteren / Yesterday** quick pill | Sets from = to = yesterday. | — |
 | **Deze maand / This month** quick pill | Sets from = first of month, to = today. | — |
@@ -57,7 +60,7 @@ Both tabs share one filter bar at the top:
 
 > The date filter is **inclusive on both ends**. `From = 2026-05-01`, `To = 2026-05-31` returns the entire month of May. Timestamps inside the data are AST (America/Paramaribo), so a sale rung up at 23:58 AST on May 31 belongs to the May report, even though it might be June 1 in UTC.
 
-Scope rules (decided by the backend, you don't choose):
+Organisation-scope rules (decided by the backend, you don't choose — the store dropdown above only narrows *within* your org):
 
 - **Super Admin** sees every active organisation by default. Pass `?org_id=…` to scope to one. There's no dropdown for this in the screen yet — Super Admins typically use the URL or the API.
 - **Org Admin / Store Manager / Auditor** are scoped to their own organisation automatically. They cannot see another org's data and the query doesn't even hit that data.
@@ -219,6 +222,72 @@ Source: `backend/app/Http/Controllers/Api/DashboardController.php::consolidatedB
 
 ---
 
+## 10.4a Profit report (Winst & marge) — revenue, cost, margin
+
+The third tab on the Reports screen. Answers the question the consolidated tab deliberately doesn't: *"how much of that revenue did we actually keep?"*
+
+### Who sees this tab at all
+
+Cost prices are commercially sensitive, so this is the one report tab that is **role-gated in both the UI and the API**:
+
+| Role | Access |
+|---|---|
+| **Super Admin / Org Admin / Store Manager** | ✅ — these are the roles that hold `products.view_cost` (the same permission that shows cost prices in the Catalogue). |
+| **Cashier / Auditor / Tax Inspector / API Integration** | ❌ — the tab is not rendered, and a direct API call returns `403`. |
+
+Why the auditor and the tax inspector are excluded: Belastingdienst audits **BTW**, not margin. The BTW report (§10.4) and the Rekenkamer export (§10.6) cover everything a compliance reviewer is entitled to see — your buying prices are not part of that entitlement.
+
+### What you see (top to bottom)
+
+#### KPI cards (five)
+
+| Card | What it shows |
+|---|---|
+| **Omzet / Revenue** | Sum of line totals (post-discount, BTW-inclusive) for completed sales in scope. |
+| **Inkoopkosten / Cost of goods** | Sum of `cost_snapshot_srd × quantity` across the same lines. |
+| **Winst / Profit** | Revenue − cost, summed from the per-line `line_profit_srd`. |
+| **Marge % / Margin %** | Profit ÷ revenue × 100. `—` when revenue is zero. |
+| **Transacties / Transactions** | Completed-sale count in scope. Voids excluded, as everywhere. |
+
+#### "Lines without cost" warning
+
+If any sold line has no cost snapshot (the product had no cost price at sale time), an amber banner counts those lines: profit is **understated** until the products get a cost price in the Catalogue ([Chapter 4](04-catalogue-and-categories.md)). Fixing the catalogue improves *future* sales only — see the snapshot rule below.
+
+#### Daily profit trend
+
+A line chart with one revenue line and one profit line per day. It's the fastest way to spot "revenue held up but margin collapsed" — a discounting problem, not a traffic problem.
+
+#### Per-store breakdown
+
+One row per store — revenue, cost, profit, margin %, transactions — ranked by profit. This is the chain-owner's view: two branches with equal revenue can sit far apart in profit if one leans on low-margin staples.
+
+#### Top 10 products by profit
+
+Ranked by **profit, not revenue** — deliberately a different ranking than the consolidated tab's top-10. A high-volume low-margin SKU (rice, cooking oil) drops down the list; a low-volume high-margin item rises. Product names are `product_name_snapshot`, same as everywhere else.
+
+#### Loss-making sales
+
+Every sale in scope whose **whole-sale profit is negative** — items went out the door below cost. Worst first, capped at 20 rows: timestamp, sale number, store, revenue, loss. Two realistic causes, both worth chasing the same day:
+
+- **Over-discount** — a line or sale discount pushed the price below cost.
+- **Mispriced product** — the sell price or the cost price is wrong in the catalogue.
+
+### The cost-snapshot rule (why history doesn't move)
+
+Every sale line freezes the product's cost at sale time into `sale_items.cost_snapshot_srd`, and the line's profit into `line_profit_srd` — the same pattern as `product_name_snapshot` and the persisted BTW amounts. Edit a product's cost price today and **no historical profit figure changes**; only sales rung from now on use the new cost. A profit report for May renders identically in December.
+
+### Backend endpoint
+
+```
+GET /api/reports/profit?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD[&store_id=<uuid>]
+```
+
+Source: `backend/app/Http/Controllers/Api/ReportController.php::profit`. Requires `products.view_cost` — everyone else gets `403`.
+
+> **PDF caveat:** there is no dedicated profit PDF in this release — the **Exporteer PDF / Export PDF** button while on this tab produces the *consolidated* PDF. For a profit figure on paper, screenshot the tab or consume the JSON endpoint.
+
+---
+
 ## 10.5 Per-store reports — daily, monthly, custom range
 
 These five reports (`daily`, `monthly`, `custom`, `top-products`, `x-report`) live behind `/api/reports/*` and are used by the **POS-side Reports screen** rather than the dashboard. They are listed here because Store Managers regularly ask "where do I see yesterday's number for *just my store*?" — and the answer is "the POS-side Reports screen" (covered in [POS user manual ch 11](../user_manual/11-reports.md)), or one of these endpoints directly.
@@ -242,6 +311,8 @@ Response shape (`buildDailySummary`):
 | `total_discount_srd` | Sum of `discount_srd` (sale-level discount; line-item discounts are baked into `total_srd`). |
 | `avg_basket_srd` | Avg `total_srd`. |
 | `cash_total_srd` / `card_total_srd` / `mixed_total_srd` | Payment-method split. |
+| `bank_transfer_total_srd` / `mobile_transfer_total_srd` / `foreign_cash_total_srd` / `qr_payment_total_srd` | The remaining payment-method totals — always present, `0.00` when the method wasn't used in the period. |
+| `bank_breakdown` | Reconciliation rows — one per `(payment_method, bank/provider)` pair. See §10.5.6. |
 | `btw_breakdown` | Array — one row per `(btw_rate, btw_exempt)` group: `base_srd`, `btw_srd`, `rate`, `exempt`. |
 | `top_products` | Top 5 by revenue: `product_name`, `quantity`, `revenue_srd`. |
 
@@ -291,6 +362,23 @@ Returns the same `buildDailySummary` shape as the daily report (for today), with
 | `note` | `"Dit is een tussentijds overzicht. De kassalade is NIET afgesloten."` |
 
 **This is the critical distinction:** the X-Report does **not** close the day. It produces no `ZReport` row. It's read-only — for spot-checks. Sales can keep happening immediately after, exactly like before. Compare with the Z-Report which *does* close the day and *does* persist a row (see [Chapter 11](11-z-reports-and-end-of-day-sync.md)).
+
+### 10.5.6 Payment × bank reconciliation — `bank_breakdown`
+
+Every report built on the same summary (daily, monthly, custom range, X-Report) also carries a **`bank_breakdown`** array: one row per `(payment_method, bank/provider)` combination, with a transaction count and an SRD total.
+
+| Field | Notes |
+|---|---|
+| `payment_method` | `card`, `mixed`, `bank_transfer`, `mobile_transfer` or `qr_payment`. Cash never appears here — there is nothing to reconcile against a statement. |
+| `provider` | The issuing bank the cashier picked from the PIN-terminal slip (DSB, Hakrinbank, Finabank, …), the transfer / mobile provider, or the QR wallet (Mopé, Uni5Pay+). `null` = no bank recorded. |
+| `tx_count` | Number of sales in the bucket. |
+| `total_srd` | SRD total for the bucket. For `mixed` sales only the **card portion** counts here — the cash half is already in the drawer. |
+
+**What it's for:** ticking the day (or the statement month) off against the bank's settlement statement and the wallet's merchant portal, bucket by bucket. When DSB's statement says SRD 4,210.00 settled and the DSB row says the same, that method is reconciled. See [Chapter 22 §22.4](22-payment-methods-and-wallets.md#224-where-the-money-shows-up) for where each method's money actually lands, and Chapter 11 for the per-method totals that ride on every Z-Report.
+
+**The `null` bucket:** a row with `provider = null` means the cashier used **Skip & complete** on the card step instead of copying the bank from the PIN slip. That's allowed — it never blocks a sale — but a consistently large null bucket makes statement-matching impossible. It's a **coaching signal, not a system error**: remind cashiers to fill the reconciliation panel.
+
+> These rows live in the report JSON; the per-store PDF export doesn't print the breakdown yet. For a spreadsheet-side reconciliation, pull the JSON endpoint for the statement period.
 
 ### PDF export — daily / monthly / custom / btw
 
@@ -394,6 +482,7 @@ Who can run what, in one table. (Source: `backend/database/seeders/RolesAndPermi
 | `reports.top_products` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | `reports.x_report` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `reports.btw` | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `products.view_cost` (profit report, §10.4a) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `reports.rekenkamer` | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
 | `reports.export` (PDF) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | **Consolidated cross-store** | ✅ | ✅ | ❌ (scoped to one store) | ❌ | ✅ | ❌ |
@@ -404,7 +493,7 @@ Cashier visibility is **scoped to their store** by the backend — they cannot s
 
 ## 10.8 Sync status caveat for reports
 
-All seven reports here read from the **local back-office database**. They are *not* gated by HQ sync status. If a store has been offline for three days and its Z-Reports are queued in `pending`, its **local** daily / monthly reports for those days are accurate — the data is on the local Postgres. What's *not* accurate yet is the **HQ Super Admin Dashboard's** view of those days, because the data hasn't crossed the network.
+All the reports here read from the **local back-office database**. They are *not* gated by HQ sync status. If a store has been offline for three days and its Z-Reports are queued in `pending`, its **local** daily / monthly reports for those days are accurate — the data is on the local Postgres. What's *not* accurate yet is the **HQ Super Admin Dashboard's** view of those days, because the data hasn't crossed the network.
 
 In other words:
 

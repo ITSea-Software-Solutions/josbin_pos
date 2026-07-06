@@ -415,6 +415,93 @@ pctToSrd('500.00', '0')    = '0.00'
 
 ---
 
+## Filing to the Belastingdienst — `btw_submissions`
+
+Everything above answers *"how much BTW did we collect?"*. The filing pipeline turns that answer into a formal, tamper-evident return that a Belastingdienst tax inspector reviews inside the platform. One model (`BtwSubmission`), one service (`BtwSubmissionService`), one controller (`BtwSubmissionController`), one policy (`BtwSubmissionPolicy`).
+
+### The submission row
+
+A `btw_submissions` row is a **snapshot at filing time**, never recomputed on read — the inspector must see exactly what was claimed, even if sales are voided later (corrections go through the supersede flow, never a silent recompute):
+
+| Column | Meaning |
+|---|---|
+| `period_type`, `period_start`, `period_end` | `daily` / `weekly` / `monthly` (`BtwSubmission::PERIOD_TYPES`). |
+| `store_id` | NULL = consolidated org-wide filing; set = per-store filing. |
+| `sales_count`, `total_sales_srd`, `btw_exempt_srd`, `btw_taxable_srd`, `total_btw_srd` | Snapshot totals from `BtwSubmissionService::computeTotals`. |
+| `status` | `filed` → `accepted` \| `disputed` \| `superseded`. |
+| `reference` | Server-generated, unique — `BTW-{YYYY}-{MM}-{ORGSLUG}-{DAY\|WK\|MTH}-{NNN}` (per-org sequence per period-type per month, so resubmissions get `-002`, `-003`, …). |
+| `submitted_at/by`, `reviewed_at/by`, `submitter_note`, `inspector_note` | Both sides of the review dialogue. |
+| `sale_ids` | JSONB array of the covered sale UUIDs — a Rekenkamer auditor can walk from filing back to source sales row-by-row. |
+| `prev_hash`, `current_hash` | Per-org SHA-256 chain, below. |
+
+There is **no `draft` status** — the dry-run role is played by `POST /api/btw-submissions/preview`, which runs the same `computeTotals` and warns about an existing filing for the period without persisting anything.
+
+`computeTotals` (`backend/app/Services/BtwSubmissionService.php`) scopes to `status = 'completed'`, `source IN ('pos','api')` (historical `import` rows excluded), `occurred_at` within the period in AST. Exempt revenue is summed from `sale_items.btw_exempt = true` lines — *not* the old "sale with zero BTW is exempt" proxy, which misclassified every mixed basket (rice + cola). Taxable = total − exempt, clamped at `0.00`.
+
+### Periods — daily / weekly / monthly
+
+`validatePayload` enforces the period shape: `daily` must be a single day, `monthly` must be exactly first-to-last of one calendar month, `weekly` has no shape guard (any past range files as weekly). Belastingdienst's formal cycle is monthly; daily/weekly exist for high-volume or transparency-minded clients — which is also why **only monthly filings ping the inspectors' notification bell** (`BtwFilingSubmitted`); daily/weekly just appear in the review queue. Resubmissions always ping (`BtwFilingResubmitted`) — they follow a dispute the inspector raised.
+
+### Org-wide (OA) vs store-scoped (SM) filings
+
+BTW is legally an organisation-level return, so the consolidated org-wide filing (`store_id` NULL) is the Org Admin's job. A Store Manager can also file — common for single-store Surinamese shops — but `validatePayload` **forces `store_id = $user->store_id`** for store-bound roles, ignoring whatever the client sent. An OA naming a specific store passes through `canAccessStore`. The same split runs through every read: `applyListFilters` pins an SM to their own store's filings, `BtwSubmissionPolicy::view/supersede` re-check it per row.
+
+### Idempotency — one active filing per period
+
+Three migrations tell the story:
+
+1. `2026_05_26_030001` — plain composite UNIQUE on `(organisation_id, period_type, period_start, period_end)`. Blocked double-filing, but also blocked *resubmission*.
+2. `2026_05_26_070001` — replaced by a **partial unique index** `btw_subs_active_period_unique … WHERE status <> 'superseded'`. Superseded rows no longer occupy the period, so a period can be resubmitted any number of times.
+3. `2026_06_16_000001` — made it **store-aware**: the index now includes `COALESCE(store_id, '0000…0000'::uuid)` (sentinel for NULL, because a plain nullable column would let org-wide duplicates through). Net effect: one active org-wide filing per period, one active filing per store per period, and org-wide + per-store filings for the same period coexist.
+
+On top of the index, `store()` pre-checks for a blocking `filed`/`accepted` row and returns `409 BTW_ALREADY_FILED` with the existing reference — a friendlier failure than the constraint violation.
+
+### The hash chain
+
+`BtwSubmissionService::hashChain` computes `current_hash = sha256(prev_hash . '|' . canonical_json)` over the canonical filing payload (org, store, period, totals, submitter, reference). The chain is **per-organisation** — a taxpayer's filings must form one continuous self-contained ledger; if `prev` were global, org B filing would become a link in org A's sequence and per-taxpayer verification would break the moment anyone else filed. `prev` is the latest `current_hash` for the org ordered by `submitted_at` (UUID PKs aren't monotonic).
+
+Same pattern as the `audit_logs` chain (ch 2), but note: `php artisan audit:verify` covers `audit_logs` only — a `btw:verify-chain` counterpart is mentioned in the migration comments and **does not exist yet**. Until it ships, verification means walking `btw_submissions` per org and recomputing.
+
+### Review loop — accept / dispute / resubmit
+
+```
+OA or SM                              tax_inspector
+────────                              ─────────────
+preview (dry-run)
+file → status: filed  ──────────────▶ review queue
+                                      ├── accept  → status: accepted   (locked — cannot be superseded)
+                                      └── dispute → status: disputed   (inspector_note required, min 5 chars)
+                        ◀────────────  taxpayer notified (bell + mail)
+correct & resubmit:
+POST {id}/supersede
+  ├── recompute totals (picks up post-filing voids/refunds)
+  ├── original → status: superseded  (frees the partial unique index)
+  └── new row  → status: filed  ────▶ inspector notified, re-review
+```
+
+Gates in `BtwSubmissionPolicy`: `review` requires `btw.review_submission` **and** `status === 'filed'` (accepted/disputed/superseded rows are done); `supersede` requires `btw.submit`, same org, same store for an SM, and `status ∈ [filed, disputed]` — an accepted filing is the tax authority's record and cannot be replaced. Even the SA goes through `review` so audit attribution stays honest. Every transition writes an `audit_logs` row: `btw.submitted`, `btw.accepted`, `btw.disputed`, `btw.superseded`.
+
+### Endpoints
+
+All under `auth:sanctum` (`backend/routes/api.php:342-358`); static paths registered before the `{btwSubmission}` wildcards:
+
+| Method | Path | Who | Notes |
+|---|---|---|---|
+| `GET` | `/api/btw-submissions` | `btw.view_submissions` | Cross-org roles see everything; OA their org; SM their store. Filters: status, period_type, from/to, year, amount band, `source` (pos/api via `sale_ids`), search. |
+| `GET` | `/api/btw-submissions/export` | same | Streamed CSV (UTF-8 BOM for Excel), same filters as index — the CSV always matches the screen. |
+| `GET` | `/api/btw-submissions/inspector-dashboard` | same | KPI snapshot: BTW this/last month, pending/disputed counts, 30-day trend, top orgs; cross-org roles also get the >7-days-silent late-filers list. For an OA the same shape scoped to their own org. |
+| `POST` | `/api/btw-submissions/preview` | `btw.submit` | Dry-run totals + existing-filing warning. |
+| `POST` | `/api/btw-submissions` | `btw.submit` | Files. `409 BTW_ALREADY_FILED` on an active duplicate. |
+| `GET` | `/api/btw-submissions/{id}` / `{id}/detail` | policy `view` | Detail adds per-store, per-source (`sales.source` — Josbin POS vs Layer-3 API vs import), per-payment-method, per-BTW-rate breakdowns + the audit-log timeline. |
+| `POST` | `/api/btw-submissions/{id}/accept` | policy `review` | Optional note. Notifies taxpayer. |
+| `POST` | `/api/btw-submissions/{id}/dispute` | policy `review` | Note required. Notifies taxpayer. |
+| `POST` | `/api/btw-submissions/bulk-accept` | per-row `review` | Up to 200 ids, `throttle:30,1`. Rows that aren't `filed` (or aren't reviewable by the caller) are skipped, not errored; each accept still writes its own audit row and notification. |
+| `POST` | `/api/btw-submissions/{id}/supersede` | policy `supersede` | The correct-and-resubmit flow above. |
+
+Notification mechanics (queued `database`+`mail`, why an SMTP outage can't block an inspector's action) are in [10 — Jobs & schedules](10-jobs-and-schedules.md); the `tax_inspector` role itself is in [3 — Auth & roles](03-auth-and-roles.md).
+
+---
+
 ## Where each piece lives
 
 ```
@@ -437,6 +524,17 @@ Consumers
 Reports
 ├── ReportController::btwReport     backend/app/Http/Controllers/Api/ReportController.php:246
 └── ReportController::export        backend/app/Http/Controllers/Api/ReportController.php:293
+
+Belastingdienst filing pipeline
+├── BtwSubmission (model)           backend/app/Models/BtwSubmission.php
+├── BtwSubmissionService            backend/app/Services/BtwSubmissionService.php
+│   ├── computeTotals               snapshot totals + sale_ids
+│   ├── nextReference               BTW-YYYY-MM-ORGSLUG-…-NNN
+│   └── hashChain                   per-org sha256 chain
+├── BtwSubmissionController         backend/app/Http/Controllers/Api/BtwSubmissionController.php
+├── BtwSubmissionPolicy             backend/app/Policies/BtwSubmissionPolicy.php
+├── Notifications                   backend/app/Notifications/BtwFiling{Submitted,Accepted,Disputed,Resubmitted}.php
+└── Migrations                      2026_05_26_030001 → 2026_05_26_070001 → 2026_06_16_000001
 
 Pre-BTW discount layer
 └── DiscountRuleService::applyRules backend/app/Services/DiscountRuleService.php:33

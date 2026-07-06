@@ -85,13 +85,13 @@ De knop **Catalogus pushen** zit op **Catalogus → header rechtsboven** (niet o
 ![Vestigingen-scherm — alleen-lezen org-header, vestigingslijst, + Nieuwe vestiging-knop](screenshots/02-stores-screen-oa.png)
 
 
-**Het Vestigingen-scherm is de OA-thuisbasis voor vestiging-CRUD.** Zijbalk → **Vestigingen**. Zichtbaar voor Super Admin, OA en vestigingsmanager.
+**Het Vestigingen-scherm is de OA-thuisbasis voor vestiging-CRUD.** Zijbalk → **Vestigingen**. Alleen zichtbaar voor Super Admin en OA — vestigingsmanagers krijgen dit menu niet.
 
 | Wie ziet wat |
 |---|
 | **Super Admin** — ziet bovenaan een organisatie-keuzemenu; kies eerst de org, dan de vestigingslijst. Kan aanmaken / hernoemen / deactiveren. Kan dit ook doen via Organisaties → drill-in (de oude SA-only-flow werkt nog steeds). |
 | **OA** — ziet een alleen-lezen header-strip met hun organisatienaam + BTW-nummer + type + locale (beheerd door uw Josbin POS-leverancier — mail `support@josbin-pos.sr` om te wijzigen), dan de vestigingslijst. Kan vestigingen aanmaken / hernoemen / deactiveren tot de licentielimiet. |
-| **Vestigingsmanager** — ziet dezelfde lijst (org-scoped). Kan hernoemen / deactiveren; aanmaken hangt af van `stores.manage`-rechten (vandaag toegekend). |
+| **Vestigingsmanager** — ziet het menu **Vestigingen** helemaal **niet**. Vestigingen aanmaken, hernoemen en deactiveren is hoofdkantoorwerk, en de API weigert die acties vanaf een manageraccount (`StorePolicy`). Wat een manager *wél* krijgt is **Vestigingsinstellingen** voor de eigen toegewezen vestiging — zie §2.3.1. |
 
 **Om een vestiging toe te voegen:**
 
@@ -126,7 +126,9 @@ Tik op **Aanmaken**. De vestiging verschijnt in de lijst met status *Actief*.
 
 **Pad:** Dashboard → **Vestigingsinstellingen** (linker zijbalk) → kies de vestiging uit het keuzemenu.
 
-Dit scherm heeft drie secties plus rechts een live bon-preview die meeloopt terwijl u typt.
+**Wie mag hier bewerken:** Super Admin en OA bewerken elk veld, voor elke vestiging in de org. Een **vestigingsmanager** krijgt dit scherm ook — alleen voor de **eigen toegewezen vestiging** — en kan de operationele velden bewerken: weergavenaam, stad, adres, bonhoofd/-voet, BTW-registratienummer op de bon, het logo en de QR-wallet-afbeeldingen. De ene uitzondering is het **standaard BTW-tarief**: voor een manager is dat grijs gemaakt met de hint *"Wordt door uw organisatie ingesteld"* — belastinginstellingen blijven bij de OA. En het is niet slechts een uitgeschakeld invoerveld: de server verwijdert `default_btw_rate` (plus structurele velden zoals POS-type en actief-status) uit elke opslag die een manager verstuurt, dus omzeilen door het verzoek handmatig te bouwen kan niet.
+
+Dit scherm heeft vier secties plus rechts een live bon-preview die meeloopt terwijl u typt.
 
 **Vestigingsgegevens**
 - Vestigingsnaam, stad, adres
@@ -146,6 +148,11 @@ Dit scherm heeft drie secties plus rechts een live bon-preview die meeloopt terw
 - Upload een PNG, JPG of SVG, max 2 MB.
 - Wordt afgedrukt bovenaan de thermische bon, de gemailde PDF-bon en de HTML-mailbon.
 - Een preview-thumbnail verschijnt direct; **Verwijderen** maakt het leeg.
+
+**QR-wallets (Mopé / Uni5Pay+)**
+- Eén tegel per wallet-aanbieder: upload de **statische merchant-QR** van uw winkel (de sticker of PDF-afbeelding die u van uw bank / wallet-aanbieder kreeg).
+- De kassa toont deze QR groot op het scherm bij een QR-betaling, met het te betalen bedrag ernaast — de klant scant en typt het bedrag in de wallet-app.
+- Volledige inrichtingsdoorloop: [Hoofdstuk 22 §22.2](22-payment-methods-and-wallets.md).
 
 Het rechterpaneel toont precies hoe de volgende geprinte bon eruit zal zien. Gebruik het om te controleren of uw koptekst niet overloopt.
 
@@ -190,6 +197,44 @@ Om te deactiveren: open de organisatie → tab Vestigingen → de vestigingskaar
 
 ---
 
+## 2.5a Het vestigingsdetailscherm — wat HQ per vestiging ziet
+
+Klikken op een vestigingskaart vanaf het **Dashboard** brengt de OA / vestigingsmanager / SA op een live dashboard voor die ene vestiging — specifiek gebouwd voor "wat gebeurt er nu in dit filiaal?" in plaats van de opgetelde org-weergave.
+
+![Vestigingsdetail — hero + 6 KPI-tegels + alertstrook](./screenshots/02-store-detail-hero-kpis.png)
+
+**Van boven naar beneden:**
+
+1. **Hero** — vestigingsnaam + initialen-avatar, online/offline-pil (real-time via Reverb), organisatie + stad + adres, toegewezen manager, BTW-nummer, aantal kassa's. Gaat de vestiging offline, dan toont de hero het laatst-gezien-tijdstip.
+
+2. **Alertstrook** *(alleen wanneer iets actie vereist)* — aantal openstaande bank-/mobiele overboekingen + totaal SRD (geel), producten met lage voorraad in deze vestiging (rood). Is alles gezond, dan verdwijnt de strook.
+
+3. **KPI-strook** — 6 tegels met een accentstreep aan de linkerrand:
+   - Omzet vandaag + ▲/▼-delta t.o.v. gisteren
+   - Transacties + delta
+   - Gemiddelde bongrootte
+   - Geïnde BTW
+   - Kassa's die nu open zijn
+   - Aantal producten met lage voorraad
+
+4. **Uurlijkse staafgrafiek + 7-daagse lijngrafiek** — piekuuranalyse voor vandaag, trend voor de week. Handig voor personeelsbeslissingen ("we pieken op vrijdag altijd tussen 16:00 en 18:00 — zet een extra kassier in").
+
+![Vestigingsdetail — grafieken, topproducten, actieve sessies](./screenshots/02-store-detail-charts-tables.png)
+
+5. **Top 5 producten vandaag + Kassiers in dienst** — naast elkaar.
+   - Topproducten tonen medailles (🥇🥈🥉) met aantal + omzet.
+   - De lijst kassiers in dienst toont avatar + kassanaam + sinds-wanneer + beginsaldo.
+
+6. **Tabel recente verkopen** — laatste 10 voltooide verkopen met tijd, bonnummer, kassier, betaalmethode-pil, totaal. Dezelfde vorm als de volledige verkooplijst van de OA, alleen ingekort.
+
+7. **Sync-voettekst** — syncstatus-pil, laatste synctijdstip, datum laatste Z-Rapport.
+
+![Vestigingsdetail — recente verkopen + sync-voettekst](./screenshots/02-store-detail-recent-sales.png)
+
+Het scherm ververst elke 60 seconden. SaleCompleted-broadcasts vanaf de POS verhogen de omzet en het transactieaantal van vandaag onmiddellijk, zonder refetch — wanneer de kassier op Voltooien tikt, ziet de OA die dit scherm bekijkt de tegel binnen een seconde bewegen.
+
+---
+
 ## 2.6 Een uitgewerkt voorbeeld: Supermarkt De Hoop end-to-end opzetten
 
 Klant: Supermarkt De Hoop NV. Twee filialen (Paramaribo Centrum en Nieuw Nickerie). 3 kassa's in Paramaribo, 1 in Nickerie. Sandra Codrington is de inkoper op het hoofdkantoor.
@@ -211,7 +256,7 @@ Hier is de volledige sequentie — wat de **Super Admin** doet, en daarna wat **
 2. **Sandra's licentie uitgeven.**
    Dashboard → **Licentiebeheer** → **+ Licentie uitgeven** → kies `Supermarkt De Hoop NV`, niveau `Professional`, max_stores `2`, max_terminals `4`, valid_from vandaag, valid_until +1 jaar. Uitgeven. *(Pad B — in-dashboard. Pad A via de aparte License Server is voor on-prem IonCube-leveringen; zie [Hoofdstuk 16](16-license-operations.md) §16.4.)*
 
-3. **Sandra's OA-account aanmaken** (behandeld in [Hoofdstuk 3](03-users.md)). Ze krijgt een e-mail met inloggegevens.
+3. **Sandra's OA-account aanmaken** (behandeld in [Hoofdstuk 3](03-users.md)). Ze krijgt een welkomstmail met de dashboard-link en haar login-e-mailadres; het tijdelijke wachtwoord wordt apart overhandigd via de eenmalige groene banner (zie [Hoofdstuk 3 §3.2](03-users.md)).
 
 4. Overdracht — klaar. Alles hieronder is Sandra's werk.
 

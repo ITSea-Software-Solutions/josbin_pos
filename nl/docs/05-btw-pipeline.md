@@ -415,6 +415,93 @@ pctToSrd('500.00', '0')    = '0.00'
 
 ---
 
+## Aangifte bij de Belastingdienst — `btw_submissions`
+
+Alles hierboven beantwoordt *"hoeveel BTW hebben we geïnd?"*. De aangifte-pijplijn maakt van dat antwoord een formele, manipulatie-aantoonbare aangifte die een Belastingdienst-inspecteur binnen het platform beoordeelt. Eén model (`BtwSubmission`), één service (`BtwSubmissionService`), één controller (`BtwSubmissionController`), één policy (`BtwSubmissionPolicy`).
+
+### De aangifte-rij
+
+Een `btw_submissions`-rij is een **snapshot op indienmoment**, nooit herberekend bij lezen — de inspecteur moet exact zien wat er geclaimd is, zelfs als verkopen later worden geannuleerd (correcties lopen via de supersede-flow, nooit via een stille herberekening):
+
+| Kolom | Betekenis |
+|---|---|
+| `period_type`, `period_start`, `period_end` | `daily` / `weekly` / `monthly` (`BtwSubmission::PERIOD_TYPES`). |
+| `store_id` | NULL = geconsolideerde org-brede aangifte; gezet = per-vestiging-aangifte. |
+| `sales_count`, `total_sales_srd`, `btw_exempt_srd`, `btw_taxable_srd`, `total_btw_srd` | Snapshot-totalen uit `BtwSubmissionService::computeTotals`. |
+| `status` | `filed` → `accepted` \| `disputed` \| `superseded`. |
+| `reference` | Server-gegenereerd, uniek — `BTW-{YYYY}-{MM}-{ORGSLUG}-{DAY\|WK\|MTH}-{NNN}` (per-org-volgnummer per periodetype per maand, dus herindieningen krijgen `-002`, `-003`, …). |
+| `submitted_at/by`, `reviewed_at/by`, `submitter_note`, `inspector_note` | Beide kanten van de review-dialoog. |
+| `sale_ids` | JSONB-array van de gedekte sale-UUIDs — een Rekenkamer-auditor kan rij-voor-rij van aangifte terug naar bronverkopen lopen. |
+| `prev_hash`, `current_hash` | Per-org SHA-256-chain, hieronder. |
+
+Er is **geen `draft`-status** — de dry-run-rol wordt gespeeld door `POST /api/btw-submissions/preview`, die dezelfde `computeTotals` draait en waarschuwt voor een bestaande aangifte voor de periode zonder iets te persisteren.
+
+`computeTotals` (`backend/app/Services/BtwSubmissionService.php`) scoped op `status = 'completed'`, `source IN ('pos','api')` (historische `import`-rijen uitgesloten), `occurred_at` binnen de periode in AST. Vrijgestelde omzet wordt gesommeerd vanuit `sale_items.btw_exempt = true`-regels — *niet* de oude proxy "verkoop met nul BTW is vrijgesteld", die elke gemengde mand (rijst + cola) misclassificeerde. Belastbaar = totaal − vrijgesteld, geklemd op `0.00`.
+
+### Perioden — daily / weekly / monthly
+
+`validatePayload` dwingt de periodevorm af: `daily` moet één dag zijn, `monthly` moet exact eerste-tot-laatste van één kalendermaand zijn, `weekly` heeft geen vormguard (elke bereik in het verleden dient in als weekly). De formele cyclus van de Belastingdienst is maandelijks; daily/weekly bestaan voor high-volume of transparantie-gerichte klanten — en daarom pingen **alleen maandelijkse aangiften de notificatie-bel van de inspecteurs** (`BtwFilingSubmitted`); daily/weekly verschijnen gewoon in de review-queue. Herindieningen pingen altijd (`BtwFilingResubmitted`) — die volgen op een dispuut dat de inspecteur zelf opwierp.
+
+### Org-breed (OA) vs vestiging-gescoped (SM)
+
+BTW is juridisch een aangifte op organisatieniveau, dus de geconsolideerde org-brede aangifte (`store_id` NULL) is de taak van de Org Admin. Een Store Manager kan ook indienen — gebruikelijk voor Surinaamse winkels met één vestiging — maar `validatePayload` **forceert `store_id = $user->store_id`** voor store-bound rollen, wat de client ook meestuurde. Een OA die een specifieke vestiging noemt gaat door `canAccessStore`. Dezelfde splitsing loopt door elke read: `applyListFilters` pint een SM op de aangiften van de eigen vestiging, `BtwSubmissionPolicy::view/supersede` hercheckt het per rij.
+
+### Idempotentie — één actieve aangifte per periode
+
+Drie migraties vertellen het verhaal:
+
+1. `2026_05_26_030001` — platte composite UNIQUE op `(organisation_id, period_type, period_start, period_end)`. Blokkeerde dubbel indienen, maar ook *herindienen*.
+2. `2026_05_26_070001` — vervangen door een **partial unique index** `btw_subs_active_period_unique … WHERE status <> 'superseded'`. Superseded rijen bezetten de periode niet meer, dus een periode kan onbeperkt vaak opnieuw ingediend worden.
+3. `2026_06_16_000001` — maakte hem **store-aware**: de index bevat nu `COALESCE(store_id, '0000…0000'::uuid)` (sentinel voor NULL, want een gewone nullable kolom zou org-brede duplicaten doorlaten). Netto-effect: één actieve org-brede aangifte per periode, één actieve aangifte per vestiging per periode, en org-breed + per-vestiging voor dezelfde periode bestaan naast elkaar.
+
+Bovenop de index pre-checkt `store()` op een blokkerende `filed`/`accepted`-rij en retourneert `409 BTW_ALREADY_FILED` met de bestaande referentie — een vriendelijkere fout dan de constraint-violation.
+
+### De hash-chain
+
+`BtwSubmissionService::hashChain` berekent `current_hash = sha256(prev_hash . '|' . canonical_json)` over de canonieke aangifte-payload (org, vestiging, periode, totalen, indiener, referentie). De chain is **per organisatie** — de aangiften van een belastingplichtige moeten één doorlopend, op zichzelf staand grootboek vormen; als `prev` globaal was, zou org B's aangifte een schakel in org A's reeks worden en zou per-belastingplichtige-verificatie breken zodra iemand anders indient. `prev` is de laatste `current_hash` van de org, geordend op `submitted_at` (UUID-PKs zijn niet monotoon).
+
+Zelfde patroon als de `audit_logs`-chain (h. 2), maar let op: `php artisan audit:verify` dekt alleen `audit_logs` — een `btw:verify-chain`-tegenhanger wordt genoemd in de migratie-comments en **bestaat nog niet**. Tot die er is, betekent verifiëren: `btw_submissions` per org doorlopen en herberekenen.
+
+### Review-loop — accepteren / betwisten / herindienen
+
+```
+OA of SM                              tax_inspector
+────────                              ─────────────
+preview (dry-run)
+indienen → status: filed  ──────────▶ review-queue
+                                      ├── accept  → status: accepted   (vergrendeld — kan niet gesuperseded worden)
+                                      └── dispute → status: disputed   (inspector_note verplicht, min. 5 tekens)
+                        ◀────────────  belastingplichtige genotificeerd (bel + mail)
+corrigeren & herindienen:
+POST {id}/supersede
+  ├── totalen herberekend (pikt voids/refunds van na de aangifte op)
+  ├── origineel → status: superseded  (maakt de partial unique index vrij)
+  └── nieuwe rij → status: filed  ───▶ inspecteur genotificeerd, herbeoordeling
+```
+
+Gates in `BtwSubmissionPolicy`: `review` vereist `btw.review_submission` **én** `status === 'filed'` (accepted/disputed/superseded rijen zijn klaar); `supersede` vereist `btw.submit`, dezelfde org, dezelfde vestiging voor een SM, en `status ∈ [filed, disputed]` — een geaccepteerde aangifte is het dossier van de belastingautoriteit en kan niet vervangen worden. Zelfs de SA gaat door `review` zodat de audit-attributie eerlijk blijft. Elke overgang schrijft een `audit_logs`-rij: `btw.submitted`, `btw.accepted`, `btw.disputed`, `btw.superseded`.
+
+### Endpoints
+
+Allemaal onder `auth:sanctum` (`backend/routes/api.php:342-358`); statische paden geregistreerd vóór de `{btwSubmission}`-wildcards:
+
+| Method | Path | Wie | Notities |
+|---|---|---|---|
+| `GET` | `/api/btw-submissions` | `btw.view_submissions` | Cross-org-rollen zien alles; OA hun org; SM hun vestiging. Filters: status, period_type, from/to, year, bedragband, `source` (pos/api via `sale_ids`), search. |
+| `GET` | `/api/btw-submissions/export` | idem | Gestreamde CSV (UTF-8 BOM voor Excel), zelfde filters als index — de CSV matcht altijd het scherm. |
+| `GET` | `/api/btw-submissions/inspector-dashboard` | idem | KPI-snapshot: BTW deze/vorige maand, pending/disputed-tellingen, 30-dagen-trend, top-orgs; cross-org-rollen krijgen ook de lijst van >7 dagen stille laat-indieners. Voor een OA dezelfde shape gescoped op de eigen org. |
+| `POST` | `/api/btw-submissions/preview` | `btw.submit` | Dry-run-totalen + waarschuwing voor bestaande aangifte. |
+| `POST` | `/api/btw-submissions` | `btw.submit` | Dient in. `409 BTW_ALREADY_FILED` bij een actief duplicaat. |
+| `GET` | `/api/btw-submissions/{id}` / `{id}/detail` | policy `view` | Detail voegt per-vestiging, per-source (`sales.source` — Josbin POS vs Layer-3 API vs import), per-betaalmethode, per-BTW-tarief-uitsplitsingen toe + de audit-log-tijdlijn. |
+| `POST` | `/api/btw-submissions/{id}/accept` | policy `review` | Optionele notitie. Notificeert belastingplichtige. |
+| `POST` | `/api/btw-submissions/{id}/dispute` | policy `review` | Notitie verplicht. Notificeert belastingplichtige. |
+| `POST` | `/api/btw-submissions/bulk-accept` | per rij `review` | Max. 200 ids, `throttle:30,1`. Rijen die niet `filed` zijn (of niet reviewbaar door de caller) worden overgeslagen, niet ge-errord; elke accept schrijft nog steeds zijn eigen audit-rij en notificatie. |
+| `POST` | `/api/btw-submissions/{id}/supersede` | policy `supersede` | De corrigeer-en-herindien-flow hierboven. |
+
+Notificatie-mechaniek (queued `database`+`mail`, waarom een SMTP-storing de actie van een inspecteur niet kan blokkeren) staat in [10 — Jobs & schedules](10-jobs-and-schedules.md); de `tax_inspector`-rol zelf in [3 — Auth & rollen](03-auth-and-roles.md).
+
+---
+
 ## Waar elk stuk zit
 
 ```
@@ -437,6 +524,17 @@ Consumers
 Reports
 ├── ReportController::btwReport     backend/app/Http/Controllers/Api/ReportController.php:246
 └── ReportController::export        backend/app/Http/Controllers/Api/ReportController.php:293
+
+Belastingdienst-aangifte-pijplijn
+├── BtwSubmission (model)           backend/app/Models/BtwSubmission.php
+├── BtwSubmissionService            backend/app/Services/BtwSubmissionService.php
+│   ├── computeTotals               snapshot-totalen + sale_ids
+│   ├── nextReference               BTW-YYYY-MM-ORGSLUG-…-NNN
+│   └── hashChain                   per-org sha256-chain
+├── BtwSubmissionController         backend/app/Http/Controllers/Api/BtwSubmissionController.php
+├── BtwSubmissionPolicy             backend/app/Policies/BtwSubmissionPolicy.php
+├── Notifications                   backend/app/Notifications/BtwFiling{Submitted,Accepted,Disputed,Resubmitted}.php
+└── Migraties                       2026_05_26_030001 → 2026_05_26_070001 → 2026_06_16_000001
 
 Pre-BTW discount layer
 └── DiscountRuleService::applyRules backend/app/Services/DiscountRuleService.php:33

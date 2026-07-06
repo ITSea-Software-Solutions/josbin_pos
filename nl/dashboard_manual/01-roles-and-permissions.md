@@ -168,7 +168,7 @@ Concrete lijst van wat elke rol mag aanraken. Elke regel wordt door de backend a
 | **Kassier/manager aan specifieke vestigingen toewijzen** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Gebruikers verwijderen | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Vestigingen** aanmaken / bewerken / deactiveren | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Eigen **organisatie alleen-lezen** bekijken (Vestigingen-schermheader) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Eigen **organisatie alleen-lezen** bekijken (SA/OA: Vestigingen-scherm · VM: eigen Vestigingsinstellingen) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | **Organisaties** aanmaken / bewerken | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **API-sleutels** beheren (uitgeven, intrekken) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Auditlogboek** bekijken | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |

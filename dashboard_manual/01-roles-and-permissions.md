@@ -168,7 +168,7 @@ Concrete list of what each role can touch. Every row is enforced by the backend 
 | **Assign cashier/manager to specific stores** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Delete users | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Create / edit / deactivate **stores** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
-| View own **organisation read-only** (Stores screen header) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| View own **organisation read-only** (SA/OA: Stores screen · SM: own Store Settings) | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Create / edit **organisations** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
 | Manage **API keys** (issue, revoke) | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | View **audit log** | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |

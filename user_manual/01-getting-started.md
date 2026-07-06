@@ -77,6 +77,7 @@ The main screen is divided into three areas:
 **Top Bar** — contains:
 - Store name and your name (top left)
 - Today's total sales and transaction count
+- **Online / Offline indicator** — a small pill with a green or red dot (explained below)
 - Navigation buttons: POS, Reports, Exchange Rate, End of Day, Settings, Labels
 - On-screen keyboard toggle button (keyboard icon)
 - Language toggle (NL / EN)
@@ -91,6 +92,21 @@ The main screen is divided into three areas:
 - Shows subtotal, BTW (tax) breakdown, and total in SRD
 - Contains the **Checkout** button to proceed to payment
 - Contains the **Hold** button to save the cart and start a new one
+
+### The Online / Offline indicator
+
+The top bar always shows a small status pill with a coloured dot:
+
+| Pill | What it means | What you do |
+|---|---|---|
+| 🟢 **Online** | The terminal has a network connection. Hovering shows *"Connected — sales sync to head office"*. Completed sales reach headquarters within seconds. | Nothing — normal operation |
+| 🔴 **Offline** | No network right now. Hovering shows *"No internet — sales are saved locally and synced later"*. | **Keep selling.** Every sale is saved locally and syncs automatically the moment the connection returns. |
+
+Going offline is not an emergency. Josbin POS is built for Suriname's patchy connections: sales are processed on the store's own server, and a five-layer sync fallback catches up with headquarters afterwards (see [Chapter 10 — End of Day](10-end-of-day.md), section 10.6). No sale is ever lost because the internet dropped.
+
+**When to escalate:** if the indicator stays Offline for a long stretch (an hour or more), tell your manager — a cable, Wi-Fi or router problem may need fixing so the day's data can sync before the Z-Report.
+
+> **Keyboard tip:** if your terminal has a physical keyboard, the POS screen has function-key shortcuts (F2 hold, F9 pay, Esc close, and more). The full table is in [Chapter 4 — Making a Sale](04-making-a-sale.md), section 4.7.
 
 ---
 

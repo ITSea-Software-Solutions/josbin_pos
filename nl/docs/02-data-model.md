@@ -4,19 +4,21 @@ Wat opgeslagen is, waar, en hoe de stukjes samenhangen. Lees dit vóór elk cont
 
 ---
 
-## De 20 models
+## De models
 
-Allemaal in `backend/app/Models/`. Money is `decimal:2`, time is `timestampTz` (AST), IDs zijn UUIDs tenzij anders aangegeven.
+Allemaal in `backend/app/Models/` — 24 bestanden op moment van schrijven (tel ze na, vertrouw deze zin niet). Money is `decimal:2`, time is `timestampTz` (AST), IDs zijn UUIDs tenzij anders aangegeven.
 
 | Model | Doel | Opvallend |
 |---|---|---|
 | `Organisation` | De klant-tenant — één supermarktketen, één ministerie, één winkel. | `is_government` flipt elke security guard. `Auditable`. |
 | `Store` | Een fysieke vestiging onder een organisatie. | `pos_type`: `native` of `external` (alleen API). `Auditable`. |
 | `Register` | Een kassa binnen een vestiging. Genummerd per vestiging (`unique(store_id, number)`). | `openSession()` retourneert de enige niet-gesloten sessie, indien aanwezig. |
-| `RegisterSession` | Eén dienst van een kassier op één kassa. Contant-float in/uit staat hier. | `status` ∈ `open/closed/reopen_requested/reopen_approved`. |
-| `Sale` | Een voltooide (of geannuleerde/vastgehouden) transactie. | `sale_number` toegewezen via Postgres advisory lock; `Auditable`. |
+| `RegisterSession` | Eén dienst van een kassier op één kassa. Openingsfloat + sluitings-telling staan hier. | `status` ∈ `open/closed/reopen_requested` — reopen-goedkeuring flipt terug naar `open` met `reopen_approved_*`-stempels. |
+| `CashMovement` | Een handmatige lade-beweging (pay-in/pay-out) tijdens een dienst (wisselgeld bijvullen, leverancier uit de kassa betaald). | Append-only, `$timestamps = false` (alleen `created_at`). `direction` ∈ `in/out`, `amount > 0` CHECK. Voedt de verwachte contant bij sluiting — zie [h. 6](06-register-and-z-report.md). `Auditable`. |
+| `Sale` | Een voltooide (of geannuleerde/vastgehouden) transactie. | `sale_number` toegewezen via Postgres advisory lock; zeven betaalmethoden + reconciliatie-kolommen (zie hieronder); `Auditable`. |
 | `SaleItem` | Eén regel op een verkoop. | `product_name_snapshot` is bevroren op moment van verkoop — product kan later hernoemd/verwijderd worden. |
 | `Product` | Catalogusitem (org-breed). | `embedding` is een `vector(1536)` pgvector-kolom, default verborgen. `Auditable`. |
+| `ProductVariant` | Eén maat/kleur/smaak onder een parent-product. | `SoftDeletes`. `price`/`cost_price` NULL = erf van parent (`effectivePrice()`/`effectiveCost()`). Eigen `sku`/`barcode`, per-variant `stock_qty` (org-breed voor v1). `Auditable`. |
 | `Category` | Catalogusgroepering (org-breed). | Tweetalig `name_nl` / `name_en`. |
 | `StoreProductOverride` | Vestigingsspecifieke prijs-override op een product. | Valt terug op `products.price` als geen rij bestaat. |
 | `ProductStock` | Per-(product, vestiging) lopende voorraad. | Nieuw sinds `2026_05_25_054551`. Vervangt enkele `products.stock_qty`. |
@@ -25,14 +27,13 @@ Allemaal in `backend/app/Models/`. Money is `decimal:2`, time is `timestampTz` (
 | `User` | Een mens (of `api_integration`-machine-account). | UUID, `HasApiTokens`, `HasRoles`. `Auditable`. |
 | `DailyRate` | De gelockte USD→SRD-koers voor één datum. | `date` is uniek. `locked_at` non-null = gelockt. |
 | `HeldBill` | Een geparkeerde winkelwagen (cart JSON) die de kassier kan herstellen. | `cart_data` is een JSON-blob, niet een `Sale`-rij. |
-| `ZReport` | End-of-day kassa-sluiting, één per vestiging per datum. | `sync_status` stuurt de offline-fallback-dans. `Auditable`. |
+| `ZReport` | End-of-day kassa-sluiting, één per vestiging per datum. | `sync_status` stuurt de offline-fallback-dans. Per-methode `*_total_srd`-kolommen voor alle zeven betaalmethoden (zie hieronder). `Auditable`. |
+| `BtwSubmission` | Een formele BTW-aangifte bij Belastingdienst Suriname. | Statussen `filed/accepted/disputed/superseded`; per-org SHA-256-hash-chain (`prev_hash`/`current_hash`); store-scoped partial unique op de periode; snapshot-totalen + `sale_ids` JSONB voor traceerbaarheid. `Auditable`. Zie [h. 5](05-btw-pipeline.md). |
 | `ApiIntegration` | Layer 3-client — één API key per rij. | `api_key_hash` + `webhook_secret` zijn verborgen in JSON. |
 | `DiscountRule` | Discount-configuratie op catalogus/categorie/vestigingsniveau. | `Active()` + `forStore()` scopes doen de dagelijkse filtering. |
 | `AuditLog` | De hash-chained, append-only audit-rij. | `bigIncrements` PK. Update + delete hooks retourneren `false`. |
 | `AppSetting` | Platform-brede key/JSON-waarde-bag. | Bewaart momenteel `two_factor_required_roles`. `Auditable`. |
-| `License` | Het geïnstalleerde product-licentierecord. | Stuurt de renewal-status-state-machine in `computeRenewalStatus()`. |
-
-Dat zijn 21 ingangen; `License` is technisch ook een model — maar het praat met de externe license server, niet met de POS-dataflow. Het "20 models"-cijfer in de brief verwijst naar de operationele set hierboven (exclusief de integration-helper `License` als je pedant wilt zijn — beide bestanden zijn aanwezig en beide worden hier gedocumenteerd).
+| `License` | Het geïnstalleerde product-licentierecord. | Stuurt de renewal-status-state-machine in `computeRenewalStatus()`. Praat met de externe license server, niet met de POS-dataflow. |
 
 ---
 
@@ -62,6 +63,30 @@ Cardinaliteit:
 | Sale | SaleItem | 1:N |
 
 De "slechts één open sessie per kassa"-regel wordt afgedwongen in `RegisterController` en de `Register::openSession()`-relatie, niet door een DB-constraint — onthoud dit als je ooit de controller omzeilt.
+
+---
+
+## Betalingen op `sales` — zeven methoden
+
+`sales.payment_method` begon als `cash|card|mixed` en groeide naar zeven waarden via een gedropte-en-opnieuw-aangemaakte Postgres CHECK-constraint. De canonieke lijst is `Sale::PAYMENT_METHODS` (`backend/app/Models/Sale.php:66-70`):
+
+```
+cash · card · mixed · bank_transfer · mobile_transfer · foreign_cash · qr_payment
+```
+
+Drie migratiegolven voegden de ondersteunende kolommen toe:
+
+| Golf | Migratie | Kolommen op `sales` |
+|---|---|---|
+| Card-reconciliatie | `2026_05_26_040001` | `card_bank`, `card_approval_code`, `card_terminal_ref`, `card_last_four` — allemaal optioneel, overgenomen van de PIN-terminal-bon zodat de OA card-verkopen kan matchen met het bank-settlement-overzicht. Nooit de volledige PAN (PCI blijft buiten scope). Partial index `sales_card_bank_idx`. |
+| Transfers + vreemde valuta | `2026_05_26_050001` | `payment_provider`, `payment_reference`, `payment_sender_name`, `payment_confirmed_at`, `payment_confirmed_by` (FK users), `foreign_currency` (`USD`/`EUR`), `foreign_amount`, `foreign_rate_used` `decimal(10,4)`. Partial index `sales_pending_payment_idx` voor het pending-payments-scherm van de OA. |
+| QR-wallets | `2026_05_26_060001` | `qr_payload` (opake provider-payload; Mopé / Uni5Pay+). Provider/referentie/bevestiging hergebruiken de golf-2-kolommen. |
+
+De lifecycle-splitsing is `Sale::PM_PENDING_CONFIRMATION = [bank_transfer, mobile_transfer, qr_payment]`: deze settelen de lade niet op het moment van aanslaan — ze blijven pending tot de OA bevestigt dat het geld binnen is (`payment_confirmed_at`/`payment_confirmed_by`), te checken via `Sale::isAwaitingPaymentConfirmation()`. `foreign_cash` is direct lade-gesetteld: de klant betaalde fysiek USD/EUR, beide bedragen plus de gelockte koers worden opgeslagen.
+
+Twee extra sale-kolommen zijn belangrijk voor Layer 3: `api_integration_id` (FK, gestempeld op elke API-sourced verkoop) en `external_sale_ref`, samen uniek via de partial index `sales_integration_external_ref_unique` (`2026_07_02_090001`) — idempotentie is **per integratie** gescoped, niet per vestiging. Details in [h. 8](08-integration-api.md).
+
+Stroomafwaarts persisteert `z_reports` een per-methode-uitsplitsing: `cash_total_srd`, `card_total_srd` en — sinds `2026_07_06_090001` — `mixed_total_srd`, `bank_transfer_total_srd`, `mobile_transfer_total_srd`, `foreign_cash_total_srd`, `qr_payment_total_srd`. Vóór die migratie liet de gepersisteerde uitsplitsing vijf methoden stilzwijgend vallen en telde ze niet meer op tot `total_sales_srd` op een QR-zware dag. Details in [h. 6](06-register-and-z-report.md).
 
 ---
 

@@ -31,6 +31,7 @@ Dit scherm beheert de **kassa's** (per-kassa setup) en toont de **sessiehistorie
 | Een kassa hernoemen / deactiveren | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Open sessies bekijken (wie waar is ingelogd) | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Sessiehistorie bekijken | ✅ | ✅ | ✅ | ❌ (alleen eigen) | ✅ |
+| Een kasmutatie (kas in / kas uit) vastleggen op een open sessie | ✅ | ✅ | ✅ | ✅ (eigen sessie, op de POS) | ❌ |
 | **Een gesloten sessie heropenen voor de volgende dienst** | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Een kassier-heropenverzoek goedkeuren | ✅ | ✅ | ✅ | ❌ | ❌ |
 | Geforceerd sluiten van een kassasessie (zelden) | ✅ | ✅ | ✅ | ❌ | ❌ |
@@ -163,6 +164,42 @@ U levert aan:
 
 ---
 
+## 19.9a Kas in / uit tijdens een dienst (kasmutaties)
+
+Niet elke SRD die de lade in- of uitgaat is een verkoop. Het wisselgeld raakt op en iemand vult bij; een leverancier wordt contant betaald bij levering; de manager brengt halverwege de middag SRD 2.000 naar de bank. Worden die bewegingen niet vastgelegd, dan klopt de kastelling bij het sluiten niet — buiten de schuld van de kassier om.
+
+**Wie legt het vast:** de kassier op de open sessie, of een manager (SM / OA / SA) — altijd op een **open** kassasessie. Een gesloten sessie weigert de mutatie (`409`).
+
+**Waar:** op de POS — bovenbalk → **💵 Kas** → het modal *Kas in / uit*. Kies een richting, voer het bedrag in en typ de **verplichte reden** (minimaal 2 tekens):
+
+| Richting | Typisch gebruik |
+|---|---|
+| **Kas in** | Wisselgeld / beginsaldo bijvullen, eigenaar legt contant bij in de lade. |
+| **Kas uit** | Bankafstorting halverwege de dienst, leverancier contant betaald bij levering, kleine-kas-aankoop (schoonmaakmiddelen, taxi). |
+
+**Het effect op de afrekening** — daar draait het allemaal om. Elke mutatie past het verwachte contant van de sessie aan, zodat de lade bij het sluiten nog steeds klopt:
+
+```
+verwacht contant = beginsaldo
+                 + contante verkopen (incl. het contante deel van gemengde betalingen)
+                 − contante terugbetalingen
+                 + kas-in − kas-uit
+```
+
+Een vastgelegde bankafstorting van SRD 2.000 houdt de afsluiting groen. Een **niet-vastgelegde** verschijnt als `−SRD 2.000` kastekort en triggert de verplichte verschilnotitie — zie [Hoofdstuk 11 §11.8](11-z-reports-and-end-of-day-sync.md#118-kasverschil--hoe-het-hier-terechtkomt).
+
+**Waar u het terugziet:**
+
+- De **sluitsamenvatting van de sessie** toont kas-in en kas-uit als eigen regels in het kassalade-blok, naast beginsaldo en contante verkopen.
+- Het **auditlogboek** krijgt per mutatie een `register.cash_movement`-gebeurtenis — richting, bedrag, reden, gebruiker, tijdstempel ([h13](13-audit-log.md)).
+- De POS toont direct na het vastleggen het **nieuwe verwachte contant**, zodat de kassier altijd weet wat er in de lade hoort te zitten.
+
+> **Coaching-regel:** het redenveld is vrije tekst, maar hoort de tegenpartij of het doel te noemen (`Leverancier Fernandes — SRD 350 contant`), niet `eruit`. Het auditlogboek bewaart het voor altijd; een auditor die het over zes maanden leest, hoort niet te hoeven raden.
+
+De kassierszijde-walkthrough staat in [user_manual h3 — Uw Kassa](../user_manual/03-register.md).
+
+---
+
 ## 19.10 Veelvoorkomende situaties
 
 ### "We hebben Kassa 1 net in twee kassa's gesplitst — hoe voeg ik de nieuwe toe?"
@@ -176,6 +213,9 @@ U levert aan:
 
 ### "Z-Rapport sluit niet — 'open sessies blijven'"
 §19.5 — tabblad Open sessies vertelt u welke. Vind de kassier of geforceerd sluiten.
+
+### "We brachten halverwege de dienst contant naar de bank — hoe houden we de kastelling groen?"
+§19.9a — leg een kas-uit met reden vast op het moment dat het geld de lade verlaat. Het verwachte contant past zich direct aan en de afsluiting klopt.
 
 ### "Hoe weet ik of iemand nu aan het verkopen is?"
 §19.5 — tabblad Open sessies is uw live weergave. Kassiernamen + hoe lang zij open zijn geweest.

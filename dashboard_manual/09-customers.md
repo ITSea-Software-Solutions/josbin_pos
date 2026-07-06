@@ -80,7 +80,7 @@ The page shows a single searchable, paginated table. The header counter (`123 kl
 | **Totaal besteed / Total spend** | Lifetime SRD spend across the organisation, incremented on every completed sale. | Plain `DECIMAL(12,2)`. Across all stores within the org. |
 | **Bezoeken / Visits** | Lifetime visit count across the organisation. | Plain integer. One unique sale = one visit. |
 | **Klant sinds / Customer since** | First time the customer was created (i.e. their first POS encounter). | Localised: `26 mei 2026` (NL) / `May 26, 2026` (EN). |
-| **(action)** | **Bewerken / Edit** button. | Opens the edit modal — §9.5. |
+| **(action)** | **Bewerken / Edit** button; for Org Admin and Super Admin also a red **Wissen / Erase** button. | Edit opens the modal — §9.5. Erase is the WBP-S erasure action — §9.5a. |
 
 ### The search box
 
@@ -129,7 +129,48 @@ Tap **Opslaan / Save**. The row updates immediately, and the change is recorded 
 
 > **What you can't edit from this screen.** `id_number` (government ID) is editable via the API but deliberately not surfaced in the dashboard edit modal — it's a *bijzondere persoonsgegeven* and shouldn't be casually corrected by back-office staff. If a govt ID needs updating, that's a vendor support request with a written reason.
 
-> **What you can't do at all.** There is no Delete button. Hard-deleting a customer would orphan every historical sale that ever named them and break the audit trail. The `customers` table uses `SoftDeletes`, so a soft-delete is technically possible via API but **not exposed in the UI**. The right pattern, if a customer asks for their data to be removed under WBP-S "right to erasure", is a vendor support request — we soft-delete the row, blank the PII, and keep the sales history pointing at a tombstone record.
+> **Deleting vs erasing.** There is deliberately no hard-delete — removing the row would orphan every historical sale that ever named the customer and break the audit trail. What *does* exist is a WBP-S **erasure** action that redacts the personal data while keeping the sales history on a tombstone record — see §9.5a.
+
+---
+
+## 9.5a Erasing a customer's personal data (WBP-S right to erasure)
+
+When a customer invokes their WBP-S *recht op vergetelheid* ("erase everything you have about me"), an **Organisation Admin or Super Admin** handles it directly from the Customers screen — no vendor ticket needed.
+
+**Path:** Customers screen → find the row → **Wissen / Erase** (next to Edit).
+
+### Who can do it
+
+| Role | Allowed? |
+|---|---|
+| **Super Admin** | ✅ |
+| **Organisation Admin** | ✅ — own organisation only. |
+| **Store Manager / Cashier / Auditor** | ❌ — the button isn't rendered, and the API refuses (`CustomerPolicy::delete`). Erasure is a data-controller decision, not a store-floor action. |
+
+### What it does — redaction, not deletion
+
+This is an **irreversible redaction**, engineered so the WBP-S right and the bookkeeping/audit obligations don't collide:
+
+| Field | After erasure |
+|---|---|
+| **Name** | Replaced by the tombstone value `[verwijderd — WBP-S]`. |
+| **Phone / email / ID number** | Erased outright. |
+| **Search hashes** (`name_hash`, `phone_hash`) | Nulled — the tombstone can never be found via search again. |
+| **`total_spend_srd` / `visit_count`** | **Kept.** Aggregate numbers are not personal data. |
+| **Sales history** | **Kept.** Every historical sale keeps pointing at the tombstone record, so reports, BTW filings and the Rekenkamer export are untouched. |
+| **`is_active`** | Set to `false`. |
+
+Because the row survives as a tombstone, nothing downstream breaks: the May BTW report renders the same the day after an erasure as the day before.
+
+### The confirmation dialog
+
+Erasure is one click away from permanent, so the dialog spells out the consequence before you confirm: *"Name, phone, email and ID for … will be permanently erased (WBP-S right to erasure). Sales history and totals are kept. This cannot be undone."* — confirm with **Definitief wissen / Erase permanently**. There is no undo, no grace period, no recycle bin.
+
+### What lands in the audit log
+
+A `customer.redacted` event on the hash-chained audit log (Chapter 13): who did it, when, from which IP, for which customer id — and **no plaintext PII**, old or new. The auditor can prove the erasure happened and was authorised without the log becoming a back-door copy of the data that was just erased.
+
+> **API path:** `DELETE /api/customers/{id}` — source `backend/app/Http/Controllers/Api/CustomerController.php::destroy`. Same policy gate as the button.
 
 ---
 
@@ -203,7 +244,9 @@ This is mostly invisible to back-office users — the only reason to know about 
 
 **"I want to export a CSV of customers for our newsletter."** This is **not provided as a one-click export** by design — bulk customer extraction is a WBP-S risk. If the customer's stated processing purpose (the *verwerkingsdoel* declared in the Verwerkersovereenkomst) includes marketing, the vendor can produce the export on written request. Don't try to scrape it via the API on your own initiative — that gets logged.
 
-**"I deleted a customer but they're still there."** There is no delete button in the dashboard. If you used the API directly and triggered a soft-delete, the row's `deleted_at` is set but the row remains for sales-history integrity. To truly purge, see vendor support — the operation is a deliberate, audited, manual step.
+**"I erased a customer but a row is still there."** Correct — erasure (§9.5a) is a *redaction*, not a row delete. The tombstone row (name `[verwijderd — WBP-S]`, no phone/email) stays behind so historical sales and reports keep working, but the person's data is gone and the row can no longer be found via search. There is deliberately no way to remove the row itself.
+
+**"A Store Manager needs to handle an erasure request."** They can't — the Erase button is OA + Super Admin only (§9.5a). Have the manager forward the customer's request to the Org Admin; erasure is a data-controller decision under WBP-S, not a store-level action.
 
 **"Edit modal shows the email field but I can't type into it for an existing customer."** You can. Make sure the field isn't being rendered behind another element (rare browser glitch — full-page refresh fixes it). If the field is literally read-only and rejects keypresses, this is a bug — report to vendor support.
 
@@ -221,7 +264,7 @@ Every action on a customer creates an entry in the audit log (Chapter 13):
 |---|---|---|---|
 | Created via POS quick-add or import | `created` | `null` | The new field values — **but** the PII fields are stored as their *encrypted* ciphertext in the audit. The auditor sees that a customer was created, not who. |
 | Edited via dashboard | `updated` | The previous encrypted ciphertext of every changed field | The new encrypted ciphertext. The diff viewer shows two opaque strings — by design. |
-| Soft-deleted via API (vendor support) | `updated` | (old `deleted_at: null`) | (new `deleted_at: <timestamp>`) |
+| Erased via dashboard (WBP-S, §9.5a) | `customer.redacted` | `null` | `null` — deliberately no values; only the actor, customer id, IP and timestamp. The event itself is the proof. |
 
 This means the auditor's view of the customer table is "**when** a record changed, **who** changed it, and **whether** PII was touched" — not the PII itself. That's WBP-S-correct: the audit log itself is not a back-door to read encrypted data.
 
@@ -248,7 +291,10 @@ BULK IMPORT            Not yet in the dashboard UI. Use the API:
                        CSV columns: name (req), phone, email, id_number
                        Match key for upsert: phone (HMAC)
 
-DELETE                 Not exposed. WBP-S "right to erasure" → vendor support.
+ERASE (WBP-S)          Row → Wissen / Erase → confirm. OA + Super Admin only.
+                       Irreversible: redacts name/phone/email/ID, keeps sales
+                       history + spend totals on a tombstone record.
+                       Audit event: customer.redacted.
 
 TOP SPENDERS / VISITS  Reports → Top Customers (Chapter 10)
 

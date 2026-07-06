@@ -8,7 +8,7 @@ This chapter covers everything that happens before payment — adding products, 
 
 ![POS screen — product grid on the left, empty cart on the right](screenshots/04-pos-screen-empty-cart.png)
 
-There are four ways to add a product:
+There are five ways to add a product:
 
 ### Method A — Tap/click from the product grid
 
@@ -47,6 +47,19 @@ There are four ways to add a product:
 1. If your terminal has a camera, the camera scanner may be enabled in Settings.
 2. Point the camera at the barcode.
 3. When detected, the product is added automatically.
+
+> **Weighed goods (scale labels):** if your store has a labelling scale (deli, meat, produce) and the manager has enabled **scale barcodes** in Settings ([Chapter 13, section 13.9](13-settings.md)), scanning the label the scale printed adds the product with the weighed price or weight already filled in — you don't type anything.
+
+### Method E — The Favorites row (★)
+
+Above the product grid you'll usually see a row labelled **★ Favorites** (Dutch: *Favorieten*) with up to 8 product tiles. This is your quick row — the fastest path to the items you sell all day:
+
+- **Tap a tile** to add the product to the cart — exactly like the grid, just closer to hand.
+- **Pinned favorites come first.** Tap the **☆** on a tile to pin it as a favorite (it turns ★); tap **★** to unpin. Pin your store's daily top sellers.
+- **Recent products fill the remaining slots.** Every product you add — by tap, search or barcode — automatically moves to the front of the recents list, so the row learns your fast movers by itself.
+- The row hides while you're searching or when a category filter is active. Clear the search and pick **"All"** to see it again.
+
+> **Per terminal:** favorites and recents are stored on this terminal (in its local browser storage), per store. Kassa 2 keeps its own list, and clearing the terminal's browser data clears the row. Nothing is lost except the shortcuts — it rebuilds itself from what you sell.
 
 ---
 
@@ -144,6 +157,26 @@ If a barcode or search returns no result:
 You can still sell an unlisted product by:
 1. Adding any product to the cart.
 2. Editing the name and price on the line item (see [Chapter 8 — Discounts](08-discounts.md) for line item editing).
+
+---
+
+## 4.7 Keyboard shortcuts
+
+If your terminal has a physical keyboard, five keys cover the whole sale rhythm — no mouse needed:
+
+| Key | What it does | When it works |
+|---|---|---|
+| **F2** | Hold the current bill — opens the Hold window ([Chapter 9](09-hold-bills.md)) | Cart has at least one item |
+| **F4** | Start a new sale — closes the receipt screen after a completed sale | Only while the receipt screen is showing |
+| **F9** | Open the payment screen ([Chapter 5](05-payment.md)) | Cart has at least one item and no payment screen is open yet |
+| **F12** | Show / hide the on-screen keyboard | Always — on every POS screen |
+| **Esc** | Close whatever is open, in this order: the payment screen first, then the receipt screen, then the on-screen keyboard | When one of those is open |
+
+Good to know:
+
+- Shortcuts are **ignored while you are typing in a field** (search bar, numpad, reason boxes) — so a barcode scanner or a product name never triggers them by accident.
+- They work on the **POS sell screen only** — on Reports, Settings and other screens the keys do nothing. The one exception is **F12**, which toggles the on-screen keyboard everywhere.
+- The **Pay button shows "F9"** as a reminder. Cashiers who learn **F9 + Esc** are noticeably faster on a busy Friday.
 
 ---
 

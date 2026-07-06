@@ -40,6 +40,8 @@ Als een cijfer er verkeerd uitziet, sluit de dag dan nog niet af. Bekijk recente
 
 Kasafstemming is het proces waarbij het contante geld in de lade wordt vergeleken met wat het systeem verwacht.
 
+> **Wat verwacht het systeem?** Het verwachte contant van het Z-Rapport is de **netto contante omzet** van de dag: alles wat volledig contant is betaald, minus contante terugbetalingen en retouren. Het bevat **niet** uw beginsaldo (daarom telt u dat niet mee — zie Stap 1), niet het contante deel van gemengde betalingen, en niet de kas-in/kas-uit-mutaties die overdag op een kassa zijn vastgelegd ([Hoofdstuk 3 §3.2a](03-register.md)). Die mutaties worden automatisch verrekend wanneer elke kassier zijn **kassasessie** sluit — op dagniveau verwijst u ernaar in de notitie wanneer ze een verschil verklaren.
+
 **Stap 1 — Tel het contante geld in de lade**
 
 Tel elk biljet en elke munt in de kassalade. Tel niet mee:
@@ -63,6 +65,9 @@ Schrijf het totaal op of onthoud het.
 | SRD 500.00 | SRD 500.00 | SRD 0.00 ✓ | Perfecte match |
 | SRD 500.00 | SRD 495.00 | − SRD 5.00 | Kastekort (mogelijke fout of diefstal) |
 | SRD 500.00 | SRD 502.00 | + SRD 2.00 | Kasoverschot (wisselgeldfout) |
+| SRD 500.00 | SRD 400.00 | − SRD 100.00 | Een **vastgelegde kas-uit** (bijv. SRD 100 leverancier betaald uit de lade, Hoofdstuk 3 §3.2a) — geen vermist geld. Noem de mutatie in de notitie en de telling is verklaard. |
+
+> **Kas-in en kas-uit:** kasmutaties die tijdens de dienst zijn vastgelegd, worden automatisch verrekend bij het sluiten van de kassasessie van elke kassier, maar het verwachte dagbedrag hierboven trekt ze **niet** af — een vastgelegde kas-uit van SRD 100 verschijnt hier dus nog steeds als −100. Dat is prima: verwijs ernaar in de notitie (*"kas-uit leverancier, zie kassasessie Kassa 1"*) en het verschil is verantwoord. Een **niet-vastgelegde** kas-uit ziet er daarentegen precies uit als vermist geld — en daarom staat Hoofdstuk 3 §3.2a erop dat u elke mutatie vastlegt op het moment dat die plaatsvindt.
 
 **Stap 3 — Bij een verschil: voeg een notitie toe**
 
@@ -167,6 +172,7 @@ Het X-Rapport wordt door managers gebruikt om de prestaties midden op de dag te 
 Voordat u 's avonds vertrekt, doorloopt u deze checklist:
 
 - [ ] Alle vastgehouden bonnen zijn voltooid of geleegd
+- [ ] Alle kas-in/kas-uit-mutaties zijn met een reden vastgelegd ([Hoofdstuk 3 §3.2a](03-register.md))
 - [ ] Het werkelijke contante geld in de lade is geteld
 - [ ] De kasafstemming is ingevoerd
 - [ ] Verschilnotitie toegevoegd indien nodig

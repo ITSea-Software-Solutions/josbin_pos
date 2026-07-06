@@ -199,7 +199,11 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            // 'ai' carries DetectSaleAnomaly (dispatched with ->onQueue('ai')
+            // after every sale). It was silently never consumed — Horizon only
+            // read 'default' — so anomaly detection never ran. Keep both here;
+            // low-priority AI work sits behind default in the same supervisor.
+            'queue' => ['default', 'ai'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,

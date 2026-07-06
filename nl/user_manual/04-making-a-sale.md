@@ -8,7 +8,7 @@ Dit hoofdstuk behandelt alles wat gebeurt vóór de betaling — producten toevo
 
 ![POS-scherm — productraster links, lege winkelwagen rechts](screenshots/04-pos-screen-empty-cart.png)
 
-Er zijn vier manieren om een product toe te voegen:
+Er zijn vijf manieren om een product toe te voegen:
 
 ### Methode A — Tikken/klikken op het productraster
 
@@ -47,6 +47,19 @@ Er zijn vier manieren om een product toe te voegen:
 1. Als uw terminal een camera heeft, kan de camerascanner via Instellingen worden ingeschakeld.
 2. Richt de camera op de barcode.
 3. Bij detectie wordt het product automatisch toegevoegd.
+
+> **Gewogen artikelen (weegschaaletiketten):** heeft uw winkel een etiketteerweegschaal (vleeswaren, vlees, groente en fruit) en heeft de manager **weegschaal-barcodes** ingeschakeld in Instellingen ([Hoofdstuk 13, sectie 13.9](13-settings.md)), dan voegt het scannen van het etiket van de weegschaal het product toe met de gewogen prijs of het gewicht al ingevuld — u typt niets.
+
+### Methode E — De favorietenrij (★)
+
+Boven het productraster ziet u meestal een rij met het label **★ Favorieten** met maximaal 8 producttegels. Dit is uw snelrij — de snelste route naar de artikelen die u de hele dag verkoopt:
+
+- **Tik op een tegel** om het product aan de winkelwagen toe te voegen — precies zoals het raster, maar dichterbij.
+- **Vastgezette favorieten staan voorop.** Tik op de **☆** op een tegel om deze als favoriet vast te zetten (wordt ★); tik op **★** om hem weer los te maken. Zet de dagelijkse toppers van uw winkel vast.
+- **Recente producten vullen de overige plekken.** Elk product dat u toevoegt — via tikken, zoeken of barcode — schuift automatisch naar voren in de recente lijst, zodat de rij vanzelf uw hardlopers leert kennen.
+- De rij verdwijnt terwijl u zoekt of wanneer een categoriefilter actief is. Wis de zoekopdracht en kies **"Alles"** om hem weer te zien.
+
+> **Per terminal:** favorieten en recente producten worden op deze terminal opgeslagen (in de lokale browseropslag), per vestiging. Kassa 2 heeft zijn eigen lijst, en het wissen van de browsergegevens van de terminal wist de rij. Er gaat niets verloren behalve de snelkoppelingen — de rij bouwt zichzelf weer op uit wat u verkoopt.
 
 ---
 
@@ -144,6 +157,26 @@ Als een barcode of zoekopdracht geen resultaat oplevert:
 U kunt nog steeds een niet-gecatalogiseerd product verkopen door:
 1. Een willekeurig product aan de winkelwagen toe te voegen.
 2. De naam en prijs op de regel te bewerken (zie [Hoofdstuk 8 — Kortingen](08-discounts.md) voor bewerken van regels).
+
+---
+
+## 4.7 Sneltoetsen
+
+Heeft uw terminal een fysiek toetsenbord, dan dekken vijf toetsen het hele verkoopritme — geen muis nodig:
+
+| Toets | Wat het doet | Wanneer het werkt |
+|---|---|---|
+| **F2** | Huidige bon vasthouden — opent het venster Vasthouden ([Hoofdstuk 9](09-hold-bills.md)) | Winkelwagen bevat minstens één artikel |
+| **F4** | Nieuwe verkoop starten — sluit het bonscherm na een voltooide verkoop | Alleen terwijl het bonscherm wordt getoond |
+| **F9** | Betaalscherm openen ([Hoofdstuk 5](05-payment.md)) | Winkelwagen bevat minstens één artikel en er is nog geen betaalscherm open |
+| **F12** | Schermtoetsenbord tonen / verbergen | Altijd — op elk POS-scherm |
+| **Esc** | Sluit wat open staat, in deze volgorde: eerst het betaalscherm, dan het bonscherm, dan het schermtoetsenbord | Wanneer een daarvan open is |
+
+Goed om te weten:
+
+- Sneltoetsen worden **genegeerd terwijl u in een veld typt** (zoekbalk, numpad, redenvelden) — een barcodescanner of een productnaam activeert ze dus nooit per ongeluk.
+- Ze werken alleen op het **POS-verkoopscherm** — op Rapporten, Instellingen en andere schermen doen de toetsen niets. De enige uitzondering is **F12**, die het schermtoetsenbord overal schakelt.
+- De **Afrekenen-knop toont "F9"** als geheugensteuntje. Kassiers die **F9 + Esc** aanleren zijn merkbaar sneller op een drukke vrijdag.
 
 ---
 

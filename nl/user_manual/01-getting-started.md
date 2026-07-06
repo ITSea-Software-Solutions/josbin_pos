@@ -77,6 +77,7 @@ Het hoofdscherm is verdeeld in drie gebieden:
 **Bovenbalk** — bevat:
 - Naam vestiging en uw naam (linksboven)
 - Dagtotaal verkopen en aantal transacties
+- **Online/Offline-indicator** — een klein label met een groene of rode stip (hieronder uitgelegd)
 - Navigatieknoppen: POS, Rapporten, Wisselkoers, Einde dag, Instellingen, Labels
 - Knop voor schermtoetsenbord (toetsenbordpictogram)
 - Taalkeuze (NL / EN)
@@ -91,6 +92,21 @@ Het hoofdscherm is verdeeld in drie gebieden:
 - Toont subtotaal, BTW-specificatie en totaal in SRD
 - Bevat de knop **Afrekenen** om door te gaan naar de betaling
 - Bevat de knop **Vasthouden** om de winkelwagen op te slaan en een nieuwe te starten
+
+### De Online / Offline-indicator
+
+De bovenbalk toont altijd een klein statuslabel met een gekleurde stip:
+
+| Label | Wat het betekent | Wat u doet |
+|---|---|---|
+| 🟢 **Online** | De terminal heeft netwerkverbinding. Bij aanwijzen verschijnt *"Verbonden — verkopen synchroniseren met het hoofdkantoor"*. Voltooide verkopen bereiken het hoofdkantoor binnen seconden. | Niets — normaal gebruik |
+| 🔴 **Offline** | Op dit moment geen netwerk. Bij aanwijzen verschijnt *"Geen internet — verkopen worden lokaal opgeslagen en later gesynchroniseerd"*. | **Blijf gewoon verkopen.** Elke verkoop wordt lokaal opgeslagen en synchroniseert automatisch zodra de verbinding terugkeert. |
+
+Offline gaan is geen noodgeval. Josbin POS is gebouwd voor de wisselvallige verbindingen in Suriname: verkopen worden verwerkt op de eigen server van de vestiging, en een vijflaagse synchronisatie-terugval haalt daarna de achterstand met het hoofdkantoor in (zie [Hoofdstuk 10 — Einde dag](10-end-of-day.md), sectie 10.6). Er gaat nooit een verkoop verloren omdat het internet wegviel.
+
+**Wanneer escaleren:** blijft de indicator lange tijd op Offline staan (een uur of langer), meld het dan aan uw manager — mogelijk moet een kabel-, wifi- of routerprobleem worden opgelost zodat de gegevens van de dag vóór het Z-Rapport kunnen synchroniseren.
+
+> **Toetsenbordtip:** heeft uw terminal een fysiek toetsenbord, dan heeft het POS-scherm functietoets-sneltoetsen (F2 bon vasthouden, F9 afrekenen, Esc sluiten, en meer). De volledige tabel staat in [Hoofdstuk 4 — Een verkoop maken](04-making-a-sale.md), sectie 4.7.
 
 ---
 

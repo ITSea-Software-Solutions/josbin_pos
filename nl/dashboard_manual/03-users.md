@@ -58,7 +58,7 @@ Het modal Gebruiker aanmaken opent. Velden:
 | **Organisatie** | ⚠️ | Verplicht voor OA, vestigingsmanager, kassier, auditor, API-integratie. Verborgen voor Super Admin (platformniveau, geen org). Voor niet-Super Admin-makers is het veld vergrendeld op uw eigen org. |
 | **Taal** | ✅ | `Nederlands` of `English`. Standaard UI-taal. De gebruiker kan dit veranderen op het scherm Mijn Account. |
 | **Tijdelijk wachtwoord** | ✅ | Min. 8 tekens. Tik op **Genereer** voor een sterke willekeurige. Het oogje-icoon toont/verbergt de waarde. |
-| **Welkom-e-mail versturen** | optioneel | Standaard aan. Mailt de gebruiker de login-URL + hun inloggegevens. |
+| **Welkom-e-mail versturen** | optioneel | Standaard aan. Mailt de gebruiker de dashboard-login-URL + hun login-e-mailadres — **bewust nooit het wachtwoord** (zie "Nadat de gebruiker is aangemaakt" hieronder). Wordt pas bezorgd zodra SMTP op de server is geconfigureerd. |
 
 Tik op **Gebruiker aanmaken**.
 
@@ -84,6 +84,10 @@ Wanneer u de rol van een vestigingsgebonden gebruiker wijzigt naar een org-scope
 ### Nadat de gebruiker is aangemaakt
 
 Een groene bevestigingsbanner verschijnt bovenaan het Gebruikers-scherm met de e-mail en het wachtwoord in platte tekst, plus een knop **Kopieer inloggegevens**. **Toon dit één keer aan de gebruiker, en niet meer dan dat.** Het platte-tekst wachtwoord wordt nooit meer getoond — verliezen ze het, dan reset u het (§3.7).
+
+De welkomstmail — als u de schakelaar aan liet staan — bevat **alleen de dashboard-login-URL en het login-e-mailadres van de gebruiker, nooit het wachtwoord**. Dat is een bewuste beveiligingskeuze: e-mail reist onversleuteld, dus het systeem weigert er een platte-tekst wachtwoord in te zetten. De mail vertelt de gebruiker dat de beheerder het eerste wachtwoord veilig overhandigt — en daar is de groene banner / knop **Kopieer inloggegevens** precies voor (persoonlijk, telefonisch of via een versleuteld kanaal — dezelfde regel als bij wachtwoordresets, §3.7).
+
+> 📧 **E-mailbezorging vereist SMTP.** De welkomstmail gaat pas echt de deur uit zodra echte SMTP-gegevens op de server zijn geconfigureerd — dezelfde kanttekening als bij de BTW-notificatiemails in [Hoofdstuk 20 §20.3](20-btw-submissions-belastingdienst.md). Tot die tijd komt er geen welkomstmail aan en overhandigt u de dashboard-URL zelf, samen met de inloggegevens.
 
 De gebruiker moet het tijdelijke wachtwoord bij eerste login wijzigen. Ze kunnen op dat moment ook verplicht 2FA inschrijven als het beleid dat eist (§3.9).
 
@@ -158,6 +162,25 @@ De wijziging wordt geregistreerd in het auditlogboek: oude rol, nieuwe rol, wie 
 De statusbadge van de rij wisselt naar grijs *Inactief*. De open dashboard- of POS-sessies van de gebruiker worden binnen seconden beëindigd.
 
 **Om te heractiveren**: dezelfde knop, nu groen en gelabeld **Activeren**.
+
+---
+
+## 3.5a Bulkacties — meerdere gebruikers tegelijk activeren of deactiveren
+
+Zes seizoenskassiers die op dezelfde dag vertrekken? U hoeft niet zes rijen één voor één aan te klikken. De gebruikerstabel heeft meervoudige selectie — hetzelfde patroon als de lijst BTW-aangiftes ([Hoofdstuk 20](20-btw-submissions-belastingdienst.md)).
+
+**Zo werkt het:**
+
+1. Vink het **selectievakje** aan het begin van elke rij aan die u wilt wijzigen. Een selectievakje verschijnt alleen op rijen die u mag beheren (§3.1) — rollen onder de uwe, en nooit uw eigen account. Het selectievakje in de koprij selecteert alle beheerbare rijen tegelijk.
+2. Een **bulkbalk** verschijnt met *"N geselecteerd"*, een knop **Deselecteren**, een groene **Activeren** en een rode **Deactiveren**.
+3. Kies de actie. Er komt **altijd eerst een bevestigingsdialoog**, die vertelt hoeveel gebruikers er daadwerkelijk wijzigen — gebruikers die de doelstatus al hebben, worden overgeslagen.
+4. De balk toont voortgang per rij (*"Bezig… 3/8"*) terwijl de wijziging gebruiker voor gebruiker wordt toegepast, waarna een toast het resultaat samenvat — bv. *"6 gebruiker(s) gedeactiveerd"*, of *"5 gedeactiveerd, 1 mislukt"* als een policy-check er één weigerde.
+
+**De kleine lettertjes:**
+
+- **Rolgrenzen zijn identiek aan acties per rij.** Super Admin kan iedereen in bulk beheren; een OA ziet alleen selectievakjes op vestigingsmanagers, kassiers, auditors en API-integratieaccounts in de eigen org; een vestigingsmanager alleen op kassiers. Kassiers en auditors beheren niemand — zij zien nooit selectievakjes of de bulkbalk.
+- **Elke wijziging wordt nog steeds individueel in het auditlogboek vastgelegd.** De bulkbalk is een UI-gemak: onder de motorkap gaat elke gebruiker door hetzelfde update-endpoint en dezelfde policy-checks als de knop per rij, dus het auditlogboek toont één vermelding per gebruiker — geen anonieme klomp.
+- **Er is geen bulk-verwijderen.** Consistent met §3.5 — hard verwijderen zit helemaal niet in het dashboard. Bulk-deactiveren is het uitstroomgereedschap, en het is omkeerbaar: selecteer dezelfde rijen en tik op **Activeren**.
 
 ---
 
@@ -238,6 +261,7 @@ WACHTWOORD RESETTEN Gebruikers → Bewerken → Nieuw wachtwoord → Reset/typen
 ORG OVERPLAATSEN  (alleen Super Admin) Gebruikers → Bewerken → Organisatie wijzigen → Opslaan
 DEACTIVEREN       Gebruikersrij → Deactiveren-knop → bevestigen → grijze badge
 HERACTIVEREN      Gebruikersrij → Activeren-knop → bevestigen → groene badge
+BULK (DE)ACTIVEREN Gebruikers → rijen aanvinken → bulkbalk → Activeren / Deactiveren → bevestigen (§3.5a)
 ```
 
 Voor rolbeslissingen, zie Hoofdstuk 1.

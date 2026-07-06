@@ -10,7 +10,7 @@ Nadat de betaling is geaccepteerd, verschijnt een bon-pop-up met deze opties:
 
 | Knop | Wat het doet |
 |--------|-------------|
-| **Bon afdrukken** (thermisch) | Stuurt naar de aangesloten thermische bonprinter |
+| **Bon afdrukken** | Altijd beschikbaar. Drukt geluidloos af op de thermische printer als er een is geconfigureerd; anders opent het normale afdrukvenster met dezelfde bon |
 | **PDF downloaden** | Opent/downloadt een PDF-bon |
 | **Bon e-mailen** | Verstuurt de bon naar het e-mailadres van de klant |
 | **Nieuwe verkoop** | Sluit de bon en start een verse lege winkelwagen |
@@ -45,6 +45,17 @@ Thermisch afdrukken stuurt de bon direct naar uw bonprinter (bijv. EPSON TM-T20)
 - Betaalmethode en gegeven wisselgeld (bij contante betalingen)
 - Voettekst van de vestiging (bijv. "Bedankt voor uw aankoop")
 - BTW-nummer
+
+**Geen thermische printer geconfigureerd?** De knop Bon afdrukken werkt dan nog steeds: hij opent het normale Windows-afdrukvenster met exact dezelfde bon, zodat u kunt afdrukken op elke printer die op de machine is geïnstalleerd — een A4-kantoorprinter, of zelfs een thermische printer via het Windows-stuurprogramma. Een thermische printer configureren in Instellingen maakt het afdrukken alleen geluidloos en direct.
+
+### Automatisch afdrukken
+
+Krijgen klanten in uw winkel altijd een papieren bon, schakel dan **automatisch afdrukken** in, zodat u niet honderden keren per dag op Afdrukken hoeft te tikken:
+
+1. Ga naar **Instellingen → Printer & Kassalade → "Bon automatisch afdrukken na elke verkoop"** (zie [Hoofdstuk 13 §13.2](13-settings.md)). Deze staat **standaard uit** en is een instelling per terminal.
+2. Met automatisch afdrukken aan wordt de bon afgedrukt **op het moment dat het bonscherm verschijnt** — precies één keer per verkoop.
+3. Met een geconfigureerde thermische printer gebeurt dit geluidloos op de achtergrond; zonder printer opent in plaats daarvan na elke verkoop het afdrukvenster.
+4. De knop **Bon afdrukken** blijft beschikbaar voor een herafdruk — klant wil een tweede exemplaar, papier vastgelopen, printer stond uit.
 
 ---
 

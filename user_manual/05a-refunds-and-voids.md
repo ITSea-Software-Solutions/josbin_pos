@@ -160,6 +160,9 @@ Yes. As long as the day's Z-Report isn't blocked, you can refund any past sale. 
 ### "Customer wants a partial refund on a B2B invoice (bank transfer)"
 Process the refund in Josbin POS, then do the outbound bank transfer separately from your bank app. Record the outbound reference in the refund's note: `Outbound transfer ref OUT-2026-05-26-001`. OA confirms when funds leave the account (same Pending Payments flow but inverted — future improvement).
 
+### "Customer has no receipt and I can't find the sale anywhere"
+Search §5a.2 properly first — date picker, sale number, customer name. If the sale genuinely cannot be found, a manager can process a **blind return** — see §5a.8. Cashiers: call your manager; you cannot do this one yourself.
+
 ---
 
 ## 5a.7 What ends up in the audit log
@@ -177,6 +180,43 @@ Every refund and void writes an audit_logs entry that an Auditor or Rekenkamer i
 | timestamp | AST timezone | AST timezone |
 
 The dashboard's Audit Log screen ([dashboard_manual/13](../dashboard_manual/13-audit-log.md)) lets the OA / Auditor filter for these events and click into any one to see the full diff.
+
+Blind returns (§5a.8) write their own event, `sale.blind_return`, carrying the reason, the refund total and BTW, the payment method, the line count and the manager who confirmed.
+
+---
+
+## 5a.8 Return without a receipt — blind return
+
+Sometimes a customer brings goods back with **no receipt**, and the sale can't be found on the Sales tab either — wrong day, bought at another branch, or a till that wasn't this one. For that case Josbin POS has the **blind return** (Dutch: *Retour zonder bon*): a return with no original sale behind it.
+
+> **Last resort.** A blind return creates money-out with nothing to check it against, so always work through §5a.2 first: date picker, sale number, customer name. Only fall back to a blind return when the original sale genuinely cannot be found.
+
+### Who can do it
+
+**Managers only.** The blind-return button is visible to Store Managers and Organisation Admins — cashier accounts never see it, and there is no approval prompt to hand over. If a customer arrives at a cashier's till without a findable receipt, the cashier calls the manager, and the manager does the whole thing (or signs in on that terminal).
+
+### How to do it
+
+1. **Build the return in the normal cart.** Add the items the customer is returning exactly as you would for a sale — tap, scan or search (Chapter 4) — and set the quantities to what is actually coming back.
+2. **Check the prices.** The cart shows *today's* catalogue price. If the customer paid something different (an old price, a discount at the time), edit the line price — there is no original sale to copy from, so **the prices in the cart are the amounts that will be refunded**.
+3. Tap the red **↩ Return without receipt** button at the bottom of the cart panel (below the Pay button — manager accounts only).
+4. The window shows the item count and the refund total in red (e.g. **− SRD 45.00**).
+5. Pick **Refund via**: cash, card, bank transfer, mobile, or QR wallet (Mopé / Uni5Pay+). Same practicalities as §5a.3 — card and bank refunds are executed on the bank's terminal or bank app; Josbin POS records them.
+6. **Reason (required, at least 5 characters).** Tap a quick-reason chip — *Damaged / Expired / Wrong item / Customer request* — or choose *Other* and type your own. Write it for the auditor who reads it in 6 months.
+7. Tap **Confirm return**. Hand the customer their money. For cash: the drawer does **not** open automatically on a blind return — open it with the drawer key (or the **Test drawer** button in Settings, Chapter 13 §13.2) and count carefully.
+
+### What happens in the system
+
+1. A **negative sale** is posted with its own sale number, marked internally as `BLIND RETURN:` plus your reason. It counts against **today's** totals.
+2. **BTW is extracted from the refund amount** automatically at each line's BTW rate (exempt items stay at SRD 0.00), so the day's BTW report remains correct.
+3. **Stock is restored** for every catalogue-linked line — the goods are going back on the shelf.
+4. If the manager confirming it has an **open register session** on this till, the return is tied to that session and a cash refund lowers its expected drawer cash automatically.
+5. A **heavyweight audit event** `sale.blind_return` is written: manager's name, reason, refund total, BTW, payment method, line count, terminal IP. This is precisely the kind of event Belastingdienst and Rekenkamer auditors zoom in on — a store with many blind returns will be asked why.
+6. The return appears on the **Transactions** tab like any sale (negative total); print the PDF receipt from there if the customer wants proof.
+
+> **Whose drawer?** The return is linked to the register session of the **manager who confirms it**. If you (the manager) have no open session on this till and the cash comes out of the *cashier's* drawer, also record a **pay-out** for the same amount on that drawer (Chapter 3 §3.2a, reason e.g. `blind return S-2026-001240`) — otherwise the cashier counts short at close for money you handed out.
+
+> **Daily rate needed:** like a sale, a blind return requires today's USD→SRD rate to be locked. If you see a "no daily rate" message, lock the rate first (top bar → Exchange Rate) and try again.
 
 ---
 

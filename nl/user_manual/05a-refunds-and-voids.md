@@ -160,6 +160,9 @@ Ja. Zolang het Z-Rapport van die dag niet is geblokkeerd, kunt u elke voorgaande
 ### "Klant wil een gedeeltelijke terugbetaling op een B2B-factuur (overschrijving)"
 Verwerk de terugbetaling in Josbin POS, doe daarna de uitgaande bankoverschrijving apart via uw bank-app. Registreer de uitgaande referentie in de notitie van de terugbetaling: `Uitgaande overschrijving ref OUT-2026-05-26-001`. OA bevestigt wanneer de middelen de rekening verlaten (zelfde Pending Payments-proces maar omgekeerd — toekomstige verbetering).
 
+### "Klant heeft geen bon en ik kan de verkoop nergens vinden"
+Zoek eerst grondig via §5a.2 — datumkiezer, verkoopnummer, klantnaam. Kan de verkoop echt niet worden gevonden, dan kan een manager een **blinde retour** verwerken — zie §5a.8. Kassiers: roep uw manager; deze handeling kunt u niet zelf uitvoeren.
+
 ---
 
 ## 5a.7 Wat in het auditlogboek terechtkomt
@@ -177,6 +180,43 @@ Elke terugbetaling en annulering schrijft een audit_logs-vermelding die een Audi
 | timestamp | AST-tijdzone | AST-tijdzone |
 
 Het Auditlogboek-scherm van het dashboard ([dashboard_manual/13](../dashboard_manual/13-audit-log.md)) laat de OA / Auditor filteren op deze events en op een klikken om de volledige diff te zien.
+
+Blinde retouren (§5a.8) schrijven hun eigen event, `sale.blind_return`, met de reden, het terugbetaalde totaal en de BTW, de betaalmethode, het aantal regels en de manager die bevestigde.
+
+---
+
+## 5a.8 Retour zonder bon — blinde retour
+
+Soms brengt een klant artikelen terug **zonder bon**, en is de verkoop ook niet te vinden op het tabblad Verkopen — verkeerde dag, gekocht bij een andere vestiging, of een andere kassa. Voor dat geval heeft Josbin POS de **blinde retour** (*Retour zonder bon*): een retour zonder oorspronkelijke verkoop erachter.
+
+> **Laatste redmiddel.** Een blinde retour creëert geld-uit zonder iets om het tegen te controleren. Werk daarom altijd eerst §5a.2 af: datumkiezer, verkoopnummer, klantnaam. Val alleen terug op een blinde retour wanneer de oorspronkelijke verkoop echt niet te vinden is.
+
+### Wie mag het doen
+
+**Alleen managers.** De blinde-retourknop is zichtbaar voor vestigingsmanagers en organisatiebeheerders — kassiersaccounts zien hem nooit, en er is geen goedkeuringsmelding om over te dragen. Komt een klant zonder vindbare bon bij de kassa van een kassier, dan roept de kassier de manager, en de manager doet de hele handeling zelf (of logt in op die terminal).
+
+### Zo doet u het
+
+1. **Bouw de retour op in de normale winkelwagen.** Voeg de artikelen toe die de klant terugbrengt, precies zoals bij een verkoop — tikken, scannen of zoeken (Hoofdstuk 4) — en zet de aantallen op wat er daadwerkelijk terugkomt.
+2. **Controleer de prijzen.** De winkelwagen toont de catalogusprijs van *vandaag*. Betaalde de klant destijds iets anders (een oude prijs, een korting), bewerk dan de regelprijs — er is geen oorspronkelijke verkoop om van te kopiëren, dus **de prijzen in de winkelwagen zijn de bedragen die worden terugbetaald**.
+3. Tik op de rode knop **↩ Retour zonder bon** onderaan het winkelwagenpaneel (onder de Afrekenen-knop — alleen zichtbaar bij manageraccounts).
+4. Het venster toont het aantal artikelen en het terug te betalen totaal in rood (bijv. **− SRD 45.00**).
+5. Kies **Terugbetaald via**: contant, pin, bankoverschrijving, mobiel of QR-wallet (Mopé / Uni5Pay+). Zelfde praktijk als §5a.3 — pin- en bankterugbetalingen voert u uit op de terminal van de bank of in de bank-app; Josbin POS registreert ze.
+6. **Reden (verplicht, minimaal 5 tekens).** Tik op een snelle-redenchip — *Beschadigd / Verlopen / Verkeerd artikel / Klantverzoek* — of kies *Anders* en typ zelf. Schrijf voor de auditor die het over 6 maanden leest.
+7. Tik op **Retour bevestigen**. Geef de klant het geld. Bij contant: de lade gaat bij een blinde retour **niet** automatisch open — open hem met de sleutel (of de knop **Lade testen** in Instellingen, Hoofdstuk 13 §13.2) en tel zorgvuldig.
+
+### Wat er in het systeem gebeurt
+
+1. Er wordt een **negatieve verkoop** geboekt met een eigen verkoopnummer, intern gemarkeerd als `BLIND RETURN:` plus uw reden. Deze telt mee in de totalen van **vandaag**.
+2. **De BTW wordt automatisch uit het terugbetaalde bedrag gehaald** tegen het BTW-tarief van elke regel (vrijgestelde artikelen blijven op SRD 0.00), zodat het BTW-rapport van de dag correct blijft.
+3. **De voorraad wordt hersteld** voor elke regel die aan de catalogus is gekoppeld — de artikelen gaan terug het schap op.
+4. Heeft de bevestigende manager een **open kassasessie** op deze kassa, dan wordt de retour aan die sessie gekoppeld en verlaagt een contante terugbetaling automatisch het verwachte kasgeld ervan.
+5. Er wordt een **zwaarwegend audit-event** `sale.blind_return` geschreven: naam van de manager, reden, terugbetaald totaal, BTW, betaalmethode, aantal regels, IP van de terminal. Dit is precies het soort event waar auditors van de Belastingdienst en de Rekenkamer op inzoomen — een winkel met veel blinde retouren zal om uitleg worden gevraagd.
+6. De retour verschijnt op het tabblad **Transacties** zoals elke verkoop (negatief totaal); druk daar de PDF-bon af als de klant een bewijs wil.
+
+> **Wiens lade?** De retour wordt gekoppeld aan de kassasessie van de **manager die bevestigt**. Heeft u (de manager) geen open sessie op deze kassa en komt het geld uit de lade van de *kassier*, leg dan ook een **kas-uit** vast voor hetzelfde bedrag op die lade (Hoofdstuk 3 §3.2a, reden bijv. `blinde retour S-2026-001240`) — anders telt de kassier bij het sluiten een tekort voor geld dat u heeft uitgegeven.
+
+> **Dagkoers vereist:** net als bij een verkoop vereist een blinde retour dat de USD→SRD-koers van vandaag is vergrendeld. Ziet u een melding "geen dagkoers", vergrendel dan eerst de koers (bovenbalk → Wisselkoers) en probeer opnieuw.
 
 ---
 

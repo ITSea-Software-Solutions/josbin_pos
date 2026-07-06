@@ -13,9 +13,9 @@
 ![10 rapporten overzicht](screenshots/10-reports-overview.png)
 ---
 
-## 10.1 De zeven rapporttypes in één oogopslag
+## 10.1 De negen rapporttypes in één oogopslag
 
-Josbin POS toont zeven onderscheiden rapport-endpoints. Sommige leven op het **dashboard Rapporten-scherm** (geconsolideerd cross-vestiging), andere zijn per vestiging en alleen bereikbaar via de API of de POS-zijde einde-dag-flow.
+Josbin POS toont negen onderscheiden rapport-endpoints. Sommige leven op het **dashboard Rapporten-scherm** (geconsolideerd cross-vestiging), andere zijn per vestiging en alleen bereikbaar via de API of de POS-zijde einde-dag-flow.
 
 | # | Rapport | Scope | Waar | Rechten | Output |
 |---|---|---|---|---|---|
@@ -27,8 +27,9 @@ Josbin POS toont zeven onderscheiden rapport-endpoints. Sommige leven op het **d
 | 6 | **BTW-rapport** | één vestiging *of* hele org | Dashboard → Rapporten → BTW | `reports.btw` | JSON, PDF |
 | 7 | **Rekenkamer-export** | hele org (of één vestigingsfilter) | API `GET /reports/rekenkamer` | `reports.rekenkamer` of OA / Auditor | **Ondertekende PDF** |
 | 8 | **Geconsolideerd** (cross-vestiging) | alle vestigingen in een org | Dashboard → Rapporten → Geconsolideerd | (OA / Super Admin / Auditor) | JSON, PDF |
+| 9 | **Winst & marge** | één vestiging *of* hele org | Dashboard → Rapporten → Winst & marge | `products.view_cost` (Super Admin / OA / vestigingsmanager) | JSON |
 
-Het scherm **Rapporten** van het dashboard verpakt twee hiervan (geconsolideerd + BTW). De andere vijf zijn bereikbaar ofwel vanaf het POS-zijde rapportenscherm (voor één vestiging tegelijk) ofwel vanaf de API. De Rekenkamer-export heeft nog geen dedicated dashboardscherm — die wordt getriggerd door URL of door een "Audit-export downloaden"-knop op het Auditlogboek-scherm ([Hoofdstuk 13](13-audit-log.md)).
+Het scherm **Rapporten** van het dashboard verpakt er drie hiervan (geconsolideerd + BTW + winst & marge). De andere vijf zijn bereikbaar ofwel vanaf het POS-zijde rapportenscherm (voor één vestiging tegelijk) ofwel vanaf de API. De Rekenkamer-export heeft nog geen dedicated dashboardscherm — die wordt getriggerd door URL of door een "Audit-export downloaden"-knop op het Auditlogboek-scherm ([Hoofdstuk 13](13-audit-log.md)).
 
 > Het **Z-Rapport** zit *niet* in dit hoofdstuk. Het is de einde-dag kassa-afsluiting — zie [Hoofdstuk 11](11-z-reports-and-end-of-day-sync.md). Hier landen de analytische rapporten die u leest; Z-Rapport is de operationele actie van een dag sluiten.
 
@@ -38,17 +39,19 @@ Het scherm **Rapporten** van het dashboard verpakt twee hiervan (geconsolideerd 
 
 **Pad:** Dashboard → linker zijbalk → **Rapporten**.
 
-U landt op een twee-tab-scherm:
+U landt op een drie-tab-scherm:
 
 - **Geconsolideerd** — cross-vestiging omzet, BTW, transacties, betalingsbreakdown, per-vestiging tabel, top 10 producten.
 - **BTW-overzicht** — Belastingdienst-geformatteerd VAT-rapport geaggregeerd over dezelfde vestigingsscope.
+- **Winst & marge** — omzet, inkoopkosten, winst en marge % voor dezelfde scope. Deze tab bestaat alleen voor Super Admin, OA en vestigingsmanager — zie §10.4a.
 
-Beide tabs delen één filterbalk bovenaan:
+Alle drie de tabs delen één filterbalk bovenaan:
 
 | Filter | Wat het doet | Standaard |
 |---|---|---|
 | **Van** | Startdatum (inclusief). | Eerste dag van huidige maand. |
 | **Tot** | Einddatum (inclusief). | Vandaag. |
+| Keuzemenu **Vestiging** | Beperkt de actieve tab tot één vestiging. Wordt alleen getoond wanneer uw org meer dan één vestiging heeft. | Alle vestigingen. |
 | Snel-pil **Vandaag** | Stelt van = tot = vandaag in. | — |
 | Snel-pil **Gisteren** | Stelt van = tot = gisteren in. | — |
 | Snel-pil **Deze maand** | Stelt van = eerste van maand, tot = vandaag in. | — |
@@ -57,7 +60,7 @@ Beide tabs delen één filterbalk bovenaan:
 
 > De datumfilter is **inclusief aan beide uiteinden**. `Van = 2026-05-01`, `Tot = 2026-05-31` retourneert de hele maand mei. Timestamps in de data zijn AST (America/Paramaribo), dus een verkoop afgerekend om 23:58 AST op 31 mei behoort tot het mei-rapport, ook al kan het 1 juni zijn in UTC.
 
-Scope-regels (besloten door de backend, u kiest niet):
+Organisatiescope-regels (besloten door de backend, u kiest niet — het keuzemenu Vestiging hierboven versmalt alleen *binnen* uw org):
 
 - **Super Admin** ziet elke actieve organisatie standaard. Geef `?org_id=…` door om te scopen naar één. Er is nog geen keuzemenu voor dit in het scherm — Super Admins gebruiken meestal de URL of de API.
 - **OA / Vestigingsmanager / Auditor** zijn automatisch beperkt tot hun eigen organisatie. Ze kunnen geen data van een andere org zien en de query raakt die data zelfs niet aan.
@@ -219,6 +222,72 @@ Bron: `backend/app/Http/Controllers/Api/DashboardController.php::consolidatedBtw
 
 ---
 
+## 10.4a Winstrapport (Winst & marge) — omzet, inkoop, marge
+
+De derde tab op het Rapporten-scherm. Beantwoordt de vraag die de geconsolideerde tab bewust niet beantwoordt: *"hoeveel van die omzet hebben we daadwerkelijk overgehouden?"*
+
+### Wie ziet deze tab überhaupt
+
+Inkoopprijzen zijn commercieel gevoelig, dus dit is de enige rapporttab die **rol-gegate is in zowel de UI als de API**:
+
+| Rol | Toegang |
+|---|---|
+| **Super Admin / OA / vestigingsmanager** | ✅ — dit zijn de rollen die `products.view_cost` hebben (hetzelfde recht dat inkoopprijzen toont in de Catalogus). |
+| **Kassier / Auditor / Belastinginspecteur / API-integratie** | ❌ — de tab wordt niet gerenderd, en een directe API-aanroep geeft `403` terug. |
+
+Waarom de auditor en de belastinginspecteur zijn uitgesloten: Belastingdienst audit **BTW**, geen marge. Het BTW-rapport (§10.4) en de Rekenkamer-export (§10.6) dekken alles waar een compliance-beoordelaar recht op heeft — uw inkoopprijzen horen daar niet bij.
+
+### Wat u ziet (van boven naar beneden)
+
+#### KPI-kaarten (vijf)
+
+| Kaart | Wat het toont |
+|---|---|
+| **Omzet** | Som van regeltotalen (post-korting, BTW-inclusief) voor voltooide verkopen in scope. |
+| **Inkoopkosten** | Som van `cost_snapshot_srd × quantity` over dezelfde regels. |
+| **Winst** | Omzet − inkoop, gesommeerd uit de per-regel `line_profit_srd`. |
+| **Marge %** | Winst ÷ omzet × 100. `—` wanneer omzet nul is. |
+| **Transacties** | Aantal voltooide verkopen in scope. Annuleringen uitgesloten, zoals overal. |
+
+#### Waarschuwing "regels zonder inkoopprijs"
+
+Heeft een verkochte regel geen kostensnapshot (het product had geen inkoopprijs op verkoopmoment), dan telt een amber banner die regels: winst is **onderschat** totdat de producten een inkoopprijs krijgen in de Catalogus ([Hoofdstuk 4](04-catalogue-and-categories.md)). De catalogus repareren verbetert alleen *toekomstige* verkopen — zie de snapshot-regel hieronder.
+
+#### Dagelijkse winsttrend
+
+Een lijngrafiek met per dag één omzetlijn en één winstlijn. De snelste manier om "omzet hield stand maar marge stortte in" te spotten — een kortingsprobleem, geen bezoekersprobleem.
+
+#### Per-vestiging breakdown
+
+Eén rij per vestiging — omzet, inkoop, winst, marge %, transacties — gerangschikt op winst. Dit is de view van de keteneigenaar: twee filialen met gelijke omzet kunnen in winst ver uit elkaar liggen als één leunt op lage-marge basisproducten.
+
+#### Top 10 producten op winst
+
+Gerangschikt op **winst, niet op omzet** — bewust een andere ranking dan de top-10 van de geconsolideerde tab. Een hoog-volume lage-marge SKU (rijst, bakolie) zakt in de lijst; een laag-volume hoge-marge item stijgt. Productnamen zijn `product_name_snapshot`, zoals overal.
+
+#### Verlies-verkopen
+
+Elke verkoop in scope waarvan de **winst van de hele verkoop negatief is** — artikelen gingen onder inkoopprijs de deur uit. Ergste eerst, gemaximeerd op 20 rijen: tijdstip, bonnummer, vestiging, omzet, verlies. Twee realistische oorzaken, beide waard om dezelfde dag na te jagen:
+
+- **Te veel korting** — een regel- of verkoopkorting duwde de prijs onder de inkoopprijs.
+- **Verkeerd geprijsd product** — de verkoopprijs of de inkoopprijs staat verkeerd in de catalogus.
+
+### De kostensnapshot-regel (waarom de geschiedenis niet beweegt)
+
+Elke verkoopregel bevriest de inkoopprijs van het product op verkoopmoment in `sale_items.cost_snapshot_srd`, en de winst van de regel in `line_profit_srd` — hetzelfde patroon als `product_name_snapshot` en de gepersisteerde BTW-bedragen. Bewerk vandaag de inkoopprijs van een product en **geen enkel historisch winstcijfer verandert**; alleen verkopen die vanaf nu worden geboekt gebruiken de nieuwe inkoopprijs. Een winstrapport over mei rendert in december identiek.
+
+### Backend-endpoint
+
+```
+GET /api/reports/profit?date_from=YYYY-MM-DD&date_to=YYYY-MM-DD[&store_id=<uuid>]
+```
+
+Bron: `backend/app/Http/Controllers/Api/ReportController.php::profit`. Vereist `products.view_cost` — iedereen anders krijgt `403`.
+
+> **PDF-kanttekening:** er is geen dedicated winst-PDF in deze release — de knop **Exporteer PDF** op deze tab produceert de *geconsolideerde* PDF. Voor een winstcijfer op papier: screenshot de tab of gebruik het JSON-endpoint.
+
+---
+
 ## 10.5 Per-vestiging rapporten — dagelijks, maandelijks, aangepast bereik
 
 Deze vijf rapporten (`daily`, `monthly`, `custom`, `top-products`, `x-report`) leven achter `/api/reports/*` en worden gebruikt door het **POS-zijde Rapportenscherm** in plaats van het dashboard. Ze zijn hier vermeld omdat vestigingsmanagers regelmatig vragen "waar zie ik het nummer van gisteren voor *alleen mijn vestiging*?" — en het antwoord is "het POS-zijde Rapportenscherm" (behandeld in [POS-handleiding hfdst. 11](../user_manual/11-reports.md)), of een van deze endpoints direct.
@@ -242,6 +311,8 @@ Respons-vorm (`buildDailySummary`):
 | `total_discount_srd` | Som van `discount_srd` (verkoop-niveau korting; regel-item kortingen zijn ingebakken in `total_srd`). |
 | `avg_basket_srd` | Gem. `total_srd`. |
 | `cash_total_srd` / `card_total_srd` / `mixed_total_srd` | Betaalmethode-split. |
+| `bank_transfer_total_srd` / `mobile_transfer_total_srd` / `foreign_cash_total_srd` / `qr_payment_total_srd` | De overige betaalmethode-totalen — altijd aanwezig, `0.00` wanneer de methode in de periode niet is gebruikt. |
+| `bank_breakdown` | Reconciliatierijen — één per `(payment_method, bank/provider)`-paar. Zie §10.5.6. |
 | `btw_breakdown` | Array — één rij per `(btw_rate, btw_exempt)`-groep: `base_srd`, `btw_srd`, `rate`, `exempt`. |
 | `top_products` | Top 5 op omzet: `product_name`, `quantity`, `revenue_srd`. |
 
@@ -291,6 +362,23 @@ Retourneert dezelfde `buildDailySummary`-vorm als het dagelijkse rapport (voor v
 | `note` | `"Dit is een tussentijds overzicht. De kassalade is NIET afgesloten."` |
 
 **Dit is het kritieke onderscheid:** het X-Rapport sluit de dag **niet**. Het produceert geen `ZReport`-rij. Het is alleen-lezen — voor spot-checks. Verkopen kunnen direct na blijven gebeuren, precies zoals voorheen. Vergelijk met het Z-Rapport dat de dag *wel* sluit en *wel* een rij persisteert (zie [Hoofdstuk 11](11-z-reports-and-end-of-day-sync.md)).
+
+### 10.5.6 Betaling × bankreconciliatie — `bank_breakdown`
+
+Elk rapport dat op dezelfde samenvatting is gebouwd (dagelijks, maandelijks, aangepast bereik, X-Rapport) draagt ook een **`bank_breakdown`**-array: één rij per `(payment_method, bank/provider)`-combinatie, met een transactie-aantal en een SRD-totaal.
+
+| Veld | Opmerkingen |
+|---|---|
+| `payment_method` | `card`, `mixed`, `bank_transfer`, `mobile_transfer` of `qr_payment`. Contant verschijnt hier nooit — er valt niets te reconciliëren tegen een afschrift. |
+| `provider` | De uitgevende bank die de kassier van de pinterminal-strook overnam (DSB, Hakrinbank, Finabank, …), de overschrijvings-/mobiele provider, of de QR-wallet (Mopé, Uni5Pay+). `null` = geen bank vastgelegd. |
+| `tx_count` | Aantal verkopen in de bucket. |
+| `total_srd` | SRD-totaal voor de bucket. Bij `mixed`-verkopen telt hier alleen het **kaartdeel** — de contante helft zit al in de lade. |
+
+**Waar het voor is:** de dag (of de afschriftmaand) bucket voor bucket aftikken tegen het vereffeningsafschrift van de bank en het merchant-portaal van de wallet. Zegt het afschrift van DSB dat SRD 4.210,00 is vereffend en zegt de DSB-rij hetzelfde, dan is die methode gereconcilieerd. Zie [Hoofdstuk 22 §22.4](22-payment-methods-and-wallets.md#224-waar-het-geld-terugkomt) voor waar het geld van elke methode daadwerkelijk landt, en Hoofdstuk 11 voor de per-methode-totalen die op elk Z-Rapport meerijden.
+
+**De `null`-bucket:** een rij met `provider = null` betekent dat de kassier **Overslaan & afronden** gebruikte op de kaartstap in plaats van de bank van de pinstrook over te nemen. Dat mag — het blokkeert nooit een verkoop — maar een consistent grote null-bucket maakt afschrift-matching onmogelijk. Het is een **coaching-signaal, geen systeemfout**: herinner kassiers eraan het reconciliatiepaneel in te vullen.
+
+> Deze rijen leven in de rapport-JSON; de per-vestiging PDF-export print de breakdown nog niet. Voor een reconciliatie in een spreadsheet: haal het JSON-endpoint op voor de afschriftperiode.
 
 ### PDF-export — dagelijks / maandelijks / aangepast / btw
 
@@ -394,6 +482,7 @@ Wie kan wat draaien, in één tabel. (Bron: `backend/database/seeders/RolesAndPe
 | `reports.top_products` | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | `reports.x_report` | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
 | `reports.btw` | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `products.view_cost` (winstrapport, §10.4a) | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | `reports.rekenkamer` | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
 | `reports.export` (PDF) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 | **Geconsolideerd cross-vestiging** | ✅ | ✅ | ❌ (gescoped op één vestiging) | ❌ | ✅ | ❌ |
@@ -404,7 +493,7 @@ Kassier-zichtbaarheid is door de backend **gescoped op hun vestiging** — ze ku
 
 ## 10.8 Sync-status caveat voor rapporten
 
-Alle zeven rapporten hier lezen vanuit de **lokale back-office-database**. Ze zijn *niet* gegate door HQ-sync-status. Is een vestiging drie dagen offline geweest en haar Z-Rapporten staan in `pending` in de wachtrij, dan zijn haar **lokale** dagelijkse / maandelijkse rapporten voor die dagen accuraat — de data zit op de lokale Postgres. Wat *niet* accuraat is, is de view van het **HQ Super Admin Dashboard** op die dagen, omdat de data het netwerk niet heeft overgestoken.
+Alle rapporten hier lezen vanuit de **lokale back-office-database**. Ze zijn *niet* gegate door HQ-sync-status. Is een vestiging drie dagen offline geweest en haar Z-Rapporten staan in `pending` in de wachtrij, dan zijn haar **lokale** dagelijkse / maandelijkse rapporten voor die dagen accuraat — de data zit op de lokale Postgres. Wat *niet* accuraat is, is de view van het **HQ Super Admin Dashboard** op die dagen, omdat de data het netwerk niet heeft overgestoken.
 
 Met andere woorden:
 

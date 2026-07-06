@@ -4,19 +4,21 @@ What's stored, where, and how the pieces hang together. Read this before any con
 
 ---
 
-## The 20 models
+## The models
 
-All live in `backend/app/Models/`. Money is `decimal:2`, time is `timestampTz` (AST), IDs are UUIDs unless flagged otherwise.
+All live in `backend/app/Models/` — 24 files at the time of writing (count them, don't trust this sentence). Money is `decimal:2`, time is `timestampTz` (AST), IDs are UUIDs unless flagged otherwise.
 
 | Model | Purpose | Notable |
 |---|---|---|
 | `Organisation` | The customer tenant — one supermarket chain, one ministry, one shop. | `is_government` flips every security guard. `Auditable`. |
 | `Store` | A physical branch under an organisation. | `pos_type`: `native` or `external` (API-only). `Auditable`. |
 | `Register` | A till inside a store. Numbered per store (`unique(store_id, number)`). | `openSession()` returns the one non-closed session, if any. |
-| `RegisterSession` | One cashier's shift on one register. Cash float in/out lives here. | `status` ∈ `open/closed/reopen_requested/reopen_approved`. |
-| `Sale` | A completed (or voided/held) transaction. | `sale_number` allocated via Postgres advisory lock; `Auditable`. |
+| `RegisterSession` | One cashier's shift on one register. Opening float + close-out cash counts live here. | `status` ∈ `open/closed/reopen_requested` — reopen approval flips back to `open` with `reopen_approved_*` stamps. |
+| `CashMovement` | A manual drawer pay-in/pay-out during a shift (change top-up, supplier paid from till). | Append-only, `$timestamps = false` (`created_at` only). `direction` ∈ `in/out`, `amount > 0` CHECK. Feeds expected cash at close — see [ch 6](06-register-and-z-report.md). `Auditable`. |
+| `Sale` | A completed (or voided/held) transaction. | `sale_number` allocated via Postgres advisory lock; seven payment methods + reconciliation columns (see below); `Auditable`. |
 | `SaleItem` | One line on a sale. | `product_name_snapshot` is frozen at sale time — product can be renamed/deleted later. |
 | `Product` | Catalogue item (org-wide). | `embedding` is a `vector(1536)` pgvector column, hidden by default. `Auditable`. |
+| `ProductVariant` | One size/colour/flavour under a parent product. | `SoftDeletes`. `price`/`cost_price` NULL = inherit parent (`effectivePrice()`/`effectiveCost()`). Own `sku`/`barcode`, per-variant `stock_qty` (org-wide for v1). `Auditable`. |
 | `Category` | Catalogue grouping (org-wide). | Bilingual `name_nl` / `name_en`. |
 | `StoreProductOverride` | Per-store price override on a product. | Falls back to `products.price` when no row exists. |
 | `ProductStock` | Per-(product, store) running stock. | New as of `2026_05_25_054551`. Replaces single `products.stock_qty`. |
@@ -25,14 +27,13 @@ All live in `backend/app/Models/`. Money is `decimal:2`, time is `timestampTz` (
 | `User` | A human (or `api_integration` machine account). | UUID, `HasApiTokens`, `HasRoles`. `Auditable`. |
 | `DailyRate` | The locked USD→SRD rate for one date. | `date` is unique. `locked_at` non-null = locked. |
 | `HeldBill` | A parked basket (cart JSON) the cashier can restore. | `cart_data` is a JSON blob, not a `Sale` row. |
-| `ZReport` | End-of-day register close, one per store per date. | `sync_status` drives the offline-fallback dance. `Auditable`. |
+| `ZReport` | End-of-day register close, one per store per date. | `sync_status` drives the offline-fallback dance. Per-method `*_total_srd` columns for all seven payment methods (see below). `Auditable`. |
+| `BtwSubmission` | A formal BTW filing to Belastingdienst Suriname. | Statuses `filed/accepted/disputed/superseded`; per-org SHA-256 hash chain (`prev_hash`/`current_hash`); store-scoped partial unique on the period; snapshot totals + `sale_ids` JSONB for traceability. `Auditable`. See [ch 5](05-btw-pipeline.md). |
 | `ApiIntegration` | Layer 3 client — one API key per row. | `api_key_hash` + `webhook_secret` are hidden in JSON. |
 | `DiscountRule` | Catalogue/category/store-level discount config. | `Active()` + `forStore()` scopes do the day-to-day filtering. |
 | `AuditLog` | The hash-chained, append-only audit row. | `bigIncrements` PK. Update + delete hooks return `false`. |
 | `AppSetting` | Platform-wide key/JSON value bag. | Currently stores `two_factor_required_roles`. `Auditable`. |
-| `License` | The installed product licence record. | Drives the renewal-status state machine in `computeRenewalStatus()`. |
-
-That's 21 entries; `License` is technically also a model — but it talks to the external licence server, not the POS data flow. The "20 models" figure in the brief refers to the operational set above (excluding the integration helper `License` if you want to be pedantic — both files are present and both are documented here).
+| `License` | The installed product licence record. | Drives the renewal-status state machine in `computeRenewalStatus()`. Talks to the external licence server, not the POS data flow. |
 
 ---
 
@@ -62,6 +63,30 @@ Cardinality:
 | Sale | SaleItem | 1:N |
 
 The "only one open session per register" rule is enforced in `RegisterController` and the `Register::openSession()` relation, not by a DB constraint — keep this in mind if you ever bypass the controller.
+
+---
+
+## Payments on `sales` — seven methods
+
+`sales.payment_method` started as `cash|card|mixed` and grew to seven values via a dropped-and-recreated Postgres CHECK constraint. The canonical list is `Sale::PAYMENT_METHODS` (`backend/app/Models/Sale.php:66-70`):
+
+```
+cash · card · mixed · bank_transfer · mobile_transfer · foreign_cash · qr_payment
+```
+
+Three migration waves added the supporting columns:
+
+| Wave | Migration | Columns on `sales` |
+|---|---|---|
+| Card reconciliation | `2026_05_26_040001` | `card_bank`, `card_approval_code`, `card_terminal_ref`, `card_last_four` — all optional, copied from the PIN-terminal slip so the OA can match card sales to the bank settlement statement. Never the full PAN (PCI stays out of scope). Partial index `sales_card_bank_idx`. |
+| Transfers + foreign cash | `2026_05_26_050001` | `payment_provider`, `payment_reference`, `payment_sender_name`, `payment_confirmed_at`, `payment_confirmed_by` (FK users), `foreign_currency` (`USD`/`EUR`), `foreign_amount`, `foreign_rate_used` `decimal(10,4)`. Partial index `sales_pending_payment_idx` for the OA's pending-payments screen. |
+| QR wallets | `2026_05_26_060001` | `qr_payload` (opaque provider payload; Mopé / Uni5Pay+). Provider/reference/confirmation reuse the wave-2 columns. |
+
+The lifecycle split is `Sale::PM_PENDING_CONFIRMATION = [bank_transfer, mobile_transfer, qr_payment]`: these don't settle the drawer when rung — they sit pending until the OA confirms the funds landed (`payment_confirmed_at`/`payment_confirmed_by`), checked via `Sale::isAwaitingPaymentConfirmation()`. `foreign_cash` is drawer-settled immediately: the customer paid physical USD/EUR, both amounts plus the locked rate are stored.
+
+Two more sale columns matter to Layer 3: `api_integration_id` (FK, stamped on every API-sourced sale) and `external_sale_ref`, unique together via the partial index `sales_integration_external_ref_unique` (`2026_07_02_090001`) — idempotency is scoped **per integration**, not per store. Details in [ch 8](08-integration-api.md).
+
+Downstream, `z_reports` persists a per-method breakdown: `cash_total_srd`, `card_total_srd` and — since `2026_07_06_090001` — `mixed_total_srd`, `bank_transfer_total_srd`, `mobile_transfer_total_srd`, `foreign_cash_total_srd`, `qr_payment_total_srd`. Before that migration the persisted breakdown silently dropped five methods and no longer summed to `total_sales_srd` on a QR-heavy day. Details in [ch 6](06-register-and-z-report.md).
 
 ---
 

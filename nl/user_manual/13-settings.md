@@ -72,6 +72,15 @@ Als het Fout toont:
 - Probeer de andere pin-instelling (Pin 2 vs Pin 5).
 - Zorg ervoor dat de printer aan en aangesloten is.
 
+### Stap 5 — Bonnen automatisch afdrukken (optioneel)
+
+Onder de ladetest staat de schakelaar **"Bon automatisch afdrukken na elke verkoop"**.
+
+- **Uit (standaard):** de kassier tikt op **Bon afdrukken** in het bonscherm wanneer de klant papier wil.
+- **Aan:** de bon wordt vanzelf afgedrukt op het moment dat elke verkoop wordt voltooid — precies één keer per verkoop. Met een geconfigureerde thermische printer gebeurt dit geluidloos; met verbindingstype **Geen** opent in plaats daarvan na elke verkoop het Windows-afdrukvenster (dat gaat snel vervelen — configureer eerst de printer).
+
+Dit is een instelling per terminal. Zie [Hoofdstuk 6 §6.2](06-receipts.md) voor hoe dit zich gedraagt op het bonscherm.
+
 ---
 
 ## 13.3 Taal en datumnotatie
@@ -150,8 +159,10 @@ Managers kunnen standaard BTW-instellingen configureren:
 | Printer-IP | (leeg) | Alleen netwerkprinters |
 | Printerpoort | 9100 | Wijzig niet tenzij uw printer een andere poort gebruikt |
 | Kassalade-pin | Pin 2 | Wijzig naar Pin 5 als de lade niet open gaat |
+| Bon automatisch afdrukken | Uit | Per terminal; drukt af zodra elke verkoop is voltooid — §13.2 Stap 5 |
 | Taal | Nederlands | Instelling per gebruiker |
 | Datumnotatie | DD-MM-YYYY | Instelling per gebruiker |
+| Weegschaal-barcodes (gewogen artikelen) | Uit | §13.9 — bevestig de indeling met de weegschaal van uw vestiging vóór ingebruikname |
 | Auto-start bij opstarten systeem | Uit | Manager+ — zie §13.8 |
 | Knoppen Sluiten + Herstarten | (Manager+) | Alleen zichtbaar voor Vestigingsmanager en hoger |
 
@@ -187,6 +198,50 @@ Een knop (alleen Manager+). Sluit Josbin POS volledig (Electron stopt). Gebruik 
 > **Sluiten tijdens een geopende kassa?** U krijgt een waarschuwing. Sluit eerst uw kassa (Hoofdstuk 3 §3.5), anders kan de volgende opener geen nieuwe sessie starten op dezelfde kassa.
 
 Zowel Sluiten + Herstarten zijn manager-beperkt omdat een kassier die er per ongeluk op tikt midden in een verkoop de status zou verliezen. De kassier ziet hier helemaal geen knoppen.
+
+---
+
+## 13.9 Gewogen artikelen / weegschaal-barcodes
+
+Voor winkels met een **etiketteerweegschaal** (vleeswarenafdeling, vlees, groente en fruit): de weegschaal weegt het artikel en drukt een barcode af die een *waarde* bevat — de berekende prijs, of het gewicht — in plaats van een vast product aan te duiden. Josbin POS kan die etiketten inlezen, zodat de kassier alleen maar scant en de regel correct geprijsd verschijnt.
+
+**Standaard uit.** Schakel dit alleen in als uw winkel daadwerkelijk weegschaaletiketten gebruikt.
+
+### De instellingen
+
+| Instelling | Wat het betekent | Standaard |
+|---|---|---|
+| **Weegschaal-barcodes inlezen** | Hoofdschakelaar voor de functie | Uit |
+| **Ingebedde waarde** | **Prijs** — de weegschaal heeft het artikel al geprijsd; het etiket bevat het bedrag (SRD). **Gewicht** — het etiket bevat het gewicht; de POS vermenigvuldigt dit met de catalogusprijs per kg van het product. | Prijs |
+| **Prefix** | Het begincijfer (of de begincijfers) dat een barcode als weegschaaletiket markeert. Vrijwel alle weegschalen gebruiken **2** (het EAN-13 "in-store"-bereik). | 2 |
+
+### Hoe het etiket wordt gelezen
+
+Weegschaaletiketten zijn EAN-13-barcodes met deze indeling (de standaard 6 + 5-verdeling):
+
+```
+2  123456  01750  C
+│  │       │      └ controlecijfer
+│  │       └ 5 cijfers waarde — prijs in centen (SRD 17.50) of gewicht in grammen (1,750 kg)
+│  └ 6 cijfers artikelcode — moet overeenkomen met de barcode van het product in de catalogus
+└ prefix (instelbaar, standaard 2)
+```
+
+Twee dingen moeten kloppen om dit te laten werken:
+
+1. **Het product staat in de catalogus met de 6-cijferige artikelcode als barcode** — bijv. barcode `123456` op "Kipfilet per kg", geprijsd per kg. De weegschaal en de catalogus moeten het over die code eens zijn.
+2. **De indeling komt overeen met uw weegschaal.** De prefix en het waardetype (prijs/gewicht) zijn hier instelbaar; de 6 + 5-cijferverdeling ligt vast op de gangbare standaard. Weegschaalmerken (Bizerba, CAS, Avery, Digi, …) kunnen anders geprogrammeerd zijn — gebruikt uw weegschaal een andere verdeling, neem dan contact op met uw Josbin-contactpersoon **voordat** u dit inschakelt.
+
+> ⚠️ **Vaste regel — test vóór ingebruikname, elke vestiging, elke weegschaal.** Druk een paar testetiketten af op de eigen weegschaal van de winkel en scan ze aan de kassa. Controleer of het product, het gewicht/de prijs en het regeltotaal precies kloppen. **Een verkeerde indeling geeft geen foutmelding — hij beprijst elk gewogen artikel geruisloos verkeerd.** Zet dit nooit aan voor een vestiging zonder te bevestigen met de weegschaal van die vestiging zelf, en test opnieuw nadat iemand de weegschaal heeft geherprogrammeerd.
+
+### Wat de kassier ziet
+
+Niets nieuws — dat is juist de bedoeling. Scan het etiket zoals elke barcode ([Hoofdstuk 4 §4.1, Methode D](04-making-a-sale.md)):
+
+- **Prijsmodus:** het product wordt toegevoegd met de ingebedde prijs van het etiket als regelprijs voor dat gewogen artikel.
+- **Gewichtsmodus:** het product wordt toegevoegd met het gewicht als aantal (bijv. `1.750`), geprijsd tegen catalogusprijs × kg.
+
+Wordt de artikelcode niet gevonden, dan verschijnt de normale melding "product niet gevonden" — voeg het product toe aan de catalogus (met de artikelcode als barcode) en scan opnieuw. Net als de andere opties op dit scherm is dit een instelling **per terminal**: schakel hem in op elke kassa van de vestiging.
 
 ---
 

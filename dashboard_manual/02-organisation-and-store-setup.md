@@ -85,13 +85,13 @@ The **Push catalogus / Push catalogue** button lives on **Catalogus / Catalogue 
 ![Stores screen — read-only org header, list of stores, + New store button](screenshots/02-stores-screen-oa.png)
 
 
-**The Stores screen is the OA's home for store CRUD.** Sidebar → **Vestigingen / Stores**. Visible to Super Admin, Org Admin, and Store Manager.
+**The Stores screen is the OA's home for store CRUD.** Sidebar → **Vestigingen / Stores**. Visible to Super Admin and Org Admin only — Store Managers don't get this menu.
 
 | Who sees what |
 |---|
 | **Super Admin** — sees an organisation dropdown at the top; pick the org first, then the stores list. Can create / rename / deactivate. Can also do this via Organisations → drill-in (the old SA-only flow still works). |
 | **Org Admin** — sees a read-only header strip with their organisation name + BTW number + type + locale (managed by your Josbin POS vendor — email `support@josbin-pos.sr` to change), then the stores list. Can create / rename / deactivate stores up to the licence limit. |
-| **Store Manager** — sees the same list (org-scoped). Can rename / deactivate; create depends on `stores.manage` permission (granted today). |
+| **Store Manager** — does **not** see the **Vestigingen / Stores** menu at all. Creating, renaming and deactivating stores is HQ work, and the API refuses those actions from a manager account (`StorePolicy`). What a manager *does* get is **Vestigingsinstellingen / Store Settings** for their own assigned store — see §2.3.1. |
 
 **To add a store:**
 
@@ -126,7 +126,9 @@ Tap **Aanmaken / Create**. The store appears in the list with status *Actief / A
 
 **Path:** Dashboard → **Vestigingsinstellingen / Store Settings** (left sidebar) → pick the store from the dropdown.
 
-This screen has three sections plus a live receipt preview on the right that updates as you type.
+**Who can edit here:** Super Admin and Org Admin edit every field, for any store in the org. A **Store Manager** also gets this screen — for their **own assigned store only** — and can edit the operational fields: display name, city, address, receipt header/footer, BTW registration number on the receipt, the logo, and the QR-wallet images. The one exception is the **Default BTW rate**: for a manager it's greyed out with the hint *"Wordt door uw organisatie ingesteld / Set by your organisation"* — tax settings stay with the Org Admin. And it's not just a disabled input: the server strips `default_btw_rate` (plus structural fields like POS type and active status) from any save a manager sends, so it can't be bypassed by hand-crafting the request.
+
+This screen has four sections plus a live receipt preview on the right that updates as you type.
 
 **Vestigingsgegevens / Store Information**
 - Store name, city, address
@@ -146,6 +148,11 @@ This screen has three sections plus a live receipt preview on the right that upd
 - Upload a PNG, JPG or SVG, max 2 MB.
 - Prints at the top of the thermal receipt, the emailed PDF receipt, and the email HTML receipt.
 - A preview thumbnail shows immediately; **Remove** clears it.
+
+**QR-wallets (Mopé / Uni5Pay+)**
+- One tile per wallet provider: upload the store's **static merchant QR** (the sticker or PDF image your bank / wallet provider issued).
+- The POS shows this QR large on screen during a QR payment, with the amount due next to it — the customer scans and types the amount in the wallet app.
+- Full setup walkthrough: [Chapter 22 §22.2](22-payment-methods-and-wallets.md).
 
 The right-hand pane shows exactly what the next printed bon will look like. Use it to check that your header doesn't overflow.
 
@@ -249,7 +256,7 @@ Here's the full sequence — what the **Super Admin** does, then what **Sandra (
 2. **Issue Sandra's licence.**
    Dashboard → **License Management** → **+ Issue license** → pick `Supermarkt De Hoop NV`, tier `Professional`, max_stores `2`, max_terminals `4`, valid_from today, valid_until +1 year. Issue. *(Path B — in-dashboard. Path A via the separate License Server is for on-prem IonCube deliveries; see [Chapter 16](16-license-operations.md) §16.4.)*
 
-3. **Create Sandra's Org Admin account** (covered in [Chapter 3](03-users.md)). She gets an email with login credentials.
+3. **Create Sandra's Org Admin account** (covered in [Chapter 3](03-users.md)). She gets a welcome email with the dashboard link and her login email; the temporary password is handed over separately via the one-time green banner (see [Chapter 3 §3.2](03-users.md)).
 
 4. Hand-off — done. Everything below is Sandra's job.
 

@@ -17,7 +17,7 @@ Technische kennis is niet nodig. Het dashboard doet het zware werk; deze handlei
 
 ## Hoe u deze handleiding gebruikt
 
-Elk hoofdstuk behandelt één onderdeel van het dashboard. Lees 1 → 18 als u nieuw bent met Josbin POS; of spring direct naar het hoofdstuk dat u nodig hebt.
+Elk hoofdstuk behandelt één onderdeel van het dashboard. Lees 1 → 22 als u nieuw bent met Josbin POS; of spring direct naar het hoofdstuk dat u nodig hebt.
 
 | # | Hoofdstuk | Voor wie |
 |---|-----------|----------|
@@ -42,8 +42,19 @@ Elk hoofdstuk behandelt één onderdeel van het dashboard. Lees 1 → 18 als u n
 | 19 | [Kassabeheer / Registers — fysieke kassa's, sessies, heropenflow](19-registers.md) | Manager+ |
 | 20 | [BTW-aangiftes — formele aangiftes aan Belastingdienst Suriname](20-btw-submissions-belastingdienst.md) | OA, SM, Inspecteur, SA |
 | 21 | [Belastinginspecteur-rol — Belastingdienst cross-org toegang](21-tax-inspector.md) | SA (aanmaken), Inspecteur (gebruiken) |
+| 22 | [Betaalmethoden, QR-wallets en openstaande betalingen](22-payment-methods-and-wallets.md) | OA, vestigingsmanager |
 
 Alle hoofdstukken zijn nu geschreven.
+
+---
+
+## Wat u ziet bij de eerste login
+
+Elke rol landt na het inloggen op het **Dashboard**-startscherm — behalve kassiers, die alleen [Mijn Account](18-my-account.md) krijgen, en de belastinginspecteur, die op het BTW-dashboard landt ([Hoofdstuk 21](21-tax-inspector.md)). Twee kaarten op dat startscherm verschijnen alleen voor sommige mensen, dus u mist ze snel in de hoofdstukken:
+
+- **Platform-overzicht (alleen Super Admin).** Een cross-tenant-paneel vastgezet boven de vestigingskaarten: platformbrede KPI-tegels (organisaties actief/inactief, omzet en transacties van vandaag en deze maand over het hele netwerk, actieve terminals in de laatste 24 u), **licentiestatus-emmers** (gezond / verloopt < 30d / verloopt < 14d / grace / soft-lock / hard-lock) met een aandachtsteller, het aantal **BTW-aangiftes dat op de inspecteur wacht**, de **volgende verlopende licenties** en de laatste **Super Admin-acties**. Het ververst automatisch elke 60 seconden. Dit is de leverancierspols over alle tenants — OA's zien het nooit; hun dashboard begint bij de eigen vestigingen. De opvolging leeft in [Hoofdstuk 15](15-license-management.md) (licenties) en [Hoofdstuk 20](20-btw-submissions-belastingdienst.md) (aangiftes).
+
+- **"Aan de slag"-checklist (verse organisaties).** OA's (en de Super Admin, die mogelijk nog een org aan het inrichten is) zien een eerste-keer-onboardingkaart zolang de org leeg is: **Voeg een vestiging toe → Maak gebruikers aan → Vul de catalogus → Verkoop testen in de kassa**. Elke stap linkt direct naar het juiste scherm en vinkt zichzelf automatisch af zodra de vestiging / gebruikers / producten daadwerkelijk bestaan; de kaart trekt zich vanzelf terug zodra de org echt is ingericht. **Verbergen** sluit de kaart handmatig — dat wordt per browser onthouden, dus op een andere pc kan de kaart opnieuw verschijnen. De stappen komen overeen met [Hoofdstuk 2](02-organisation-and-store-setup.md), [Hoofdstuk 3](03-users.md) en [Hoofdstuk 4](04-catalogue-and-categories.md).
 
 ---
 

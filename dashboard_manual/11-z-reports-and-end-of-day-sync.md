@@ -168,6 +168,8 @@ TRADING DAY ENDS
    the monthly BTW report, and the audit log.
 ```
 
+> **Expected cash includes recorded drawer movements.** The expected-cash figure the manager reconciles against in step 5 already folds in every pay-in / pay-out recorded on the day's register sessions ([Chapter 19 §19.9a](19-registers.md)) — a recorded SRD 500 bank drop does **not** show up as a shortfall. Before treating a discrepancy as real, check the recorded cash movements for the day's sessions first.
+
 For the **manager-side details** (which button, what message, what to do if the cash doesn't match), see [POS user manual ch 10](../user_manual/10-end-of-day.md). This chapter handles everything **after** step 6 — i.e. what HQ sees and what to do if anything goes wrong.
 
 ---
@@ -286,20 +288,25 @@ When the manager closes the day, the system computes:
 
 ```
 discrepancy = actual_cash − expected_cash
-            = (what the manager physically counted) − (opening floats + cash sales − refunds)
+            = (what the manager physically counted)
+              − (opening floats + cash sales (incl. the cash portion of mixed)
+                 − cash refunds + pay-ins − pay-outs)
 ```
+
+The pay-in / pay-out terms are the manual drawer movements recorded during the shifts — float top-ups, bank drops, petty cash ([Chapter 19 §19.9a](19-registers.md)). They also appear as their own lines on each session-close summary, so a recorded movement never surfaces as a discrepancy.
 
 This is stored as `cash_discrepancy_srd` on the `z_reports` row. The discrepancy column in the dashboard table shows:
 
 - **OK (green)** if `|discrepancy| ≤ SRD 0.005` (i.e. rounding-zero).
-- **Red `−SRD x.xx`** if cash was **short**. Possible causes: counting error, missed refund, theft, or a sale that was rung up cash but paid card (no money in the drawer for it).
+- **Red `−SRD x.xx`** if cash was **short**. Possible causes: an unrecorded pay-out (supplier paid from the till, bank drop — see [Ch 19 §19.9a](19-registers.md)), counting error, missed refund, theft, or a sale that was rung up cash but paid card (no money in the drawer for it).
 - **Amber `+SRD x.xx`** if cash was **over**. Usually a change-giving error in the customer's favour (the cashier gave too little change).
 
 If the discrepancy is non-zero, the manager **must** type a `discrepancy_note` before the close-day call succeeds. That note is stored on the same row and visible in the audit log forever — see [Chapter 13 — Audit Log](13-audit-log.md).
 
 You'll want to investigate any:
 
-- Persistent shortfalls at one cashier — chase down the till sessions in the Registers screen (Ch 8) and look for the pattern.
+- Any shortfall, **before anything else** — check the recorded pay-ins / pay-outs for the day's sessions (Registers → History, [Ch 19 §19.9a](19-registers.md)). A properly recorded pay-out keeps the count green; an unrecorded one is indistinguishable from missing cash.
+- Persistent shortfalls at one cashier — chase down the till sessions in the Registers screen (Ch 19) and look for the pattern.
 - Large amber over-counts — these often signal a refund that wasn't recorded properly. Reconcile against the sales list for the day.
 - Tiny rounding-style discrepancies — usually safe to ignore. SRD cash includes 5-cent and 10-cent pieces; over a busy day a few cents can drift either way.
 

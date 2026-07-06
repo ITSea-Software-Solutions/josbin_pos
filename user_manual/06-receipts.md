@@ -10,7 +10,7 @@ After payment is accepted, a receipt pop-up appears with these options:
 
 | Button | What it does |
 |--------|-------------|
-| **Print receipt** (thermal) | Sends to the connected thermal receipt printer |
+| **Print receipt** | Always available. Prints silently to the thermal printer when one is configured; otherwise opens the normal print dialog with the same receipt |
 | **Download PDF** | Opens/downloads a PDF receipt |
 | **Email receipt** | Sends the receipt to the customer's email address |
 | **New sale** | Closes the receipt and starts a fresh empty cart |
@@ -45,6 +45,17 @@ Thermal printing sends the receipt directly to your receipt printer (e.g. EPSON 
 - Payment method and change given (for cash payments)
 - Store footer (e.g. "Thank you for your purchase")
 - BTW registration number
+
+**No thermal printer configured?** The Print button still works: it opens the normal Windows print dialog with the exact same receipt, so you can print to any printer installed on the machine — an A4 office printer, or even a thermal printer through its Windows driver. Configuring a thermal printer in Settings just makes printing silent and instant.
+
+### Printing automatically
+
+If customers at your store always get a paper receipt, turn on **auto-print** so you don't have to tap Print a few hundred times a day:
+
+1. Go to **Settings → Printer & cash drawer → "Print receipt automatically after each sale"** (see [Chapter 13 §13.2](13-settings.md)). It is **off by default** and is a per-terminal setting.
+2. With auto-print on, the receipt prints **the moment the receipt screen appears** — exactly once per sale.
+3. With a thermal printer configured it prints silently in the background; without one, the print dialog opens after each sale instead.
+4. The **Print** button stays available for reprints — customer wants a second copy, paper jammed, printer was off.
 
 ---
 

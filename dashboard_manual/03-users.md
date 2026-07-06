@@ -58,7 +58,7 @@ The Create User modal opens. Fields:
 | **Organisatie / Organisation** | ⚠️ | Required for Org Admin, Store Manager, Cashier, Auditor, API Integration. Hidden for Super Admin (platform-level, no org). For non-Super-Admin creators, the field is locked to your own org. |
 | **Taal / Language** | ✅ | `Nederlands` or `English`. Default UI language. The user can change it on their My Account screen. |
 | **Tijdelijk wachtwoord / Temporary password** | ✅ | Min. 8 characters. Tap **Genereer / Generate** to get a strong random one. The eye icon shows/hides the value. |
-| **Welkom-e-mail versturen / Send welcome email** | optional | Default on. Emails the user the login URL + their credentials. |
+| **Welkom-e-mail versturen / Send welcome email** | optional | Default on. Emails the user the dashboard login URL + their login email — **deliberately never the password** (see "After the user is created" below). Only delivers once SMTP is configured on the server. |
 
 Tap **Gebruiker aanmaken / Create user**.
 
@@ -84,6 +84,10 @@ When you change a store-scoped user's role to an org-scoped one (e.g. promote a 
 ### After the user is created
 
 A green confirmation banner appears at the top of the Users screen with the email and password in plain text, plus a **Kopieer inloggegevens / Copy credentials** button. **Show this to the user once and only once.** The plaintext password is never displayed again — if they lose it, you reset it (§3.7).
+
+The welcome email — if you left the toggle on — contains the **dashboard login URL and the user's login email only, never the password**. That's a deliberate security choice: email travels unencrypted, so the system refuses to put a plaintext password in it. The mail tells the user their administrator will hand over the initial password securely — which is exactly what the green banner / **Copy credentials** button is for (in person, by phone, or via an encrypted channel — same rule as password resets, §3.7).
+
+> 📧 **Email delivery needs SMTP.** The welcome email only actually goes out once real SMTP credentials are configured on the server — the same caveat as the BTW notification emails in [Chapter 20 §20.3](20-btw-submissions-belastingdienst.md). Until then no welcome email arrives, and you hand over the dashboard URL along with the credentials yourself.
 
 The user must change the temporary password on their first login. They can also be required to enrol 2FA at that point if the policy demands it (§3.9).
 
@@ -158,6 +162,25 @@ The change is recorded in the audit log: old role, new role, who changed it, whe
 The row's status badge flips to grey *Inactief / Inactive*. The user's open dashboard or POS sessions are killed within seconds.
 
 **To reactivate**: same button, now green and labelled **Activeren / Activate**.
+
+---
+
+## 3.5a Bulk actions — activate or deactivate many users at once
+
+Six seasonal cashiers leave on the same day? You don't have to click six rows one by one. The Users table has multi-select — the same pattern as the BTW-submissions list ([Chapter 20](20-btw-submissions-belastingdienst.md)).
+
+**How it works:**
+
+1. Tick the **checkbox** at the start of each row you want to change. A checkbox only appears on rows you're allowed to manage (§3.1) — roles below yours, and never your own account. The checkbox in the header row selects every manageable row at once.
+2. A **bulk bar** appears with *"N geselecteerd / N selected"*, a **Deselecteren / Deselect** button, a green **Activeren / Activate** and a red **Deactiveren / Deactivate**.
+3. Pick the action. A **confirmation dialog always comes first**, telling you how many users will actually change — users already in the target state are skipped.
+4. The bar shows per-row progress (*"Bezig… 3/8 / Working… 3/8"*) while the change is applied user-by-user, then a toast summarises the result — e.g. *"6 user(s) deactivated"*, or *"5 deactivated, 1 failed"* if a policy check refused one.
+
+**The fine print:**
+
+- **Role limits are identical to single-row actions.** Super Admin can bulk-manage anyone; an Org Admin sees checkboxes only on Store Managers, Cashiers, Auditors and API Integration accounts in their own org; a Store Manager only on Cashiers. Cashiers and Auditors manage nobody — they never see checkboxes or the bulk bar.
+- **Every change is still individually audit-logged.** The bulk bar is a UI convenience: under the hood each user goes through the same update endpoint and policy checks as the single-row button, so the audit log shows one entry per user — not one anonymous blob.
+- **There is no bulk delete.** Consistent with §3.5 — hard-delete isn't exposed in the dashboard at all. Bulk deactivation is the off-boarding tool, and it's reversible: select the same rows and hit **Activate**.
 
 ---
 
@@ -238,6 +261,7 @@ RESET PASSWORD    Users → Edit → New password → Reset/type → Save → te
 TRANSFER ORG      (Super Admin only) Users → Edit → change Organisation → Save
 DEACTIVATE        Users row → Deactivate button → confirm → grey badge
 REACTIVATE        Users row → Activate button → confirm → green badge
+BULK (DE)ACTIVATE Users → tick row checkboxes → bulk bar → Activate / Deactivate → confirm (§3.5a)
 ```
 
 For role decisions, see Chapter 1.

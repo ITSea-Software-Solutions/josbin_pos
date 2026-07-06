@@ -89,6 +89,7 @@ export default function BlindReturnModal({ isOpen, onClose }: BlindReturnModalPr
           <option value="card">{isNl ? 'Pin / kaart' : 'Card'}</option>
           <option value="bank_transfer">{isNl ? 'Bankoverschrijving' : 'Bank transfer'}</option>
           <option value="mobile_transfer">{isNl ? 'Mobiel' : 'Mobile'}</option>
+          <option value="qr_payment">{isNl ? 'QR-wallet (Mopé / Uni5Pay+)' : 'QR wallet (Mopé / Uni5Pay+)'}</option>
         </select>
 
         <label style={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 600 }}>{t('pos.blindReturn.reason')}</label>

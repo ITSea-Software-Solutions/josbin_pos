@@ -168,6 +168,8 @@ HANDELSDAG EINDIGT
    het maandelijkse BTW-rapport, en het auditlogboek.
 ```
 
+> **Verwacht contant omvat vastgelegde kasmutaties.** Het verwachte contantbedrag waartegen de manager in stap 5 telt, verwerkt al elke kas-in / kas-uit die op de kassasessies van de dag is vastgelegd ([Hoofdstuk 19 §19.9a](19-registers.md)) — een vastgelegde bankafstorting van SRD 500 verschijnt dus **niet** als tekort. Controleer eerst de vastgelegde kasmutaties van de dag voordat u een verschil als echt behandelt.
+
 Voor de **managerzijde details** (welke knop, welk bericht, wat te doen als het contant niet klopt) zie [POS-gebruikershandleiding h10](../user_manual/10-end-of-day.md). Dit hoofdstuk behandelt alles **na** stap 6 — d.w.z. wat het hoofdkantoor ziet en wat te doen als er iets misgaat.
 
 ---
@@ -286,20 +288,25 @@ Wanneer de manager de dag sluit, berekent het systeem:
 
 ```
 verschil = werkelijk_contant − verwacht_contant
-         = (wat de manager fysiek geteld heeft) − (beginsaldo's + contante verkopen − terugbetalingen)
+         = (wat de manager fysiek geteld heeft)
+           − (beginsaldo's + contante verkopen (incl. het contante deel van gemengd)
+              − contante terugbetalingen + kas-in − kas-uit)
 ```
+
+De termen kas-in / kas-uit zijn de handmatige kasmutaties die tijdens de diensten zijn vastgelegd — wisselgeld bijvullen, bankafstortingen, kleine kas ([Hoofdstuk 19 §19.9a](19-registers.md)). Ze verschijnen ook als eigen regels op elke sluitsamenvatting van een sessie, dus een vastgelegde mutatie duikt nooit op als verschil.
 
 Dit wordt opgeslagen als `cash_discrepancy_srd` op de `z_reports`-rij. De verschilkolom in de dashboardtabel toont:
 
 - **OK (groen)** als `|verschil| ≤ SRD 0,005` (d.w.z. afrondings-nul).
-- **Rood `−SRD x.xx`** als contant **tekort** was. Mogelijke oorzaken: telfout, gemiste terugbetaling, diefstal, of een verkoop die contant werd geboekt maar met pin werd betaald (geen geld in de lade ervoor).
+- **Rood `−SRD x.xx`** als contant **tekort** was. Mogelijke oorzaken: een niet-vastgelegde kas-uit (leverancier uit de lade betaald, bankafstorting — zie [H19 §19.9a](19-registers.md)), telfout, gemiste terugbetaling, diefstal, of een verkoop die contant werd geboekt maar met pin werd betaald (geen geld in de lade ervoor).
 - **Amber `+SRD x.xx`** als contant **over** was. Meestal een wisselgeldfout in het voordeel van de klant (kassier gaf te weinig wisselgeld).
 
 Als het verschil niet nul is, **moet** de manager een `discrepancy_note` invoeren voordat de dag-sluiten-aanroep slaagt. Die notitie wordt opgeslagen op dezelfde rij en is voor altijd zichtbaar in het auditlogboek — zie [Hoofdstuk 13 — Auditlogboek](13-audit-log.md).
 
 U wilt onderzoek doen naar:
 
-- Aanhoudende tekorten bij één kassier — duik in de kassasessies in het Kassabeheer-scherm (H8) en zoek het patroon.
+- Elk tekort, **vóór al het andere** — controleer de vastgelegde kas-in / kas-uit van de dagsessies (Kassabeheer → Geschiedenis, [H19 §19.9a](19-registers.md)). Een correct vastgelegde kas-uit houdt de telling groen; een niet-vastgelegde is niet te onderscheiden van verdwenen geld.
+- Aanhoudende tekorten bij één kassier — duik in de kassasessies in het Kassabeheer-scherm (H19) en zoek het patroon.
 - Grote amberkleurige overtellingen — die wijzen vaak op een terugbetaling die niet correct is geregistreerd. Stem af tegen de verkooplijst voor de dag.
 - Kleine afrondingsachtige verschillen — meestal veilig om te negeren. SRD contant bevat munten van 5 en 10 cent; over een drukke dag kunnen een paar centen beide kanten op drijven.
 
