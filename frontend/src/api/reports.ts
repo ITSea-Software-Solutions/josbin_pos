@@ -129,12 +129,34 @@ export async function getBtwReport(
   return data.data
 }
 
-export function getReportExportUrl(
+/**
+ * Open a report PDF in a new tab WITHOUT putting a token in the URL.
+ *
+ * Mirrors openReceiptPdf in api/sales.ts. The old implementation built a
+ * `?token=<session token>` URL for window.open — the backend (rightly, P0-5)
+ * ignores broad session tokens in query strings, so the request 401'd, and
+ * the token leaked into history/logs/Referer. Fetch over the authenticated
+ * XHR (Bearer header) instead and open the local blob URL. The blank tab is
+ * opened synchronously inside the click handler so the pop-up blocker
+ * doesn't swallow it.
+ */
+export async function openReportPdf(
   storeId: string,
   type: string,
   params: Record<string, string>
-): string {
-  const token = localStorage.getItem('josbin_pos_token') ?? ''
-  const searchParams = new URLSearchParams({ store_id: storeId, type, ...params, token })
-  return `${import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'}/reports/export?${searchParams}`
+): Promise<void> {
+  const win = window.open('', '_blank')
+  try {
+    const res = await apiClient.get('/reports/export', {
+      params: { store_id: storeId, type, ...params },
+      responseType: 'blob',
+    })
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    if (win) win.location.href = url
+    else window.open(url, '_blank')
+    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  } catch (e) {
+    if (win) win.close()
+    throw e
+  }
 }

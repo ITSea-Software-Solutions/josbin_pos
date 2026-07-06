@@ -303,12 +303,19 @@ class ReportController extends Controller
     {
         abort_unless($request->user()?->can('reports.export'), 403);
 
+        // Each type takes the SAME params as its JSON sibling endpoint:
+        // daily → ?date, monthly → ?year&month, custom → ?date_from&date_to.
+        // 'btw' is intentionally absent — the Belastingdienst PDF layout is
+        // the SPOS-209 expansion; until it ships, /reports/btw (JSON) and the
+        // dashboard's /dashboard/reports/btw/export cover that need.
         $request->validate([
-            'type'      => ['required', Rule::in(['daily', 'monthly', 'custom', 'btw'])],
+            'type'      => ['required', Rule::in(['daily', 'monthly', 'custom'])],
             'store_id'  => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
-            'date_from' => ['nullable', 'date_format:Y-m-d'],
-            'date_to'   => ['nullable', 'date_format:Y-m-d'],
             'date'      => ['nullable', 'date_format:Y-m-d'],
+            'year'      => ['required_if:type,monthly', 'integer', 'min:2020'],
+            'month'     => ['required_if:type,monthly', 'integer', 'min:1', 'max:12'],
+            'date_from' => ['required_if:type,custom', 'date_format:Y-m-d'],
+            'date_to'   => ['required_if:type,custom', 'date_format:Y-m-d', 'after_or_equal:date_from'],
             'locale'    => ['nullable', Rule::in(['nl', 'en'])],
         ]);
 
@@ -318,8 +325,12 @@ class ReportController extends Controller
 
         $data = match ($type) {
             'daily'   => $this->buildDailySummary($storeId, $request->input('date', today()->toDateString())),
-            'monthly','custom' => $this->buildRangeSummary($storeId, $request->input('date_from'), $request->input('date_to')),
-            'btw'     => [], // placeholder — full BTW PDF in SPOS-209 expansion
+            'monthly' => $this->buildRangeSummary(
+                $storeId,
+                Carbon::create($request->integer('year'), $request->integer('month'), 1)->startOfMonth()->toDateString(),
+                Carbon::create($request->integer('year'), $request->integer('month'), 1)->endOfMonth()->toDateString(),
+            ),
+            'custom'  => $this->buildRangeSummary($storeId, $request->input('date_from'), $request->input('date_to')),
         };
 
         $pdf = Pdf::loadView('reports.summary', [

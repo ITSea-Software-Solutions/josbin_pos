@@ -135,9 +135,9 @@ class RekenkamerController extends Controller
         $documentHash = hash('sha256', $hashInput);
 
         $pdf = Pdf::loadView('reports.rekenkamer', compact(
-            'organisation', 'sales', 'voidedSales', 'btwBreakdown', 'paymentBreakdown',
+            'organisation', 'sales', 'voidedSales', 'btwBreakdown',
             'summaryRows', 'grandTotal', 'totalBtw', 'totalNetBase',
-            'generatedAt', 'generatedBy', 'documentHash', 'locale', 'from', 'to',
+            'generatedAt', 'generatedBy', 'documentHash', 'locale',
         ) + ['fromDate' => $from, 'toDate' => $to, 'paymentBreakdown' => $payBreakdown])
             ->setPaper('a4', 'landscape')
             ->setOptions([

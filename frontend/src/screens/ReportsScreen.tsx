@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
-import { getDailyReport, getMonthlyReport, getCustomReport, getXReport, getReportExportUrl } from '@/api/reports'
+import { getDailyReport, getMonthlyReport, getCustomReport, getXReport, openReportPdf } from '@/api/reports'
 import type { ReportSummary } from '@/api/reports'
 
 interface ReportsScreenProps {
@@ -77,8 +77,7 @@ export default function ReportsScreen({ storeId }: ReportsScreenProps) {
     if (tab === 'daily') params.date = date
     if (tab === 'monthly') { params.year = String(month.year); params.month = String(month.month) }
     if (tab === 'custom') { params.date_from = dateFrom; params.date_to = dateTo }
-    const url = getReportExportUrl(storeId, tab, params)
-    window.open(url, '_blank')
+    openReportPdf(storeId, tab, params).catch(console.error)
   }
 
   return (

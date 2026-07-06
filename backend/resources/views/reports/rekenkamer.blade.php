@@ -71,9 +71,9 @@
       </div>
     </div>
     <div class="header-meta">
-      @if($locale === 'nl')Gegenereerd op@else Generated@endif<br>
+      @if($locale === 'nl')Gegenereerd op @else Generated @endif<br>
       {{ $generatedAt }}<br>
-      @if($locale === 'nl')door@else by@endif <strong>{{ $generatedBy }}</strong><br>
+      @if($locale === 'nl')door @else by @endif <strong>{{ $generatedBy }}</strong><br>
       <span class="seal">Josbin POS Rekenkamer Export</span>
     </div>
   </div>
@@ -95,10 +95,10 @@
 <table class="btw-table">
   <thead>
     <tr>
-      <th>@if($locale === 'nl')BTW-tarief@else VAT Rate@endif</th>
-      <th>@if($locale === 'nl')Vrijgesteld@else Exempt@endif</th>
-      <th class="num">@if($locale === 'nl')Nettobasis@else Net Base@endif</th>
-      <th class="num">@if($locale === 'nl')BTW-bedrag@else VAT Amount@endif</th>
+      <th>@if($locale === 'nl')BTW-tarief @else VAT Rate @endif</th>
+      <th>@if($locale === 'nl')Vrijgesteld @else Exempt @endif</th>
+      <th class="num">@if($locale === 'nl')Nettobasis @else Net Base @endif</th>
+      <th class="num">@if($locale === 'nl')BTW-bedrag @else VAT Amount @endif</th>
     </tr>
   </thead>
   <tbody>
@@ -111,7 +111,7 @@
     </tr>
     @endforeach
     <tr class="total-row">
-      <td colspan="2">@if($locale === 'nl')Totaal@else Total@endif</td>
+      <td colspan="2">@if($locale === 'nl')Totaal @else Total @endif</td>
       <td class="num">SRD {{ number_format($totalNetBase, 2, '.', ',') }}</td>
       <td class="num">SRD {{ number_format($totalBtw, 2, '.', ',') }}</td>
     </tr>
@@ -119,13 +119,13 @@
 </table>
 
 {{-- ═══ PAYMENT METHOD BREAKDOWN ════════════════════════════════════════════ --}}
-<h2>@if($locale === 'nl')Betaalmethoden@else Payment Methods@endif</h2>
+<h2>@if($locale === 'nl')Betaalmethoden @else Payment Methods @endif</h2>
 <table class="btw-table">
   <thead>
     <tr>
-      <th>@if($locale === 'nl')Methode@else Method@endif</th>
-      <th class="num">@if($locale === 'nl')Transacties@else Transactions@endif</th>
-      <th class="num">@if($locale === 'nl')Bedrag@else Amount@endif</th>
+      <th>@if($locale === 'nl')Methode @else Method @endif</th>
+      <th class="num">@if($locale === 'nl')Transacties @else Transactions @endif</th>
+      <th class="num">@if($locale === 'nl')Bedrag @else Amount @endif</th>
     </tr>
   </thead>
   <tbody>
@@ -141,19 +141,19 @@
 
 {{-- ═══ COMPLETE TRANSACTION LIST ═══════════════════════════════════════════ --}}
 <div class="page-break"></div>
-<h2>@if($locale === 'nl')Volledige Transactielijst@else Complete Transaction List@endif</h2>
+<h2>@if($locale === 'nl')Volledige Transactielijst @else Complete Transaction List @endif</h2>
 <table>
   <thead>
     <tr>
       <th>@if($locale === 'nl')Bon-nr.@else Sale#@endif</th>
       <th>@if($locale === 'nl')Datum/Tijd (AST)@else Date/Time (AST)@endif</th>
-      <th>@if($locale === 'nl')Kassa@else Cashier@endif</th>
-      <th>@if($locale === 'nl')Vestiging@else Store@endif</th>
-      <th class="num">@if($locale === 'nl')Subtotaal@else Subtotal@endif</th>
-      <th class="num">@if($locale === 'nl')Korting@else Discount@endif</th>
+      <th>@if($locale === 'nl')Kassa @else Cashier @endif</th>
+      <th>@if($locale === 'nl')Vestiging @else Store @endif</th>
+      <th class="num">@if($locale === 'nl')Subtotaal @else Subtotal @endif</th>
+      <th class="num">@if($locale === 'nl')Korting @else Discount @endif</th>
       <th class="num">BTW</th>
-      <th class="num">@if($locale === 'nl')Totaal@else Total@endif</th>
-      <th>@if($locale === 'nl')Betaling@else Payment@endif</th>
+      <th class="num">@if($locale === 'nl')Totaal @else Total @endif</th>
+      <th>@if($locale === 'nl')Betaling @else Payment @endif</th>
       <th>Status</th>
     </tr>
   </thead>
@@ -176,9 +176,9 @@
     @if($sale->status === 'voided')
     <tr>
       <td colspan="10" style="background:#fef2f2; color:#7f1d1d; font-size:9.5px; padding:3px 12px;">
-        @if($locale === 'nl')Geannuleerd op@else Voided@endif
+        @if($locale === 'nl')Geannuleerd op @else Voided @endif
         {{ $sale->voided_at ? \Carbon\Carbon::parse($sale->voided_at)->setTimezone('America/Paramaribo')->format('d-m-Y H:i') . ' AST' : '—' }}
-        @if($locale === 'nl')door@else by@endif {{ $sale->voidedBy?->name ?? '—' }}
+        @if($locale === 'nl')door @else by @endif {{ $sale->voidedBy?->name ?? '—' }}
         @if($sale->void_reason) &nbsp;|&nbsp; {{ $sale->void_reason }} @endif
       </td>
     </tr>
@@ -197,17 +197,17 @@
 {{-- ═══ VOID LOG ════════════════════════════════════════════════════════════ --}}
 @if($voidedSales->isNotEmpty())
 <div class="page-break"></div>
-<h2>@if($locale === 'nl')Annuleringslogboek@else Void Log@endif</h2>
+<h2>@if($locale === 'nl')Annuleringslogboek @else Void Log @endif</h2>
 <table>
   <thead>
     <tr>
       <th>@if($locale === 'nl')Bon-nr.@else Sale#@endif</th>
-      <th>@if($locale === 'nl')Originele Datum@else Original Date@endif</th>
-      <th>@if($locale === 'nl')Geannuleerd op@else Voided At@endif</th>
-      <th>@if($locale === 'nl')Kassa (origineel)@else Cashier@endif</th>
-      <th>@if($locale === 'nl')Geannuleerd door@else Voided By@endif</th>
-      <th class="num">@if($locale === 'nl')Bedrag@else Amount@endif</th>
-      <th>@if($locale === 'nl')Reden@else Reason@endif</th>
+      <th>@if($locale === 'nl')Originele Datum @else Original Date @endif</th>
+      <th>@if($locale === 'nl')Geannuleerd op @else Voided At @endif</th>
+      <th>@if($locale === 'nl')Kassa (origineel)@else Cashier @endif</th>
+      <th>@if($locale === 'nl')Geannuleerd door @else Voided By @endif</th>
+      <th class="num">@if($locale === 'nl')Bedrag @else Amount @endif</th>
+      <th>@if($locale === 'nl')Reden @else Reason @endif</th>
     </tr>
   </thead>
   <tbody>
@@ -235,11 +235,11 @@
   <div class="signature-hash">SHA-256: {{ $documentHash }}</div>
   <div class="signature-row">
     <div class="signature-field">
-      <label>@if($locale === 'nl')Organisatie@else Organisation@endif</label>
+      <label>@if($locale === 'nl')Organisatie @else Organisation @endif</label>
       <span>{{ $organisation->name }}</span>
     </div>
     <div class="signature-field">
-      <label>@if($locale === 'nl')Gegenereerd door@else Generated by@endif</label>
+      <label>@if($locale === 'nl')Gegenereerd door @else Generated by @endif</label>
       <span>{{ $generatedBy }}</span>
     </div>
     <div class="signature-field">
@@ -247,18 +247,18 @@
       <span>{{ $generatedAt }}</span>
     </div>
     <div class="signature-field">
-      <label>@if($locale === 'nl')Transacties@else Transactions@endif</label>
+      <label>@if($locale === 'nl')Transacties @else Transactions @endif</label>
       <span>{{ count($sales) }}</span>
     </div>
     <div class="signature-field">
-      <label>@if($locale === 'nl')Softwareversie@else Software Version@endif</label>
+      <label>@if($locale === 'nl')Softwareversie @else Software Version @endif</label>
       <span>Josbin POS v1.0 — Laravel 13</span>
     </div>
   </div>
 </div>
 
 <div class="footer">
-  Josbin POS — {{ $organisation->name }} — @if($locale === 'nl')Gegenereerd op@else Generated@endif {{ $generatedAt }} AST
+  Josbin POS — {{ $organisation->name }} — @if($locale === 'nl')Gegenereerd op @else Generated @endif {{ $generatedAt }} AST
   &nbsp;|&nbsp; @if($locale === 'nl')Dit document is uitsluitend bestemd voor Rekenkamer van Suriname auditdoeleinden.
   @else This document is exclusively for Rekenkamer van Suriname audit purposes. @endif
 </div>

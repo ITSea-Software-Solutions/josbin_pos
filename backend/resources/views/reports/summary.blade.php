@@ -18,7 +18,7 @@
 <h1>Josbin POS @if($locale === 'nl')Rapportage @else Report @endif</h1>
 <p style="color:#888; font-size:11px">
   @if($locale === 'nl')Periode:@else Period:@endif
-  {{ $data['date_from'] }} @if($locale === 'nl')t/m@else to@endif {{ $data['date_to'] }}
+  {{ $data['date_from'] }} @if($locale === 'nl') t/m @else to @endif {{ $data['date_to'] }}
   &nbsp;|&nbsp;
   @if($locale === 'nl')Gegenereerd op:@else Generated:@endif {{ now()->setTimezone('America/Paramaribo')->format('d-m-Y H:i') }} AST
 </p>
@@ -55,6 +55,9 @@
   </tr>
 </table>
 
+{{-- Flat *_total_srd keys from ReportController::buildRangeSummary().
+     Cash/card/mixed always shown; Phase-2/3 methods only when non-zero,
+     so the visible rows always sum to TOTALE OMZET. --}}
 <h2>@if($locale === 'nl')Betaalmethode @else Payment methods @endif</h2>
 <table>
   <tr><th>@if($locale === 'nl')Methode @else Method @endif</th><th class="right">SRD</th></tr>

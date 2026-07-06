@@ -158,6 +158,7 @@ hit "MGR: GET /api/reports/top-products"         200 GET "/api/reports/top-produ
 hit "MGR: GET /api/reports/x-report"             200 GET "/api/reports/x-report?store_id=${STORE}" --token "$T_MGR"
 hit "MGR: GET /api/reports/z-report/history"     200 GET "/api/reports/z-report/history?store_id=${STORE}" --token "$T_MGR"
 hit "MGR: GET /api/reports/btw"                  200 GET "/api/reports/btw?store_id=${STORE}&date_from=2026-05-01&date_to=2026-05-31" --token "$T_MGR"
+hit "MGR: GET /api/reports/export (daily PDF)"   200 GET "/api/reports/export?type=daily&store_id=${STORE}" --token "$T_MGR"
 hit "MGR cannot GET /api/audit-log (SA/OA/AU)"   403 GET /api/audit-log --token "$T_MGR"
 hit "MGR: GET /api/customers"                    200 GET /api/customers --token "$T_MGR"
 hit "MGR: GET /api/categories"                   200 GET /api/categories --token "$T_MGR"
@@ -175,6 +176,9 @@ hit "OA: GET /api/users"                          200 GET /api/users --token "$T
 hit "OA: GET /api/dashboard/reports/btw"          200 GET "/api/dashboard/reports/btw?date_from=2026-05-01&date_to=2026-05-31" --token "$T_OA"
 hit "OA: GET /api/dashboard/z-reports"            200 GET /api/dashboard/z-reports --token "$T_OA"
 hit "OA: GET /api/dashboard/reports/consolidated" 200 GET "/api/dashboard/reports/consolidated?date_from=2026-05-01&date_to=2026-05-31" --token "$T_OA"
+hit "OA: GET /api/dashboard/reports/consolidated/export (PDF)" 200 GET "/api/dashboard/reports/consolidated/export?date_from=2026-05-01&date_to=2026-05-31" --token "$T_OA"
+hit "OA: GET /api/dashboard/reports/btw/export (PDF)"          200 GET "/api/dashboard/reports/btw/export?date_from=2026-05-01&date_to=2026-05-31" --token "$T_OA"
+hit "OA: GET /api/reports/rekenkamer (PDF)"                    200 GET "/api/reports/rekenkamer?date_from=2026-05-01&date_to=2026-05-31" --token "$T_OA"
 hit "OA: GET /api/licenses"                       200 GET /api/licenses --token "$T_OA"
 # License create/edit are SA-only (and SA has 2FA on demo). Verify the OA
 # correctly gets 403 instead of being silently allowed.

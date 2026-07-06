@@ -26,7 +26,7 @@
       </h1>
       <p style="color:#888; font-size:11px; margin:4px 0 0">
         @if($locale === 'nl')Periode:@else Period:@endif
-        {{ $data['date_from'] }} @if($locale === 'nl')t/m@else to@endif {{ $data['date_to'] }}
+        {{ $data['date_from'] }} @if($locale === 'nl')t/m @else to @endif {{ $data['date_to'] }}
         &nbsp;|&nbsp;
         @if($locale === 'nl')Gegenereerd op:@else Generated:@endif
         {{ now()->setTimezone('America/Paramaribo')->format('d-m-Y H:i') }} AST
