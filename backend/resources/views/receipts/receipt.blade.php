@@ -158,8 +158,8 @@
   </tr>
   @endif
   @endif
-  {{-- Phase 2 — bank_transfer / mobile_transfer / foreign_cash --}}
-  @if(in_array($sale['payment_method'], ['bank_transfer', 'mobile_transfer']) && !empty($sale['payment_provider']))
+  {{-- Phase 2/3 — bank_transfer / mobile_transfer / qr_payment / foreign_cash --}}
+  @if(in_array($sale['payment_method'], ['bank_transfer', 'mobile_transfer', 'qr_payment']) && !empty($sale['payment_provider']))
   <tr>
     <td class="label">{{ $t['paid_via'] ?? 'Paid via' }}</td>
     <td class="right">{{ $sale['payment_provider'] }}</td>

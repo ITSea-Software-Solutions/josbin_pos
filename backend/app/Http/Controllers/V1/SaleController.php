@@ -42,7 +42,19 @@ class SaleController extends Controller
         $data = $request->validate([
             'sale_ref'           => ['required', 'string', 'max:100'],
             'occurred_at'        => ['required', 'date'],
-            'payment_method'     => ['required', Rule::in(['cash', 'card', 'mixed'])],
+            // Full Suriname method list — cash/card/mixed plus bank_transfer,
+            // mobile_transfer, foreign_cash and qr_payment (Mopé / Uni5Pay+),
+            // so third-party POS systems report the same breakdown the native
+            // POS produces and BTW/Z-reports stay comparable across sources.
+            'payment_method'     => ['required', Rule::in(Sale::PAYMENT_METHODS)],
+            // Optional payment detail — provider/wallet name + transaction
+            // reference feed the per-provider reconciliation reports. Unlike
+            // the native POS we don't hard-require them: the external system
+            // already completed the payment and is the system of record.
+            'payment_provider'   => ['nullable', 'string', 'max:64'],
+            'payment_reference'  => ['nullable', 'string', 'max:64'],
+            'foreign_currency'   => ['nullable', 'string', 'size:3', Rule::in(['USD', 'EUR'])],
+            'foreign_amount'     => ['nullable', 'numeric', 'min:0'],
             'items'              => ['required', 'array', 'min:1'],
             'items.*.product_name' => ['required', 'string', 'max:200'],
             'items.*.unit_price' => ['required', 'numeric', 'min:0'],
@@ -110,11 +122,31 @@ class SaleController extends Controller
                 ];
             }
 
+            // Provider fields only persist on methods that use them —
+            // mirrors the native POS controller's forgiving-fields pattern.
+            $usesProvider = in_array($data['payment_method'], [
+                Sale::PM_BANK_TRANSFER, Sale::PM_MOBILE_TRANSFER, Sale::PM_QR_PAYMENT,
+            ], true);
+            $isForeign = $data['payment_method'] === Sale::PM_FOREIGN_CASH;
+
             $sale = Sale::create([
                 'store_id'           => $store->id,
                 'cashier_id'         => null, // external POS — no cashier
                 'sale_number'        => Sale::nextNumber($store->id),
                 'payment_method'     => $data['payment_method'],
+                'payment_provider'   => $usesProvider ? ($data['payment_provider'] ?? null) : null,
+                'payment_reference'  => $usesProvider ? ($data['payment_reference'] ?? null) : null,
+                'foreign_currency'   => $isForeign ? ($data['foreign_currency'] ?? null) : null,
+                'foreign_amount'     => $isForeign ? ($data['foreign_amount'] ?? null) : null,
+                // USD only — daily_rates has no EUR rate; stamping the USD
+                // rate onto a EUR sale would bake wrong audit data in.
+                'foreign_rate_used'  => ($isForeign && ($data['foreign_currency'] ?? null) === 'USD') ? ($rate?->usd_to_srd ?? null) : null,
+                // API-sourced sales are asserted complete by the external
+                // system (it already took the payment at its own till), so
+                // pending-type methods arrive pre-confirmed — they must NOT
+                // clutter the OA confirmation queue for transfers the OA has
+                // no way to verify.
+                'payment_confirmed_at' => in_array($data['payment_method'], Sale::PM_PENDING_CONFIRMATION, true) ? now() : null,
                 'subtotal_srd'       => $subtotal,
                 'discount_srd'       => $totalDisc,
                 'btw_srd'            => $totalBtw,

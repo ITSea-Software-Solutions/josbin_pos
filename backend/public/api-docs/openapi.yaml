@@ -259,8 +259,31 @@ components:
           example: "2026-04-13T14:35:00-03:00"
         payment_method:
           type: string
-          enum: [cash, card, mixed]
-          description: Primary payment method.
+          enum: [cash, card, mixed, bank_transfer, mobile_transfer, foreign_cash, qr_payment]
+          description: >-
+            Primary payment method. Pending-type methods (bank_transfer,
+            mobile_transfer, qr_payment — e.g. Mopé / Uni5Pay+) submitted via
+            this API are recorded as already confirmed: the external system is
+            the system of record for its own till.
+        payment_provider:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Bank / app / wallet name (e.g. DSB, Mopé, Uni5Pay+). Persisted for bank_transfer, mobile_transfer and qr_payment; ignored otherwise.
+        payment_reference:
+          type: string
+          maxLength: 64
+          nullable: true
+          description: Sender reference / wallet transaction ID, used in per-provider reconciliation reports.
+        foreign_currency:
+          type: string
+          enum: [USD, EUR]
+          nullable: true
+          description: Currency for foreign_cash sales.
+        foreign_amount:
+          type: number
+          nullable: true
+          description: Amount in the foreign currency for foreign_cash sales.
         items:
           type: array
           minItems: 1
@@ -324,7 +347,7 @@ components:
           format: date-time
         payment_method:
           type: string
-          enum: [cash, card, mixed]
+          enum: [cash, card, mixed, bank_transfer, mobile_transfer, foreign_cash, qr_payment]
         subtotal_srd:
           type: string
           description: Total before discounts, as a decimal string. SRD.

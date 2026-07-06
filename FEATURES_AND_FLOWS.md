@@ -161,7 +161,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | POS-13c | `mobile_transfer` payment method (DSB Mobiel, Hakrinbank Online, etc.) | ✅ | Cashier | `PaymentModal.tsx` mobile_transfer step | task #78 |
 | POS-13d | `foreign_cash` payment method (USD/EUR with locked daily rate) | ✅ | Cashier | `PaymentModal.tsx` foreign_cash step | task #78 |
 | POS-13e | Pending-payments queue + OA confirmation flow (with audit log) | ✅ | OA, SA | `PendingPaymentsScreen.tsx` + `SaleController::confirmPayment` | task #78 |
-| POS-13f | `qr_payment` scaffolding — enum + qr_payload column + lifecycle | 🟡 | Backend only | `Sale::PM_QR_PAYMENT`, migration 060001 | task #79; POS UI pending real PSP |
+| POS-13f | QR-wallet payments (Mopé / Uni5Pay+) — POS step + instant till-confirmation + full reporting | ✅ | Cashier | `PaymentModal.tsx` qr_payment step; `Api/SaleController` `payment_confirmed`; receipts/Z/exports/OpenAPI | 2026-07-06: cashier attests wallet's "payment received" → confirmed at sale; unticked → OA pending queue. V1 API accepts all 7 methods (pre-confirmed). |
 | POS-13g | QR webhook endpoint stub (HMAC-ready, feature-flagged off) | 🟡 | PSP partners | `QrPaymentWebhookController` + `qr_webhooks_enabled` config | task #79; activates once a Surinamese PSP integrates |
 | POS-14 | ESC/POS thermal receipt print | ✅ | Cashier | `lib/escpos.ts`, `lib/hardware.ts` | `user_manual/06 §6.2` |
 | POS-15 | Cash drawer pulse on cash sale | ✅ | Cashier | `lib/escpos.ts::openCashDrawer` | README §printer-cash-drawer |
@@ -616,6 +616,8 @@ Anything 🟡 in the inventory above is a candidate for a future task — explic
 ---
 
 ## §11 Changelog — every edit, dated
+
+- **2026-07-06** — QR-wallet payments (Mopé / Uni5Pay+) shipped end-to-end: POS top-level 🔳 step (wallet chips, optional TX-ID, 'payment received' attestation → instant confirm; unticked → OA pending queue), V1 API extended to all 7 methods (pre-confirmed, provider fields, OpenAPI json+yaml updated), thermal/PDF/email receipts label all methods + print wallet/ref, Z-Report now persists mixed/transfer/foreign/QR totals (new migration), consolidated + store PDF exports and all breakdown UIs show every method (non-zero gate incl. refund-negatives), refunds blocked on unconfirmed payments + refund rows stamped confirmed, session-report cross-org read closed, EUR foreign-cash no longer stamps the USD rate. DemoSeeder deals ~1-in-6 QR sales.
 
 - **2026-05-26** — Document created. Triggered by user: *"so you creating any file or what now for our features and flows and all"*. Initial inventory of 100+ features across 11 areas (auth, org/user, licence, catalogue, POS register/sales, reports, sync, API, AI, audit, settings) + 7 critical flows + 5 feature deep-dives + roles matrix + code map. Companion to `CLAUDE_WORKING_GUIDE.md` (engineering discipline) and `CLAUDE.md` (spec).
 - **2026-05-26** — Added SET-08 (vendor contact in central config + `useVendor` hook). Triggered by user calling the licence-missing banner copy impractical: *"send a request to support, this you think practical? mention Josbin our org name"*. Companion lesson logged as G-014 in `CLAUDE_WORKING_GUIDE.md`.

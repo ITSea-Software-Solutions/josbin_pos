@@ -71,6 +71,13 @@ class SaleController extends Controller
             // we don't parse it (provider-specific format) but store it for
             // future webhook matching.
             'qr_payload'          => ['nullable', 'string', 'max:1024'],
+            // QR wallets (Mopé / Uni5Pay+) confirm on the merchant device at
+            // the counter — unlike a bank transfer there's nothing to wait
+            // for. When the cashier saw the wallet's "payment received"
+            // notification they send true and we stamp the confirmation
+            // immediately; when omitted/false the sale lands in the normal
+            // pending queue for OA confirmation (delayed notification case).
+            'payment_confirmed'   => ['sometimes', 'boolean'],
             'sale_discount_srd'   => ['nullable', 'numeric', 'min:0'],
             'sale_discount_pct'   => ['nullable', 'numeric', 'min:0', 'max:100'],
             'source'              => ['sometimes', Rule::in(['pos', 'api', 'import'])],
@@ -276,10 +283,17 @@ class SaleController extends Controller
                 'payment_sender_name' => in_array($data['payment_method'], [\App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER], true) ? ($data['payment_sender_name'] ?? null) : null,
                 'foreign_currency'    => $data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH ? ($data['foreign_currency'] ?? null) : null,
                 'foreign_amount'      => $data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH ? ($data['foreign_amount'] ?? null) : null,
-                // Foreign cash locks the day's rate at sale time — same rate
-                // we already pull for the SRD column on every receipt.
-                'foreign_rate_used'   => $data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH ? $rate->usd_to_srd : null,
+                // Foreign cash locks the day's rate at sale time — USD only:
+                // daily_rates carries no EUR rate, and stamping the USD rate
+                // onto a EUR sale would bake wrong audit data into the record.
+                'foreign_rate_used'   => ($data['payment_method'] === \App\Models\Sale::PM_FOREIGN_CASH && ($data['foreign_currency'] ?? null) === 'USD') ? $rate->usd_to_srd : null,
                 'qr_payload'          => $data['payment_method'] === \App\Models\Sale::PM_QR_PAYMENT ? ($data['qr_payload'] ?? null) : null,
+                // Instant wallet confirmation: QR wallets notify the merchant
+                // device in real time, so the cashier can attest receipt at
+                // the till. Only honoured for qr_payment — bank/mobile
+                // transfers always go through the OA confirmation flow.
+                'payment_confirmed_at' => ($data['payment_method'] === \App\Models\Sale::PM_QR_PAYMENT && ($data['payment_confirmed'] ?? false)) ? now() : null,
+                'payment_confirmed_by' => ($data['payment_method'] === \App\Models\Sale::PM_QR_PAYMENT && ($data['payment_confirmed'] ?? false)) ? $request->user()->id : null,
                 'change_srd'          => $changeDue,
                 'status'              => 'completed',
                 'source'              => $data['source'] ?? 'pos',
@@ -587,6 +601,12 @@ class SaleController extends Controller
             return response()->json(['message' => __('errors.refund_only_completed')], 422);
         }
 
+        // Never refund money that was never confirmed in: an unconfirmed
+        // transfer/QR sale is still awaiting the OA's "funds landed" check.
+        if ($sale->isAwaitingPaymentConfirmation()) {
+            return response()->json(['message' => __('errors.refund_unconfirmed_payment')], 422);
+        }
+
         $data = $request->validate([
             'reason'         => ['required', 'string', 'min:5', 'max:500'],
             'items'          => ['required', 'array', 'min:1'],
@@ -641,6 +661,15 @@ class SaleController extends Controller
                 'btw_srd'            => '-' . $refundBtw,
                 'total_srd'          => '-' . $refundTotal,
                 'payment_method'     => $sale->payment_method,
+                // Carry the provider so per-wallet/bank reconciliation nets
+                // refunds against the original method, and stamp pending-type
+                // refunds confirmed — a refund is money OUT, there is nothing
+                // for the OA to "confirm landed", and an unstamped row would
+                // resurface in the pending-payments queue as noise.
+                'payment_provider'   => $sale->payment_provider,
+                'payment_reference'  => $sale->payment_reference,
+                'payment_confirmed_at' => in_array($sale->payment_method, Sale::PM_PENDING_CONFIRMATION, true) ? now() : null,
+                'payment_confirmed_by' => in_array($sale->payment_method, Sale::PM_PENDING_CONFIRMATION, true) ? $request->user()->id : null,
                 'status'             => 'completed',
                 'source'             => $sale->source,
                 'exchange_rate_used' => $sale->exchange_rate_used,
@@ -683,7 +712,7 @@ class SaleController extends Controller
 
         $data = $request->validate([
             'store_id'             => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg],
-            'payment_method'       => ['required', Rule::in([\App\Models\Sale::PM_CASH, \App\Models\Sale::PM_CARD, \App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER])],
+            'payment_method'       => ['required', Rule::in([\App\Models\Sale::PM_CASH, \App\Models\Sale::PM_CARD, \App\Models\Sale::PM_BANK_TRANSFER, \App\Models\Sale::PM_MOBILE_TRANSFER, \App\Models\Sale::PM_QR_PAYMENT])],
             'reason'               => ['required', 'string', 'min:5', 'max:500'],
             'customer_id'          => ['nullable', 'uuid', new \App\Rules\CustomerBelongsToOrg],
             'items'                => ['required', 'array', 'min:1'],
@@ -747,6 +776,10 @@ class SaleController extends Controller
                 'btw_srd'             => '-' . $btwTotal,
                 'total_srd'           => '-' . $subtotal,
                 'payment_method'      => $data['payment_method'],
+                // Money OUT — pending-type methods must not land in the OA
+                // "confirm funds arrived" queue, so stamp them immediately.
+                'payment_confirmed_at' => in_array($data['payment_method'], \App\Models\Sale::PM_PENDING_CONFIRMATION, true) ? now() : null,
+                'payment_confirmed_by' => in_array($data['payment_method'], \App\Models\Sale::PM_PENDING_CONFIRMATION, true) ? $request->user()->id : null,
                 'status'              => 'completed',
                 'source'              => 'pos',
                 'exchange_rate_used'  => $rate->usd_to_srd,

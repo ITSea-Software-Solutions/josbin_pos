@@ -406,11 +406,17 @@ class DemoSeeder extends Seeder
         }
 
         $cart = $this->btw->calculateCart($cartItems);
-        $paymentMethod = ['cash','cash','cash','card','mixed'][random_int(0, 4)];
-        $cashTendered  = $paymentMethod === 'card' ? null : bcadd((string) $cart['total'], '0', 2);
-        $cardAmount    = $paymentMethod === 'cash' ? null : ($paymentMethod === 'card' ? (string) $cart['total'] : (string) bcdiv((string) $cart['total'], '2', 2));
+        // ~1 in 6 demo sales pays by QR wallet (Mopé / Uni5Pay+) — mirrors how
+        // common scan-to-pay is at Paramaribo supermarkets and fills the new
+        // wallet rows on reports/dashboards with realistic data.
+        $paymentMethod = ['cash','cash','cash','card','mixed','qr_payment'][random_int(0, 5)];
+        $isQr          = $paymentMethod === 'qr_payment';
+        $cashTendered  = in_array($paymentMethod, ['cash', 'mixed'], true) ? bcadd((string) $cart['total'], '0', 2) : null;
+        $cardAmount    = $paymentMethod === 'card' ? (string) $cart['total'] : ($paymentMethod === 'mixed' ? (string) bcdiv((string) $cart['total'], '2', 2) : null);
+        $walletProvider  = $isQr ? (random_int(1, 10) <= 7 ? 'Mopé' : 'Uni5Pay+') : null;
+        $walletReference = $isQr ? sprintf('%s-2026-%06d', $walletProvider === 'Mopé' ? 'MP' : 'U5', random_int(1, 999999)) : null;
 
-        return DB::transaction(function () use ($store, $cashier, $session, $cart, $cartItems, $paymentMethod, $cashTendered, $cardAmount, $customer, $occurredAt) {
+        return DB::transaction(function () use ($store, $cashier, $session, $cart, $cartItems, $paymentMethod, $cashTendered, $cardAmount, $customer, $occurredAt, $isQr, $walletProvider, $walletReference) {
             $sale = Sale::create([
                 'store_id'            => $store->id,
                 'cashier_id'          => $cashier->id,
@@ -422,6 +428,12 @@ class DemoSeeder extends Seeder
                 'btw_srd'             => $cart['btw_total'],
                 'total_srd'           => $cart['total'],
                 'payment_method'      => $paymentMethod,
+                'payment_provider'    => $walletProvider,
+                'payment_reference'   => $walletReference,
+                // Demo QR sales are confirmed at the till, like real wallet
+                // payments — keeps the OA pending queue clean in the demo.
+                'payment_confirmed_at' => $isQr ? $occurredAt : null,
+                'payment_confirmed_by' => $isQr ? $cashier->id : null,
                 'cash_received_srd'   => $cashTendered,
                 'card_amount_srd'     => $cardAmount,
                 'change_srd'          => '0.00',

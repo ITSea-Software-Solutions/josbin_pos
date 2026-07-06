@@ -24,6 +24,10 @@ export interface ReportSummary {
   cash_total_srd: string
   card_total_srd: string
   mixed_total_srd: string
+  bank_transfer_total_srd?: string
+  mobile_transfer_total_srd?: string
+  foreign_cash_total_srd?: string
+  qr_payment_total_srd?: string
   btw_breakdown: BtwBreakdownLine[]
   top_products: TopProduct[]
   type?: string

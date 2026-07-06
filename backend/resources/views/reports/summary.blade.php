@@ -23,6 +23,10 @@
   @if($locale === 'nl')Gegenereerd op:@else Generated:@endif {{ now()->setTimezone('America/Paramaribo')->format('d-m-Y H:i') }} AST
 </p>
 
+{{-- Keys below match ReportController::buildRangeSummary exactly — the
+     original draft of this blade read total_sales / payment_breakdown /
+     top_5_products, none of which the builder ever produced, so the export
+     rendered blanks. Fixed alongside the qr-wallet release. --}}
 <h2>@if($locale === 'nl')Samenvatting @else Summary @endif</h2>
 <table>
   <tr>
@@ -31,35 +35,48 @@
   </tr>
   <tr>
     <td>@if($locale === 'nl')Geannuleerd @else Voided @endif</td>
-    <td class="right">{{ $data['void_count'] }}</td>
+    <td class="right">{{ $data['void_count'] ?? 0 }}</td>
   </tr>
   <tr>
     <td>@if($locale === 'nl')Gemiddeld kassabon @else Avg basket @endif</td>
-    <td class="right">SRD {{ $data['avg_basket'] }}</td>
+    <td class="right">SRD {{ $data['avg_basket_srd'] }}</td>
   </tr>
   <tr>
     <td>@if($locale === 'nl')Totale korting @else Total discounts @endif</td>
-    <td class="right">SRD {{ $data['total_discounts'] }}</td>
+    <td class="right">SRD {{ $data['total_discount_srd'] }}</td>
   </tr>
   <tr>
     <td>@if($locale === 'nl')Totaal BTW @else Total VAT @endif</td>
-    <td class="right">SRD {{ $data['total_btw'] }}</td>
+    <td class="right">SRD {{ $data['total_btw_srd'] }}</td>
   </tr>
   <tr class="total">
     <td>@if($locale === 'nl')TOTALE OMZET @else TOTAL REVENUE @endif</td>
-    <td class="right">SRD {{ $data['total_sales'] }}</td>
+    <td class="right">SRD {{ $data['total_sales_srd'] }}</td>
   </tr>
 </table>
 
 <h2>@if($locale === 'nl')Betaalmethode @else Payment methods @endif</h2>
 <table>
   <tr><th>@if($locale === 'nl')Methode @else Method @endif</th><th class="right">SRD</th></tr>
-  <tr><td>@if($locale === 'nl')Contant @else Cash @endif</td><td class="right">{{ $data['payment_breakdown']['cash'] }}</td></tr>
-  <tr><td>@if($locale === 'nl')Pin/Kaart @else Card/PIN @endif</td><td class="right">{{ $data['payment_breakdown']['card'] }}</td></tr>
-  <tr><td>@if($locale === 'nl')Gemengd @else Mixed @endif</td><td class="right">{{ $data['payment_breakdown']['mixed'] }}</td></tr>
+  <tr><td>@if($locale === 'nl')Contant @else Cash @endif</td><td class="right">{{ $data['cash_total_srd'] }}</td></tr>
+  <tr><td>@if($locale === 'nl')Pin/Kaart @else Card/PIN @endif</td><td class="right">{{ $data['card_total_srd'] }}</td></tr>
+  <tr><td>@if($locale === 'nl')Gemengd @else Mixed @endif</td><td class="right">{{ $data['mixed_total_srd'] }}</td></tr>
+  {{-- Phase 2/3 methods — only when used (non-zero incl. refund-negative). --}}
+  @if((float) ($data['bank_transfer_total_srd'] ?? 0) != 0.0)
+  <tr><td>@if($locale === 'nl')Overschrijving @else Bank transfer @endif</td><td class="right">{{ $data['bank_transfer_total_srd'] }}</td></tr>
+  @endif
+  @if((float) ($data['mobile_transfer_total_srd'] ?? 0) != 0.0)
+  <tr><td>@if($locale === 'nl')Mobiel bankieren @else Mobile banking @endif</td><td class="right">{{ $data['mobile_transfer_total_srd'] }}</td></tr>
+  @endif
+  @if((float) ($data['foreign_cash_total_srd'] ?? 0) != 0.0)
+  <tr><td>@if($locale === 'nl')Vreemde valuta @else Foreign cash @endif</td><td class="right">{{ $data['foreign_cash_total_srd'] }}</td></tr>
+  @endif
+  @if((float) ($data['qr_payment_total_srd'] ?? 0) != 0.0)
+  <tr><td>@if($locale === 'nl')QR-wallet (Mopé / Uni5Pay+) @else QR wallet (Mopé / Uni5Pay+) @endif</td><td class="right">{{ $data['qr_payment_total_srd'] }}</td></tr>
+  @endif
 </table>
 
-@if(!empty($data['top_5_products']))
+@if(!empty($data['top_products']))
 <h2>@if($locale === 'nl')Top 5 producten @else Top 5 products @endif</h2>
 <table>
   <tr>
@@ -67,11 +84,11 @@
     <th class="right">@if($locale === 'nl')Stuks @else Units @endif</th>
     <th class="right">@if($locale === 'nl')Omzet @else Revenue @endif</th>
   </tr>
-  @foreach($data['top_5_products'] as $p)
+  @foreach($data['top_products'] as $p)
   <tr>
-    <td>{{ $p->name ?? $p['name'] }}</td>
-    <td class="right">{{ number_format($p->qty ?? $p['qty'], 1) }}</td>
-    <td class="right">SRD {{ number_format($p->revenue ?? $p['revenue'], 2) }}</td>
+    <td>{{ $p['product_name'] }}</td>
+    <td class="right">{{ number_format((float) $p['quantity'], 1) }}</td>
+    <td class="right">SRD {{ number_format((float) $p['revenue_srd'], 2) }}</td>
   </tr>
   @endforeach
 </table>

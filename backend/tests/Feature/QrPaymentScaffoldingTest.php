@@ -123,6 +123,85 @@ class QrPaymentScaffoldingTest extends TestCase
         $this->assertContains('qr_payment', $methods->toArray());
     }
 
+    public function test_qr_payment_confirmed_at_sale_when_cashier_attests(): void
+    {
+        // Mopé / Uni5Pay+ notify the merchant device instantly at the till.
+        // payment_confirmed=true = cashier saw "payment received" → the sale
+        // completes confirmed and skips the OA pending queue.
+        $resp = $this->actingAs($this->cashier, 'sanctum')->postJson('/api/sales', $this->payload([
+            'payment_provider'  => 'Mopé',
+            'payment_reference' => 'MP-2026-000123',
+            'payment_confirmed' => true,
+        ]));
+        $resp->assertCreated();
+        $resp->assertJsonPath('data.payment_method', 'qr_payment');
+        $resp->assertJsonPath('data.payment_provider', 'Mopé');
+
+        $sale = Sale::find($resp->json('data.id'));
+        $this->assertNotNull($sale->payment_confirmed_at);
+        $this->assertSame($this->cashier->id, $sale->payment_confirmed_by);
+        $this->assertFalse($sale->isAwaitingPaymentConfirmation());
+
+        // ...and therefore it must NOT appear in the OA pending queue.
+        $queue = $this->actingAs($this->oa, 'sanctum')->getJson('/api/sales/pending-payments');
+        $queue->assertOk();
+        $this->assertNotContains($sale->id, collect($queue->json('data'))->pluck('id')->toArray());
+    }
+
+    public function test_payment_confirmed_flag_is_ignored_for_bank_transfer(): void
+    {
+        // Instant confirmation is a QR-wallet property. A bank transfer takes
+        // hours/days to land, so the flag must not bypass the OA flow.
+        $resp = $this->actingAs($this->cashier, 'sanctum')->postJson('/api/sales', $this->payload([
+            'payment_method'    => 'bank_transfer',
+            'payment_provider'  => 'DSB',
+            'payment_reference' => 'REF-1',
+            'payment_confirmed' => true,
+        ]));
+        $resp->assertCreated();
+        $sale = Sale::find($resp->json('data.id'));
+        $this->assertNull($sale->payment_confirmed_at);
+        $this->assertTrue($sale->isAwaitingPaymentConfirmation());
+    }
+
+    public function test_refund_is_blocked_while_payment_unconfirmed(): void
+    {
+        // Money must never leave the drawer for funds that were never
+        // confirmed in — unconfirmed QR/transfer sales can't be refunded.
+        $resp = $this->actingAs($this->cashier, 'sanctum')->postJson('/api/sales', $this->payload([
+            'payment_provider' => 'Mopé', 'payment_reference' => 'MP-R1',
+        ]));
+        $resp->assertCreated();
+        $saleId = $resp->json('data.id');
+
+        $refund = $this->actingAs($this->oa, 'sanctum')->postJson("/api/sales/{$saleId}/refund", [
+            'reason' => 'klant retour — test',
+            'items'  => [['sale_item_id' => Sale::find($saleId)->items()->first()->id, 'quantity' => 1]],
+        ]);
+        $refund->assertStatus(422);
+    }
+
+    public function test_refund_of_confirmed_qr_sale_does_not_reenter_pending_queue(): void
+    {
+        $resp = $this->actingAs($this->cashier, 'sanctum')->postJson('/api/sales', $this->payload([
+            'payment_provider' => 'Mopé', 'payment_reference' => 'MP-R2', 'payment_confirmed' => true,
+        ]));
+        $resp->assertCreated();
+        $saleId = $resp->json('data.id');
+
+        $refund = $this->actingAs($this->oa, 'sanctum')->postJson("/api/sales/{$saleId}/refund", [
+            'reason' => 'klant retour — test',
+            'items'  => [['sale_item_id' => Sale::find($saleId)->items()->first()->id, 'quantity' => 1]],
+        ]);
+        $refund->assertCreated();
+
+        // The negative refund row must be stamped confirmed — a refund is
+        // money OUT; there is nothing for the OA to "confirm landed".
+        $queue = $this->actingAs($this->oa, 'sanctum')->getJson('/api/sales/pending-payments');
+        $queue->assertOk();
+        $this->assertCount(0, $queue->json('data'));
+    }
+
     public function test_webhook_is_disabled_by_default(): void
     {
         $resp = $this->postJson('/api/qr-payments/webhook', [

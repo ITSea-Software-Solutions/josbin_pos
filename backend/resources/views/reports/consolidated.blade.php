@@ -75,6 +75,32 @@
     <td>@if($locale === 'nl')Gemengd @else Mixed @endif</td>
     <td class="right">{{ $data['payment_breakdown']['mixed'] }}</td>
   </tr>
+  {{-- Phase 2/3 methods — only rendered when used in the period, so legacy
+       three-method reports keep their familiar layout. --}}
+  @if((float) ($data['payment_breakdown']['bank_transfer'] ?? 0) != 0.0)
+  <tr>
+    <td>@if($locale === 'nl')Overschrijving @else Bank transfer @endif</td>
+    <td class="right">{{ $data['payment_breakdown']['bank_transfer'] }}</td>
+  </tr>
+  @endif
+  @if((float) ($data['payment_breakdown']['mobile_transfer'] ?? 0) != 0.0)
+  <tr>
+    <td>@if($locale === 'nl')Mobiel bankieren @else Mobile banking @endif</td>
+    <td class="right">{{ $data['payment_breakdown']['mobile_transfer'] }}</td>
+  </tr>
+  @endif
+  @if((float) ($data['payment_breakdown']['foreign_cash'] ?? 0) != 0.0)
+  <tr>
+    <td>@if($locale === 'nl')Vreemde valuta @else Foreign cash @endif</td>
+    <td class="right">{{ $data['payment_breakdown']['foreign_cash'] }}</td>
+  </tr>
+  @endif
+  @if((float) ($data['payment_breakdown']['qr_payment'] ?? 0) != 0.0)
+  <tr>
+    <td>@if($locale === 'nl')QR-wallet (Mopé / Uni5Pay+) @else QR wallet (Mopé / Uni5Pay+) @endif</td>
+    <td class="right">{{ $data['payment_breakdown']['qr_payment'] }}</td>
+  </tr>
+  @endif
 </table>
 
 {{-- ── Per-store breakdown ── --}}

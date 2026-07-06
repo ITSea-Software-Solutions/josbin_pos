@@ -187,7 +187,11 @@ class DashboardController extends Controller
                 AVG(total_srd) as avg_basket,
                 SUM(CASE WHEN payment_method = \'cash\'  THEN total_srd ELSE 0 END) as cash_total,
                 SUM(CASE WHEN payment_method = \'card\'  THEN total_srd ELSE 0 END) as card_total,
-                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total
+                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total,
+                SUM(CASE WHEN payment_method = \'bank_transfer\'   THEN total_srd ELSE 0 END) as bank_transfer_total,
+                SUM(CASE WHEN payment_method = \'mobile_transfer\' THEN total_srd ELSE 0 END) as mobile_transfer_total,
+                SUM(CASE WHEN payment_method = \'foreign_cash\'    THEN total_srd ELSE 0 END) as foreign_cash_total,
+                SUM(CASE WHEN payment_method = \'qr_payment\'      THEN total_srd ELSE 0 END) as qr_payment_total
             ')
             ->first();
 
@@ -244,6 +248,10 @@ class DashboardController extends Controller
                 'cash'  => number_format((float) ($totals->cash_total ?? 0), 2, '.', ''),
                 'card'  => number_format((float) ($totals->card_total ?? 0), 2, '.', ''),
                 'mixed' => number_format((float) ($totals->mixed_total ?? 0), 2, '.', ''),
+                'bank_transfer'   => number_format((float) ($totals->bank_transfer_total ?? 0), 2, '.', ''),
+                'mobile_transfer' => number_format((float) ($totals->mobile_transfer_total ?? 0), 2, '.', ''),
+                'foreign_cash'    => number_format((float) ($totals->foreign_cash_total ?? 0), 2, '.', ''),
+                'qr_payment'      => number_format((float) ($totals->qr_payment_total ?? 0), 2, '.', ''),
             ],
             'per_store'         => $perStore->values(),
             'top_products'      => $topProducts,
@@ -643,7 +651,11 @@ class DashboardController extends Controller
                 AVG(total_srd) as avg_basket,
                 SUM(CASE WHEN payment_method = \'cash\'  THEN total_srd ELSE 0 END) as cash_total,
                 SUM(CASE WHEN payment_method = \'card\'  THEN total_srd ELSE 0 END) as card_total,
-                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total
+                SUM(CASE WHEN payment_method = \'mixed\' THEN total_srd ELSE 0 END) as mixed_total,
+                SUM(CASE WHEN payment_method = \'bank_transfer\'   THEN total_srd ELSE 0 END) as bank_transfer_total,
+                SUM(CASE WHEN payment_method = \'mobile_transfer\' THEN total_srd ELSE 0 END) as mobile_transfer_total,
+                SUM(CASE WHEN payment_method = \'foreign_cash\'    THEN total_srd ELSE 0 END) as foreign_cash_total,
+                SUM(CASE WHEN payment_method = \'qr_payment\'      THEN total_srd ELSE 0 END) as qr_payment_total
             ')
             ->first();
 
@@ -681,6 +693,10 @@ class DashboardController extends Controller
                 'cash'  => number_format((float) ($totals->cash_total ?? 0), 2, '.', ''),
                 'card'  => number_format((float) ($totals->card_total ?? 0), 2, '.', ''),
                 'mixed' => number_format((float) ($totals->mixed_total ?? 0), 2, '.', ''),
+                'bank_transfer'   => number_format((float) ($totals->bank_transfer_total ?? 0), 2, '.', ''),
+                'mobile_transfer' => number_format((float) ($totals->mobile_transfer_total ?? 0), 2, '.', ''),
+                'foreign_cash'    => number_format((float) ($totals->foreign_cash_total ?? 0), 2, '.', ''),
+                'qr_payment'      => number_format((float) ($totals->qr_payment_total ?? 0), 2, '.', ''),
             ],
             'per_store'         => $perStore->values(),
         ];

@@ -81,6 +81,8 @@ export default function ReceiptModal({
           cashier_name:      sale.cashier_id, // name resolved server-side, fallback to id
           customer_name:     sale.customer?.name,
           payment_method:    sale.payment_method,
+          payment_provider:  sale.payment_provider ?? undefined,
+          payment_reference: sale.payment_reference ?? undefined,
           subtotal_srd:      sale.subtotal_srd,
           discount_srd:      sale.discount_srd,
           total_srd:         sale.total_srd,

@@ -17,6 +17,7 @@ function daysAgo(s: string): number {
 const METHOD_ICON: Record<string, string> = {
   bank_transfer: '🏦',
   mobile_transfer: '📱',
+  qr_payment: '🔳',
 }
 
 // ─── Confirm modal ───────────────────────────────────────────────────────────
@@ -170,7 +171,7 @@ export default function PendingPaymentsScreen() {
                   <tr key={s.id} style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}>
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12.5, color: '#16203a', fontWeight: 600 }}>{s.sale_number}</td>
                     <td style={{ padding: '14px 16px', fontSize: 13 }}>
-                      {METHOD_ICON[s.payment_method] ?? '•'} {s.payment_method === 'bank_transfer' ? (isNl ? 'Overschrijving' : 'Bank transfer') : (isNl ? 'Mobiel' : 'Mobile')}
+                      {METHOD_ICON[s.payment_method] ?? '•'} {s.payment_method === 'bank_transfer' ? (isNl ? 'Overschrijving' : 'Bank transfer') : s.payment_method === 'qr_payment' ? (isNl ? 'QR-wallet' : 'QR wallet') : (isNl ? 'Mobiel' : 'Mobile')}
                     </td>
                     <td style={{ padding: '14px 16px', fontSize: 13, color: '#374151', fontWeight: 600 }}>{s.payment_provider ?? '—'}</td>
                     <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontSize: 12, color: '#374151' }}>{s.payment_reference ?? '—'}</td>

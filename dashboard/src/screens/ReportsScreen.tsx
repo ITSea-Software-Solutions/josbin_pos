@@ -370,7 +370,13 @@ export default function ReportsScreen() {
                 { label: isNl ? 'Contant'    : 'Cash',     value: consolidated.payment_breakdown.cash,  color: '#16a34a' },
                 { label: isNl ? 'PIN/Kaart'  : 'Card/PIN', value: consolidated.payment_breakdown.card,  color: '#2563eb' },
                 { label: isNl ? 'Gemengd'    : 'Mixed',    value: consolidated.payment_breakdown.mixed, color: '#293371' },
-              ].map((p) => (
+                // Phase 2/3 methods — hidden until actually used in the
+                // period so the familiar three-column layout stays clean.
+                { label: isNl ? 'Overschrijving'   : 'Bank transfer',  value: consolidated.payment_breakdown.bank_transfer   ?? '0', color: '#0e7490' },
+                { label: isNl ? 'Mobiel bankieren' : 'Mobile banking', value: consolidated.payment_breakdown.mobile_transfer ?? '0', color: '#7c2d92' },
+                { label: isNl ? 'Vreemde valuta'   : 'Foreign cash',   value: consolidated.payment_breakdown.foreign_cash    ?? '0', color: '#a16207' },
+                { label: isNl ? 'QR-wallet'        : 'QR wallet',      value: consolidated.payment_breakdown.qr_payment      ?? '0', color: '#ef6c00' },
+              ].filter((p, idx) => idx < 3 || parseFloat(p.value) !== 0).map((p) => (
                 <div key={p.label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span style={{ fontSize: 11, color: '#7e88a0', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>{p.label}</span>
                   <span style={{ fontSize: 16, fontWeight: 800, color: p.color }}>{formatSRD(p.value)}</span>

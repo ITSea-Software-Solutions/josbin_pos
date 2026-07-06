@@ -167,6 +167,16 @@ function ReportView({ summary }: { summary: ReportSummary; storeId: string }) {
     { label: t('reports.summary.totalBtw'), value: `SRD ${parseFloat(summary.total_btw_srd).toFixed(2)}`, color: 'var(--color-btw)' },
     { label: t('reports.summary.cashTotal'), value: `SRD ${parseFloat(summary.cash_total_srd).toFixed(2)}`, color: 'var(--text-primary)' },
     { label: t('reports.summary.cardTotal'), value: `SRD ${parseFloat(summary.card_total_srd).toFixed(2)}`, color: 'var(--text-primary)' },
+    // Phase 2/3 methods — only shown when used in the period so the familiar
+    // six-card layout stays uncluttered for cash/card-only stores.
+    ...(parseFloat(summary.bank_transfer_total_srd ?? '0') !== 0
+      ? [{ label: t('reports.summary.bankTransferTotal'), value: `SRD ${parseFloat(summary.bank_transfer_total_srd!).toFixed(2)}`, color: 'var(--text-primary)' }] : []),
+    ...(parseFloat(summary.mobile_transfer_total_srd ?? '0') !== 0
+      ? [{ label: t('reports.summary.mobileTransferTotal'), value: `SRD ${parseFloat(summary.mobile_transfer_total_srd!).toFixed(2)}`, color: 'var(--text-primary)' }] : []),
+    ...(parseFloat(summary.foreign_cash_total_srd ?? '0') !== 0
+      ? [{ label: t('reports.summary.foreignCashTotal'), value: `SRD ${parseFloat(summary.foreign_cash_total_srd!).toFixed(2)}`, color: 'var(--text-primary)' }] : []),
+    ...(parseFloat(summary.qr_payment_total_srd ?? '0') !== 0
+      ? [{ label: t('reports.summary.qrTotal'), value: `SRD ${parseFloat(summary.qr_payment_total_srd!).toFixed(2)}`, color: 'var(--text-primary)' }] : []),
   ]
 
   return (

@@ -91,7 +91,7 @@ export interface Customer {
   visit_count: number
 }
 
-export type PaymentMethod = 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash'
+export type PaymentMethod = 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash' | 'qr_payment'
 export type SaleStatus = 'completed' | 'voided' | 'held'
 
 export interface SaleItem {
@@ -119,6 +119,11 @@ export interface Sale {
   btw_srd: string
   total_srd: string
   payment_method: PaymentMethod
+  // Phase 2/3 detail — wallet/bank name + transaction reference (null on
+  // cash/card sales) and the confirmation stamp for pending-type methods.
+  payment_provider?: string | null
+  payment_reference?: string | null
+  payment_confirmed_at?: string | null
   status: SaleStatus
   source: 'pos' | 'api' | 'import'
   exchange_rate_used: string

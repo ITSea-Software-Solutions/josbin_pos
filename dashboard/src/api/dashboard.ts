@@ -71,7 +71,12 @@ export interface ConsolidatedReport {
   total_btw: string
   total_discounts: string
   avg_basket: string
-  payment_breakdown: { cash: string; card: string; mixed: string }
+  payment_breakdown: {
+    cash: string; card: string; mixed: string
+    // Phase 2/3 Suriname methods — present since the qr-wallet release;
+    // optional so the UI tolerates an older backend during rollout.
+    bank_transfer?: string; mobile_transfer?: string; foreign_cash?: string; qr_payment?: string
+  }
   per_store: Array<{
     store_id: string
     store_name: string

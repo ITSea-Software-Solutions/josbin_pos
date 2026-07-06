@@ -124,6 +124,10 @@ export default function SalesHistoryScreen({ storeId }: Props) {
     if (m === 'cash')  return isNl ? 'Contant' : 'Cash'
     if (m === 'card')  return isNl ? 'Pin/Kaart' : 'Card'
     if (m === 'mixed') return isNl ? 'Gemengd' : 'Mixed'
+    if (m === 'bank_transfer')   return isNl ? 'Overschrijving' : 'Bank transfer'
+    if (m === 'mobile_transfer') return isNl ? 'Mobiel bankieren' : 'Mobile banking'
+    if (m === 'foreign_cash')    return isNl ? 'Vreemde valuta' : 'Foreign cash'
+    if (m === 'qr_payment')      return isNl ? 'QR-wallet' : 'QR wallet'
     return m
   }
 

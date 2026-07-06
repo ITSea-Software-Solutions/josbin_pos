@@ -32,6 +32,7 @@ return [
     'void_requires_second_approval' => 'Void request recorded. Waiting for second approval.',
     'second_approver_must_differ'   => 'The second approval must come from a different user.',
     'refund_only_completed'         => 'Only completed sales can be refunded.',
+    'refund_unconfirmed_payment'    => 'This sale is still awaiting payment confirmation. Confirm the payment first (Dashboard → Pending payments), then refund.',
     'receipt_emailed'               => 'Receipt emailed to :email.',
     'customer_redacted'             => 'Customer personal data has been erased. The record is kept for sales history but no longer contains identifiable information.',
     'missing_btw_number'            => 'This organisation has no BTW registration number on file, so a BTW receipt cannot be issued. Ask your Org Admin to set it in Dashboard → Organisation.',

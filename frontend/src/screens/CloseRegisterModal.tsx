@@ -212,6 +212,18 @@ export default function CloseRegisterModal({ onClose }: Props) {
                     {parseFloat(report.payment_breakdown.mixed) > 0 && (
                       <SRDRow label={isNl ? 'Gemengd' : 'Mixed'} value={report.payment_breakdown.mixed} />
                     )}
+                    {parseFloat(report.payment_breakdown.bank_transfer ?? '0') !== 0 && (
+                      <SRDRow label={isNl ? 'Overschrijving' : 'Bank transfer'} value={report.payment_breakdown.bank_transfer!} />
+                    )}
+                    {parseFloat(report.payment_breakdown.mobile_transfer ?? '0') !== 0 && (
+                      <SRDRow label={isNl ? 'Mobiel bankieren' : 'Mobile banking'} value={report.payment_breakdown.mobile_transfer!} />
+                    )}
+                    {parseFloat(report.payment_breakdown.foreign_cash ?? '0') !== 0 && (
+                      <SRDRow label={isNl ? 'Vreemde valuta' : 'Foreign cash'} value={report.payment_breakdown.foreign_cash!} />
+                    )}
+                    {parseFloat(report.payment_breakdown.qr_payment ?? '0') !== 0 && (
+                      <SRDRow label={isNl ? 'QR-wallet' : 'QR wallet'} value={report.payment_breakdown.qr_payment!} />
+                    )}
                   </div>
 
                   {/* ── Cash drawer math ── */}

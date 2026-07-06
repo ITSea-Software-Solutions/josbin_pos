@@ -129,7 +129,15 @@
       "recordTransfer": "Record transfer",
       "foreignCashHelp": "Customer pays in USD or EUR. We lock today's rate and the receipt shows both amounts.",
       "foreignCurrency": "Currency",
-      "foreignAmount": "Amount in foreign currency"
+      "foreignAmount": "Amount in foreign currency",
+      "qrWallet": "QR wallet (Mopé / Uni5Pay+)",
+      "qrWalletHelp": "Customer scans the store QR code and pays in the wallet app. Complete once 'payment received' appears on the wallet device.",
+      "walletPick": "Wallet",
+      "walletCustomPlaceholder": "Wallet name",
+      "walletReference": "Transaction ID",
+      "walletConfirmed": "Payment received — confirmed on the wallet device",
+      "walletPendingNote": "Not confirmed: the sale is recorded as 'awaiting confirmation' and must be approved by your administrator later.",
+      "recordQr": "Complete QR payment"
     },
     "refund": {
       "title": "Refund Sale",
@@ -267,7 +275,11 @@
       "avgBasket": "Avg. Basket",
       "totalBtw": "Total VAT",
       "cashTotal": "Cash",
-      "cardTotal": "Card / PIN"
+      "cardTotal": "Card / PIN",
+      "bankTransferTotal": "Bank transfer",
+      "mobileTransferTotal": "Mobile banking",
+      "foreignCashTotal": "Foreign cash",
+      "qrTotal": "QR wallet"
     }
   },
   "endOfDay": {

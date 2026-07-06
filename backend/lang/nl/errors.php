@@ -41,6 +41,7 @@ return [
     'void_requires_second_approval' => 'Annuleringsverzoek geregistreerd. Wachten op tweede goedkeuring.',
     'second_approver_must_differ'   => 'De tweede goedkeuring moet door een andere gebruiker worden gegeven.',
     'refund_only_completed'         => 'Alleen voltooide verkopen kunnen worden terugbetaald.',
+    'refund_unconfirmed_payment'    => 'Deze verkoop wacht nog op betalingsbevestiging. Bevestig eerst de betaling (Dashboard → Openstaande betalingen) en betaal daarna terug.',
     'receipt_emailed'               => 'Kassabon verstuurd naar :email.',
     'customer_redacted'             => 'Persoonsgegevens van de klant zijn gewist. Het record blijft bewaard voor de verkoophistorie maar bevat geen identificeerbare gegevens meer.',
     'missing_btw_number'            => 'Deze organisatie heeft geen BTW-nummer geregistreerd, dus er kan geen BTW-bon worden uitgegeven. Vraag de Org Admin om het in te stellen via Dashboard → Organisatie.',

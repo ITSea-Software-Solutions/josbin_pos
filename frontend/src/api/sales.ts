@@ -1,7 +1,7 @@
 import apiClient from './client'
 import type { Sale, HeldBill } from '@/types/models'
 
-export type PaymentMethodSlug = 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash'
+export type PaymentMethodSlug = 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash' | 'qr_payment'
 
 export interface CreateSalePayload {
   store_id: string
@@ -23,6 +23,12 @@ export interface CreateSalePayload {
   payment_sender_name?: string    // optional payer name (B2B / govt)
   foreign_currency?: 'USD' | 'EUR'
   foreign_amount?: number
+  // Phase 3 — QR wallets (Mopé / Uni5Pay+). payment_confirmed=true means the
+  // cashier saw the wallet's "payment received" notification on the merchant
+  // device, so the backend stamps payment_confirmed_at immediately instead of
+  // queueing the sale for OA confirmation.
+  qr_payload?: string
+  payment_confirmed?: boolean
   sale_discount_srd?: number
   sale_discount_pct?: number
   // Client-side idempotency key: send the same value on retries so the backend

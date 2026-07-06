@@ -110,6 +110,8 @@ export interface EscPosReceiptOptions {
     cashier_name: string
     customer_name?: string
     payment_method: string
+    payment_provider?: string
+    payment_reference?: string
     subtotal_srd: string
     discount_srd: string
     total_srd: string
@@ -159,6 +161,11 @@ const TRANSLATIONS = {
     cash:           'Contant',
     card:           'Pin / Kaart',
     mixed:          'Contant + Pin',
+    bank_transfer:  'Overschrijving',
+    mobile_transfer:'Mobiel bankieren',
+    foreign_cash:   'Vreemde valuta',
+    qr_payment:     'QR-wallet',
+    paid_via:       'Betaald via',
     cash_tendered:  'Ontvangen',
     change:         'Wisselgeld',
     exempt:         'vrijgesteld',
@@ -187,6 +194,11 @@ const TRANSLATIONS = {
     cash:           'Cash',
     card:           'Card / PIN',
     mixed:          'Cash + Card',
+    bank_transfer:  'Bank transfer',
+    mobile_transfer:'Mobile banking',
+    foreign_cash:   'Foreign cash',
+    qr_payment:     'QR wallet',
+    paid_via:       'Paid via',
     cash_tendered:  'Tendered',
     change:         'Change',
     exempt:         'exempt',
@@ -285,9 +297,18 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   }
 
   // ── Payment method ────────────────────────────────────────────────────────
-  const pmLabel: Record<string, string> = { cash: t.cash, card: t.card, mixed: t.mixed }
+  const pmLabel: Record<string, string> = {
+    cash: t.cash, card: t.card, mixed: t.mixed,
+    bank_transfer: t.bank_transfer, mobile_transfer: t.mobile_transfer,
+    foreign_cash: t.foreign_cash, qr_payment: t.qr_payment,
+  }
   b.cmd(CMD.ALIGN_CENTER)
   b.line(`${t.payment}: ${pmLabel[sale.payment_method] ?? sale.payment_method}`)
+  // Wallet / transfer detail — which provider and (when captured) which
+  // transaction, so the customer copy carries the reconciliation trail too.
+  if (sale.payment_provider) {
+    b.line(`${t.paid_via}: ${sale.payment_provider}${sale.payment_reference ? ` (${sale.payment_reference})` : ''}`)
+  }
 
   // ── Footer ────────────────────────────────────────────────────────────────
   b.emptyLine()

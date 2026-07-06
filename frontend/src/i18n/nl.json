@@ -129,7 +129,15 @@
       "recordTransfer": "Overschrijving registreren",
       "foreignCashHelp": "Klant betaalt in USD of EUR. Wij vergrendelen de dagkoers en de bon toont beide bedragen.",
       "foreignCurrency": "Valuta",
-      "foreignAmount": "Bedrag in vreemde valuta"
+      "foreignAmount": "Bedrag in vreemde valuta",
+      "qrWallet": "QR-wallet (Mopé / Uni5Pay+)",
+      "qrWalletHelp": "Klant scant de QR-code van de winkel en betaalt in de wallet-app. Zodra 'betaling ontvangen' op het wallet-apparaat verschijnt, rondt u af.",
+      "walletPick": "Wallet",
+      "walletCustomPlaceholder": "Naam wallet",
+      "walletReference": "Transactie-ID",
+      "walletConfirmed": "Betaling ontvangen — bevestigd op het wallet-apparaat",
+      "walletPendingNote": "Niet bevestigd: de verkoop wordt geregistreerd als 'wacht op bevestiging' en moet later door uw beheerder worden goedgekeurd.",
+      "recordQr": "QR-betaling afronden"
     },
     "refund": {
       "title": "Verkoop terugbetalen",
@@ -267,7 +275,11 @@
       "avgBasket": "Gemiddelde bon",
       "totalBtw": "Totale BTW",
       "cashTotal": "Contant",
-      "cardTotal": "Pin/Card"
+      "cardTotal": "Pin/Card",
+      "bankTransferTotal": "Overschrijving",
+      "mobileTransferTotal": "Mobiel bankieren",
+      "foreignCashTotal": "Vreemde valuta",
+      "qrTotal": "QR-wallet"
     }
   },
   "endOfDay": {

@@ -12,6 +12,7 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 | 🏦 **Bank transfer / Overschrijving** | B2B / government — customer transfers to your bank account; OA confirms when funds land | ❌ No (sale marked "awaiting confirmation") |
 | 📱 **Mobile transfer / Mobiel bankieren** | DSB Mobiel, Hakrinbank Online, Republic Mobile, etc. — customer pays via their banking app | ❌ No (same lifecycle as bank transfer) |
 | 💱 **Foreign cash / Vreemde valuta** | Customer pays in USD or EUR — system locks today's rate and shows both amounts on the receipt | ✅ Yes |
+| 🔳 **QR wallet / QR-wallet** | Mopé or Uni5Pay+ — customer scans your store QR and pays in the wallet app; confirmation appears on your wallet device within seconds | ❌ No |
 
 > **About card reconciliation** (the optional fields after Card / PIN): if you fill in the bank name + approval code + last 4 digits from the customer's terminal slip, the OA can match daily card sales against the bank's settlement statement on the dashboard. **Skip & complete / Overslaan & afronden** is fine if the slip isn't out yet — the sale completes either way. Same for bank/mobile transfers — provider + reference are required so OA can find the funds when they land.
 
@@ -133,3 +134,17 @@ Once payment is accepted:
 2. The cash drawer opens (for cash/mixed payments).
 3. The **Receipt screen** opens — see [Chapter 6 — Receipts](06-receipts.md).
 4. Today's totals in the top bar update immediately.
+
+## 5.9 QR wallet payment (Mopé / Uni5Pay+)
+
+QR wallets are the everyday scan-to-pay method in Suriname. The flow at the till:
+
+1. Tap **🔳 QR wallet (Mopé / Uni5Pay+)** on the payment screen.
+2. The customer scans your store's QR code (Mopé sticker / Uni5Pay+ static QR) and pays in their wallet app.
+3. Within seconds, **"payment received"** appears on your wallet device (the store phone/tablet with the merchant app).
+4. Pick the wallet (**Mopé** / **Uni5Pay+** / Other), optionally type the transaction ID from the merchant app, and leave **"Payment received — confirmed on the wallet device"** ticked.
+5. Tap **Complete QR payment** — the sale completes immediately, no cash drawer involved.
+
+> **Notification delayed?** Untick the confirmation box before completing. The sale is then recorded as *awaiting confirmation* and your administrator approves it later from **Dashboard → Pending payments** — same flow as a bank transfer.
+
+> **Daily reconciliation tip for managers:** compare the day's **QR wallet** total on the Z-Report with the wallet's own merchant portal. The optional transaction ID on each sale makes matching individual payments easy.

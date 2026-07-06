@@ -12,6 +12,7 @@ Zodra alle producten in de winkelwagen staan, laat dit hoofdstuk u zien hoe u de
 | 🏦 **Overschrijving** | B2B / overheid — klant maakt over naar uw bankrekening; OA bevestigt wanneer de middelen binnenkomen | ❌ Nee (verkoop gemarkeerd als "wacht op bevestiging") |
 | 📱 **Mobiel bankieren** | DSB Mobiel, Hakrinbank Online, Republic Mobile, enz. — klant betaalt via zijn/haar bank-app | ❌ Nee (zelfde levenscyclus als bankoverschrijving) |
 | 💱 **Vreemde valuta** | Klant betaalt in USD of EUR — systeem vergrendelt de dagkoers en toont beide bedragen op de bon | ✅ Ja |
+| 🔳 **QR-wallet** | Mopé of Uni5Pay+ — klant scant de winkel-QR en betaalt in de wallet-app; de bevestiging verschijnt binnen enkele seconden op uw wallet-apparaat | ❌ Nee |
 
 > **Over pin-reconciliatie** (de optionele velden na Pin): als u de banknaam + goedkeuringscode + laatste 4 cijfers van de slip van de klantterminal invult, kan de OA dagelijkse pin-verkopen koppelen aan het afrekeningsoverzicht van de bank op het dashboard. **Overslaan & afronden** is prima als de slip nog niet uit is — de verkoop wordt sowieso voltooid. Hetzelfde voor bank-/mobiele overschrijvingen — aanbieder + referentie zijn vereist zodat de OA de middelen kan vinden wanneer ze binnenkomen.
 
@@ -133,3 +134,17 @@ Zodra de betaling is geaccepteerd:
 2. De kassalade gaat open (bij contante/gemengde betalingen).
 3. Het **Bonscherm** opent — zie [Hoofdstuk 6 — Bonnen](06-receipts.md).
 4. De dagtotalen in de bovenbalk worden direct bijgewerkt.
+
+## 5.9 QR-wallet-betaling (Mopé / Uni5Pay+)
+
+QR-wallets zijn dé alledaagse scan-en-betaal-methode in Suriname. Zo werkt het aan de kassa:
+
+1. Tik op **🔳 QR-wallet (Mopé / Uni5Pay+)** in het betaalscherm.
+2. De klant scant de QR-code van uw winkel (Mopé-sticker / statische Uni5Pay+-QR) en betaalt in de wallet-app.
+3. Binnen enkele seconden verschijnt **'betaling ontvangen'** op uw wallet-apparaat (de winkeltelefoon/-tablet met de merchant-app).
+4. Kies de wallet (**Mopé** / **Uni5Pay+** / Anders), typ eventueel het transactie-ID uit de merchant-app over, en laat **'Betaling ontvangen — bevestigd op het wallet-apparaat'** aangevinkt.
+5. Tik op **QR-betaling afronden** — de verkoop is direct voltooid, de kassalade blijft dicht.
+
+> **Melding vertraagd?** Vink het bevestigingsvakje uit vóór het afronden. De verkoop wordt dan geregistreerd als *wacht op bevestiging* en uw beheerder keurt hem later goed via **Dashboard → Openstaande betalingen** — dezelfde route als een bankoverschrijving.
+
+> **Dagelijkse afstemtip voor managers:** vergelijk het dagtotaal **QR-wallet** op het Z-rapport met het merchant-portaal van de wallet zelf. Het optionele transactie-ID per verkoop maakt het matchen van individuele betalingen eenvoudig.

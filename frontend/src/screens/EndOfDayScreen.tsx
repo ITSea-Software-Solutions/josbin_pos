@@ -142,6 +142,18 @@ export default function EndOfDayScreen({ storeId }: EndOfDayScreenProps) {
                 { label: t('reports.summary.totalBtw'), value: `SRD ${parseFloat(todaySummary.total_btw_srd).toFixed(2)}`, color: 'var(--color-btw)' },
                 { label: t('reports.summary.cashTotal'), value: `SRD ${expectedCash.toFixed(2)}` },
                 { label: t('reports.summary.cardTotal'), value: `SRD ${parseFloat(todaySummary.card_total_srd).toFixed(2)}` },
+                // Non-drawer methods — shown when used so the method rows
+                // always reconcile with the day's total.
+                ...(parseFloat(todaySummary.mixed_total_srd ?? '0') !== 0
+                  ? [{ label: t('pos.payment.mixed'), value: `SRD ${parseFloat(todaySummary.mixed_total_srd).toFixed(2)}` }] : []),
+                ...(parseFloat(todaySummary.bank_transfer_total_srd ?? '0') !== 0
+                  ? [{ label: t('reports.summary.bankTransferTotal'), value: `SRD ${parseFloat(todaySummary.bank_transfer_total_srd!).toFixed(2)}` }] : []),
+                ...(parseFloat(todaySummary.mobile_transfer_total_srd ?? '0') !== 0
+                  ? [{ label: t('reports.summary.mobileTransferTotal'), value: `SRD ${parseFloat(todaySummary.mobile_transfer_total_srd!).toFixed(2)}` }] : []),
+                ...(parseFloat(todaySummary.foreign_cash_total_srd ?? '0') !== 0
+                  ? [{ label: t('reports.summary.foreignCashTotal'), value: `SRD ${parseFloat(todaySummary.foreign_cash_total_srd!).toFixed(2)}` }] : []),
+                ...(parseFloat(todaySummary.qr_payment_total_srd ?? '0') !== 0
+                  ? [{ label: t('reports.summary.qrTotal'), value: `SRD ${parseFloat(todaySummary.qr_payment_total_srd!).toFixed(2)}` }] : []),
               ].map((row) => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>{row.label}</span>

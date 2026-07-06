@@ -52,7 +52,10 @@ export interface SessionReport {
   /** @deprecated use net_sales */
   total_sales: string
   total_btw: string
-  payment_breakdown: { cash: string; card: string; mixed: string }
+  payment_breakdown: {
+    cash: string; card: string; mixed: string
+    bank_transfer?: string; mobile_transfer?: string; foreign_cash?: string; qr_payment?: string
+  }
   cash_drawer: {
     opening_float: string
     cash_in: string

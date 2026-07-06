@@ -16,7 +16,7 @@ interface PaymentModalProps {
   onSuccess: (saleId: string, cashTendered: number, change: number) => void
 }
 
-type Step = 'method' | 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash'
+type Step = 'method' | 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash' | 'qr_payment'
 
 const NUMPAD = ['7','8','9','4','5','6','1','2','3','','0','.']
 
@@ -55,6 +55,10 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const TRANSFER_BANKS = ['DSB', 'Hakrinbank', 'Finabank', 'RBC', 'Republic', 'Other'] as const
   // Mobile-banking apps used in Suriname; "Other" for emerging providers.
   const MOBILE_APPS = ['DSB Mobiel', 'Hakrinbank Online', 'Finabank App', 'RBC Mobile', 'Republic Mobile', 'Other'] as const
+  // Phase 3 — QR wallets accepted at Suriname supermarkets. Mopé (Hakrinbank)
+  // and Uni5Pay+ (Southern Commercial Bank) both confirm on the merchant
+  // device in real time; "Other" catches new wallets without a release.
+  const WALLETS = ['Mopé', 'Uni5Pay+', 'Other'] as const
 
   // Phase 2 state — kept separate from card state since the workflows differ.
   const [transferProvider,   setTransferProvider]   = useState('')
@@ -66,10 +70,19 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const [mobileReference,  setMobileReference]  = useState('')
   const [foreignCurrency, setForeignCurrency] = useState<'USD' | 'EUR'>('USD')
   const [foreignAmount,   setForeignAmount]   = useState('')
+  // Phase 3 QR wallet state. walletConfirmed defaults to true because the
+  // wallet notifies the merchant device instantly at the counter — the
+  // cashier only unticks it when the notification is delayed, which parks
+  // the sale in the OA confirmation queue instead.
+  const [walletProvider,       setWalletProvider]       = useState('')
+  const [walletProviderCustom, setWalletProviderCustom] = useState('')
+  const [walletReference,      setWalletReference]      = useState('')
+  const [walletConfirmed,      setWalletConfirmed]      = useState(true)
   const [showMore, setShowMore] = useState(false)
 
   const effectiveTransferProvider = transferProvider === 'Other' ? transferProviderCustom.trim() : transferProvider
   const effectiveMobileProvider   = mobileProvider   === 'Other' ? mobileProviderCustom.trim()   : mobileProvider
+  const effectiveWalletProvider   = walletProvider   === 'Other' ? walletProviderCustom.trim()   : walletProvider
 
   // Stable idempotency key for this checkout attempt. Resets whenever the
   // modal is reopened or after a successful sale so the *next* sale gets a
@@ -87,6 +100,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       setTransferProvider(''); setTransferProviderCustom(''); setTransferReference(''); setTransferSenderName('')
       setMobileProvider(''); setMobileProviderCustom(''); setMobileReference('')
       setForeignCurrency('USD'); setForeignAmount('')
+      setWalletProvider(''); setWalletProviderCustom(''); setWalletReference(''); setWalletConfirmed(true)
       setShowMore(false)
     }
   }, [isOpen])
@@ -131,8 +145,12 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     },
     onSuccess: (sale) => {
       qc.invalidateQueries({ queryKey: ['today-summary', storeId] })
-      const tendered = step === 'cash' ? cashTendered : mixedCashAmt
-      const chg = step === 'cash' ? change : Math.max(0, mixedCashAmt - cardAmt)
+      // Only cash and mixed involve physical cash — every other method
+      // (card, transfers, QR wallet, foreign handled separately) must report
+      // zero tendered/change or the confirmation screen invites the cashier
+      // to hand out "change" for a fully-paid wallet sale.
+      const tendered = step === 'cash' ? cashTendered : step === 'mixed' ? mixedCashAmt : 0
+      const chg = step === 'cash' ? change : step === 'mixed' ? Math.max(0, mixedCashAmt - cardAmt) : 0
 
       // Auto-open cash drawer on cash or mixed payment
       if ((step === 'cash' || step === 'mixed') && printer.type !== 'none') {
@@ -153,12 +171,15 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     // NONE of the reconciliation fields even if the cashier started typing.
     const isCardSide = (method === 'card' || method === 'mixed') && !skipRecon
     const isTransfer = method === 'bank_transfer' || method === 'mobile_transfer'
+    const isQr = method === 'qr_payment'
     const transferProviderForMethod = method === 'bank_transfer'
       ? effectiveTransferProvider
-      : method === 'mobile_transfer' ? effectiveMobileProvider : ''
+      : method === 'mobile_transfer' ? effectiveMobileProvider
+      : isQr ? effectiveWalletProvider : ''
     const transferReferenceForMethod = method === 'bank_transfer'
       ? transferReference
-      : method === 'mobile_transfer' ? mobileReference : ''
+      : method === 'mobile_transfer' ? mobileReference
+      : isQr ? walletReference : ''
     return {
       store_id: storeId,
       customer_id: customer?.id ?? null,
@@ -172,12 +193,16 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       card_approval_code: isCardSide && cardApproval    ? cardApproval    : undefined,
       card_terminal_ref:  isCardSide && cardTerminalRef ? cardTerminalRef : undefined,
       card_last_four:     isCardSide && cardLastFour    ? cardLastFour    : undefined,
-      // Phase 2 transfer/foreign fields. Backend nulls them when method doesn't match.
-      payment_provider:    isTransfer ? transferProviderForMethod || undefined : undefined,
-      payment_reference:   isTransfer ? transferReferenceForMethod || undefined : undefined,
+      // Phase 2/3 transfer/wallet/foreign fields. Backend nulls them when method doesn't match.
+      payment_provider:    (isTransfer || isQr) ? transferProviderForMethod || undefined : undefined,
+      payment_reference:   (isTransfer || isQr) ? transferReferenceForMethod.trim() || undefined : undefined,
       payment_sender_name: method === 'bank_transfer' && transferSenderName ? transferSenderName : undefined,
       foreign_currency:    method === 'foreign_cash' ? foreignCurrency : undefined,
       foreign_amount:      method === 'foreign_cash' && foreignAmount ? parseFloat(foreignAmount) : undefined,
+      // QR wallets confirm on the merchant device at the till — when the
+      // cashier attests receipt the backend stamps the confirmation instead
+      // of parking the sale in the OA pending queue.
+      payment_confirmed:   isQr ? walletConfirmed : undefined,
       sale_discount_srd: saleDiscount.type === 'fixed' && saleDiscount.value > 0 ? saleDiscount.value : undefined,
       sale_discount_pct: saleDiscount.type === 'percent' && saleDiscount.value > 0 ? saleDiscount.value : undefined,
       items: items.map((i) => ({
@@ -245,6 +270,9 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               // through if the bank slip isn't out yet.
               { key: 'card', label: t('pos.payment.card'), icon: '💳', action: () => setStep('card') },
               { key: 'mixed', label: t('pos.payment.mixed'), icon: '🔀', action: () => { setCardAmount(''); setStep('mixed') } },
+              // QR wallets (Mopé / Uni5Pay+) are an everyday till method at
+              // Suriname supermarkets — top-level, not behind the expander.
+              { key: 'qr_payment', label: t('pos.payment.qrWallet'), icon: '🔳', action: () => setStep('qr_payment') },
             ].concat(showMore ? [
               { key: 'bank_transfer',   label: t('pos.payment.bankTransfer'),   icon: '🏦', action: () => setStep('bank_transfer') },
               { key: 'mobile_transfer', label: t('pos.payment.mobileTransfer'), icon: '📱', action: () => setStep('mobile_transfer') },
@@ -530,6 +558,87 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               opacity: (isProcessing || !effectiveMobileProvider || !mobileReference.trim()) ? 0.5 : 1,
             }}>
             {isProcessing ? t('pos.payment.processing') : `✓ ${t('pos.payment.recordTransfer')}`}
+          </button>
+        </div>
+      )}
+
+      {step === 'qr_payment' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <button onClick={() => setStep('method')} style={{ alignSelf: 'flex-start', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 'var(--font-size-sm)' }}>← {t('app.back')}</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 14px', background: 'var(--bg-elevated)', borderRadius: 'var(--border-radius)' }}>
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>🔳 {t('pos.payment.qrWallet')}</span>
+            <span className="currency-srd" style={{ fontSize: 24, fontWeight: 800, color: 'var(--color-total)' }}>SRD {totals.total}</span>
+          </div>
+
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: 0 }}>
+            {t('pos.payment.qrWalletHelp')}
+          </p>
+
+          {/* Wallet picker — big touch chips, not a dropdown: two wallets
+              cover the whole market so chips are one tap instead of three. */}
+          <div>
+            <label style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>{t('pos.payment.walletPick')} *</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {WALLETS.map((w) => (
+                <button key={w} onClick={() => setWalletProvider(w)}
+                  style={{
+                    flex: 1, height: 44, borderRadius: 'var(--border-radius)',
+                    border: `2px solid ${walletProvider === w ? 'var(--color-primary)' : 'var(--border-color)'}`,
+                    background: walletProvider === w ? 'var(--color-primary)' : 'var(--bg-elevated)',
+                    color: walletProvider === w ? '#fff' : 'var(--text-primary)',
+                    cursor: 'pointer', fontWeight: 700, fontSize: 'var(--font-size-sm)',
+                  }}>
+                  {w === 'Other' ? t('pos.payment.cardBankOther') : w}
+                </button>
+              ))}
+            </div>
+            {walletProvider === 'Other' && (
+              <input value={walletProviderCustom} onChange={(e) => setWalletProviderCustom(e.target.value)}
+                placeholder={t('pos.payment.walletCustomPlaceholder')} maxLength={64}
+                style={{ marginTop: 6, width: '100%', height: 34, borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', padding: '0 10px', boxSizing: 'border-box' }}
+              />
+            )}
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
+              {t('pos.payment.walletReference')} <span style={{ opacity: .6 }}>({t('pos.payment.optional')})</span>
+            </label>
+            <input value={walletReference} onChange={(e) => setWalletReference(e.target.value)} maxLength={64}
+              placeholder="MP-2026-000123"
+              style={{ width: '100%', height: 38, borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: 'var(--bg-input)', color: 'var(--text-primary)', fontSize: 'var(--font-size-sm)', padding: '0 10px', boxSizing: 'border-box', fontFamily: 'monospace' }} />
+          </div>
+
+          {/* Confirmation attestation — checked = wallet showed "payment
+              received" on the merchant device, sale completes confirmed.
+              Unchecked = record as awaiting confirmation for the OA queue. */}
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', background: 'var(--bg-elevated)', borderRadius: 'var(--border-radius)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={walletConfirmed} onChange={(e) => setWalletConfirmed(e.target.checked)}
+              style={{ width: 18, height: 18, accentColor: 'var(--color-primary)', cursor: 'pointer', marginTop: 1 }} />
+            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', lineHeight: 1.35 }}>
+              {t('pos.payment.walletConfirmed')}
+              {!walletConfirmed && (
+                <span style={{ display: 'block', fontSize: 11, color: 'var(--color-warning, #b45309)', marginTop: 4 }}>
+                  {t('pos.payment.walletPendingNote')}
+                </span>
+              )}
+            </span>
+          </label>
+
+          {saleMutation.isError && (
+            <div style={{ color: 'var(--color-error)', fontSize: 'var(--font-size-sm)', textAlign: 'center' }}>{getErrorMessage(saleMutation.error)}</div>
+          )}
+
+          <button
+            onClick={() => handleComplete('qr_payment')}
+            disabled={isProcessing || !effectiveWalletProvider}
+            style={{
+              height: 'var(--touch-target-xl)', borderRadius: 'var(--border-radius)', border: 'none',
+              background: 'var(--color-primary)', color: '#fff', cursor: isProcessing ? 'wait' : 'pointer',
+              fontWeight: 700, fontSize: 'var(--font-size-base)',
+              opacity: (isProcessing || !effectiveWalletProvider) ? 0.5 : 1,
+            }}>
+            {isProcessing ? t('pos.payment.processing') : `✓ ${t('pos.payment.recordQr')}`}
           </button>
         </div>
       )}

@@ -11,7 +11,7 @@ export interface PendingPaymentSale {
   store_id: string
   occurred_at: string
   total_srd: string
-  payment_method: 'bank_transfer' | 'mobile_transfer'
+  payment_method: 'bank_transfer' | 'mobile_transfer' | 'qr_payment'
   payment_provider: string | null      // bank / app name
   payment_reference: string | null     // sender's payment ref
   payment_sender_name: string | null

@@ -229,8 +229,12 @@ class RegisterController extends Controller
         $user = $request->user();
 
         // Only the cashier who opened it (or a manager) can close it
+        // Own session, or a manager-level role that can actually access this
+        // session's store — role alone is NOT enough (an OA/SM of org A must
+        // never read org B's shift report via a guessed session UUID).
         abort_unless(
-            $session->cashier_id === $user->id || $user->isAtLeastManager(),
+            $session->cashier_id === $user->id
+                || ($user->isAtLeastManager() && $user->canAccessStore($session->store_id)),
             403
         );
 
@@ -516,6 +520,10 @@ class RegisterController extends Controller
                 COALESCE(SUM(CASE WHEN payment_method = 'cash'  THEN total_srd END), 0)      as cash_net,
                 COALESCE(SUM(CASE WHEN payment_method = 'card'  THEN total_srd END), 0)      as card_net,
                 COALESCE(SUM(CASE WHEN payment_method = 'mixed' THEN total_srd END), 0)      as mixed_net,
+                COALESCE(SUM(CASE WHEN payment_method = 'bank_transfer'   THEN total_srd END), 0) as bank_transfer_net,
+                COALESCE(SUM(CASE WHEN payment_method = 'mobile_transfer' THEN total_srd END), 0) as mobile_transfer_net,
+                COALESCE(SUM(CASE WHEN payment_method = 'foreign_cash'    THEN total_srd END), 0) as foreign_cash_net,
+                COALESCE(SUM(CASE WHEN payment_method = 'qr_payment'      THEN total_srd END), 0) as qr_payment_net,
                 COALESCE(SUM(
                   CASE WHEN total_srd >= 0 AND payment_method IN ('cash','mixed')
                        THEN COALESCE(cash_received_srd, 0) - COALESCE(change_srd, 0)
@@ -585,6 +593,12 @@ class RegisterController extends Controller
                     'cash'  => $fmt($agg->cash_net  ?? 0),
                     'card'  => $fmt($agg->card_net  ?? 0),
                     'mixed' => $fmt($agg->mixed_net ?? 0),
+                    // Phase 2/3 — none of these touch the cash drawer, but the
+                    // cashier's shift summary must still account for them.
+                    'bank_transfer'   => $fmt($agg->bank_transfer_net   ?? 0),
+                    'mobile_transfer' => $fmt($agg->mobile_transfer_net ?? 0),
+                    'foreign_cash'    => $fmt($agg->foreign_cash_net    ?? 0),
+                    'qr_payment'      => $fmt($agg->qr_payment_net      ?? 0),
                 ],
                 'cash_drawer'          => [
                     'opening_float' => $fmt($openingFloat),
