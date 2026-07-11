@@ -126,6 +126,17 @@ Voor een gloednieuwe installatie kun je ook sample data seeden (aanbevolen voor 
 docker compose exec app php artisan db:seed --force
 ```
 
+### A5a. Koppel de publieke opslag (vereist voor afbeeldingen)
+
+```bash
+docker compose exec app php artisan storage:link
+```
+
+Zonder deze symlink geeft elke geüploade afbeelding — bonlogo's, productfoto's
+en de wallet-QR-codes — een 404. Het is een eenmalige stap per installatie,
+makkelijk te vergeten en later lastig te herleiden, dus doe hem direct na de
+migraties.
+
 ### A6. Activeer de licentie
 
 De eerste keer dat de backend boot, roept hij je license server aan met een hardware fingerprint (MAC + CPU + UUID) en vraagt om activatie. Om een licentie vooraf uit te geven:
@@ -206,6 +217,19 @@ Hetzelfde scherm → vouw de organisatie uit → **+ Vestiging toevoegen**.
 | Bonvoet | Vrije tekst — meestal "bedankt" + retourbeleid |
 | Bonlogo | Upload PNG/JPG, getoond op PDF- + e-mailbonnen |
 | BTW-nummer op bon | Per vestiging overschrijven als anders |
+
+### B2a. Betaalinstellingen per vestiging (2 minuten)
+
+Twee optionele-maar-aanbevolen stappen terwijl u toch in de
+vestigingsinstellingen bent:
+
+1. **Wallet-QR's** — upload de Mopé- / Uni5Pay+-merchant-QR van de winkel
+   (Vestigingen → Instellingen → *QR-wallets*). De kassa toont hem daarna
+   full-screen bij QR-betalingen, zodat klanten direct van het scherm scannen.
+2. **Pinterminal-modus** — op elke kassaterminal: Instellingen →
+   *Pinterminal*. Laat op *Losse bankterminal* staan voor echte winkels;
+   alleen voor training/demo op *Gesimuleerde terminal*. Niet-technische
+   uitleg: [/card-payments.html](/card-payments.html).
 
 ### B3. Maak kassa's aan onder elke vestiging
 
@@ -356,6 +380,13 @@ USB HID-scanner → gewoon insteken. Hij gedraagt zich als een toetsenbord; de P
 Test: houd een productverpakking voor de scanner. Als `Beep + het item verschijnt in winkelwagen` → werkend.
 
 ---
+
+### F5. Bank-pinterminal (kaartbetalingen)
+
+Niets aan te sluiten: de pinterminal van de bank is een zelfstandig apparaat —
+naast de kassa zetten, klaar. De kassier tikt het bedrag op het bankapparaat
+in en registreert de kaartverkoop in de kassa. Er is bewust geen kabel of
+koppelstap. Details en visuele gids: [/card-payments.html](/card-payments.html).
 
 ## Deel G — Dagelijkse setup (elke ochtend)
 

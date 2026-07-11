@@ -126,6 +126,16 @@ For a brand-new install, also seed sample data (recommended for the delivery tea
 docker compose exec app php artisan db:seed --force
 ```
 
+### A5a. Link public storage (required for images)
+
+```bash
+docker compose exec app php artisan storage:link
+```
+
+Without this symlink every uploaded image — receipt logos, product photos and
+the wallet QR codes — returns 404. It is a one-time step per install, easy to
+forget and easy to misdiagnose later, so do it right after the migrations.
+
 ### A6. Activate the license
 
 The first time the backend boots, it will call your license server with a hardware fingerprint (MAC + CPU + UUID) and ask to activate. To pre-issue a license:
@@ -206,6 +216,18 @@ Same screen → expand the organisation → **+ Add store**.
 | Receipt footer | Free text — usually "thank you" + return policy |
 | Receipt logo | Upload PNG/JPG, displayed on PDF + email receipts |
 | BTW number on receipt | Override per-store if different |
+
+### B2a. Payment setup per store (2 minutes)
+
+Two optional-but-recommended steps while you are in the store's settings:
+
+1. **Wallet QRs** — upload the store's Mopé / Uni5Pay+ merchant QR
+   (Stores → Settings → *QR wallets*). The POS then shows it full-screen
+   during QR payments so customers scan straight from the screen.
+2. **Card terminal mode** — on each POS terminal: Settings → *Card / PIN
+   terminal*. Leave on *Standalone bank terminal* for live stores; switch to
+   *Simulated terminal* only for training/demo. Non-technical walkthrough:
+   [/card-payments.html](/card-payments.html).
 
 ### B3. Create registers under each store
 
@@ -356,6 +378,13 @@ USB HID scanner → just plug in. It acts as a keyboard; the POS captures scans 
 Test: hold a product packet up to the scanner. If `Beep + the item appears in cart` → working.
 
 ---
+
+### F5. Bank PIN terminal (card payments)
+
+Nothing to connect: the bank's PIN terminal is a standalone device — put it
+next to the till, done. The cashier keys the amount into the bank device and
+records the card sale in the POS. There is deliberately no cable or pairing
+step. Details and a visual guide: [/card-payments.html](/card-payments.html).
 
 ## Part G — Daily setup (every morning)
 
