@@ -118,7 +118,11 @@ display + attestation/pending-confirmation flow) and 3-mode card terminals
 (manual / simulated / ECR-ready); PDF report exports fixed + pinned by tests;
 full docs site (EN+NL manuals, dev docs, deployment playbook ch 14, visual
 card-payments guide); navy/orange rebrand; marketing promo/teaser/videos
-pages; exchange-rate + OpenAI keys wired.
+pages; exchange-rate + OpenAI keys wired. 2026-07-18: dependency
+freshness/security sweep (Laravel 13.20, Electron 41.7, 0 npm vulns in both
+SPAs, spatie/permission 8 deliberately held) + hardware-compatibility batch
+(CP858 thermal encoding, 58 mm paper, widened scanner symbologies, POS
+camera scanner, install-guide §F0 device matrix).
 
 **Blocked on the user (deployment gating list):**
 
