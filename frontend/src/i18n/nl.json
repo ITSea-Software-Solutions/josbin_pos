@@ -239,6 +239,13 @@
       "reasonPlaceholder": "Bijv. klant bracht artikel terug zonder bon",
       "confirm": "Retour bevestigen",
       "done": "Retour vastgelegd — SRD {{total}} terugbetaald"
+    },
+    "cameraScan": {
+      "title": "Scannen met camera",
+      "hint": "Richt de camera op de barcode",
+      "httpsOnly": "Camerascannen werkt alleen via een beveiligde verbinding (HTTPS) of in de desktop-app. Gebruik een USB-barcodescanner of typ de barcode in het zoekveld.",
+      "denied": "Cameratoegang geweigerd — sta de camera toe en probeer opnieuw.",
+      "failed": "Camera kon niet starten. Gebruik een USB-scanner of typ de barcode. ({{error}})"
     }
   },
   "reports": {
@@ -359,6 +366,10 @@
       "pin2": "Pin 2 (standaard)",
       "pin5": "Pin 5",
       "pinHelp": "Gebruik Pin 2 voor de meeste kassalades. Probeer Pin 5 als de lade niet opent.",
+      "paperWidth": "Papierbreedte",
+      "paper80": "80 mm (42 tekens)",
+      "paper58": "58 mm (32 tekens)",
+      "paperWidthHelp": "Kies de breedte van de papierrol: 80 mm voor toonbankprinters (EPSON TM-T20-klasse), 58 mm voor compacte printers. Een verkeerde breedte laat regels doorlopen of afvallen.",
       "testDrawer": "Test kassalade openen",
       "testingDrawer": "Bezig...",
       "drawerOpened": "Kassalade geopend!",

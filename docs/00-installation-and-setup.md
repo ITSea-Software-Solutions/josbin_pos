@@ -350,12 +350,26 @@ If you hit the licensed terminal count, the next install shows **"License limit 
 
 POS app → **Settings** → **Printer & Cash Drawer**.
 
+### F0. What hardware works — compatibility at a glance
+
+| Device | Works | Notes |
+|---|---|---|
+| **Thermal printers** | Any **ESC/POS** printer — EPSON TM-T20/T88 series, Xprinter (XP-58/XP-80), 3nStar, Bixolon, Rongta, Citizen, Posiflex, generic "POS-58"/"POS-80" | Receipts print with the correct accents (é ë ó ñ) via code page 858, which all of these support. **Star Micronics** printers: set the printer to *ESC/POS emulation mode* first (Star's own mode is a different language). |
+| **Paper width** | **80 mm** (42 chars) and **58 mm** (32 chars) | Set it in Settings → Printer → **Paper width** so lines fit the roll. |
+| **Barcode scanners** | Any **USB or Bluetooth HID** ("keyboard mode") scanner — Honeywell, Zebra/Symbol, Datalogic, Netum, and generic 1D/2D scanners | Factory defaults work; scanners that send an AIM prefix are handled automatically. |
+| **Barcode types** | EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 (cartons), Code 128 and Code 39 (alphanumeric supplier SKUs), scale-printed EAN-13 (weighed goods) | 2D scanners also read the QR codes printed on Josbin labels. |
+| **Cash drawers** | Any drawer with an **RJ11** cable, driven by the printer | Pin 2 default, Pin 5 selectable. |
+| **Labelling scales** | Bizerba, CAS, Digi, Avery — any scale printing embedded-price/weight EAN-13 | Layout is configurable; verify against the actual scale before go-live. |
+| **Bank PIN terminals** | All (standalone — no cable) | See F5. |
+| **Not supported on the thermal receipt** | Store logo image | The logo appears on PDF and e-mail receipts; thermal receipts are text (fastest and works on every printer). |
+
 ### F1. Thermal printer — Network TCP (recommended)
 
 1. Print a self-test on the printer (usually hold Feed while powering on) to find its IP.
 2. In Settings → Printer → **Network (TCP)** → enter IP, port `9100`.
-3. Click **Test print** → should print a sample receipt.
-4. Click **Test cash drawer** → drawer should pop.
+3. Set **Paper width** to match the roll: 80 mm (countertop) or 58 mm (compact).
+4. Click **Test print** → should print a sample receipt.
+5. Click **Test cash drawer** → drawer should pop.
 
 Works on Windows and Android without drivers. Same printer can serve multiple terminals.
 
@@ -363,6 +377,7 @@ Works on Windows and Android without drivers. Same printer can serve multiple te
 
 1. Install the printer using the manufacturer's Windows driver.
 2. Settings → Printer → **USB** → **Refresh** → pick from list.
+3. Set **Paper width** to match the roll.
 
 ### F3. Cash drawer
 
@@ -373,9 +388,11 @@ Connects via **RJ11 cable to the printer's DK port**. No separate config — the
 
 ### F4. Barcode scanner
 
-USB HID scanner → just plug in. It acts as a keyboard; the POS captures scans automatically while any screen is open (focus-independent).
+USB HID scanner → just plug in. It acts as a keyboard; the POS captures scans automatically while any screen is open (focus-independent). Bluetooth scanners in HID ("keyboard") mode work the same way.
 
 Test: hold a product packet up to the scanner. If `Beep + the item appears in cart` → working.
+
+**No scanner at hand?** Tap the **📷 camera button** next to the POS search bar — the terminal's camera live-scans EAN/UPC/Code 128/Code 39/ITF barcodes. The camera needs a secure connection (HTTPS) or the desktop app; on a plain `http://` address the browser blocks camera access by design.
 
 ---
 

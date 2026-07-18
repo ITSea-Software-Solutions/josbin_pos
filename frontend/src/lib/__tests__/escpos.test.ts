@@ -3,6 +3,7 @@ import {
   buildReceiptBytes,
   cashDrawerPulse,
   paperCut,
+  encodeCp858Char,
   type EscPosReceiptOptions,
 } from '@/lib/escpos'
 
@@ -125,5 +126,67 @@ describe('escpos — control commands', () => {
 
   it('paperCut(true) returns a partial cut (GS V B 0x01)', () => {
     expect(Array.from(paperCut(true))).toEqual([0x1d, 0x56, 0x42, 0x01])
+  })
+})
+
+describe('escpos — CP858 code page (accented characters on real printers)', () => {
+  it('INIT selects code page 858 (ESC t 19) so accents render on hardware', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    expect(indexOfSubsequence(bytes, [0x1b, 0x74, 19])).toBeGreaterThan(-1)
+  })
+
+  it('encodes é/ë/ó as CP858 bytes, not Latin-1', () => {
+    expect(encodeCp858Char('é')).toBe(0x82) // Latin-1 would be 0xE9
+    expect(encodeCp858Char('ë')).toBe(0x89)
+    expect(encodeCp858Char('ó')).toBe(0xa2)
+    expect(encodeCp858Char('ñ')).toBe(0xa4)
+    expect(encodeCp858Char('€')).toBe(0xd5)
+  })
+
+  it('passes ASCII through unchanged and transliterates unmapped accents', () => {
+    expect(encodeCp858Char('A')).toBe(0x41)
+    expect(encodeCp858Char('ő')).toBe(0x6f) // Hungarian ő → base 'o'
+    expect(encodeCp858Char('世')).toBe(0x3f) // no base letter → '?'
+  })
+
+  it('product names with accents land in the receipt as CP858 bytes', () => {
+    const opts = makeReceiptOptions()
+    opts.sale.payment_method = 'qr_payment'
+    opts.sale.payment_provider = 'Mopé'
+    const bytes = buildReceiptBytes(opts)
+    // 'Mopé' → 4d 6f 70 82
+    expect(indexOfSubsequence(bytes, [0x4d, 0x6f, 0x70, 0x82])).toBeGreaterThan(-1)
+  })
+})
+
+describe('escpos — paper width', () => {
+  it('defaults to 42 columns (80 mm)', () => {
+    const text = bytesToLatin1(buildReceiptBytes(makeReceiptOptions()))
+    expect(text).toContain('='.repeat(42))
+  })
+
+  it('paperWidth 58 prints 32-column separators and no 42-wide lines', () => {
+    const text = bytesToLatin1(buildReceiptBytes(makeReceiptOptions({ paperWidth: 58 })))
+    expect(text).toContain('='.repeat(32))
+    expect(text).not.toContain('='.repeat(42))
+    expect(text).not.toContain('-'.repeat(42))
+  })
+})
+
+describe('escpos — BTW rate label from items', () => {
+  it('single distinct rate prints that rate', () => {
+    const text = bytesToLatin1(buildReceiptBytes(makeReceiptOptions()))
+    expect(text).toContain('BTW 10%')
+  })
+
+  it('mixed rates fall back to a plain BTW label (no wrong percentage)', () => {
+    const opts = makeReceiptOptions()
+    opts.sale.items = [
+      { ...opts.sale.items[0] },
+      { ...opts.sale.items[0], product_name: 'Melk', btw_rate: '5.00' },
+    ]
+    const text = bytesToLatin1(buildReceiptBytes(opts))
+    expect(text).not.toContain('BTW 10%')
+    expect(text).not.toContain('BTW 5%')
   })
 })

@@ -108,6 +108,7 @@ export default function ReceiptModal({
           btw_number:     store.settings?.receipt_btw_number || store.organisation?.btw_number || undefined,
         },
         locale,
+        paperWidth: printer.paperWidth ?? 80,
       })
 
       const result = await printEscPos(bytes, printer)

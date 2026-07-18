@@ -39,6 +39,8 @@ export interface PrinterConfig {
   printerName?: string
   /** Which cash drawer pin to trigger (1 = pin 2, 2 = pin 5). Most printers use 1. */
   drawerPin?: 1 | 2
+  /** Paper roll width: 80 mm (42 chars, countertop) or 58 mm (32 chars, compact). */
+  paperWidth?: 58 | 80
 }
 
 export interface PrinterInfo {

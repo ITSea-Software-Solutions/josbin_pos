@@ -319,6 +319,33 @@ export default function SettingsScreen() {
             </div>
           )}
 
+          {/* Paper width — 80mm countertop vs 58mm compact rolls */}
+          {printer.type !== 'none' && (
+            <div>
+              <label style={labelSt}>{t('settings.printer.paperWidth')}</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {([80, 58] as const).map((w) => (
+                  <button
+                    key={w}
+                    onClick={() => updatePrinter({ paperWidth: w })}
+                    style={{
+                      flex: 1, height: 44, borderRadius: 'var(--border-radius)',
+                      border: (printer.paperWidth ?? 80) === w ? '1px solid var(--color-primary)' : '1px solid var(--border-color)',
+                      background: (printer.paperWidth ?? 80) === w ? 'var(--color-primary)' : 'var(--bg-input)',
+                      color: (printer.paperWidth ?? 80) === w ? '#fff' : 'var(--text-secondary)',
+                      cursor: 'pointer', fontSize: 'var(--font-size-sm)',
+                    }}
+                  >
+                    {w === 80 ? t('settings.printer.paper80') : t('settings.printer.paper58')}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                {t('settings.printer.paperWidthHelp')}
+              </div>
+            </div>
+          )}
+
           {/* Cash drawer pin */}
           {printer.type !== 'none' && (
             <div>

@@ -110,7 +110,7 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
         target: viewportRef.current,
         constraints: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 360 } },
       },
-      decoder: { readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'code_128_reader'] },
+      decoder: { readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader', 'code_39_reader', 'i2of5_reader'] },
       locate: true,
     }, (err) => {
       if (err) {

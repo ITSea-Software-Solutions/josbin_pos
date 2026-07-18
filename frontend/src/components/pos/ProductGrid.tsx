@@ -7,8 +7,10 @@ import { useLowStockSet } from '@/hooks/useLowStockSet'
 import { useToast } from '@/components/shared/Toast'
 import { getPosProducts, getCategories, getProductByBarcode } from '@/api/products'
 import { parseEmbeddedBarcode } from '@/lib/embeddedBarcode'
+import { looksLikeScannedCode, stripAimPrefix } from '@/lib/barcode'
 import { getRecent, getFavorites, recordRecent, toggleFavorite } from '@/lib/productFavorites'
 import CategoryFilter from './CategoryFilter'
+import CameraScanModal from './CameraScanModal'
 import ProductCard from './ProductCard'
 import type { Product } from '@/types/models'
 
@@ -31,6 +33,7 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [barcodeError, setBarcodeError] = useState<string | null>(null)
+  const [camScanOpen, setCamScanOpen] = useState(false)
 
   // Cashier favorites (pinned) + recents, per store, from localStorage.
   const [favIds, setFavIds] = useState<string[]>(() => getFavorites(storeId))
@@ -108,9 +111,10 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
 
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
-      const val = search.trim()
-      // Treat 8–13 digit string as barcode
-      if (/^\d{8,13}$/.test(val)) {
+      // Scanners may prepend an AIM symbology id (e.g. "]E0"); drop it first.
+      const val = stripAimPrefix(search.trim())
+      // Numeric 6–14 (UPC-E through GTIN-14) or alphanumeric SKUs (Code 39/128)
+      if (looksLikeScannedCode(val)) {
         handleBarcodeSearch(val)
       }
     }
@@ -150,26 +154,44 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 10 }}>
-      {/* Search bar */}
+      {/* Search bar + camera scan (tablets / terminals without a USB scanner) */}
       <div style={{ padding: '0 16px', flexShrink: 0 }}>
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setBarcodeError(null) }}
-          onKeyDown={handleSearchKeyDown}
-          placeholder={t('pos.searchPlaceholder')}
-          style={{
-            width: '100%',
-            height: 'var(--touch-target)',
-            background: 'var(--bg-input)',
-            border: `1px solid ${barcodeError ? 'var(--color-error)' : 'var(--border-color)'}`,
-            borderRadius: 'var(--border-radius)',
-            color: 'var(--text-primary)',
-            fontSize: 'var(--font-size-base)',
-            padding: '0 16px',
-            outline: 'none',
-          }}
-        />
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setBarcodeError(null) }}
+            onKeyDown={handleSearchKeyDown}
+            placeholder={t('pos.searchPlaceholder')}
+            style={{
+              flex: 1,
+              height: 'var(--touch-target)',
+              background: 'var(--bg-input)',
+              border: `1px solid ${barcodeError ? 'var(--color-error)' : 'var(--border-color)'}`,
+              borderRadius: 'var(--border-radius)',
+              color: 'var(--text-primary)',
+              fontSize: 'var(--font-size-base)',
+              padding: '0 16px',
+              outline: 'none',
+            }}
+          />
+          <button
+            onClick={() => setCamScanOpen(true)}
+            title={t('pos.cameraScan.title')}
+            aria-label={t('pos.cameraScan.title')}
+            style={{
+              width: 'var(--touch-target)',
+              height: 'var(--touch-target)',
+              flexShrink: 0,
+              background: 'var(--bg-input)',
+              border: '1px solid var(--border-color)',
+              borderRadius: 'var(--border-radius)',
+              color: 'var(--text-secondary)',
+              fontSize: 20,
+              cursor: 'pointer',
+            }}
+          >📷</button>
+        </div>
         {barcodeError && (
           <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-error)', marginTop: 4 }}>
             {barcodeError}
@@ -255,6 +277,13 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
           </div>
         )}
       </div>
+
+      {camScanOpen && (
+        <CameraScanModal
+          onDetected={(code) => handleBarcodeSearch(code)}
+          onClose={() => setCamScanOpen(false)}
+        />
+      )}
     </div>
   )
 }

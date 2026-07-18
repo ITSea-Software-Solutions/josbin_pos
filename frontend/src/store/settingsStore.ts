@@ -61,6 +61,7 @@ export const useSettingsStore = create<SettingsState>()(
         port: 9100,
         printerName: '',
         drawerPin: 1,
+        paperWidth: 80,
       },
       autoPrintReceipt: false,
       embeddedBarcode: DEFAULT_EMBEDDED_BARCODE,

@@ -352,12 +352,26 @@ Als je het gelicentieerde terminal-aantal raakt, toont de volgende installatie *
 
 POS-app → **Instellingen** → **Printer & Kassalade**.
 
+### F0. Welke hardware werkt — compatibiliteit in één oogopslag
+
+| Apparaat | Werkt | Opmerkingen |
+|---|---|---|
+| **Thermische printers** | Elke **ESC/POS**-printer — EPSON TM-T20/T88-serie, Xprinter (XP-58/XP-80), 3nStar, Bixolon, Rongta, Citizen, Posiflex, generieke "POS-58"/"POS-80" | Bonnen printen met de juiste accenten (é ë ó ñ) via codepagina 858, die al deze printers ondersteunen. **Star Micronics**: zet de printer eerst in *ESC/POS-emulatiemodus* (Stars eigen modus is een andere taal). |
+| **Papierbreedte** | **80 mm** (42 tekens) en **58 mm** (32 tekens) | Stel in via Instellingen → Printer → **Papierbreedte**, zodat regels op de rol passen. |
+| **Barcodescanners** | Elke **USB- of Bluetooth-HID**-scanner ("toetsenbordmodus") — Honeywell, Zebra/Symbol, Datalogic, Netum, en generieke 1D/2D-scanners | Fabrieksinstellingen werken; scanners die een AIM-prefix meesturen worden automatisch afgehandeld. |
+| **Barcodetypes** | EAN-13, EAN-8, UPC-A, UPC-E, ITF-14 (dozen), Code 128 en Code 39 (alfanumerieke leveranciers-SKU's), weegschaal-EAN-13 (gewogen artikelen) | 2D-scanners lezen ook de QR-codes op Josbin-etiketten. |
+| **Kassalades** | Elke lade met een **RJ11**-kabel, aangestuurd door de printer | Pin 2 standaard, Pin 5 instelbaar. |
+| **Prijsweegschalen** | Bizerba, CAS, Digi, Avery — elke weegschaal die prijs/gewicht-EAN-13 print | Indeling is configureerbaar; controleer vóór livegang tegen de echte weegschaal. |
+| **Bank-pinterminals** | Alle (zelfstandig — geen kabel) | Zie F5. |
+| **Niet op de thermische bon** | Winkellogo (afbeelding) | Het logo staat op PDF- en e-mailbonnen; thermische bonnen zijn tekst (snelst en werkt op elke printer). |
+
 ### F1. Thermische printer — Network TCP (aanbevolen)
 
 1. Print een self-test op de printer (meestal Feed ingedrukt houden tijdens aanzetten) om zijn IP te vinden.
 2. In Instellingen → Printer → **Network (TCP)** → voer IP in, poort `9100`.
-3. Klik **Testafdruk** → moet een voorbeeldbon afdrukken.
-4. Klik **Test kassalade** → de lade moet openspringen.
+3. Stel **Papierbreedte** in op de rol: 80 mm (toonbank) of 58 mm (compact).
+4. Klik **Testafdruk** → moet een voorbeeldbon afdrukken.
+5. Klik **Test kassalade** → de lade moet openspringen.
 
 Werkt op Windows en Android zonder drivers. Dezelfde printer kan meerdere terminals bedienen.
 
@@ -365,6 +379,7 @@ Werkt op Windows en Android zonder drivers. Dezelfde printer kan meerdere termin
 
 1. Installeer de printer met de Windows-driver van de fabrikant.
 2. Instellingen → Printer → **USB** → **Vernieuwen** → kies uit de lijst.
+3. Stel **Papierbreedte** in op de rol.
 
 ### F3. Kassalade
 
@@ -375,9 +390,11 @@ Verbindt via een **RJ11-kabel naar de DK-poort van de printer**. Geen aparte con
 
 ### F4. Barcodescanner
 
-USB HID-scanner → gewoon insteken. Hij gedraagt zich als een toetsenbord; de POS pakt scans automatisch op terwijl elk scherm open is (focus-onafhankelijk).
+USB HID-scanner → gewoon insteken. Hij gedraagt zich als een toetsenbord; de POS pakt scans automatisch op terwijl elk scherm open is (focus-onafhankelijk). Bluetooth-scanners in HID-("toetsenbord")modus werken op dezelfde manier.
 
 Test: houd een productverpakking voor de scanner. Als `Beep + het item verschijnt in winkelwagen` → werkend.
+
+**Geen scanner bij de hand?** Tik op de **📷-cameraknop** naast de zoekbalk van de kassa — de camera van de terminal scant live EAN/UPC/Code 128/Code 39/ITF-barcodes. De camera vereist een beveiligde verbinding (HTTPS) of de desktop-app; op een gewoon `http://`-adres blokkeert de browser cameratoegang bewust.
 
 ---
 

@@ -239,6 +239,13 @@
       "reasonPlaceholder": "E.g. customer returned item without a receipt",
       "confirm": "Confirm return",
       "done": "Return recorded — SRD {{total}} refunded"
+    },
+    "cameraScan": {
+      "title": "Scan with camera",
+      "hint": "Point the camera at the barcode",
+      "httpsOnly": "Camera scanning only works over a secure (HTTPS) connection or in the desktop app. Use a USB barcode scanner or type the barcode in the search field.",
+      "denied": "Camera access was denied — allow the camera and try again.",
+      "failed": "Camera could not start. Use a USB scanner or type the barcode. ({{error}})"
     }
   },
   "reports": {
@@ -359,6 +366,10 @@
       "pin2": "Pin 2 (default)",
       "pin5": "Pin 5",
       "pinHelp": "Use Pin 2 for most cash drawers. Try Pin 5 if the drawer does not open.",
+      "paperWidth": "Paper width",
+      "paper80": "80 mm (42 chars)",
+      "paper58": "58 mm (32 chars)",
+      "paperWidthHelp": "Match the paper roll: 80 mm for countertop printers (EPSON TM-T20 class), 58 mm for compact printers. Wrong width makes lines wrap or get cut off.",
       "testDrawer": "Test cash drawer",
       "testingDrawer": "Testing...",
       "drawerOpened": "Cash drawer opened!",
