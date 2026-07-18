@@ -14,6 +14,18 @@
       "port": 8099
     },
     {
+      "name": "marketing-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8097",
+        "--directory",
+        "marketing"
+      ],
+      "port": 8097
+    },
+    {
       "name": "pos-dev",
       "runtimeExecutable": "bash",
       "runtimeArgs": [
