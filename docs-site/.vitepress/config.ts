@@ -257,7 +257,9 @@ export default defineConfig({
     '**/scripts/**',
     '**/docker/**',
     '**/progress/**',
-    '**/docs-site/node_modules/**',
+    // NOTE: docs-site/index.md is the site HOMEPAGE (rewritten to root index)
+    // — never exclude docs-site/** wholesale or the homepage disappears.
+    'docs-site/README.md', // the site's own README must not render into itself
     '**/marketing/**',     // marketing/* lives outside the docs site
     'nl/marketing/**',     // ditto for the NL mirror
     'README.md',
@@ -265,6 +267,11 @@ export default defineConfig({
     'CLAUDE.md',
     'CLAUDE_WORKING_GUIDE.md',
     'FEATURES_AND_FLOWS.md',
+    'HANDOVER.md',
+    'AUDIT_FINDINGS*.md',
+    '.claude/**',
+    'Phase1&2 Tickets/**',
+    'Phase3&4 Tickets/**',
     'Phase1&2 Tickets',
     'Phase3&4 Tickets',
   ],

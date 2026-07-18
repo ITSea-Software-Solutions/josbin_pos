@@ -1,5 +1,10 @@
 # Josbin POS — Build Status
 
+> **Historical document — frozen at 2026-05-25 (session 5).** The living
+> feature inventory is [`FEATURES_AND_FLOWS.md`](FEATURES_AND_FLOWS.md); the
+> current operational state (infra, access, gating items) is
+> [`HANDOVER.md`](HANDOVER.md). Kept for the session-by-session record.
+
 **Last updated:** 2026-05-25 (session 5)
 **Version:** Phase 3 complete + Phase 4 prep — multi-cashier concurrency verified end-to-end, per-store stock landed, production-blocker security gaps fixed, docs site live
 

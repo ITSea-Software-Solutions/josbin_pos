@@ -5,6 +5,7 @@ Read everything below carefully before responding to anything.
 > **Read these too** (in this order at session start):
 >  1. [`CLAUDE_WORKING_GUIDE.md`](CLAUDE_WORKING_GUIDE.md) — engineering discipline. Surfaces checklist (§2), end-to-end journeys (§3), gotcha registry (§4). Walk §2 before declaring any task done. Add new gotchas to §4 as we discover them.
 >  2. [`FEATURES_AND_FLOWS.md`](FEATURES_AND_FLOWS.md) — feature catalogue. Every feature with status (✅ / 🟡 / 🔲), the flows that wire features together, code-location quick map, roles→features matrix. The fastest way to answer "does the system already do X?".
+>  3. [`HANDOVER.md`](HANDOVER.md) — continuity map. Live infrastructure + ports, access & secret locations (never values), current status snapshot, standing user rules. Read before any ops/deploy work, and keep its snapshot current when infra or gating items change.
 >
 > Both are living docs — update them when you add or change features.
 
