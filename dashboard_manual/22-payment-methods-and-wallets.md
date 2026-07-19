@@ -19,13 +19,15 @@ setup, the pending-payments queue, and where each method shows up in reports.
 ## 22.1a Which wallets, banks and apps the POS offers — configurable
 
 The pick-lists cashiers see (QR wallets, banks for PIN slips and transfers,
-mobile-banking apps) are managed per organisation: **Organisations →
-(organisation) → Edit → POS payment options**. Each list is comma-separated;
-leave a field empty to keep the standard Suriname lists (the two QR wallets
-and the eight banks whose cards all work on any bank's PIN terminal). The
-POS always adds an "Other" choice by itself, so an unexpected provider never
-blocks a sale. This is also how a deployment outside Suriname swaps in its
-own wallets and banks — no software update needed.
+mobile-banking apps) are configured per organisation by the **platform
+administrator**: Organisations → (organisation) → Edit → **POS payment
+options**. Each list is comma-separated; an empty field keeps the standard
+Suriname lists (the two QR wallets and the eight banks whose cards all work
+on any bank's PIN terminal). The POS always adds an "Other" choice by
+itself, so an unexpected provider never blocks a sale. Need a wallet or
+bank added or renamed for your organisation — for example for a location
+outside Suriname? Ask your platform administrator; it takes effect on every
+till within minutes, no software update needed.
 
 ## 22.2 QR wallets — one-time setup per store
 

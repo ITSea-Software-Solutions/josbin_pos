@@ -20,13 +20,15 @@ rapporten terugkomt.
 ## 22.1a Welke wallets, banken en apps de kassa toont — instelbaar
 
 De keuzelijsten die kassiers zien (QR-wallets, banken voor pinbonnen en
-overschrijvingen, mobiel-bankieren-apps) beheert u per organisatie:
-**Organisaties → (organisatie) → Bewerken → Betaalopties op de kassa**. Elke
-lijst is kommagescheiden; laat een veld leeg om de standaard Surinaamse
-lijsten te houden (de twee QR-wallets en de acht banken waarvan de passen op
-elke pinterminal werken). De kassa voegt zelf altijd een keuze "Other" toe,
-zodat een onverwachte aanbieder nooit een verkoop blokkeert. Zo schakelt een
-vestiging buiten Suriname ook zijn eigen wallets en banken in — zonder
+overschrijvingen, mobiel-bankieren-apps) worden per organisatie ingesteld
+door de **platformbeheerder**: Organisaties → (organisatie) → Bewerken →
+**Betaalopties op de kassa**. Elke lijst is kommagescheiden; een leeg veld
+houdt de standaard Surinaamse lijsten (de twee QR-wallets en de acht banken
+waarvan de passen op elke pinterminal werken). De kassa voegt zelf altijd
+een keuze "Other" toe, zodat een onverwachte aanbieder nooit een verkoop
+blokkeert. Wilt u een wallet of bank toegevoegd of hernoemd voor uw
+organisatie — bijvoorbeeld voor een vestiging buiten Suriname? Vraag het uw
+platformbeheerder; het staat binnen minuten op elke kassa, zonder
 software-update.
 
 ## 22.2 QR-wallets — eenmalige inrichting per vestiging
