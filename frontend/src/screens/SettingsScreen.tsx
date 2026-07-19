@@ -431,7 +431,7 @@ export default function SettingsScreen() {
                 <select value={cardTerminal.defaultBank}
                   onChange={(e) => setCardTerminal({ defaultBank: e.target.value })}
                   style={selectSt}>
-                  {['DSB', 'Hakrinbank', 'Finabank', 'RBC', 'Republic'].map((b) => <option key={b} value={b}>{b}</option>)}
+                  {['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank'].map((b) => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
             )}

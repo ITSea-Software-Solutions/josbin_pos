@@ -57,11 +57,14 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
 
   // Common Surinamese card issuers + the international brands accepted at
   // supermarkets. Free-text "Other" preserves new banks without a release.
-  const BANKS = ['DSB', 'Hakrinbank', 'Finabank', 'RBC', 'Republic', 'Visa', 'Mastercard', 'Other'] as const
+  // The 8 BNETS member banks (one PIN terminal serves all of them) + card
+  // brands. "RBC" was removed — Republic Bank (Suriname) is the member since
+  // acquiring RBC's local operations; UnionPay is an acquired scheme locally.
+  const BANKS = ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank', 'Visa', 'Mastercard', 'UnionPay', 'Other'] as const
   // Phase 2 — banks for bank_transfer (a subset; no card brands).
-  const TRANSFER_BANKS = ['DSB', 'Hakrinbank', 'Finabank', 'RBC', 'Republic', 'Other'] as const
+  const TRANSFER_BANKS = ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank', 'Other'] as const
   // Mobile-banking apps used in Suriname; "Other" for emerging providers.
-  const MOBILE_APPS = ['DSB Mobiel', 'Hakrinbank Online', 'Finabank App', 'RBC Mobile', 'Republic Mobile', 'Other'] as const
+  const MOBILE_APPS = ['DSB Mobiel', 'Hakrinbank Online', 'Finabank App', 'Republic Mobile', 'Other'] as const
   // Phase 3 — QR wallets accepted at Suriname supermarkets. Mopé (Hakrinbank)
   // and Uni5Pay+ (Southern Commercial Bank) both confirm on the merchant
   // device in real time; "Other" catches new wallets without a release.
