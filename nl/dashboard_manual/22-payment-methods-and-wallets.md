@@ -17,13 +17,26 @@ rapporten terugkomt.
 | 💱 Vreemde valuta (USD/EUR) | ✅ | dagkoers-audittrail |
 | 🔳 QR-wallet (Mopé / Uni5Pay+) | ✅ als de kassier de wallet-melding bevestigt; ❌ als dat niet lukt | QR-instelling + incidentele bevestiging |
 
+## 22.1a Welke wallets, banken en apps de kassa toont — instelbaar
+
+De keuzelijsten die kassiers zien (QR-wallets, banken voor pinbonnen en
+overschrijvingen, mobiel-bankieren-apps) beheert u per organisatie:
+**Organisaties → (organisatie) → Bewerken → Betaalopties op de kassa**. Elke
+lijst is kommagescheiden; laat een veld leeg om de standaard Surinaamse
+lijsten te houden (de twee QR-wallets en de acht banken waarvan de passen op
+elke pinterminal werken). De kassa voegt zelf altijd een keuze "Other" toe,
+zodat een onverwachte aanbieder nooit een verkoop blokkeert. Zo schakelt een
+vestiging buiten Suriname ook zijn eigen wallets en banken in — zonder
+software-update.
+
 ## 22.2 QR-wallets — eenmalige inrichting per vestiging
 
-Mopé en Uni5Pay+ geven uw winkel een **statische merchant-QR** (sticker /
+Walletaanbieders geven uw winkel een **statische merchant-QR** (sticker /
 PDF). Upload hem één keer en de kassa toont hem full-screen bij elke
 QR-betaling, met het te betalen bedrag ernaast:
 
-1. **Vestigingen → (vestiging) → Instellingen → QR-wallets (Mopé / Uni5Pay+)**
+1. **Vestigingen → (vestiging) → Instellingen → QR-wallets** — één kaart per
+   ingestelde wallet (standaard Mopé en Uni5Pay+)
 2. Upload per wallet de QR-afbeelding (PNG/JPG — de afbeelding van uw bank)
 3. Klaar — kassiers zien hem direct; hier ook vervangen of verwijderen
 

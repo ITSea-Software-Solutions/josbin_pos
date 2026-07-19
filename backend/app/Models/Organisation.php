@@ -16,13 +16,39 @@ class Organisation extends Model implements Auditable
     protected $fillable = [
         'name', 'type', 'btw_number', 'currency', 'locale',
         'is_government', 'block_oversell', 'subscription_tier', 'is_active',
+        'settings',
     ];
 
     protected $casts = [
         'is_government'  => 'boolean',
         'block_oversell' => 'boolean',
         'is_active'      => 'boolean',
+        'settings'       => 'array',
     ];
+
+    /** Serialized alongside the model so POS + dashboard always see the
+     *  effective pick-lists without a second request. */
+    protected $appends = ['payment_options'];
+
+    /**
+     * Effective payment pick-lists: organisation override per key, falling
+     * back to the Suriname defaults in config/josbin_pos.php. NB: callers
+     * using a partial select must include `settings` or overrides are
+     * silently ignored (accessor then serves pure defaults).
+     */
+    public function getPaymentOptionsAttribute(): array
+    {
+        $defaults  = config('josbin_pos.payment_options', []);
+        $overrides = $this->settings['payment_options'] ?? [];
+
+        $effective = [];
+        foreach ($defaults as $key => $defaultList) {
+            $custom = $overrides[$key] ?? null;
+            $effective[$key] = (is_array($custom) && $custom !== []) ? array_values($custom) : $defaultList;
+        }
+
+        return $effective;
+    }
 
     public function stores(): HasMany
     {

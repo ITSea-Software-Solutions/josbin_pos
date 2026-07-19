@@ -601,8 +601,28 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
     is_active: org.is_active,
   })
 
+  // Payment pick-lists as comma-separated text; empty = the Suriname
+  // defaults (shown as placeholder). Enables non-Suriname deployments
+  // (e.g. Guyana: MMG, Caripay, Kanoo) without a code release.
+  const storedPo = (org.settings?.payment_options ?? {}) as Record<string, string[] | undefined>
+  const [payLists, setPayLists] = useState<Record<'wallets' | 'card_banks' | 'transfer_banks' | 'mobile_apps', string>>({
+    wallets:        (storedPo.wallets ?? []).join(', '),
+    card_banks:     (storedPo.card_banks ?? []).join(', '),
+    transfer_banks: (storedPo.transfer_banks ?? []).join(', '),
+    mobile_apps:    (storedPo.mobile_apps ?? []).join(', '),
+  })
+  const parseList = (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean)
+
   const mutation = useMutation({
-    mutationFn: () => updateOrganisation(org.id, form),
+    mutationFn: () => updateOrganisation(org.id, {
+      ...form,
+      payment_options: {
+        wallets:        parseList(payLists.wallets),
+        card_banks:     parseList(payLists.card_banks),
+        transfer_banks: parseList(payLists.transfer_banks),
+        mobile_apps:    parseList(payLists.mobile_apps),
+      },
+    }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['organisations'] })
       qc.invalidateQueries({ queryKey: ['organisation', org.id] })
@@ -679,6 +699,33 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
               <option value="professional">Professional</option>
               <option value="enterprise">Enterprise</option>
             </select>
+          </div>
+          {/* Payment pick-lists (POS chips) */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: '#374151', marginBottom: 3 }}>
+              {isNl ? 'Betaalopties op de kassa' : 'POS payment options'}
+            </label>
+            <p style={{ fontSize: 11.5, color: '#7e88a0', margin: '0 0 8px' }}>
+              {isNl
+                ? 'Kommagescheiden. Leeg laten = de standaardlijsten (getoond als voorbeeld). De kassa voegt zelf altijd "Other" toe.'
+                : 'Comma separated. Leave empty for the default lists (shown as placeholder). The POS always appends "Other" itself.'}
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {([
+                { key: 'wallets' as const,        label: isNl ? 'QR-wallets' : 'QR wallets' },
+                { key: 'card_banks' as const,     label: isNl ? 'Banken / kaartmerken (pin)' : 'Banks / card brands (PIN)' },
+                { key: 'transfer_banks' as const, label: isNl ? 'Banken (overschrijving)' : 'Banks (transfer)' },
+                { key: 'mobile_apps' as const,    label: isNl ? 'Mobiel-bankieren-apps' : 'Mobile banking apps' },
+              ]).map(({ key, label }) => (
+                <div key={key}>
+                  <label style={{ display: 'block', fontSize: 11.5, fontWeight: 600, color: '#6b7280', marginBottom: 4 }}>{label}</label>
+                  <input type="text" value={payLists[key]}
+                    onChange={(e) => setPayLists((p) => ({ ...p, [key]: e.target.value }))}
+                    placeholder={(org.payment_options?.[key] ?? []).join(', ')}
+                    style={inputSt} onFocus={focusIn} onBlur={focusOut} />
+                </div>
+              ))}
+            </div>
           </div>
           {/* Toggles */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

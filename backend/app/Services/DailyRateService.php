@@ -34,6 +34,22 @@ use Illuminate\Support\Facades\Log;
 class DailyRateService
 {
     /**
+     * Lock today's rate, surviving the first-sale-of-day race: two cashiers
+     * completing the day's first sales concurrently both miss the fast path
+     * and both try to INSERT the same date. daily_rates.date is unique, so
+     * the loser gets a constraint violation — treat that as "someone else
+     * just locked it" and return their row instead of failing the sale.
+     */
+    private function lockRate(string $today, array $values): DailyRate
+    {
+        try {
+            return DailyRate::updateOrCreate(['date' => $today], $values);
+        } catch (\Illuminate\Database\UniqueConstraintViolationException) {
+            return DailyRate::where('date', $today)->firstOrFail();
+        }
+    }
+
+    /**
      * Return today's locked rate, attempting to self-heal if missing.
      */
     public function ensureTodayRate(): ?DailyRate
@@ -85,8 +101,8 @@ class DailyRateService
         }
         $static = (string) $static;
 
-        $rate = DailyRate::updateOrCreate(
-            ['date' => $today],
+        $rate = $this->lockRate(
+            $today,
             [
                 'usd_to_srd'   => $static,
                 'raw_rate'     => $static,
@@ -145,8 +161,8 @@ class DailyRateService
             $markupPct = (string) config('services.exchangerate_api.markup_pct', '0.00');
             $finalRate = bcadd($rawRate, bcmul($rawRate, bcdiv($markupPct, '100', 6), 6), 4);
 
-            $rate = DailyRate::updateOrCreate(
-                ['date' => $today],
+            $rate = $this->lockRate(
+                $today,
                 [
                     'usd_to_srd'   => $finalRate,
                     'raw_rate'     => $rawRate,
@@ -185,8 +201,8 @@ class DailyRateService
         // 'manual' for the same scenario, so we match. The "this was an
         // automated carry-forward, not a human override" detail lives in
         // api_response.fallback_from + the audit_logs row below.
-        $rate = DailyRate::updateOrCreate(
-            ['date' => $today],
+        $rate = $this->lockRate(
+            $today,
             [
                 'usd_to_srd'   => $previous->usd_to_srd,
                 'raw_rate'     => $previous->raw_rate,

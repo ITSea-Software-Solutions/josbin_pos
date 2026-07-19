@@ -198,3 +198,14 @@ No changes to the main app are required — this server fulfils the contract its
 - Run behind HTTPS (Let's Encrypt) in production.
 - `php artisan serve` is fine for low volume; for production front the app with
   nginx + php-fpm.
+
+
+
+
+Real blockers (operational, on your side — not code):
+
+DigitalOcean firewall rules (public URLs still blocked)
+SMTP credentials (no emails until then)
+OpenAI billing credits (AI features silently off)
+Domain + HTTPS decision (also unlocks camera-scanning in browsers)
+Code-signing yes/no, and the on-site visit date — real printers/scale must be tested on Day 2 there

@@ -50,7 +50,13 @@ class StoreController extends Controller
 
         // btw_number is loaded so receipts can fall back to the org's BTW
         // number when the store has no per-store override configured.
-        return response()->json(['data' => $store->load('organisation:id,name,btw_number')]);
+        // `settings` must be in the select or the payment_options accessor
+        // would silently serve pure defaults instead of the org's overrides.
+        $store->load('organisation:id,name,btw_number,settings');
+        $payload = $store->toArray();
+        $payload['payment_options'] = $store->organisation->payment_options;
+
+        return response()->json(['data' => $payload]);
     }
 
     /** PUT /api/stores/{store} — org admin or super admin */
@@ -126,14 +132,14 @@ class StoreController extends Controller
         $this->authorize('update', $store);
 
         $request->validate([
-            'provider' => ['required', \Illuminate\Validation\Rule::in(array_keys(self::WALLET_SLUGS))],
+            'provider' => ['required', \Illuminate\Validation\Rule::in($this->walletProviders($store))],
             // Same raster-only rule as uploadLogo — SVG can carry scripts and
             // /storage is served same-origin (stored XSS).
             'image'    => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
         ]);
 
         $provider = $request->input('provider');
-        $slug     = self::WALLET_SLUGS[$provider];
+        $slug     = \Illuminate\Support\Str::slug($provider);
 
         $settings = $store->settings ?? [];
         $old      = $settings['wallet_qrs'][$provider] ?? null;
@@ -154,13 +160,18 @@ class StoreController extends Controller
         ]]);
     }
 
-    /** DELETE /api/stores/{store}/wallet-qr?provider=… — remove a wallet QR. */
+    /** DELETE /api/stores/{store}/wallet-qr?provider=… — remove a wallet QR.
+     *  Deletion also accepts providers no longer in the org's configured
+     *  list, so an OA can clean up a QR after renaming/removing a wallet. */
     public function deleteWalletQr(Request $request, Store $store): JsonResponse
     {
         $this->authorize('update', $store);
 
+        $configured = $this->walletProviders($store);
+        $stored     = array_keys($store->settings['wallet_qrs'] ?? []);
+
         $request->validate([
-            'provider' => ['required', \Illuminate\Validation\Rule::in(array_keys(self::WALLET_SLUGS))],
+            'provider' => ['required', \Illuminate\Validation\Rule::in(array_unique(array_merge($configured, $stored)))],
         ]);
 
         $provider = $request->input('provider');
@@ -175,9 +186,15 @@ class StoreController extends Controller
         return response()->json(['data' => ['provider' => $provider, 'wallet_qr_path' => null]]);
     }
 
-    /** Wallet providers the POS offers → filesystem slug. Keep in sync with
-     *  frontend WALLETS in PaymentModal.tsx ("Other" has no stored QR). */
-    private const WALLET_SLUGS = ['Mopé' => 'mope', 'Uni5Pay+' => 'uni5pay'];
+    /** Wallet providers whose QR can be stored — the organisation's
+     *  configured list (defaults from config/josbin_pos.php: Mopé /
+     *  Uni5Pay+). Filename slug = Str::slug(provider), which matches the
+     *  historical 'mope' / 'uni5pay' paths; the POS-side "Other" chip has
+     *  no stored QR. */
+    private function walletProviders(Store $store): array
+    {
+        return $store->organisation->payment_options['wallets'] ?? [];
+    }
 
     /** DELETE /api/stores/{store} — soft delete / deactivate, super admin only */
     public function destroy(Request $request, Store $store): JsonResponse

@@ -39,6 +39,24 @@ return [
         'website' => env('JOSBIN_POS_VENDOR_WEBSITE', 'https://josbin-pos.sr'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Default payment pick-lists (Suriname)
+    |--------------------------------------------------------------------------
+    | Shown at the POS for card slips, transfers, mobile banking and QR
+    | wallets. An organisation can override any list via
+    | organisations.settings['payment_options'] (Dashboard → Organisations →
+    | edit) — e.g. a Guyana deployment swaps in MMG / Caripay / Kanoo without
+    | code changes. Unset keys fall back to these defaults; the POS appends
+    | "Other" itself. card_banks = the 8 BNETS member banks + card schemes.
+    */
+    'payment_options' => [
+        'wallets'        => ['Mopé', 'Uni5Pay+'],
+        'card_banks'     => ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank', 'Visa', 'Mastercard', 'UnionPay'],
+        'transfer_banks' => ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank'],
+        'mobile_apps'    => ['DSB Mobiel', 'Hakrinbank Online', 'Finabank App', 'Republic Mobile'],
+    ],
+
     // Installation key issued when the license is activated (per deployment)
     'installation_key' => env('JOSBIN_POS_INSTALLATION_KEY', ''),
 

@@ -284,8 +284,9 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
               ? 'Upload per wallet de statische merchant-QR van uw winkel. De kassa toont hem groot op het scherm bij een QR-betaling, met het te betalen bedrag ernaast — de klant scant en typt het bedrag in de wallet-app.'
               : "Upload your store's static merchant QR per wallet. The POS shows it large on screen during a QR payment, with the amount due next to it — the customer scans and types the amount in the wallet app."}
           </p>
-          <WalletQrCard store={store} provider="Mopé" isNl={isNl} />
-          <WalletQrCard store={store} provider="Uni5Pay+" isNl={isNl} />
+          {(store.payment_options?.wallets ?? ['Mopé', 'Uni5Pay+']).map((provider) => (
+            <WalletQrCard key={provider} store={store} provider={provider} isNl={isNl} />
+          ))}
         </Section>
 
         {error && <p style={{ fontSize: 13, color: '#dc2626', margin: '0 0 12px' }}>{error}</p>}

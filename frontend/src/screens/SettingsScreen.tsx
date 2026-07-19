@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
+import { getStore } from '@/api/stores'
 import { listPrinters, openCashDrawer, detectPlatform } from '@/lib/hardware'
 import type { ProductDisplay } from '@/store/settingsStore'
 import type { PrinterConfig } from '@/lib/hardware'
@@ -21,6 +23,18 @@ export default function SettingsScreen() {
     autoPrintReceipt, setAutoPrintReceipt,
     embeddedBarcode, setEmbeddedBarcode,
   } = useSettingsStore()
+  const storeId = useSettingsStore((s) => s.storeId)
+
+  // Bank options for the simulated-terminal preselect come from the org's
+  // configured payment options (same source as the payment modal's chips).
+  const { data: settingsStoreData } = useQuery({
+    queryKey: ['store', storeId],
+    queryFn: () => getStore(storeId!),
+    enabled: !!storeId,
+    staleTime: 5 * 60_000,
+  })
+  const terminalBanks = settingsStoreData?.payment_options?.card_banks
+    ?? ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank']
 
   const platform = detectPlatform()
   const [saved, setSaved] = useState(false)
@@ -431,7 +445,7 @@ export default function SettingsScreen() {
                 <select value={cardTerminal.defaultBank}
                   onChange={(e) => setCardTerminal({ defaultBank: e.target.value })}
                   style={selectSt}>
-                  {['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank'].map((b) => <option key={b} value={b}>{b}</option>)}
+                  {terminalBanks.map((b) => <option key={b} value={b}>{b}</option>)}
                 </select>
               </div>
             )}

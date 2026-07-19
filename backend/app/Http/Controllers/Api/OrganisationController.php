@@ -105,7 +105,28 @@ class OrganisationController extends Controller
             'block_oversell'    => ['sometimes', 'boolean'],
             'subscription_tier' => ['sometimes', Rule::in(['starter', 'professional', 'enterprise'])],
             'is_active'         => ['sometimes', 'boolean'],
+            // Pick-lists the POS shows per tender type. An empty array means
+            // "use the defaults" (config/josbin_pos.php); the POS appends
+            // "Other" itself, so it is never stored here.
+            'payment_options'                  => ['sometimes', 'array'],
+            'payment_options.wallets'          => ['sometimes', 'array', 'max:20'],
+            'payment_options.wallets.*'        => ['string', 'max:40', 'distinct'],
+            'payment_options.card_banks'       => ['sometimes', 'array', 'max:20'],
+            'payment_options.card_banks.*'     => ['string', 'max:40', 'distinct'],
+            'payment_options.transfer_banks'   => ['sometimes', 'array', 'max:20'],
+            'payment_options.transfer_banks.*' => ['string', 'max:40', 'distinct'],
+            'payment_options.mobile_apps'      => ['sometimes', 'array', 'max:20'],
+            'payment_options.mobile_apps.*'    => ['string', 'max:40', 'distinct'],
         ]);
+
+        if (array_key_exists('payment_options', $data)) {
+            $settings = $organisation->settings ?? [];
+            $settings['payment_options'] = collect($data['payment_options'])
+                ->map(fn ($list) => array_values(array_filter(array_map('trim', $list), fn ($v) => $v !== '' && strcasecmp($v, 'Other') !== 0)))
+                ->all();
+            $data['settings'] = $settings;
+            unset($data['payment_options']);
+        }
 
         $organisation->update($data);
 

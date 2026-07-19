@@ -1,5 +1,14 @@
 import apiClient from './client'
 
+/** POS pick-lists per tender type. Effective values come appended on every
+ *  organisation payload; overrides live under settings.payment_options. */
+export interface PaymentOptions {
+  wallets?: string[]
+  card_banks?: string[]
+  transfer_banks?: string[]
+  mobile_apps?: string[]
+}
+
 export interface Organisation {
   id: string
   name: string
@@ -15,6 +24,9 @@ export interface Organisation {
   created_at: string
   allow_impersonation?: boolean
   admin_user?: { id: string; name: string; email: string } | null
+  settings?: { payment_options?: PaymentOptions } & Record<string, unknown>
+  /** Effective lists (override or default) — appended by the API. */
+  payment_options?: PaymentOptions
 }
 
 export interface Store {
@@ -30,6 +42,8 @@ export interface Store {
   receipt_logo_path?: string
   receipt_logo_url?: string
   settings?: Record<string, unknown>
+  /** Effective org pick-lists, served by GET /stores/{id}. */
+  payment_options?: PaymentOptions
   is_active: boolean
   pos_type: 'native' | 'external'
 }
@@ -83,7 +97,7 @@ export async function createOrganisation(payload: CreateOrgPayload): Promise<Org
 
 export async function updateOrganisation(
   id: string,
-  payload: Partial<CreateOrgPayload> & { is_active?: boolean; allow_impersonation?: boolean; block_oversell?: boolean },
+  payload: Partial<CreateOrgPayload> & { is_active?: boolean; allow_impersonation?: boolean; block_oversell?: boolean; payment_options?: PaymentOptions },
 ): Promise<Organisation> {
   const res = await apiClient.put<{ data: Organisation }>(`/organisations/${id}`, payload)
   return res.data.data

@@ -16,13 +16,25 @@ setup, the pending-payments queue, and where each method shows up in reports.
 | 💱 Foreign cash (USD/EUR) | ✅ | daily-rate audit trail |
 | 🔳 QR wallet (Mopé / Uni5Pay+) | ✅ when the cashier confirms on the wallet device; ❌ when they can't | wallet QR setup + occasional confirmation |
 
+## 22.1a Which wallets, banks and apps the POS offers — configurable
+
+The pick-lists cashiers see (QR wallets, banks for PIN slips and transfers,
+mobile-banking apps) are managed per organisation: **Organisations →
+(organisation) → Edit → POS payment options**. Each list is comma-separated;
+leave a field empty to keep the standard Suriname lists (the two QR wallets
+and the eight banks whose cards all work on any bank's PIN terminal). The
+POS always adds an "Other" choice by itself, so an unexpected provider never
+blocks a sale. This is also how a deployment outside Suriname swaps in its
+own wallets and banks — no software update needed.
+
 ## 22.2 QR wallets — one-time setup per store
 
-Mopé and Uni5Pay+ issue your store a **static merchant QR** (sticker / PDF).
+Wallet providers issue your store a **static merchant QR** (sticker / PDF).
 Upload it once and the POS shows it full-screen during every QR payment, with
 the amount due next to it:
 
-1. **Stores → (store) → Settings → QR wallets (Mopé / Uni5Pay+)**
+1. **Stores → (store) → Settings → QR wallets** — one card per configured
+   wallet (Mopé and Uni5Pay+ by default)
 2. Upload the QR image per wallet (PNG/JPG — the image your bank sent you)
 3. Done — cashiers see it immediately; replace or remove it here any time
 

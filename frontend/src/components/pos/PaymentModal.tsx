@@ -55,20 +55,11 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const terminalTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const effectiveBank = cardBank === 'Other' ? cardBankCustom.trim() : cardBank
 
-  // Common Surinamese card issuers + the international brands accepted at
-  // supermarkets. Free-text "Other" preserves new banks without a release.
-  // The 8 BNETS member banks (one PIN terminal serves all of them) + card
-  // brands. "RBC" was removed — Republic Bank (Suriname) is the member since
-  // acquiring RBC's local operations; UnionPay is an acquired scheme locally.
-  const BANKS = ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank', 'Visa', 'Mastercard', 'UnionPay', 'Other'] as const
-  // Phase 2 — banks for bank_transfer (a subset; no card brands).
-  const TRANSFER_BANKS = ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank', 'Other'] as const
-  // Mobile-banking apps used in Suriname; "Other" for emerging providers.
-  const MOBILE_APPS = ['DSB Mobiel', 'Hakrinbank Online', 'Finabank App', 'Republic Mobile', 'Other'] as const
-  // Phase 3 — QR wallets accepted at Suriname supermarkets. Mopé (Hakrinbank)
-  // and Uni5Pay+ (Southern Commercial Bank) both confirm on the merchant
-  // device in real time; "Other" catches new wallets without a release.
-  const WALLETS = ['Mopé', 'Uni5Pay+', 'Other'] as const
+  // Pick-lists come from the organisation's payment options (Dashboard →
+  // Organisations → edit) so a Guyana/Trinidad deployment swaps wallets and
+  // banks without a release. The fallbacks below mirror the server defaults
+  // (config/josbin_pos.php): the 8 BNETS member banks + card brands, and the
+  // two Surinamese QR wallets. "Other" is always appended client-side.
 
   // Phase 2 state — kept separate from card state since the workflows differ.
   const [transferProvider,   setTransferProvider]   = useState('')
@@ -100,6 +91,14 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     staleTime: 5 * 60_000,
   })
   const API_ORIGIN = (import.meta.env.VITE_API_URL ?? '/api').replace(/\/api$/, '')
+
+  const po = storeData?.payment_options
+  const withOther = (list: string[] | undefined, fallback: string[]) =>
+    [...(list && list.length > 0 ? list : fallback), 'Other']
+  const BANKS          = withOther(po?.card_banks,     ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank', 'Visa', 'Mastercard', 'UnionPay'])
+  const TRANSFER_BANKS = withOther(po?.transfer_banks, ['DSB', 'Hakrinbank', 'Republic', 'SPSB', 'VCB', 'GODO', 'Finabank', 'Trustbank'])
+  const MOBILE_APPS    = withOther(po?.mobile_apps,    ['DSB Mobiel', 'Hakrinbank Online', 'Finabank App', 'Republic Mobile'])
+  const WALLETS        = withOther(po?.wallets,        ['Mopé', 'Uni5Pay+'])
   const walletQrPath = (storeData?.settings?.wallet_qrs ?? {})[walletProvider]
   const walletQrUrl = walletQrPath
     ? (walletQrPath.startsWith('http') ? walletQrPath : `${API_ORIGIN}/storage/${walletQrPath}`)
