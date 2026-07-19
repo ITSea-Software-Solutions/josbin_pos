@@ -269,6 +269,7 @@ export default defineConfig({
     'FEATURES_AND_FLOWS.md',
     'HANDOVER.md',
     'PENDING.md',
+    'FIELD_RUNBOOK.md',
     'AUDIT_FINDINGS*.md',
     '.claude/**',
     'Phase1&2 Tickets/**',

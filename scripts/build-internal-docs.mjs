@@ -24,6 +24,7 @@ mkdirSync(OUT, { recursive: true })
 /** [source, slug, title, one-line description] — hub order. */
 const DOCS = [
   ['PENDING.md',                                'pending',          'Pending points & decisions', 'Everything open: waiting-on-you list, prod-split day, dev backlog, decisions'],
+  ['FIELD_RUNBOOK.md',                          'field-runbook',    'Field runbook — install a client, start to end', 'Fresh-machine bootstrap → USB kit → cloud → store server → terminals → go-live'],
   ['HANDOVER.md',                               'handover',         'Handover / continuity map',  'Infra map, access & secret locations, status snapshot, standing rules'],
   ['progress/architecture-review-2026-07.html', 'architecture-review', 'Architecture & excellence review', 'Scorecard, roadmap, spec-conformance ledger, evidence (July 2026)'],
   ['progress/load-test-2026-07.md',             'load-test',        'Load-test results',          'k6 harness design + first-run results and interpretation'],

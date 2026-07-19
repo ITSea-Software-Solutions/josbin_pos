@@ -36,6 +36,7 @@ playbook ch 14, Phase 1.)
 | D1: per-store sale-number sequence | ½ d | Numbering semantics change — do together with a Z-report review |
 | D3: refund discount handling · D5: discount combine rules | ½ d | Edge-case correctness from the June audit |
 | pgvector embeddings + semantic product search | 1 d | Blocked on OpenAI credits (row above) |
+| Runtime-configurable server URL in the POS desktop app | 1 d | Today the API address is baked at build time (`VITE_API_URL`) — the field runbook works around it with the standard store-server IP convention; a first-launch "server address" screen would remove the rebuild-per-IP case entirely |
 | Loyalty / spaarpunten | design first | Not committed |
 
 ## 4. Decisions needed before the first government client
