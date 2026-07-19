@@ -4,6 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 
 import nl from './nl.json'
 import en from './en.json'
+import srn from './srn.json'
 
 i18n
   .use(LanguageDetector)
@@ -12,9 +13,15 @@ i18n
     resources: {
       nl: { translation: nl },
       en: { translation: en },
+      // Sranantongo — draft translation, native-speaker review pending.
+      // Speakers read Dutch, so missing keys fall back nl → en.
+      srn: { translation: srn },
     },
-    fallbackLng: 'nl',
-    supportedLngs: ['nl', 'en'],
+    fallbackLng: {
+      srn: ['nl', 'en'],
+      default: ['nl'],
+    },
+    supportedLngs: ['nl', 'en', 'srn'],
     interpolation: {
       escapeValue: false, // React handles XSS escaping
     },

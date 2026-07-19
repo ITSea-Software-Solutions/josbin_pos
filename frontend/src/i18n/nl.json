@@ -185,8 +185,26 @@
       "emailPlaceholder": "E-mailadres (optioneel)",
       "emailInvalid": "Voer een geldig e-mailadres in",
       "useCustomerEmail": "E-mail van klant gebruiken",
+      "whatsapp": "Bon via WhatsApp",
+      "whatsappOpen": "WhatsApp openen",
+      "whatsappPlaceholder": "+597 8812345",
+      "whatsappHint": "Laat leeg om zelf de chat in WhatsApp te kiezen",
+      "useCustomerPhone": "Nummer van klant gebruiken",
       "noPrinterConfigured": "Tip: stel een thermische printer in via Instellingen → Printer voor afdrukken met één tik en automatisch openen van de kassalade.",
       "setupHelp": "Printer, kassalade & scanner instellen"
+    },
+    "serverConfig": {
+      "title": "Serveradres",
+      "current": "Huidige server",
+      "overrideActive": "Op deze kassa is een aangepast adres ingesteld — dit overschrijft het ingebouwde adres.",
+      "overrideBadge": "aangepast",
+      "placeholder": "192.168.0.250:8080",
+      "test": "Testen",
+      "testOk": "Verbonden",
+      "testFail": "Server niet bereikbaar",
+      "saveRestart": "Opslaan & herstarten",
+      "reset": "Standaard gebruiken",
+      "hint": "Wijzig dit alleen tijdens installatie of als de winkelserver een nieuw adres heeft gekregen. Vraag het uw manager bij twijfel — de app herstart na opslaan."
     },
     "discount": {
       "title": "Korting toevoegen",

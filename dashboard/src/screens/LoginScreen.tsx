@@ -1,5 +1,6 @@
 import { useState, useEffect, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { passkeysSupported } from '@/lib/passkeys'
 import { useDashboardAuthStore } from '@/store/authStore'
 
 const STYLES = `
@@ -57,6 +58,7 @@ export default function LoginScreen() {
   const isNl = i18n.language === 'nl'
 
   const login      = useDashboardAuthStore((s) => s.login)
+  const passkeyLogin = useDashboardAuthStore((s) => s.passkeyLogin)
   const isLoading  = useDashboardAuthStore((s) => s.isLoading)
   const error      = useDashboardAuthStore((s) => s.error)
   const clearError = useDashboardAuthStore((s) => s.clearError)
@@ -315,6 +317,27 @@ export default function LoginScreen() {
               }
             </button>
           </form>
+
+          {/* Passkey sign-in — only in secure contexts (localhost / HTTPS
+              domain); hidden on the plain-IP droplet where WebAuthn can't run. */}
+          {passkeysSupported() && (
+            <button
+              type="button"
+              onClick={() => passkeyLogin().catch(() => {})}
+              disabled={isLoading}
+              data-testid="btn-passkey-login"
+              style={{
+                marginTop: 12, width: '100%', height: 46,
+                borderRadius: 10, cursor: isLoading ? 'wait' : 'pointer',
+                border: '1px solid rgba(255,255,255,.14)',
+                background: 'rgba(255,255,255,.05)', color: '#e2e8f0',
+                fontWeight: 600, fontSize: 14,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              🔑 {isNl ? 'Inloggen met passkey' : 'Sign in with a passkey'}
+            </button>
+          )}
 
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '32px 0 24px' }}>

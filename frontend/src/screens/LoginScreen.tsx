@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import ServerConfigModal from '@/components/shared/ServerConfigModal'
 import { useAuthStore } from '@/store/authStore'
 
 // ─── Keyframe & global styles injected once ──────────────────────────────────
@@ -172,6 +173,7 @@ export default function LoginScreen() {
   const [password,    setPassword]    = useState('')
   const [showPw,      setShowPw]      = useState(false)
   const [focusField,  setFocusField]  = useState<'email'|'pw'|null>(null)
+  const [showServer,  setShowServer]  = useState(false)
   const emailRef = useRef<HTMLInputElement>(null)
   const isNl     = i18n.language === 'nl'
 
@@ -592,12 +594,25 @@ export default function LoginScreen() {
               style={{ fontSize: 11.5, color: 'rgba(148,163,184,0.75)', textDecoration: 'none', fontWeight: 600 }}>
               {isNl ? '🗺️ Hoe het werkt' : '🗺️ How it works'}
             </a>
+            {/* Field-install escape hatch: point this till at the right store
+                server without a rebuild. Deliberately reachable pre-login. */}
+            <button
+              onClick={() => setShowServer(true)}
+              data-testid="btn-server-config"
+              style={{
+                fontSize: 11.5, color: 'rgba(148,163,184,0.75)', fontWeight: 600,
+                background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+              }}>
+              ⚙ Server
+            </button>
           </div>
           <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.3)', letterSpacing: '0.3px' }}>
             Josbin POS v1.0 &nbsp;·&nbsp; © 2026
           </div>
         </div>
       </div>
+
+      <ServerConfigModal isOpen={showServer} onClose={() => setShowServer(false)} />
     </div>
   )
 }

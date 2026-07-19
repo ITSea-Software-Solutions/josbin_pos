@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import ServerConfigModal from '@/components/shared/ServerConfigModal'
 import { useAuthStore } from '@/store/authStore'
 import { useCartStore } from '@/store/cartStore'
 import { useRegisterStore } from '@/store/registerStore'
 import { useSettingsStore } from '@/store/settingsStore'
+import { getApiBaseUrl, getConfiguredServerUrl } from '@/lib/serverConfig'
 import { getZReportHistory } from '@/api/reports'
 
 const MANAGER_ROLES = ['store_manager', 'organisation_admin', 'super_admin']
@@ -37,6 +39,7 @@ export function SystemActions() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [autoLaunch, setAutoLaunchState] = useState<boolean | null>(null)
+  const [showServer, setShowServer] = useState(false)
 
   // Pull app version + current auto-launch state once
   useEffect(() => {
@@ -161,7 +164,48 @@ export function SystemActions() {
             </div>
           </label>
         )}
+
+        {/* Store-server address — the till's API endpoint. Changing it
+            restarts the app; the login-screen ⚙ Server gear is the same
+            control for pre-login (fresh install) situations. */}
+        <div
+          style={{
+            display: 'flex', alignItems: 'center', gap: 12,
+            padding: '12px 14px',
+            background: 'var(--bg-base)',
+            border: '1px solid var(--border-color)',
+            borderRadius: 'var(--border-radius)',
+          }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ margin: 0, fontWeight: 600, fontSize: 'var(--font-size-sm)' }}>
+              {t('pos.serverConfig.title')}
+              {getConfiguredServerUrl() !== null && (
+                <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--color-warning)' }}>
+                  ({t('pos.serverConfig.overrideBadge')})
+                </span>
+              )}
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: 'var(--font-size-xs)', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {getApiBaseUrl()}
+            </p>
+          </div>
+          <button
+            onClick={() => setShowServer(true)}
+            data-testid="btn-change-server"
+            style={{
+              height: 36, padding: '0 14px',
+              borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)',
+              background: 'var(--bg-input)', color: 'var(--text-primary)',
+              cursor: 'pointer', fontWeight: 600, fontSize: 'var(--font-size-sm)',
+            }}
+          >
+            {t('app.edit')}
+          </button>
+        </div>
       </div>
+
+      <ServerConfigModal isOpen={showServer} onClose={() => setShowServer(false)} />
 
       {pending && (
         <ConfirmModal

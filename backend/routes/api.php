@@ -67,6 +67,13 @@ Route::prefix('auth')->name('auth.')->group(function () {
 
     // 2FA challenge — uses pre_auth_token from body, not Sanctum guard
     Route::post('two-factor-challenge', [AuthController::class, 'twoFactorChallenge'])->name('2fa.challenge');
+
+    // Passkey login — guest WebAuthn ceremony (usernameless, discoverable
+    // credentials). Same throttle bucket as password login.
+    Route::post('passkeys/login-options', [\App\Http\Controllers\Api\PasskeyController::class, 'loginOptions'])
+        ->name('passkeys.login-options')->middleware('throttle:login');
+    Route::post('passkeys/login', [\App\Http\Controllers\Api\PasskeyController::class, 'login'])
+        ->name('passkeys.login')->middleware('throttle:login');
 });
 
 // ── 2FA Setup — requires setup token (auth:sanctum with two_factor_setup ability) ──
@@ -83,6 +90,18 @@ Route::middleware(['auth:sanctum'])->prefix('auth')->name('auth.')->group(functi
 // auth:sanctum group above) live OUTSIDE this group, so the completion flow
 // can't deadlock. Non-2FA users pass straight through (requires2FA() === false).
 Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(function () {
+
+    // Passkey management — register/list/remove the caller's own passkeys.
+    // Sits inside the 2FA-enforced group on purpose: a role that mandates
+    // TOTP must have completed it before it can mint a TOTP-bypassing
+    // credential.
+    Route::prefix('auth/passkeys')->name('auth.passkeys.')->group(function () {
+        Route::get('/',        [\App\Http\Controllers\Api\PasskeyController::class, 'index'])->name('index');
+        Route::post('options', [\App\Http\Controllers\Api\PasskeyController::class, 'registerOptions'])->name('options');
+        Route::post('/',       [\App\Http\Controllers\Api\PasskeyController::class, 'register'])->name('register');
+        Route::delete('{passkeyId}', [\App\Http\Controllers\Api\PasskeyController::class, 'destroy'])
+            ->whereNumber('passkeyId')->name('destroy');
+    });
 
     // Self-service: personal stats + profile + password change.
     // Strictly scoped to $request->user() — see MeController for the rule.

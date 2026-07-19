@@ -23,6 +23,7 @@ interface AuthState {
   twoFactor: TwoFactorState
 
   login: (email: string, password: string) => Promise<void>
+  passkeyLogin: () => Promise<void>
   submitChallenge: (code: string) => Promise<void>
   submitSetupConfirm: (code: string) => Promise<{ recovery_codes: string[] }>
   fetchSetupQr: () => Promise<{ secret: string; qr_code_url: string }>
@@ -102,6 +103,37 @@ export const useDashboardAuthStore = create<AuthState>()(
         } catch (err: unknown) {
           type ErrShape = { response?: { data?: { message?: string } } }
           const msg = (err as ErrShape)?.response?.data?.message ?? 'Invalid code. Please try again.'
+          set({ isLoading: false, error: msg })
+          throw err
+        }
+      },
+
+      passkeyLogin: async () => {
+        set({ isLoading: true, error: null })
+        try {
+          const { loginWithPasskey } = await import('@/lib/passkeys')
+          const res = await loginWithPasskey('dashboard')
+          // A user-verified passkey is already two-factor (possession +
+          // biometric/PIN) — the backend issues a full token directly.
+          localStorage.setItem('josbin_pos_dashboard_token', res.token)
+          set({
+            user: res.user as unknown as DashboardUser,
+            token: res.token,
+            expiresAt: res.expires_at,
+            isLoading: false,
+            twoFactor: { type: 'none' },
+          })
+        } catch (err: unknown) {
+          // NotAllowedError = user closed the browser's passkey prompt —
+          // not an error worth shouting about.
+          const name = (err as { name?: string })?.name
+          if (name === 'NotAllowedError' || (err as Error)?.message === 'cancelled') {
+            set({ isLoading: false })
+            return
+          }
+          type ErrShape = { response?: { data?: { errors?: { credential?: string[] }; message?: string } } }
+          const data = (err as ErrShape)?.response?.data
+          const msg = data?.errors?.credential?.[0] ?? data?.message ?? 'Passkey sign-in failed. Please try again.'
           set({ isLoading: false, error: msg })
           throw err
         }

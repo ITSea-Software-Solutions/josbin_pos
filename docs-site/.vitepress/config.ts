@@ -270,6 +270,8 @@ export default defineConfig({
     'HANDOVER.md',
     'PENDING.md',
     'FIELD_RUNBOOK.md',
+    'OPS_CHEATSHEET.md',
+    'PARTNER_OUTREACH.md',
     'AUDIT_FINDINGS*.md',
     '.claude/**',
     'Phase1&2 Tickets/**',

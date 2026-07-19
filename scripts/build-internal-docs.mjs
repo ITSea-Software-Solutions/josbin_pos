@@ -24,11 +24,13 @@ mkdirSync(OUT, { recursive: true })
 /** [source, slug, title, one-line description] — hub order. */
 const DOCS = [
   ['PENDING.md',                                'pending',          'Pending points & decisions', 'Everything open: waiting-on-you list, prod-split day, dev backlog, decisions'],
+  ['OPS_CHEATSHEET.md',                         'ops-cheatsheet',   'Ops cheatsheet — the five moves', 'Health check, backup freshness, restore drill, licences, catalogue import — for the partner ops person'],
   ['FIELD_RUNBOOK.md',                          'field-runbook',    'Field runbook — install a client, start to end', 'Fresh-machine bootstrap → USB kit → cloud → store server → terminals → go-live'],
   ['HANDOVER.md',                               'handover',         'Handover / continuity map',  'Infra map, access & secret locations, status snapshot, standing rules'],
   ['progress/architecture-review-2026-07.html', 'architecture-review', 'Architecture & excellence review', 'Scorecard, roadmap, spec-conformance ledger, evidence (July 2026)'],
   ['progress/load-test-2026-07.md',             'load-test',        'Load-test results',          'k6 harness design + first-run results and interpretation'],
   ['progress/research-regional-payments-2026-07.md', 'payments-research', 'Regional payments research', 'Verified Suriname/Guyana/T&T/Brazil payment-landscape findings'],
+  ['PARTNER_OUTREACH.md',                       'partner-outreach', 'Partner outreach — Uni5Pay+ draft & gov-DB wording', 'Ready-to-send UPPS/SCB email (EN+NL) and talking points for the government data-isolation conversation'],
   ['FEATURES_AND_FLOWS.md',                     'features-and-flows', 'Features & flows registry', 'Living feature inventory, user journeys, dated changelog'],
   ['CLAUDE_WORKING_GUIDE.md',                   'working-guide',    'Engineering working guide',  'Discipline, surfaces checklist, gotcha registry, ops practices'],
   ['CLAUDE.md',                                 'product-brief',    'Product brief / master spec', 'The full platform specification the build follows'],

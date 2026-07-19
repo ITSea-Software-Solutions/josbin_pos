@@ -286,3 +286,28 @@ Voor 2FA-inschrijving en het per-rol-beleid dat controleert of u verplicht bent 
 ---
 
 → Volgende: einde van Dashboard Handleiding v1. Zie de [Ontwikkelaarsdocumentatie](../docs/) voor de technische kant, of [Trainer Spiekbriefjes](../trainer_cheatsheets/) voor één-pagina afdrukbare referenties.
+
+
+---
+
+## Passkeys — inloggen zonder wachtwoord
+
+**Mijn Profiel → Profiel & wachtwoord → Passkeys** laat u de vingerafdruk,
+gezichtsherkenning of pincode van dit apparaat (Face ID, Windows Hello of
+een hardwaresleutel) registreren als **passkey**. Daarna toont het
+inlogscherm **Inloggen met passkey** — één aanraking vervangt wachtwoord én
+2FA-code, want een passkey bewijst zowel het apparaat als uzelf.
+
+- **Toevoegen**: geef een naam ("Werklaptop"), druk op **+ Passkey
+  toevoegen**, bevestig met vingerafdruk/pincode. Rollen met verplichte 2FA
+  moeten eerst hun 2FA-instelling hebben afgerond.
+- **Verwijderen**: elke passkey toont wanneer hij is toegevoegd en voor het
+  laatst gebruikt, met een Verwijderen-knop. Verwijderen sluit u nooit
+  buiten — wachtwoord + 2FA blijft altijd werken.
+- **Vereisten**: passkeys werken alleen via HTTPS op een echte domeinnaam
+  (en op `localhost` voor ontwikkelaars). Zolang het dashboard nog niet op
+  het definitieve domein draait, legt de kaart dit uit in plaats van de knop
+  te tonen.
+
+Elke registratie, verwijdering en passkey-login staat in het auditlogboek
+(`auth.passkey_registered`, `auth.passkey_removed`, `auth.passkey_login`).

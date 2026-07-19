@@ -185,8 +185,26 @@
       "emailPlaceholder": "Email address (optional)",
       "emailInvalid": "Enter a valid email address",
       "useCustomerEmail": "Use customer email",
+      "whatsapp": "Receipt via WhatsApp",
+      "whatsappOpen": "Open WhatsApp",
+      "whatsappPlaceholder": "+597 8812345",
+      "whatsappHint": "Leave empty to pick the chat in WhatsApp yourself",
+      "useCustomerPhone": "Use customer number",
       "noPrinterConfigured": "Tip: set up a thermal printer in Settings → Printer for one-tap printing and automatic cash-drawer opening.",
       "setupHelp": "Set up printer, cash drawer & scanner"
+    },
+    "serverConfig": {
+      "title": "Server address",
+      "current": "Current server",
+      "overrideActive": "A custom address is set on this till — it overrides the built-in one.",
+      "overrideBadge": "custom",
+      "placeholder": "192.168.0.250:8080",
+      "test": "Test",
+      "testOk": "Connected",
+      "testFail": "Cannot reach the server",
+      "saveRestart": "Save & restart",
+      "reset": "Use default",
+      "hint": "Only change this during installation or when the store server got a new address. Ask your manager if unsure — the app restarts after saving."
     },
     "discount": {
       "title": "Add Discount",

@@ -15,6 +15,11 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        // Passkeys: the package's session/web-guard routes don't fit our
+        // Sanctum-token SPA — Api\PasskeyController exposes its own routes
+        // built on the package's actions instead.
+        \Laravel\Passkeys\Passkeys::ignoreRoutes();
+
         // LicenseService is a singleton — one instance per request lifecycle
         $this->app->singleton(LicenseService::class, function () {
             return new LicenseService(
@@ -27,6 +32,27 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        // Passkeys: authoritative WebAuthn settings. Set here in boot() —
+        // after every provider's register() — because the package's config
+        // merge wins over config/passkeys.php for keys both files define
+        // (verified empirically; see that file for the documentation).
+        config([
+            'passkeys.relying_party_id' => (string) env(
+                'PASSKEYS_RP_ID',
+                parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'localhost',
+            ),
+            'passkeys.allowed_origins' => array_values(array_filter(array_merge(
+                [
+                    'http://localhost:5173',
+                    'http://localhost:5174',
+                    'http://localhost:8090',
+                    'http://localhost:8091',
+                    rtrim((string) config('app.url'), '/'),
+                ],
+                explode(',', (string) env('PASSKEYS_ALLOWED_ORIGINS', '')),
+            ))),
+        ]);
 
         // Hash-chain OwenIt model-audits (Product/User/Customer/… created &
         // updated events). OwenIt writes them to audit_logs through its own

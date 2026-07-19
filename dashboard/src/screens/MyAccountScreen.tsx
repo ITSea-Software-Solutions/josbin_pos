@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDashboardAuthStore } from '@/store/authStore'
+import { deletePasskey, listPasskeys, passkeysSupported, registerPasskey } from '@/lib/passkeys'
 import {
   getMySalesSummary, getMyShifts, updateMyProfile, changeMyPassword,
   getMyActivity, getMySessions, revokeMySession,
@@ -426,6 +427,101 @@ function ProfileTab({ isNl }: { isNl: boolean }) {
         {pwSaved && <p style={{ color: '#15803d', fontSize: 13, marginTop: 10 }}>✓ {isNl ? 'Wachtwoord gewijzigd. Andere apparaten zijn uitgelogd.' : 'Password changed. Other devices have been logged out.'}</p>}
         {pwError && <p style={{ color: '#dc2626', fontSize: 13, marginTop: 10 }}>{pwError}</p>}
       </form>
+
+      <PasskeysCard isNl={isNl} />
+    </div>
+  )
+}
+
+/**
+ * Passkeys (WebAuthn) — register this device's Face ID / Windows Hello /
+ * hardware key for passwordless sign-in. Only shows in a secure context on
+ * a domain (localhost dev, HTTPS production); the card explains itself when
+ * the current origin can't do WebAuthn instead of failing cryptically.
+ */
+function PasskeysCard({ isNl }: { isNl: boolean }) {
+  const qc = useQueryClient()
+  const supported = passkeysSupported()
+  const [newName, setNewName] = useState('')
+  const [pkError, setPkError] = useState<string | null>(null)
+
+  const { data: passkeys } = useQuery({
+    queryKey: ['my-passkeys'],
+    queryFn: listPasskeys,
+    enabled: supported,
+  })
+
+  const addMut = useMutation({
+    mutationFn: () => registerPasskey(newName.trim() || (isNl ? 'Dit apparaat' : 'This device')),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['my-passkeys'] }); setNewName(''); setPkError(null) },
+    onError: (e: unknown) => {
+      const name = (e as { name?: string })?.name
+      if (name === 'NotAllowedError' || (e as Error)?.message === 'cancelled') return
+      const msg = (e as { response?: { data?: { errors?: { credential?: string[] } } } })?.response?.data?.errors?.credential?.[0]
+      setPkError(msg ?? (isNl ? 'Passkey toevoegen mislukt.' : 'Could not add passkey.'))
+    },
+  })
+
+  const delMut = useMutation({
+    mutationFn: (id: number) => deletePasskey(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['my-passkeys'] }),
+  })
+
+  return (
+    <div style={{ ...card(), gridColumn: '1 / -1' }}>
+      <h3 style={cardHeading()}>🔑 {isNl ? 'Passkeys (inloggen zonder wachtwoord)' : 'Passkeys (passwordless sign-in)'}</h3>
+
+      {!supported ? (
+        <p style={{ fontSize: 13, color: '#6b7280', margin: 0, lineHeight: 1.6 }}>
+          {isNl
+            ? 'Passkeys werken alleen via een beveiligde verbinding met een domeinnaam (HTTPS). Zodra het dashboard via het definitieve domein draait, kunt u hier Face ID, Windows Hello of een hardwaresleutel registreren.'
+            : 'Passkeys only work over a secure connection with a domain name (HTTPS). Once the dashboard runs on its final domain you can register Face ID, Windows Hello or a hardware key here.'}
+        </p>
+      ) : (
+        <>
+          {(passkeys ?? []).length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 16 }}>
+              {(passkeys ?? []).map((pk) => (
+                <div key={pk.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10 }}>
+                  <span style={{ fontSize: 16 }}>🗝️</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>{pk.name}</div>
+                    <div style={{ fontSize: 11, color: '#6b7280' }}>
+                      {isNl ? 'Toegevoegd' : 'Added'} {new Date(pk.created_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-GB')}
+                      {pk.last_used_at && ` · ${isNl ? 'laatst gebruikt' : 'last used'} ${new Date(pk.last_used_at).toLocaleDateString(isNl ? 'nl-NL' : 'en-GB')}`}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => delMut.mutate(pk.id)}
+                    disabled={delMut.isPending}
+                    style={{ border: '1px solid #fecaca', background: '#fff', color: '#dc2626', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  >
+                    {isNl ? 'Verwijderen' : 'Remove'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder={isNl ? 'Naam (bijv. "Werklaptop")' : 'Name (e.g. "Work laptop")'}
+              style={{ ...input(), flex: 1, marginBottom: 0 }}
+            />
+            <button onClick={() => addMut.mutate()} disabled={addMut.isPending} style={{ ...primaryBtn(), width: 'auto', padding: '0 18px' }}>
+              {addMut.isPending ? '…' : (isNl ? '+ Passkey toevoegen' : '+ Add passkey')}
+            </button>
+          </div>
+          <p style={{ fontSize: 12, color: '#6b7280', margin: '10px 0 0', lineHeight: 1.5 }}>
+            {isNl
+              ? 'Een passkey vervangt wachtwoord én 2FA-code in één stap: uw apparaat bevestigt met vingerafdruk, gezicht of pincode.'
+              : 'A passkey replaces password and 2FA code in one step: your device confirms with fingerprint, face or PIN.'}
+          </p>
+          {pkError && <p style={{ color: '#dc2626', fontSize: 13, marginTop: 10 }}>{pkError}</p>}
+        </>
+      )}
     </div>
   )
 }

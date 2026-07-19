@@ -36,7 +36,8 @@ let reverbConfig: ReverbConfig | null = null
  */
 export async function discoverReverbConfig(): Promise<ReverbConfig> {
   if (reverbConfig) return reverbConfig
-  const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'
+  const { getApiBaseUrl } = await import('@/lib/serverConfig')
+  const apiBase = getApiBaseUrl()
   try {
     const res = await fetch(`${apiBase}/environment`, { headers: { Accept: 'application/json' } })
     if (res.ok) {

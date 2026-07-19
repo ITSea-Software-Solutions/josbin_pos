@@ -502,7 +502,7 @@ class AuthController extends Controller
         }
     }
 
-    private function userPayload(User $user): array
+    public static function userPayload(User $user): array
     {
         return [
             'id'                    => $user->id,

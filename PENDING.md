@@ -16,28 +16,33 @@
 | **Code-signing certificate — yes/no** | Budget decision (~$100–400/yr) | No SmartScreen warning on the POS installer for partner-performed installs |
 | **Off-site backup bucket** (DO Spaces/S3) | Your account | Automated 3rd copy via the `OFFSITE_CMD` hook (today: laptop pulls) |
 | **On-site visit date** | Travel planning | Playbook Phase 2 (hardware day, edge-case script, training) |
-| **Uni5Pay+ merchant-API access** — email UPPS / Southern Commercial Bank | Partner-driven onboarding, no self-serve portal | Dynamic per-transaction QR at the till (code slot ready, feature-flagged) |
+| **Uni5Pay+ merchant-API access** — email UPPS / Southern Commercial Bank. **Draft ready in `PARTNER_OUTREACH.md` §1 (EN+NL) — review & send** | Partner-driven onboarding, no self-serve portal; sending is yours (pick recipient + sender address per the checklist) | Dynamic per-transaction QR at the till (code slot ready, feature-flagged) |
+| **Gov-DB wording conversation with the client** — before the first government tender. Talking points ready in `PARTNER_OUTREACH.md` §2 | Proposal says "completely isolated database"; build is single-cluster with org-scoped queries (§4 decision row) — client must renegotiate wording or commission DB-per-tenant | Contract wording matches the system before any tender reviewer or auditor finds the gap |
 
 ## 2. Prod-split day (one working session, when the domain exists)
 
 Fresh droplet → HTTPS + HSTS → deploy licence server + issue pilot licence →
 IonCube encoding decision → run `k6 run -e BASE=… scripts/load-test.js` for
 the contract ≤200 ms p95 figure → rotate every seeded password → wire Sentry
-DSN → detach from the shared `ams_*` box. (Checklist detail: deployment
-playbook ch 14, Phase 1.)
+DSN → detach from the shared `ams_*` box. **New since passkeys shipped:** set
+`PASSKEYS_RP_ID=<domain>` and `PASSKEYS_ALLOWED_ORIGINS=https://<dashboard-origin>`
+in the backend .env — passkeys need HTTPS + a real domain, so prod-split day
+is exactly when the "Sign in with a passkey" button starts appearing.
+(Checklist detail: deployment playbook ch 14, Phase 1.)
 
 ## 3. Dev backlog (mine, scheduled)
 
 | Item | Size | Notes |
 |---|---|---|
-| Passkeys for Super Admin / government accounts | 2–3 d | Spec'd (Fortify; users.passkey_credential column exists) |
+| ~~Passkeys for Super Admin / government accounts~~ | done | **Shipped 2026-07-19** — WebAuthn register (My Account) + passwordless login, e2e-proven with a virtual authenticator; lights up for real users on prod-split day (HTTPS + domain, §2) |
 | Customer detail view: purchase history + statement export | 1–2 d | User parked it earlier ("will check later") |
 | Server-side caching for heavy report endpoints | 1 d | Redis, short TTL — dashboard snappiness at 50 stores |
 | D1: per-store sale-number sequence | ½ d | Numbering semantics change — do together with a Z-report review |
 | D3: refund discount handling · D5: discount combine rules | ½ d | Edge-case correctness from the June audit |
 | pgvector embeddings + semantic product search | 1 d | Blocked on OpenAI credits (row above) |
-| Runtime-configurable server URL in the POS desktop app | 1 d | Today the API address is baked at build time (`VITE_API_URL`) — the field runbook works around it with the standard store-server IP convention; a first-launch "server address" screen would remove the rebuild-per-IP case entirely |
+| ~~Runtime-configurable server URL in the POS desktop app~~ | done | **Shipped 2026-07-19** — "⚙ Server" on the login screen + Settings → System (manager+): test /health, save & restart, reset to default. A wrong baked IP is now a 30-second on-site fix |
 | Loyalty / spaarpunten | design first | Not committed |
+| Sranantongo native-speaker review | ½ d with a native | Draft srn.json shipped 2026-07-19 (390 keys); the 15 least-certain keys are listed in the generation notes — have a Paramaribo native walk the POS in srn before advertising the language |
 
 ## 4. Decisions needed before the first government client
 

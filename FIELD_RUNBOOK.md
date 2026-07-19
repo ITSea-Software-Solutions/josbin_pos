@@ -52,6 +52,12 @@ independent:
 # 1. Terminal installer — pick the STANDARD store-server LAN IP first.
 #    Convention: every store server we install gets 192.168.0.250, so ONE
 #    exe fits every store. (The API address is baked in at build time.)
+#    ESCAPE HATCH: since the runtime server-config shipped, a mis-pointed
+#    till is fixable ON THE SPOT — login screen → "⚙ Server" → enter the
+#    real address (e.g. 192.168.0.250:8080) → Test → Save & restart.
+#    Same control for managers: Settings → System → Server address.
+#    So a wrong bake is a 30-second fix, not a rebuild — but keep the
+#    convention anyway; zero-touch beats one-touch.
 cd frontend && npm ci
 VITE_API_URL=http://192.168.0.250:8080/api \
 VITE_REVERB_HOST=192.168.0.250 VITE_REVERB_PORT=6001 VITE_REVERB_SCHEME=http \

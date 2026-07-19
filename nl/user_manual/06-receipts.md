@@ -135,3 +135,33 @@ Bewaar uw bon voor retour.
 | Totaal | Totaal in rekening gebrachte bedrag |
 | Betaalinfo | Methode, aangeboden bedrag, wisselgeld |
 | Voettekst | Aangepast bericht ingesteld door de vestiging |
+
+
+---
+
+## Bon via WhatsApp
+
+Suriname draait op WhatsApp — daarom heeft het bonscherm een knop **💬 Bon
+via WhatsApp** naast Afdrukken en E-mail:
+
+1. Tik na het afronden van een verkoop op **Bon via WhatsApp**.
+2. Typ het nummer van de klant (bijv. `8812345` — `+597` wordt automatisch
+   toegevoegd), of tik op de chip **Nummer van klant gebruiken** als er een
+   klant aan de verkoop hangt. U kunt het veld ook leeg laten en zelf de
+   chat in WhatsApp kiezen.
+3. Tik op **WhatsApp openen**. WhatsApp opent met een kant-en-klare
+   tekstbon — winkelnaam, bonnummer, artikelen, BTW en totaal — in de taal
+   van de kassa. Alleen nog op verzenden drukken.
+
+> Het bericht is een tekstsamenvatting voor het gemak van de klant. De
+> formele bon blijft de geprinte / PDF-bon — er verandert niets voor uw
+> BTW-administratie. Bij heel lange bonnen worden de eerste 15 regels
+> getoond plus "+N meer".
+
+## Taal: Sranantongo (concept)
+
+Instellingen → Taal biedt nu ook **🇸🇷 Sranantongo** naast Nederlands en
+Engels — de hele kassa schakelt direct om, en WhatsApp-bonnen volgen mee. De
+vertaling is een eerste versie: ziet u iets dat een kassier in Paramaribo
+anders zou zeggen? Meld het uw manager — verbeteringen zijn welkom.
+(API-foutmeldingen vallen voorlopig terug op Nederlands.)

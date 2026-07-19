@@ -63,7 +63,7 @@ export default function SettingsScreen() {
     handleSave()
   }
 
-  function toggleLanguage(locale: 'nl' | 'en') {
+  function toggleLanguage(locale: 'nl' | 'en' | 'srn') {
     i18n.changeLanguage(locale)
     localStorage.setItem('josbin_pos_locale', locale)
   }
@@ -105,7 +105,7 @@ export default function SettingsScreen() {
         <div style={sectionSt}>
           <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>{t('settings.language')}</h3>
           <div style={{ display: 'flex', gap: 8 }}>
-            {(['nl', 'en'] as const).map((lang) => (
+            {(['nl', 'en', 'srn'] as const).map((lang) => (
               <button
                 key={lang}
                 onClick={() => toggleLanguage(lang)}
@@ -118,7 +118,7 @@ export default function SettingsScreen() {
                   fontSize: 'var(--font-size-base)',
                 }}
               >
-                {lang === 'nl' ? '🇳🇱 Nederlands' : '🇬🇧 English'}
+                {lang === 'nl' ? '🇳🇱 Nederlands' : lang === 'en' ? '🇬🇧 English' : '🇸🇷 Sranantongo'}
               </button>
             ))}
           </div>

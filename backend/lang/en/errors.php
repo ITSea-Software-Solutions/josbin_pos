@@ -43,4 +43,9 @@ return [
 
     // Licence / organisation
     'no_active_licence_for_stores'  => 'No active licence for this organisation. Ask the Super Admin to issue one before creating stores.',
+
+    // Passkeys (WebAuthn)
+    'passkey_ceremony_expired'      => 'The passkey request expired. Please try again.',
+    'passkey_invalid'               => 'That passkey could not be verified. Please try again.',
+    'not_found'                     => 'Not found.',
 ];

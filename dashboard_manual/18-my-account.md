@@ -286,3 +286,27 @@ For 2FA enrollment and the per-role policy that controls whether you're required
 ---
 
 → Next: end of Dashboard Manual v1. See the [Developer Documentation](../docs/) for the technical side, or [Trainer Cheat Sheets](../trainer_cheatsheets/) for one-page printable references.
+
+
+---
+
+## Passkeys — sign in without a password
+
+**My Account → Profile & password → Passkeys** lets you register this
+device's fingerprint, face or PIN (Face ID, Windows Hello, or a hardware
+key) as a **passkey**. After that, the login screen shows **Sign in with a
+passkey** — one touch replaces password *and* 2FA code, because a passkey
+proves both the device and you.
+
+- **Add**: give it a name ("Work laptop"), press **+ Add passkey**, confirm
+  with your fingerprint/PIN. Roles with mandatory 2FA must have completed
+  their 2FA setup first.
+- **Remove**: each passkey lists when it was added and last used, with a
+  Remove button. Removing one never locks you out — password + 2FA always
+  keeps working.
+- **Requirements**: passkeys only work over HTTPS on a real domain (and on
+  `localhost` for developers). Until the dashboard runs on its final domain
+  the card explains this instead of offering the button.
+
+Every registration, removal and passkey sign-in is written to the audit log
+(`auth.passkey_registered`, `auth.passkey_removed`, `auth.passkey_login`).

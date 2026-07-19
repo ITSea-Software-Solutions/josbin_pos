@@ -3,8 +3,10 @@
  * Thin wrapper around axios with Sanctum bearer token auth.
  */
 import axios, { AxiosInstance } from 'axios'
+import { getApiBaseUrl } from '@/lib/serverConfig'
 
-const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'
+// Runtime override (Settings/Login → Server) wins over the baked VITE_API_URL.
+const BASE_URL = getApiBaseUrl()
 
 export const apiClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,

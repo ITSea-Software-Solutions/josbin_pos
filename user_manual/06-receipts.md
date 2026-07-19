@@ -135,3 +135,32 @@ Bewaar uw bon voor retour.
 | Totaal | Total amount charged |
 | Payment info | Method, amount tendered, change |
 | Footer | Custom message set by the store |
+
+
+---
+
+## Receipt via WhatsApp
+
+Suriname runs on WhatsApp — so the receipt screen has a **💬 Receipt via
+WhatsApp** button next to Print and Email:
+
+1. After completing a sale, tap **Receipt via WhatsApp**.
+2. Type the customer's number (e.g. `8812345` — the `+597` is added
+   automatically), or tap the **Use customer number** chip when the sale has
+   a customer attached. You can also leave it empty and pick the chat inside
+   WhatsApp yourself.
+3. Tap **Open WhatsApp**. WhatsApp opens with a ready-made text receipt —
+   store name, receipt number, items, BTW and total — in the till's current
+   language. Just press send.
+
+> The message is a text summary for the customer's convenience. The formal
+> receipt stays the printed / PDF one — nothing changes for your BTW
+> records. Very long receipts list the first 15 items and add "+N more".
+
+## Language: Sranantongo (draft)
+
+Settings → Language now offers **🇸🇷 Sranantongo** alongside Nederlands and
+English — the whole POS switches instantly, and receipts sent via WhatsApp
+follow. The translation is a first draft: spot something a Paramaribo
+cashier would say differently? Tell your manager — corrections are welcome.
+(API error messages fall back to Dutch for now.)

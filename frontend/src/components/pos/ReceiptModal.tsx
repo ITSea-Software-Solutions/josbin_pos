@@ -5,6 +5,7 @@ import Modal from '@/components/shared/Modal'
 import HelpButton from '@/components/shared/HelpButton'
 import { getSale, sendReceiptEmail } from '@/api/sales'
 import { buildReceiptBytes } from '@/lib/escpos'
+import { buildReceiptText, buildWhatsAppLink } from '@/lib/receiptText'
 import { printEscPos } from '@/lib/hardware'
 import { useSettingsStore } from '@/store/settingsStore'
 import apiClient from '@/api/client'
@@ -38,6 +39,8 @@ export default function ReceiptModal({
   const [emailInput, setEmailInput]     = useState('')
   const [showEmail, setShowEmail]       = useState(false)
   const [emailStatus, setEmailStatus]   = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
+  const [showWhatsApp, setShowWhatsApp] = useState(false)
+  const [phoneInput, setPhoneInput]     = useState('')
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   const emailValid = EMAIL_RE.test(emailInput.trim())
@@ -48,19 +51,21 @@ export default function ReceiptModal({
   const { data: sale } = useQuery({
     queryKey: ['sale', saleId],
     queryFn: () => getSale(saleId),
-    enabled: isOpen && (hasThermal || showEmail),
+    enabled: isOpen && (hasThermal || showEmail || showWhatsApp),
   })
 
   const customerEmail = sale?.customer?.email?.trim() || ''
+  const customerPhone = sale?.customer?.phone?.trim() || ''
 
-  // Fetch store details for receipt header/footer
+  // Fetch store details for receipt header/footer (thermal) and the store
+  // name on the WhatsApp text receipt.
   const { data: store } = useQuery<Store>({
     queryKey: ['store', storeId],
     queryFn: async () => {
       const { data } = await apiClient.get(`/stores/${storeId}`)
       return data.data
     },
-    enabled: isOpen && hasThermal && !!storeId,
+    enabled: isOpen && (hasThermal || showWhatsApp) && !!storeId,
   })
 
   const emailMutation = useMutation({
@@ -214,6 +219,36 @@ export default function ReceiptModal({
     }
     setEmailStatus('sending')
     emailMutation.mutate()
+  }
+
+  // "Bon via WhatsApp" — builds a compact text receipt into a wa.me deep
+  // link. With a number → straight to that chat; empty → WhatsApp's own
+  // chat picker. Electron routes https:// windows to the system browser,
+  // which hands off to WhatsApp (app or Web).
+  function handleWhatsApp() {
+    if (!sale) return
+    const lang = i18n.language
+    const locale = lang === 'en' || lang === 'srn' ? lang : 'nl'
+    const text = buildReceiptText({
+      storeName:       store?.name || 'Josbin POS',
+      saleNumber:      sale.sale_number,
+      occurredAt:      sale.occurred_at,
+      items: sale.items.map((item) => ({
+        product_name:   item.product_name_snapshot,
+        quantity:       item.quantity,
+        unit_price_srd: item.unit_price_srd,
+        line_total_srd: item.line_total_srd,
+      })),
+      subtotalSrd:     sale.subtotal_srd,
+      discountSrd:     sale.discount_srd,
+      btwSrd:          sale.btw_srd,
+      totalSrd:        sale.total_srd,
+      paymentMethod:   sale.payment_method,
+      paymentProvider: sale.payment_provider ?? undefined,
+      change:          change > 0 ? change.toFixed(2) : undefined,
+      locale,
+    })
+    window.open(buildWhatsAppLink(phoneInput, text), '_blank', 'noopener,noreferrer')
   }
 
   const statusIcon = { idle: '🖨', printing: '⏳', ok: '✓', error: '✗' }
@@ -370,6 +405,85 @@ export default function ReceiptModal({
                   {t('pos.receipt.emailInvalid')}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* WhatsApp receipt — Suriname's channel of choice */}
+          {!showWhatsApp ? (
+            <button
+              onClick={() => { setShowWhatsApp(true); if (customerPhone) setPhoneInput(customerPhone) }}
+              data-testid="btn-whatsapp-receipt"
+              style={{
+                height: 'var(--touch-target)',
+                borderRadius: 'var(--border-radius)',
+                border: '1px solid var(--border-color)',
+                background: 'var(--bg-elevated)',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                fontWeight: 600,
+                fontSize: 'var(--font-size-sm)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              💬 {t('pos.receipt.whatsapp')}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {customerPhone && customerPhone !== phoneInput.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setPhoneInput(customerPhone)}
+                  data-testid="chip-use-customer-phone"
+                  style={{
+                    alignSelf: 'flex-start',
+                    height: 26, padding: '0 10px',
+                    borderRadius: 20, cursor: 'pointer',
+                    fontSize: 11, fontWeight: 600,
+                    background: 'rgba(79,142,247,0.12)',
+                    border: '1px solid var(--color-primary)',
+                    color: 'var(--color-primary)',
+                    whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+                  }}
+                >
+                  👤 {t('pos.receipt.useCustomerPhone')}: {customerPhone}
+                </button>
+              )}
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input
+                  type="tel"
+                  placeholder={t('pos.receipt.whatsappPlaceholder')}
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  data-testid="input-whatsapp-phone"
+                  style={{
+                    flex: 1, height: 'var(--touch-target)',
+                    borderRadius: 'var(--border-radius)',
+                    border: '1px solid var(--border-color)',
+                    background: 'var(--bg-input)',
+                    color: 'var(--text-primary)',
+                    padding: '0 12px', fontSize: 'var(--font-size-sm)',
+                  }}
+                />
+                <button
+                  onClick={handleWhatsApp}
+                  disabled={!sale}
+                  data-testid="btn-whatsapp-open"
+                  style={{
+                    height: 'var(--touch-target)', padding: '0 16px',
+                    borderRadius: 'var(--border-radius)',
+                    border: 'none',
+                    background: '#25D366',
+                    color: '#fff', cursor: !sale ? 'wait' : 'pointer', fontWeight: 600,
+                    fontSize: 'var(--font-size-sm)',
+                    opacity: !sale ? 0.6 : 1,
+                  }}
+                >
+                  {!sale ? '⏳' : t('pos.receipt.whatsappOpen')}
+                </button>
+              </div>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                {t('pos.receipt.whatsappHint')}
+              </span>
             </div>
           )}
 

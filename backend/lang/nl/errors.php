@@ -52,4 +52,9 @@ return [
 
     // Licence / organisation
     'no_active_licence_for_stores'  => 'Geen actieve licentie voor deze organisatie. Vraag de Super Admin om een licentie uit te geven voordat u vestigingen aanmaakt.',
+
+    // Passkeys (WebAuthn)
+    'passkey_ceremony_expired'      => 'Het passkey-verzoek is verlopen. Probeer het opnieuw.',
+    'passkey_invalid'               => 'Deze passkey kon niet worden geverifieerd. Probeer het opnieuw.',
+    'not_found'                     => 'Niet gevonden.',
 ];

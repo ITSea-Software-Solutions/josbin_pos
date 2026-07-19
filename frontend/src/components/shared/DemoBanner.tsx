@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getApiBaseUrl } from '@/lib/serverConfig'
 
 /**
  * Renders a bright "DEMO MODE" bar across the top of the app when the
@@ -16,8 +17,7 @@ export function DemoBanner() {
   const isNl = i18n.language === 'nl'
 
   useEffect(() => {
-    const base = import.meta.env.VITE_API_URL ?? 'http://localhost:8080/api'
-    fetch(`${base}/environment`)
+    fetch(`${getApiBaseUrl()}/environment`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (data?.demo_mode) setDemo(true) })
       .catch(() => { /* ignore — banner just stays hidden */ })
