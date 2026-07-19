@@ -212,11 +212,11 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 
 | # | Feature | Status | Roles | Code | Docs |
 |---|---|---|---|---|---|
-| SYNC-01 | Layer 1 — Real-time sync (every sale → cloud within seconds) | ✅ | Auto | `DispatchWebhook` queued job + Reverb | `dashboard_manual/11 §11.5.1` |
-| SYNC-02 | Layer 2 — Auto retry (1m / 5m / 15m / 30m schedule) | ✅ | Auto | `DispatchWebhook` retry config | task #43 |
-| SYNC-03 | Layer 3 — Z-Report forced retry | ✅ | SM | `ZReportController::submit` | `dashboard_manual/11 §11.5.3` |
-| SYNC-04 | Layer 4 — USB encrypted export (.josbin_pos file, AES-256) | ✅ | SM | `SyncExportController::export/import` | `dashboard_manual/11 §11.5.4` |
-| SYNC-05 | Layer 5 — Catch-up sync on internet restore | ✅ | Auto | scheduler + `register_sessions.synced_at` | `dashboard_manual/11 §11.5.5` |
+| SYNC-01 | Layer 1 — Real-time sync (every sale → cloud within seconds) | 🟡 | Auto | Data model ready; no per-sale outbox/push job — moot in single-site installs (dashboard reads the same DB). `DispatchWebhook` is the Layer-3-API webhook, NOT store→cloud sync | `docs/07-sync-and-offline.md` §7.3 |
+| SYNC-02 | Layer 2 — Auto retry (1m / 5m / 15m / 30m schedule) | 🟡 | Auto | Depends on SYNC-01's outbox; ships with it | `docs/07 §7.3` |
+| SYNC-03 | Layer 3 — Z-Report forced retry / submit-to-HQ | ✅ | SM | `ZReportController::submit` (idempotent, stamps `z_reports.synced_at`) | `dashboard_manual/11 §11.4`, `docs/07 §7.3` |
+| SYNC-04 | Layer 4 — USB encrypted export (.josbin_pos file, AES-256+HMAC) | ✅ | SM | `SyncExportController::export/import` — roundtrip verified | `dashboard_manual/11 §11.5`, `docs/07 §7.3` |
+| SYNC-05 | Layer 5 — Catch-up sync on internet restore | 🟡 | Auto | No `sync:catchup` command yet; mechanical once SYNC-01 lands | `docs/07 §7.3` |
 | SYNC-06 | Mobile data dongle fallback (Digicel/Telesur 4G) | 🔲 | Local server setup | doc only; no app code needed | CLAUDE.md §offline |
 | SYNC-07 | Offline sale buffering (POS keeps selling without internet) | ✅ | Auto | `sales` written locally; sync layer pushes later | task #43 |
 | SYNC-08 | Yesterday-sync notice at the register gate — non-blocking "not at HQ yet" strip when yesterday's Z-Report hasn't synced, with a manager-only Retry (`POST /reports/z-report/{id}/submit`) | ✅ | All (see), SM (retry) | `OpenRegisterGate.tsx` sync-notice | `user_manual/03` morning § |
@@ -654,6 +654,8 @@ Anything 🟡 in the inventory above is a candidate for a future task — explic
 ---
 
 ## §11 Changelog — every edit, dated
+
+- **2026-07-19 (offline chapter + sync truth-fix)** — `docs/07-sync-and-offline.md` was still a 🚧 stub; now the full install-to-daily-life offline story (EN+NL): what's installed where and why tills never need internet, the sale-commits-locally-first guarantee, the two deployment shapes (single-site = one DB, nothing to sync; multi-site cloud = the 5-layer ladder), per-layer step-by-step with HONEST availability (L3 submit + L4 USB ✓ today; L1/2/5 roadmap for the first cloud multi-store rollout), outage-hour-by-hour (rate stays locked, 72 h licence grace, e-mail queues), 4G-dongle guidance, where-to-see-sync-state table, FAQ. While writing it, §1.7's SYNC-01/02/05 rows were found marked ✅ against the code and the canonical verification doc — corrected to 🟡 with truthful notes (the old rows cited `DispatchWebhook`, which is the Layer-3 API webhook, not store→cloud sync). dashboard_manual ch 11 §11.6 already had the honest table and needed no change.
 
 - **2026-07-19 (payments manual deep-dive)** — user_manual ch 5 (EN+NL) now explains every payment method end-to-end after a real "what do I type here?" question about the card reconciliation screen: new §5.1a seven-methods table (what each needs, when money is confirmed), §5.3 rewritten as a slip-to-screen walkthrough (where AUTH code / last-4 / terminal ref sit on the PIN slip, why the store cares, Skip always allowed), mixed-payment note, and NEW §5.4a bank/mobile transfer (required sender reference, awaiting-confirmation → Dashboard → Pending payments, never treat as cash) + §5.4b foreign cash (USD/EUR at the locked daily rate, both amounts on the receipt). Docs-only change, verified against PaymentModal behaviour before writing.
 
