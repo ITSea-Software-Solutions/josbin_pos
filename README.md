@@ -337,13 +337,19 @@ Returns `{ token, expires_at, user }`. Pass the token as `Authorization: Bearer 
 
 **Default seeded accounts:**
 
-| Role | Email | Password | 2FA? | Log in at |
-|---|---|---|---|---|
-| Super Admin | `admin@josbin-pos.sr` | `JosbinPOS@2026!` | Yes (enforced) | Dashboard |
-| Organisation Admin (HQ) | `orgadmin@dehoop.sr` | `OrgAdmin@2026` | No | Dashboard |
-| Store Manager | `manager@dehoop.sr` | `Manager@2026` | No | Dashboard or POS |
-| Cashier | `kassa@dehoop.sr` | `Cashier@2026` | No | POS |
-| Tax Inspector (Belastingdienst) | `belastingdienst@gov.sr` | `Inspector@2026` | Yes (mandatory for role) | Dashboard at **`/belastingdienst`** (own government-styled portal; `?belastingdienst` also works) |
+| Role | Email | Password | 2FA? | Login URL — server (droplet) | Login URL — local dev |
+|---|---|---|---|---|---|
+| Super Admin | `admin@josbin-pos.sr` | `JosbinPOS@2026!` | Yes (enforced) | <http://142.93.88.143:8090> | <http://localhost:5174> |
+| Organisation Admin (HQ) | `orgadmin@dehoop.sr` | `OrgAdmin@2026` | No | <http://142.93.88.143:8090> | <http://localhost:5174> |
+| Store Manager | `manager@dehoop.sr` | `Manager@2026` | No | Dashboard <http://142.93.88.143:8090> · POS <http://142.93.88.143:8091> | <http://localhost:5174> · <http://localhost:5173> |
+| Cashier | `kassa@dehoop.sr` | `Cashier@2026` | No | <http://142.93.88.143:8091> | <http://localhost:5173> |
+| Tax Inspector (Belastingdienst) | `belastingdienst@gov.sr` | `Inspector@2026` | Yes (mandatory for role) | <http://142.93.88.143:8090/belastingdienst> (own government-styled portal; `?belastingdienst` also works) | <http://localhost:5174/belastingdienst> |
+
+Other logins on the server: internal team portal <http://142.93.88.143:8095/internal/> —
+user `itsea`, password `itsea@123` (**team only**); Horizon queue monitor at
+<http://142.93.88.143:8080/horizon> (Super Admin token). Local dev POS/dashboard
+talk to the live stack API (`:8080`) by default — point them at the demo stack
+with `VITE_API_URL=http://localhost:8082/api npm run dev`.
 
 The same accounts exist on **every stack** (local live, local demo, droplet) —
 each stack has its own isolated database, so logging into demo never touches
