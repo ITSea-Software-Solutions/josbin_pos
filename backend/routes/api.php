@@ -257,6 +257,8 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
     // Register sessions (cash drawer open/close)
     Route::prefix('registers')->name('registers.')->group(function () {
         Route::get('my-session',                              [RegisterController::class, 'mySession'])->name('my-session');
+        Route::get('yesterday-status',                        [RegisterController::class, 'yesterdayStatus'])->name('yesterday-status');
+        Route::post('sessions/{session}/reconcile',           [RegisterController::class, 'reconcile'])->name('reconcile');
         Route::get('sessions',                                [RegisterController::class, 'sessions'])->name('sessions');
         Route::post('sessions/{session}/close',               [RegisterController::class, 'close'])->name('close');
         Route::post('sessions/{session}/cash-movements',      [RegisterController::class, 'recordCashMovement'])->name('cash-movement');

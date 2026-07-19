@@ -42,13 +42,27 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
   const [pendingExit, setPendingExit]           = useState<'logout' | 'switch' | null>(null)
 
   function requestLogout() {
-    if (cartItemCount > 0) setPendingExit('logout')
+    // Guard when the cart has unsold items OR the register is still open —
+    // leaving with an open drawer is exactly how the "yesterday was never
+    // closed" morning starts.
+    if (cartItemCount > 0 || session) setPendingExit('logout')
     else logout()
   }
   function requestSwitchStore() {
     if (cartItemCount > 0) setPendingExit('switch')
     else clearStoreId(null)
   }
+
+  // Closing-time nudge: past the store's configured closing hour with the
+  // session still open → persistent amber strip under the top bar.
+  const { data: storeData } = useQuery({
+    queryKey: ['store', storeId],
+    queryFn: () => import('@/api/stores').then(m => m.getStore(storeId)),
+    staleTime: 5 * 60_000,
+  })
+  const closingTime = (storeData?.settings?.closing_time as string | undefined) ?? null
+  const nowHHMM = new Date().toTimeString().slice(0, 5)
+  const pastClosing = !!(session && closingTime && nowHHMM >= closingTime)
 
   const { data: todaySummary } = useQuery({
     queryKey: ['today-summary', storeId],
@@ -306,6 +320,24 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
         </div>
       </div>
 
+      {/* Closing-time nudge: still selling past the store's closing hour */}
+      {pastClosing && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+          padding: '7px 14px', background: 'rgba(245,158,11,.14)',
+          borderBottom: '1px solid rgba(245,158,11,.3)', color: '#b45309',
+          fontSize: 12.5, fontWeight: 600, flexShrink: 0,
+        }}>
+          <span>⏰ {i18n.language === 'nl'
+            ? `Sluitingstijd (${closingTime}) voorbij — sluit de kassa af vóór vertrek.`
+            : `Past closing time (${closingTime}) — close the register before leaving.`}</span>
+          <button onClick={() => setCloseRegisterOpen(true)}
+            style={{ padding: '4px 12px', borderRadius: 7, border: '1px solid rgba(180,83,9,.4)', background: 'rgba(255,255,255,.5)', color: '#92400e', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            {i18n.language === 'nl' ? 'Kassa afsluiten' : 'Close register'}
+          </button>
+        </div>
+      )}
+
       <CustomerModal isOpen={customerOpen} onClose={() => setCustomerOpen(false)} />
       <HeldBillsPanel isOpen={heldBillsOpen} onClose={() => setHeldBillsOpen(false)} storeId={storeId} />
       {session && (
@@ -320,7 +352,13 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
       <ConfirmDialog
         isOpen={pendingExit !== null}
         title={pendingExit === 'switch' ? t('pos.exitGuard.switchTitle') : t('pos.exitGuard.logoutTitle')}
-        message={t('pos.exitGuard.body', { count: cartItemCount })}
+        message={
+          cartItemCount > 0
+            ? t('pos.exitGuard.body', { count: cartItemCount })
+            : (i18n.language === 'nl'
+                ? 'De kassa staat nog open. Sluit de manager vanavond af? Zo niet, sluit de kassa nu via het menu.'
+                : 'The register is still open. Is the manager closing tonight? If not, close it now from the menu.')
+        }
         confirmLabel={pendingExit === 'switch' ? (i18n.language === 'nl' ? 'Wisselen' : 'Switch') : t('auth.logout')}
         onConfirm={() => {
           const action = pendingExit

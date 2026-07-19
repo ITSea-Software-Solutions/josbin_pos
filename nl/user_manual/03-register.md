@@ -202,4 +202,28 @@ Het vestigingsbrede **Einde dag / Z-Rapport** (Hoofdstuk 10) is een aparte manag
 
 ---
 
+## "Gisteren is nog niet afgesloten" — het ochtendscherm
+
+Als een kassa van gisteren open bleef, laat de kassa vandaag pas beginnen als
+dat is opgelost — u ziet dan een **"Gisteren is nog niet afgesloten"**-scherm.
+Dat is normaal en snel op te lossen:
+
+- **Bent u manager?** Tel daar de la van gisteren, voeg een toelichting toe
+  als het bedrag afwijkt van verwacht, en druk op **Gisteren afsluiten** —
+  daarna opent de kassa van vandaag. Was de kassa ’s nachts automatisch
+  afgesloten, dan ziet u in plaats daarvan een **tel-de-la**-stap (zelfde
+  idee, er was nog niet geteld).
+- **Bent u kassier?** Alleen een manager kan afsluiten. Het scherm toont een
+  **Bel [manager]**-knop (en WhatsApp) als de vestiging die heeft ingesteld —
+  tik erop, vraag de manager om gisteren af te sluiten, en druk op
+  **Vernieuwen**.
+
+U ziet ook een kleine oranje strook na de **sluitingstijd** van de vestiging
+als uw kassa nog open staat — een herinnering om af te sluiten vóór u
+weggaat, zodat morgenochtend schoon is. Er verschijnt ook een regel als de
+totalen van gisteren nog niet bij het hoofdkantoor zijn; een manager kan
+opnieuw proberen, maar het wordt ook vanzelf opnieuw geprobeerd.
+
+---
+
 → Volgende: [Hoofdstuk 4 — Een verkoop maken](04-making-a-sale.md)

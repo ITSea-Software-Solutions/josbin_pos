@@ -32,6 +32,7 @@ return [
 
     // Register + Z-Report
     'register_already_closed_today' => 'Deze kassa is vandaag al gesloten. Vraag uw manager om heropening.',
+    'discrepancy_note_required' => 'Een kasverschil vereist een korte toelichting.',
     'register_already_closed'       => 'Deze kassasessie is al gesloten.',
     'register_day_already_closed'   => 'De kas voor vandaag is al gesloten.',
     'z_report_already_sent'         => 'Dit Z-rapport is al verzonden naar het hoofdkantoor.',

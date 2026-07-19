@@ -8,6 +8,7 @@ use App\Models\Register;
 use App\Models\RegisterSession;
 use App\Models\Sale;
 use App\Models\User;
+use App\Models\ZReport;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -269,6 +270,116 @@ class RegisterController extends Controller
             ]);
 
         return response()->json(['data' => $this->formatSession($session->fresh()->load('cashier:id,name'))]);
+    }
+
+    // ─── Morning recovery ─────────────────────────────────────────────────
+
+    /**
+     * POST /api/registers/sessions/{session}/reconcile
+     *
+     * The morning after a nightly auto-close: a manager counts the drawer of
+     * a SYSTEM-CLOSED session and records the real cash. Completes what the
+     * auto-close deliberately left open — the human count.
+     */
+    public function reconcile(Request $request, RegisterSession $session): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless(
+            $user->isAtLeastManager() && $user->canAccessStore($session->store_id),
+            403
+        );
+        abort_unless($session->system_closed, 409, 'Session was not system-closed.');
+        abort_if($session->reconciled_at !== null, 409, 'Session is already reconciled.');
+
+        $data = $request->validate([
+            'counted_cash' => ['required', 'numeric', 'min:0'],
+            'note'         => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $expected    = $session->expected_cash ?? $session->computeExpectedCash();
+        $discrepancy = bcsub((string) $data['counted_cash'], (string) $expected, 2);
+
+        // A mismatch needs a written explanation — same discipline as a
+        // normal register close.
+        if (bccomp($discrepancy, '0.00', 2) !== 0 && blank($data['note'] ?? null)) {
+            return response()->json([
+                'message' => __('errors.discrepancy_note_required'),
+                'errors'  => ['note' => [__('errors.discrepancy_note_required')]],
+            ], 422);
+        }
+
+        $session->update([
+            'closing_cash_counted' => $data['counted_cash'],
+            'expected_cash'        => $expected,
+            'discrepancy'          => $discrepancy,
+            'reconciled_at'        => now(),
+            'reconciled_by'        => $user->id,
+            'closing_note'         => trim(($session->closing_note ?? '') . ($data['note'] ? ' | ' . $data['note'] : '')),
+        ]);
+
+        $this->logRegisterActivity($user, $session, 'register.reconciled', [
+            'expected_cash' => $expected,
+            'counted_cash'  => $data['counted_cash'],
+            'discrepancy'   => $discrepancy,
+        ]);
+
+        return response()->json(['data' => $this->formatSession($session->fresh()->load('cashier:id,name'))]);
+    }
+
+    /**
+     * GET /api/registers/yesterday-status?store_id=
+     *
+     * One call powering the POS morning screen: sessions still open from a
+     * PREVIOUS day (blockers), system-closed sessions awaiting a manager
+     * count, and whether yesterday's Z-report reached headquarters.
+     */
+    public function yesterdayStatus(Request $request): JsonResponse
+    {
+        $request->validate(['store_id' => ['required', 'uuid', new \App\Rules\StoreBelongsToOrg]]);
+        $user      = $request->user();
+        abort_unless($user->canAccessStore($request->store_id), 403);
+        $isManager = $user->isAtLeastManager();
+
+        $stale = RegisterSession::with(['cashier:id,name', 'register:id,name,number'])
+            ->where('store_id', $request->store_id)
+            ->where('status', 'open')
+            ->where('opened_at', '<', today())
+            ->orderBy('opened_at')
+            ->get()
+            ->map(fn ($s) => [
+                'id'            => $s->id,
+                'register_name' => $s->register?->name,
+                'cashier_name'  => $s->cashier?->name,
+                'opened_at'     => (string) $s->opened_at,
+                // Cash expectations are manager information — a cashier only
+                // needs to know WHO to call, not what should be in a drawer
+                // they don't control.
+                'expected_cash' => $isManager ? $s->computeExpectedCash() : null,
+            ]);
+
+        $unreconciled = RegisterSession::with(['cashier:id,name', 'register:id,name,number'])
+            ->where('store_id', $request->store_id)
+            ->where('system_closed', true)
+            ->whereNull('reconciled_at')
+            ->orderBy('closed_at')
+            ->get()
+            ->map(fn ($s) => [
+                'id'            => $s->id,
+                'register_name' => $s->register?->name,
+                'cashier_name'  => $s->cashier?->name,
+                'closed_at'     => (string) $s->closed_at,
+                'expected_cash' => $isManager ? ($s->expected_cash ?? $s->computeExpectedCash()) : null,
+            ]);
+
+        $yz = ZReport::where('store_id', $request->store_id)
+            ->where('report_date', today()->subDay()->toDateString())
+            ->first(['id', 'sync_status']);
+
+        return response()->json(['data' => [
+            'stale_sessions'    => $stale,
+            'unreconciled'      => $unreconciled,
+            'yesterday_zreport' => $yz ? ['id' => $yz->id, 'sync_status' => $yz->sync_status] : null,
+        ]]);
     }
 
     // ─── Cash drawer: manual pay-in / pay-out ─────────────────────────────
@@ -623,22 +734,9 @@ class RegisterController extends Controller
      */
     private function computeExpectedCash(RegisterSession $session): string
     {
-        $row = Sale::where('register_session_id', $session->id)
-            ->where('status', 'completed')
-            ->whereIn('payment_method', ['cash', 'mixed'])
-            ->selectRaw('
-                COALESCE(SUM(CASE WHEN total_srd >= 0 THEN COALESCE(cash_received_srd,0) - COALESCE(change_srd,0) END), 0) as cash_in,
-                COALESCE(SUM(CASE WHEN total_srd <  0 THEN ABS(total_srd) END), 0)                                          as cash_out
-            ')
-            ->first();
-
-        $salesNet = bcsub((string) ($row->cash_in ?? 0), (string) ($row->cash_out ?? 0), 2);
-
-        return bcadd(
-            bcadd((string) $session->opening_float, $salesNet, 2),
-            $this->manualCashNet($session),
-            2,
-        );
+        // Single source of truth on the model — shared with the nightly
+        // registers:auto-close command.
+        return $session->computeExpectedCash();
     }
 
     /**

@@ -4,9 +4,15 @@ import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useRegisterStore } from '@/store/registerStore'
 import {
-  getRegisters, getMySession, openRegister,
-  type Register,
+  getRegisters, getMySession, openRegister, closeRegister, reconcileSession,
+  getYesterdayStatus,
+  type Register, type YesterdayStatus,
 } from '@/api/registers'
+import { getStore } from '@/api/stores'
+import apiClient from '@/api/client'
+import type { Store } from '@/types/models'
+
+const MANAGER_ROLES = ['store_manager', 'organisation_admin', 'super_admin']
 
 // ─── Numpad ───────────────────────────────────────────────────────────────────
 function Numpad({ value, onChange }: { value: string; onChange: (v: string) => void }) {
@@ -59,19 +65,45 @@ export default function OpenRegisterGate() {
   const [loading, setLoading]           = useState(true)
   const [opening, setOpening]           = useState(false)
   const [error, setError]               = useState('')
-  const [step, setStep]                 = useState<'pick' | 'float'>('pick')
+  const [step, setStep]                 = useState<'pick' | 'float' | 'yesterday'>('pick')
+  const [yStatus, setYStatus]           = useState<YesterdayStatus | null>(null)
+  const [storeInfo, setStoreInfo]       = useState<Store | null>(null)
+  const [count, setCount]               = useState('0')
+  const [note, setNote]                 = useState('')
+  const [closingStale, setClosingStale] = useState(false)
+  const [refreshTick, setRefreshTick]   = useState(0)
+
+  const isManager = MANAGER_ROLES.includes(user?.role ?? '')
 
   useEffect(() => {
     if (!storeId) return
     Promise.all([
       getRegisters(storeId),
       getMySession(storeId),
-    ]).then(([regs, existing]) => {
+      getYesterdayStatus(storeId).catch(() => null),
+      getStore(storeId).catch(() => null),
+    ]).then(([regs, existing, ystat, store]) => {
+      setYStatus(ystat)
+      setStoreInfo(store)
+
+      // Morning recovery: sessions still open from a PREVIOUS day block the
+      // new day — never silently resume one, route into the guided flow.
+      // A manager also lands there when a system-closed session still needs
+      // its drawer counted (skippable — reconciliation is a task, not a wall).
+      if (ystat && (ystat.stale_sessions.length > 0
+          || (MANAGER_ROLES.includes(user?.role ?? '') && ystat.unreconciled.length > 0))) {
+        setRegisters(regs)
+        setStep('yesterday')
+        setCount('0'); setNote('')
+        return
+      }
+
       if (existing) {
-        // Already have an open session — resume directly
+        // Already have an open session (from today) — resume directly
         setSession(existing)
       } else {
         setRegisters(regs)
+        setStep('pick') // leave the morning-recovery step once it's resolved
         // Auto-pick only when exactly one register is *openable* — don't
         // auto-pick a closed-today register, the cashier would be stuck.
         const openable = regs.filter(r => r.status === 'available')
@@ -94,7 +126,58 @@ export default function OpenRegisterGate() {
       setError(isNl ? 'Kon kassa\'s niet laden' : 'Could not load registers')
     })
       .finally(() => setLoading(false))
-  }, [storeId, setStoreId, isNl])
+  }, [storeId, setStoreId, isNl, refreshTick])
+
+  /** Manager closes yesterday's forgotten session with a real count. */
+  async function handleCloseStale(sessionId: string, expected: string | null) {
+    const counted = parseFloat(count) || 0
+    const diff = expected !== null ? counted - parseFloat(expected) : 0
+    if (Math.abs(diff) > 0.005 && note.trim() === '') {
+      setError(isNl ? 'Een kasverschil vereist een korte toelichting.' : 'A cash difference needs a short note.')
+      return
+    }
+    setClosingStale(true); setError('')
+    try {
+      await closeRegister(sessionId, counted, note.trim() || (isNl ? 'Ochtendafsluiting van gisteren' : 'Morning close of yesterday'))
+      setCount('0'); setNote('')
+      setRefreshTick(t => t + 1)   // refetch — next stale session or on to today
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(msg ?? (isNl ? 'Afsluiten mislukt' : 'Close failed'))
+    } finally {
+      setClosingStale(false)
+    }
+  }
+
+  /** Manager records the drawer count of a system-closed session. */
+  async function handleReconcile(sessionId: string, expected: string | null) {
+    const counted = parseFloat(count) || 0
+    const diff = expected !== null ? counted - parseFloat(expected) : 0
+    if (Math.abs(diff) > 0.005 && note.trim() === '') {
+      setError(isNl ? 'Een kasverschil vereist een korte toelichting.' : 'A cash difference needs a short note.')
+      return
+    }
+    setClosingStale(true); setError('')
+    try {
+      await reconcileSession(sessionId, counted, note.trim() || undefined)
+      setCount('0'); setNote('')
+      setRefreshTick(t => t + 1)
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(msg ?? (isNl ? 'Telling opslaan mislukt' : 'Saving the count failed'))
+    } finally {
+      setClosingStale(false)
+    }
+  }
+
+  async function handleRetrySync(zReportId: string) {
+    try {
+      await apiClient.post(`/reports/z-report/${zReportId}/submit`)
+      setRefreshTick(t => t + 1)
+    } catch {
+      setError(isNl ? 'Opnieuw versturen mislukt — wordt automatisch opnieuw geprobeerd.' : 'Retry failed — it will retry automatically.')
+    }
+  }
 
   async function handleOpen() {
     if (!selected) return
@@ -149,9 +232,11 @@ export default function OpenRegisterGate() {
             </svg>
           </div>
           <h2 style={{ color: '#f1f5f9', fontSize: 20, fontWeight: 800, letterSpacing: '-0.4px', marginBottom: 4 }}>
-            {step === 'pick'
-              ? (isNl ? 'Kies een kassa' : 'Choose a register')
-              : (isNl ? 'Openingsbedrag' : 'Opening float')}
+            {step === 'yesterday'
+              ? (isNl ? 'Gisteren is nog niet afgesloten' : 'Yesterday was never closed')
+              : step === 'pick'
+                ? (isNl ? 'Kies een kassa' : 'Choose a register')
+                : (isNl ? 'Openingsbedrag' : 'Opening float')}
           </h2>
           <p style={{ color: 'rgba(148,163,184,.6)', fontSize: 13 }}>
             {isNl ? `Welkom, ${user?.name?.split(' ')[0]}` : `Welcome, ${user?.name?.split(' ')[0]}`}
@@ -161,6 +246,121 @@ export default function OpenRegisterGate() {
         {error && (
           <div style={{ background: 'rgba(239,68,68,.12)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 10, padding: '10px 14px', marginBottom: 18, fontSize: 13, color: '#fca5a5', textAlign: 'center' }}>
             {error}
+          </div>
+        )}
+
+        {/* Yesterday's sync didn't reach HQ — informative, never blocking */}
+        {step !== 'float' && yStatus?.yesterday_zreport && yStatus.yesterday_zreport.sync_status !== 'synced' && (
+          <div style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 10, padding: '9px 12px', marginBottom: 14, fontSize: 12, color: '#fde68a', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <span>{isNl ? 'Z-rapport van gisteren nog niet bij hoofdkantoor.' : "Yesterday's Z-report has not reached headquarters yet."}</span>
+            {isManager && (
+              <button onClick={() => handleRetrySync(yStatus.yesterday_zreport!.id)}
+                style={{ flexShrink: 0, padding: '5px 12px', borderRadius: 8, border: '1px solid rgba(251,191,36,.4)', background: 'transparent', color: '#fde68a', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {isNl ? 'Opnieuw versturen' : 'Retry now'}
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Morning recovery: close yesterday's session / count a system-closed drawer */}
+        {step === 'yesterday' && (() => {
+          const stale = yStatus?.stale_sessions[0] ?? null
+          const recon = !stale ? (yStatus?.unreconciled[0] ?? null) : null
+          const target = stale ?? recon
+          if (!target) return null // effect routes back to 'pick' on next fetch
+          const expected = target.expected_cash
+          const when = 'opened_at' in target ? target.opened_at : (target as { closed_at: string }).closed_at
+          const managerName  = (storeInfo?.settings?.manager_name as string | undefined) || null
+          const managerPhone = (storeInfo?.settings?.manager_phone as string | undefined) || null
+
+          return (
+            <div>
+              <div style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 12, padding: '12px 14px', marginBottom: 16, fontSize: 12.5, lineHeight: 1.5, color: '#fde68a' }}>
+                {stale
+                  ? (isNl
+                      ? <>De kassa <b>{target.register_name ?? '—'}</b> van <b>{target.cashier_name ?? '—'}</b> staat nog open sinds <b>{when.slice(0, 16)}</b>. Vandaag kan pas beginnen als gisteren is afgesloten.</>
+                      : <>Register <b>{target.register_name ?? '—'}</b> of <b>{target.cashier_name ?? '—'}</b> has been open since <b>{when.slice(0, 16)}</b>. Today can only start once yesterday is closed.</>)
+                  : (isNl
+                      ? <>De kassa <b>{target.register_name ?? '—'}</b> is vannacht automatisch afgesloten <b>zonder telling</b>. Tel de la en leg het bedrag vast.</>
+                      : <>Register <b>{target.register_name ?? '—'}</b> was auto-closed overnight <b>without a count</b>. Count the drawer and record the amount.</>)}
+              </div>
+
+              {isManager ? (
+                <div>
+                  {expected !== null && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', background: 'rgba(255,255,255,.05)', borderRadius: 10, padding: '9px 14px', marginBottom: 12, fontSize: 13 }}>
+                      <span style={{ color: 'rgba(148,163,184,.7)' }}>{isNl ? 'Verwacht in de la' : 'Expected in drawer'}</span>
+                      <span style={{ color: '#f1f5f9', fontWeight: 800, fontFamily: 'monospace' }}>SRD {parseFloat(expected).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div style={{ background: 'rgba(255,255,255,.06)', borderRadius: 12, padding: '10px 16px', textAlign: 'center', marginBottom: 12, border: '1.5px solid rgba(255,255,255,.1)' }}>
+                    <p style={{ color: 'rgba(148,163,184,.5)', fontSize: 10.5, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase' }}>{isNl ? 'Geteld' : 'Counted'} · SRD</p>
+                    <p style={{ color: '#f1f5f9', fontSize: 30, fontWeight: 900, fontFamily: 'monospace' }}>{parseFloat(count).toFixed(2)}</p>
+                  </div>
+                  <Numpad value={count} onChange={setCount} />
+                  <input
+                    type="text" value={note} onChange={e => setNote(e.target.value)}
+                    placeholder={isNl ? 'Toelichting (verplicht bij verschil)' : 'Note (required on a difference)'}
+                    style={{ width: '100%', marginTop: 14, padding: '11px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.06)', color: '#f1f5f9', fontSize: 13, outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                  />
+                  <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                    {recon && (
+                      <button onClick={() => setStep('pick')}
+                        style={{ flex: 1, padding: '12px 0', borderRadius: 12, border: '1px solid rgba(255,255,255,.1)', background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.6)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                        {isNl ? 'Later' : 'Later'}
+                      </button>
+                    )}
+                    <button
+                      onClick={() => stale ? handleCloseStale(target.id, expected) : handleReconcile(target.id, expected)}
+                      disabled={closingStale}
+                      style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: closingStale ? 'not-allowed' : 'pointer', opacity: closingStale ? 0.6 : 1, fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                      {closingStale ? '…' : stale
+                        ? (isNl ? 'Gisteren afsluiten' : 'Close yesterday')
+                        : (isNl ? 'Telling vastleggen' : 'Record the count')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center' }}>
+                  <p style={{ color: 'rgba(148,163,184,.7)', fontSize: 13.5, lineHeight: 1.6, marginBottom: 18 }}>
+                    {isNl
+                      ? 'Alleen een manager kan dit afronden. Bel de manager en vraag om de kassa van gisteren af te sluiten.'
+                      : 'Only a manager can complete this. Call the manager and ask them to close yesterday\'s register.'}
+                  </p>
+                  {managerPhone ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <a href={`tel:${managerPhone}`}
+                        style={{ display: 'block', padding: '13px 0', borderRadius: 12, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                        📞 {isNl ? 'Bel' : 'Call'} {managerName ?? 'manager'} · {managerPhone}
+                      </a>
+                      <a href={`https://wa.me/${managerPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer"
+                        style={{ display: 'block', padding: '11px 0', borderRadius: 12, border: '1px solid rgba(74,222,128,.35)', color: '#4ade80', fontSize: 13.5, fontWeight: 700, textDecoration: 'none' }}>
+                        WhatsApp
+                      </a>
+                    </div>
+                  ) : (
+                    <p style={{ color: '#fde68a', fontSize: 12.5 }}>
+                      {isNl
+                        ? 'Tip voor de beheerder: stel naam + telefoonnummer van de manager in bij Vestiging → Instellingen, dan staat hier voortaan een belknop.'
+                        : "Tip for the admin: set the manager's name + phone under Store → Settings and a call button will appear here."}
+                    </p>
+                  )}
+                  <button onClick={() => setRefreshTick(t => t + 1)}
+                    style={{ marginTop: 16, padding: '10px 22px', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.7)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {isNl ? 'Manager klaar? Vernieuwen' : 'Manager done? Refresh'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        })()}
+
+        {/* Cashier info note: a drawer still needs the manager's count (non-blocking) */}
+        {step === 'pick' && !isManager && (yStatus?.unreconciled.length ?? 0) > 0 && (
+          <div style={{ background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', borderRadius: 10, padding: '9px 12px', marginBottom: 14, fontSize: 12, color: '#fde68a' }}>
+            {isNl
+              ? 'De la van gisteren is automatisch afgesloten en moet nog door de manager geteld worden. U kunt gewoon beginnen.'
+              : "Yesterday's drawer was auto-closed and still needs the manager's count. You can start normally."}
           </div>
         )}
 

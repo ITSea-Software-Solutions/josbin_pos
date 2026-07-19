@@ -225,6 +225,39 @@ You can't reassign cashier to a sale. Refund the sale + ring it under the correc
 
 ---
 
+## §19.10 End-of-day settings — closing time & overnight auto-close
+
+**Stores → (store) → Settings → End of day** gives each store its own
+end-of-day rhythm. Nothing here is mandatory; all of it makes the *next
+morning* smoother.
+
+| Setting | What it does |
+|---|---|
+| **Closing time** | After this time, if a register is still open, the store's managers get an in-app notification (and e-mail) — one per store per day. Leave empty for no reminder. |
+| **Auto-close registers overnight** | Off by default. On: any register still open at the **auto-close time** is sealed automatically as *system-closed — cash not counted*. The next morning starts unblocked; the manager counts the drawer as a reconciliation task instead of the till being stuck. |
+| **Auto-close time** | When the overnight sweep runs (e.g. `23:59`). Only shown when auto-close is on. |
+| **Manager name & phone** | Shown on the POS when a cashier hits a "yesterday was never closed" screen and needs to call a manager — with a tap-to-call and WhatsApp button. Set these so cashiers are never stuck without knowing who to reach. |
+
+### The morning after
+
+When a register was left open past midnight, the first person at the till
+sees a clear **"Yesterday was never closed"** screen instead of a cryptic
+error:
+
+- A **manager** logging in gets an inline count-and-close (or, for an
+  auto-closed session, a count-the-drawer step) — today opens in the same
+  motion.
+- A **cashier** sees the call-manager screen (name, phone, WhatsApp) — no
+  cash figures, since counting is the manager's job.
+
+An auto-closed drawer that still needs counting also appears in the manager's
+morning flow as a skippable **"record the count"** task — do it now or
+*Later*, selling is never blocked. Every auto-close and reconciliation is in
+the [audit log](13-audit-log.md) (`register.auto_closed`,
+`register.reconciled`).
+
+---
+
 ## See also
 
 - [user_manual ch 3 — Your Register](../user_manual/03-register.md) — what the cashier sees and does

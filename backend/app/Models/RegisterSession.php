@@ -18,6 +18,7 @@ class RegisterSession extends Model
         'reopen_requested_at', 'reopen_reason', 'reopen_requested_by',
         'reopen_approved_by', 'reopen_approved_at', 'reopen_denial_reason',
         'cleared_at', 'cleared_by', 'clear_note', 'clear_for_cashier',
+        'system_closed', 'reconciled_at', 'reconciled_by',
     ];
 
     protected $casts = [
@@ -30,7 +31,46 @@ class RegisterSession extends Model
         'reopen_requested_at'    => 'datetime',
         'reopen_approved_at'     => 'datetime',
         'cleared_at'             => 'datetime',
+        'system_closed'          => 'boolean',
+        'reconciled_at'          => 'datetime',
     ];
+
+    /** System-closed by the nightly auto-close and still waiting for a
+     *  manager to count the drawer. */
+    public function needsReconciliation(): bool
+    {
+        return $this->system_closed && $this->reconciled_at === null;
+    }
+
+    /**
+     * Expected cash in the drawer right now: opening float + net cash from
+     * completed sales (cash + the cash leg of mixed; refunds subtract) + net
+     * manual pay-in/pay-out. Lives on the model so both the close endpoint
+     * and the nightly auto-close command share ONE definition.
+     */
+    public function computeExpectedCash(): string
+    {
+        $row = Sale::where('register_session_id', $this->id)
+            ->where('status', 'completed')
+            ->whereIn('payment_method', ['cash', 'mixed'])
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN total_srd >= 0 THEN COALESCE(cash_received_srd,0) - COALESCE(change_srd,0) END), 0) as cash_in,
+                COALESCE(SUM(CASE WHEN total_srd <  0 THEN ABS(total_srd) END), 0)                                          as cash_out
+            ')
+            ->first();
+
+        $salesNet = bcsub((string) ($row->cash_in ?? 0), (string) ($row->cash_out ?? 0), 2);
+
+        $movements = CashMovement::where('register_session_id', $this->id)
+            ->selectRaw("
+                COALESCE(SUM(CASE WHEN direction = 'in'  THEN amount END), 0) as paid_in,
+                COALESCE(SUM(CASE WHEN direction = 'out' THEN amount END), 0) as paid_out
+            ")
+            ->first();
+        $manualNet = bcsub((string) ($movements->paid_in ?? 0), (string) ($movements->paid_out ?? 0), 2);
+
+        return bcadd(bcadd((string) $this->opening_float, $salesNet, 2), $manualNet, 2);
+    }
 
     // ─── Status helpers ───────────────────────────────────────────────────
 

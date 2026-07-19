@@ -225,6 +225,39 @@ U kunt geen kassier herstoewijzen aan een verkoop. Betaal de verkoop terug + boe
 
 ---
 
+## §19.10 Einde-dag-instellingen — sluitingstijd & nachtelijk automatisch afsluiten
+
+**Vestigingen → (vestiging) → Instellingen → Einde van de dag** geeft elke
+vestiging zijn eigen einde-dag-ritme. Niets hiervan is verplicht; alles maakt
+de *volgende ochtend* soepeler.
+
+| Instelling | Wat het doet |
+|---|---|
+| **Sluitingstijd** | Na dit tijdstip krijgen de managers van de vestiging een in-app-melding (en e-mail) als een kassa nog open staat — één per vestiging per dag. Leeg = geen herinnering. |
+| **Kassa ’s nachts automatisch afsluiten** | Standaard uit. Aan: elke kassa die op het **automatisch-afsluiten-tijdstip** nog open staat wordt automatisch verzegeld als *systeem-afgesloten — kas niet geteld*. De volgende ochtend kan gewoon beginnen; de manager telt de la als afstemmingstaak in plaats van dat de kassa vastzit. |
+| **Tijdstip automatisch afsluiten** | Wanneer de nachtelijke ronde loopt (bijv. `23:59`). Alleen zichtbaar als automatisch afsluiten aan staat. |
+| **Managernaam & -telefoon** | Getoond op de kassa als een kassier een "gisteren is nog niet afgesloten"-scherm ziet en een manager moet bellen — met een bel- en WhatsApp-knop. Stel dit in zodat kassiers nooit vastzitten zonder te weten wie ze moeten bereiken. |
+
+### De ochtend erna
+
+Als een kassa na middernacht open bleef, ziet de eerste persoon aan de kassa
+een duidelijk **"Gisteren is nog niet afgesloten"**-scherm in plaats van een
+cryptische fout:
+
+- Een **manager** die inlogt krijgt inline tellen-en-afsluiten (of, bij een
+  automatisch afgesloten sessie, een tel-de-la-stap) — vandaag opent in
+  dezelfde beweging.
+- Een **kassier** ziet het bel-de-manager-scherm (naam, telefoon, WhatsApp)
+  — zonder kasbedragen, want tellen is de taak van de manager.
+
+Een automatisch afgesloten la die nog geteld moet worden verschijnt ook in de
+ochtendflow van de manager als een overslaanbare **"telling vastleggen"**-taak
+— nu doen of *Later*, verkopen wordt nooit geblokkeerd. Elke automatische
+afsluiting en afstemming staat in het [auditlogboek](13-audit-log.md)
+(`register.auto_closed`, `register.reconciled`).
+
+---
+
 ## Zie ook
 
 - [user_manual h3 — Uw Kassa](../user_manual/03-register.md) — wat de kassier ziet en doet

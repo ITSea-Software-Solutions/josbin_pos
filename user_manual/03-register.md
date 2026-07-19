@@ -202,4 +202,26 @@ The store-level **End of Day / Z-Report** (Chapter 10) is a separate manager-onl
 
 ---
 
+## "Yesterday was never closed" — the morning screen
+
+If a register from yesterday was left open, the POS won't let today start
+until it's dealt with — you'll see a **"Yesterday was never closed"** screen.
+This is normal and quick to fix:
+
+- **You're a manager?** Count yesterday's drawer right there, add a note if
+  the amount differs from expected, and press **Close yesterday** — today's
+  register opens straight after. If the register was auto-closed overnight,
+  you instead see a **count-the-drawer** step (same idea, no cash was counted
+  yet).
+- **You're a cashier?** Only a manager can close it. The screen shows a
+  **Call [manager]** button (and WhatsApp) if the store set those up — tap it,
+  ask the manager to close yesterday, then press **Refresh**.
+
+You'll also see a small amber strip past the store's **closing time** if your
+register is still open — a reminder to close it before you leave, so tomorrow
+morning is clean. A one-line note also appears if yesterday's totals haven't
+reached head office yet; a manager can retry, but it also retries on its own.
+
+---
+
 → Next: [Chapter 4 — Making a Sale](04-making-a-sale.md)

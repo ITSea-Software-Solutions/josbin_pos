@@ -22,6 +22,12 @@ Schedule::command('rates:lock')
 // when the morning rates:lock already succeeded. Saves the demo / pilot
 // installs where rates:lock at 06:00 missed (container restart, API outage)
 // — cashier hits "Voltooien" and a sale would otherwise 422 NO_DAILY_RATE.
+// Morning-recovery batch: nudge managers past the store's closing time, and
+// (opt-in per store) seal forgotten sessions overnight so the next morning
+// starts unblocked. Both are per-store-time aware; app TZ = AST.
+Schedule::command('registers:closing-reminder')->everyFifteenMinutes();
+Schedule::command('registers:auto-close')->everyFifteenMinutes();
+
 Schedule::command('rates:ensure-today')
     ->everyThirtyMinutes()
     ->timezone('America/Paramaribo')

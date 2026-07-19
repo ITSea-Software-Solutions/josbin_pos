@@ -68,6 +68,40 @@ export interface SessionReport {
   discrepancy: string | null
 }
 
+/** Morning-recovery payload: previous-day blockers + reconciliation queue +
+ *  yesterday's sync state — one call at the register gate. */
+export interface YesterdayStatus {
+  stale_sessions: Array<{
+    id: string
+    register_name: string | null
+    cashier_name: string | null
+    opened_at: string
+    /** Managers only; null for cashiers. */
+    expected_cash: string | null
+  }>
+  unreconciled: Array<{
+    id: string
+    register_name: string | null
+    cashier_name: string | null
+    closed_at: string
+    expected_cash: string | null
+  }>
+  yesterday_zreport: { id: string; sync_status: string } | null
+}
+
+export async function getYesterdayStatus(storeId: string): Promise<YesterdayStatus> {
+  const res = await apiClient.get<{ data: YesterdayStatus }>('/registers/yesterday-status', { params: { store_id: storeId } })
+  return res.data.data
+}
+
+export async function reconcileSession(sessionId: string, countedCash: number, note?: string): Promise<RegisterSession> {
+  const res = await apiClient.post<{ data: RegisterSession }>(`/registers/sessions/${sessionId}/reconcile`, {
+    counted_cash: countedCash,
+    note,
+  })
+  return res.data.data
+}
+
 export async function getRegisters(storeId: string): Promise<Register[]> {
   const res = await apiClient.get<{ data: Register[] }>('/registers', { params: { store_id: storeId } })
   return res.data.data

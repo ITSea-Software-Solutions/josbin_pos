@@ -49,6 +49,12 @@ interface FormState {
   receipt_header: string
   receipt_footer: string
   receipt_btw_number: string
+  // End-of-day freedom knobs (morning-recovery batch)
+  closing_time: string
+  auto_close_enabled: boolean
+  auto_close_time: string
+  manager_name: string
+  manager_phone: string
 }
 
 /**
@@ -128,6 +134,11 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
     receipt_header:     store.receipt_header ?? '',
     receipt_footer:     store.receipt_footer ?? '',
     receipt_btw_number: (store.settings?.receipt_btw_number as string) ?? '',
+    closing_time:       (store.settings?.closing_time as string) ?? '',
+    auto_close_enabled: (store.settings?.auto_close_enabled as boolean) ?? false,
+    auto_close_time:    (store.settings?.auto_close_time as string) ?? '23:59',
+    manager_name:       (store.settings?.manager_name as string) ?? '',
+    manager_phone:      (store.settings?.manager_phone as string) ?? '',
   })
   const [logoPreview, setLogoPreview] = useState<string | null>(logoUrl(store.receipt_logo_path))
   const [logoFile, setLogoFile] = useState<File | null>(null)
@@ -135,7 +146,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
   const [logoStatus, setLogoStatus] = useState<'idle' | 'uploading' | 'ok' | 'error'>('idle')
   const [error, setError] = useState('')
 
-  function set(key: keyof FormState, value: string) {
+  function set(key: keyof FormState, value: string | boolean) {
     setForm(f => ({ ...f, [key]: value }))
   }
 
@@ -155,7 +166,15 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
         default_btw_rate: form.default_btw_rate,
         receipt_header:   form.receipt_header,
         receipt_footer:   form.receipt_footer,
-        settings:         { ...store.settings, receipt_btw_number: form.receipt_btw_number },
+        settings:         {
+          ...store.settings,
+          receipt_btw_number: form.receipt_btw_number,
+          closing_time:       form.closing_time || null,
+          auto_close_enabled: form.auto_close_enabled,
+          auto_close_time:    form.auto_close_time || '23:59',
+          manager_name:       form.manager_name || null,
+          manager_phone:      form.manager_phone || null,
+        },
       }
       const updated = await updateStore(store.id, payload)
 
@@ -243,6 +262,41 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
           </Field>
           <Field label={isNl ? 'Voettekst (max. 3 regels)' : 'Footer (max. 3 lines)'} hint={isNl ? 'Wordt onderaan elke bon afgedrukt' : 'Printed at the bottom of every receipt'}>
             <textarea style={textareaStyle} value={form.receipt_footer} onChange={e => set('receipt_footer', e.target.value)} rows={3} placeholder={isNl ? 'bijv. Bedankt voor uw bezoek!\nwww.dehoop.sr' : 'e.g. Thank you for your visit!\nwww.dehoop.sr'} />
+          </Field>
+        </Section>
+
+        <Section title={isNl ? 'Einde van de dag' : 'End of day'}>
+          <Field
+            label={isNl ? 'Sluitingstijd' : 'Closing time'}
+            hint={isNl ? 'Na dit tijdstip krijgt de manager een herinnering als de kassa nog open staat. Leeg = geen herinnering.' : 'After this time the manager is reminded if a register is still open. Empty = no reminder.'}
+          >
+            <input type="time" style={{ ...inputStyle, maxWidth: 160 }} value={form.closing_time} onChange={e => set('closing_time', e.target.value)} />
+          </Field>
+
+          <Field
+            label={isNl ? 'Kassa ’s nachts automatisch afsluiten' : 'Auto-close registers overnight'}
+            hint={isNl ? 'Aan: een vergeten kassa wordt ’s nachts automatisch afgesloten (zonder telling) zodat de volgende ochtend gewoon kan beginnen. De manager telt de la de volgende dag.' : 'On: a forgotten register is auto-closed overnight (without a count) so the next morning starts unblocked. The manager counts the drawer the next day.'}
+          >
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13.5, color: '#374151' }}>
+              <input type="checkbox" checked={form.auto_close_enabled} onChange={e => set('auto_close_enabled', e.target.checked)} style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }} />
+              {isNl ? 'Automatisch afsluiten inschakelen' : 'Enable auto-close'}
+            </label>
+          </Field>
+
+          {form.auto_close_enabled && (
+            <Field label={isNl ? 'Tijdstip automatisch afsluiten' : 'Auto-close time'} hint={isNl ? 'Alle nog open kassa’s worden op dit tijdstip afgesloten.' : 'Any still-open register is closed at this time.'}>
+              <input type="time" style={{ ...inputStyle, maxWidth: 160 }} value={form.auto_close_time} onChange={e => set('auto_close_time', e.target.value)} />
+            </Field>
+          )}
+
+          <Field
+            label={isNl ? 'Manager (naam & telefoon)' : 'Manager (name & phone)'}
+            hint={isNl ? 'Getoond op de kassa als een kassier de manager moet bellen om de kassa van gisteren af te sluiten.' : 'Shown on the POS when a cashier needs to call the manager to close yesterday’s register.'}
+          >
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <input style={{ ...inputStyle, maxWidth: 200 }} value={form.manager_name} onChange={e => set('manager_name', e.target.value)} placeholder={isNl ? 'Naam' : 'Name'} />
+              <input style={{ ...inputStyle, maxWidth: 200 }} value={form.manager_phone} onChange={e => set('manager_phone', e.target.value)} placeholder="+597 …" />
+            </div>
           </Field>
         </Section>
 

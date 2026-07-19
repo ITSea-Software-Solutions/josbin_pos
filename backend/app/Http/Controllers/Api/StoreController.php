@@ -74,6 +74,14 @@ class StoreController extends Controller
             'receipt_logo_path' => ['nullable', 'string', 'max:500'],
             'pos_type'          => ['sometimes', Rule::in(['native', 'external'])],
             'settings'          => ['sometimes', 'array'],
+            // End-of-day freedom knobs (morning-recovery batch): each store
+            // picks its own closing hour and whether/when the nightly
+            // auto-close seals forgotten sessions.
+            'settings.closing_time'       => ['nullable', 'date_format:H:i'],
+            'settings.auto_close_enabled' => ['sometimes', 'boolean'],
+            'settings.auto_close_time'    => ['nullable', 'date_format:H:i'],
+            'settings.manager_name'       => ['nullable', 'string', 'max:80'],
+            'settings.manager_phone'      => ['nullable', 'string', 'max:32'],
             'is_active'         => ['sometimes', 'boolean'],
         ]);
 
