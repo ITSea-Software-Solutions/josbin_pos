@@ -18,6 +18,7 @@
 | **On-site visit date** | Travel planning | Playbook Phase 2 (hardware day, edge-case script, training) |
 | **Uni5Pay+ merchant-API access** — email UPPS / Southern Commercial Bank. **Draft ready in `PARTNER_OUTREACH.md` §1 (EN+NL) — review & send** | Partner-driven onboarding, no self-serve portal; sending is yours (pick recipient + sender address per the checklist) | Dynamic per-transaction QR at the till (code slot ready, feature-flagged) |
 | **Gov-DB wording conversation with the client** — before the first government tender. Talking points ready in `PARTNER_OUTREACH.md` §2 | Proposal says "completely isolated database"; build is single-cluster with org-scoped queries (§4 decision row) — client must renegotiate wording or commission DB-per-tenant | Contract wording matches the system before any tender reviewer or auditor finds the gap |
+| **Licence agreement / EULA — draft before first customer install.** The technical protection (IonCube, fingerprint licensing, kill-switch) is built, but no legal document exists that the customer signs. Needs: licensed-not-sold clause, no reverse-engineering/redistribution, per-store+terminal counts, renewal/soft-lock terms mirroring the built enforcement, audit clause; NL primary. Ask the developer to draft the working template, then have a Surinamese lawyer review before signature. | — | user-gated |
 
 ## 2. Prod-split day (one working session, when the domain exists)
 
