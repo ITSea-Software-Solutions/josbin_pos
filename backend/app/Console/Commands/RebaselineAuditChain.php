@@ -51,6 +51,14 @@ class RebaselineAuditChain extends Command
             $this->warn('DRY RUN — re-add --confirm to write. Chains that would be rebaselined:');
         }
 
+        // audit_logs is append-only at the DB level (trigger rejects updates
+        // beyond the initial hash stamp). Rebaselining rewrites existing
+        // hashes by design, so this break-glass command — and only it —
+        // lifts the guard for the duration of the run.
+        if ($this->option('confirm')) {
+            DB::statement('ALTER TABLE audit_logs DISABLE TRIGGER audit_logs_no_update');
+        }
+
         $totalRows = 0;
         foreach ($orgIds as $orgId) {
             $rows = DB::table('audit_logs')
@@ -99,6 +107,8 @@ class RebaselineAuditChain extends Command
             'ip_address'      => null,
             'created_at'      => now(),
         ]);
+
+        DB::statement('ALTER TABLE audit_logs ENABLE TRIGGER audit_logs_no_update');
 
         $this->info("Rebaselined {$totalRows} rows. Run `audit:verify --all` to confirm.");
         return self::SUCCESS;

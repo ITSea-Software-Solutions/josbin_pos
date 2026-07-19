@@ -44,7 +44,11 @@ class AuditRebaselineTest extends TestCase
         // behind on pre-fix rows): a stored hash the current algorithm won't
         // reproduce → verify breaks.
         $genesisId = DB::table('audit_logs')->where('organisation_id', $org->id)->orderBy('id')->value('id');
+        // audit_logs is append-only at the DB level — lift the guard only to
+        // FABRICATE the corruption this test exists to detect and repair.
+        DB::statement('ALTER TABLE audit_logs DISABLE TRIGGER audit_logs_no_update');
         DB::table('audit_logs')->where('id', $genesisId)->update(['row_hash' => str_repeat('0', 64)]);
+        DB::statement('ALTER TABLE audit_logs ENABLE TRIGGER audit_logs_no_update');
         $this->assertFalse($hasher->verifyChain($org->id)['valid'], 'Chain should now read as broken.');
 
         // Rebaseline → chain verifies clean again.
