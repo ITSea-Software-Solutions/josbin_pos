@@ -71,6 +71,13 @@ Facts that bite if forgotten:
   Deploying it + issuing the pilot licence is a Phase-1 playbook item.
 - No domain, no public TLS yet — IP + ports only. Docs/marketing links shared
   with the client use `http://142.93.88.143:8095/…`.
+- **Internal docs portal: `http://142.93.88.143:8095/internal/`** — basic
+  auth, user `itsea`, password known to the team (chosen 2026-07-19; hash in
+  `docker/frontends/internal.htpasswd`). Serves PENDING, this file, the
+  working guide, product brief, audits, research and progress logs — all
+  rendered by `scripts/build-internal-docs.mjs` on every deploy. Note: basic
+  auth is cleartext until HTTPS lands, which is why secret VALUES never
+  appear in these documents.
 - **Backups live since 2026-07-19**: cron 03:30 AST runs `scripts/backup.sh`
   (nightly dump ×14 + Sunday base snapshot ×2 into `/var/backups/josbin/`),
   Postgres archives WAL to `…/wal/` (prod compose) → point-in-time recovery;

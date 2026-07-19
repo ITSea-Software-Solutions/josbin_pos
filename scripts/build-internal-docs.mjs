@@ -81,7 +81,10 @@ for (const [src, slug, title, desc] of DOCS) {
     copyFileSync(abs, resolve(OUT, `${slug}.html`))
   } else {
     const md = readFileSync(abs, 'utf8')
-    writeFileSync(resolve(OUT, `${slug}.html`), page(title, `<h1>${title}</h1>` + wrapTables(marked.parse(md))))
+    // Markdown files that open with their own `# Title` keep it; otherwise
+    // the hub title is injected so every page has exactly one h1.
+    const heading = /^#\s/.test(md.trimStart()) ? '' : `<h1>${title}</h1>`
+    writeFileSync(resolve(OUT, `${slug}.html`), page(title, heading + wrapTables(marked.parse(md))))
   }
   cards.push(`<a class="card" href="${slug}.html"><b>${title}</b><span>${desc}</span></a>`)
 }
