@@ -29,6 +29,25 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ---
 
+## 5.1a The seven payment methods — what each one needs
+
+| Method | What the store needs | When is the money confirmed? |
+|---|---|---|
+| **Cash** | A cash drawer (and a float) | Immediately, at the till |
+| **Card / PIN** | A **bank PIN terminal** next to the till — you get this from your bank (DSB, Hakrinbank, Republic Bank, Finabank, …) with a merchant account. Nothing is cabled to the POS. | Immediately — the bank terminal approves, then you complete in the POS |
+| **Mixed** | Same as cash + card | Immediately |
+| **QR wallet (Mopé / Uni5Pay+)** | A **merchant wallet account**, the store's QR (uploaded in the Dashboard and/or the counter sticker), and the store phone/tablet with the merchant app | Immediately *if* you see "payment received" on the wallet device and tick the confirmation; otherwise it waits for your administrator |
+| **Bank transfer** | Your bank account details visible for the customer (e.g. on the counter) | **Later** — recorded as *awaiting confirmation*; your Org Admin marks it paid in **Dashboard → Pending payments** once the money lands |
+| **Mobile transfer** | Same, for mobile banking apps | Later — same pending flow |
+| **Foreign cash (USD / EUR)** | Today's exchange rate locked (Chapter 2) | Immediately — converted at the locked daily rate, receipt shows both amounts |
+
+> **Where do the bank / wallet lists come from?** The dropdowns (card banks,
+> transfer banks, wallets, mobile apps) are set per organisation by your
+> administrator — see dashboard manual ch. 22. If a bank is missing, ask
+> them to add it; **Other** + typing the name always works meanwhile.
+
+---
+
 ## 5.2 Cash payment
 
 1. On the payment screen, click **Cash** (Dutch: *"Contant"*).
@@ -58,12 +77,40 @@ Once all products are in the cart, this chapter shows you how to complete the sa
 
 ## 5.3 Card / PIN payment
 
-1. On the payment screen, click **Card** (Dutch: *"Pin"*).
-2. The system immediately records the sale as a card payment (no amount to enter — the full total is charged to the card).
-3. Process the card payment on your PIN terminal (separate device) as you normally would.
-4. Once the PIN terminal confirms payment, the receipt screen appears.
+The step-by-step at the till:
 
-> **Note:** Josbin POS does not control the PIN terminal. You must complete the card transaction on the PIN terminal separately. Only press Complete after the PIN terminal has approved.
+1. On the payment screen, tap **Card** (Dutch: *"Pin"*). The full sale total
+   is charged to the card — there is no amount to type.
+2. **Key the amount into your bank's PIN terminal** (the separate device from
+   your bank) and let the customer pay there — tap, chip or swipe, exactly as
+   you normally would. The POS does not control that device.
+3. The terminal prints its **PIN slip** (the small bank receipt). Wait for an
+   **APPROVED / GESLAAGD** result — if the terminal declines, the customer
+   pays another way and you go **← Back** in the POS.
+4. The POS now shows the **Reconciliation (from PIN slip)** form. This is
+   *optional bookkeeping*, not part of charging the customer — the payment
+   already happened on the bank terminal. Copy these from the slip:
+
+   | Field on screen | Where it is on the PIN slip | Example |
+   |---|---|---|
+   | **Issuing bank / card brand** | The bank or card logo/name at the top of the slip (or ask the customer) | DSB, Hakrinbank, Visa |
+   | **Approval code** | The line marked **AUTH**, **APPR CODE** or **AUTORISATIE** | `A12345` |
+   | **Last 4** | The masked card number line — only the last four digits are shown | `**** 1234` → `1234` |
+   | **Terminal reference** *(optional)* | The terminal/receipt number, if your store uses one | `TRM-…-001` |
+
+5. Tap **Complete payment** — or **Skip & complete** to record the sale
+   without the slip details. Both finish the sale; the receipt screen appears.
+
+> **Why bother with the slip fields?** At the end of the day the Z-Report
+> shows card sales **per bank**, and the totals must match the bank's
+> settlement statement. Sales with an approval code are easy to match
+> one-by-one when an amount is disputed. **Ask your manager what your store's
+> policy is** — the system never forces it, and skipping is always allowed
+> when there is a queue.
+
+> **Note:** only press Complete after the PIN terminal has approved. If you
+> completed the sale but the terminal payment failed, do a refund
+> ([Chapter 5a](05a-refunds-and-voids.md)) and ring the sale again.
 
 ---
 
@@ -104,8 +151,58 @@ Use this when a customer pays part of the bill by card and the rest in cash.
 
 4. Process the card amount on your PIN terminal first.
 5. Collect the cash for the remaining amount.
-6. Click **Complete** (Dutch: *"Voltooien"*).
-7. The cash drawer opens. The receipt screen appears.
+6. The same optional **Reconciliation (from PIN slip)** fields as §5.3 appear
+   for the card part — copy them from the slip or skip.
+7. Click **Complete** (Dutch: *"Voltooien"*).
+8. The cash drawer opens. The receipt screen appears.
+
+---
+
+## 5.4a Bank transfer & mobile transfer
+
+For customers who pay by transferring to the store's bank account — common
+for larger amounts and business customers. **The POS cannot see your bank
+account**, so these sales are recorded as *awaiting confirmation* and your
+administrator confirms them later.
+
+1. The customer makes the transfer (mobile banking, internet banking, or at
+   the bank) to the store's account — your store shows its account details at
+   the counter or on the invoice.
+2. Tap **🏦 Bank transfer** (or **📱 Mobile transfer** when they used a
+   mobile banking app).
+3. Pick the **bank** (or app) from the list — **Other** lets you type a name.
+4. Type the **sender reference / payment ID** — the reference the customer
+   shows you on their banking-app confirmation screen. This is required: it
+   is how your administrator finds the payment on the bank statement.
+5. Optionally add the **sender's name** (useful when it differs from the
+   customer's name).
+6. Tap **✓ Record transfer**. The sale completes and the receipt prints, but
+   the payment stays **awaiting confirmation**.
+
+**What happens next:** once the money is visible in the bank account, your
+Org Admin opens **Dashboard → Pending payments** and marks it paid. Until
+then the sale is flagged in reports as unconfirmed. If the money never
+arrives, the administrator can void it from there — so never treat a
+recorded transfer as cash in hand.
+
+---
+
+## 5.4b Foreign cash (USD / EUR)
+
+Tourists and business customers sometimes pay in US dollars or euros. The
+POS converts at the **locked daily rate** (Chapter 2) — you never calculate
+by hand.
+
+1. Tap **💱 Foreign cash (USD / EUR)**.
+2. Pick the currency — **USD** or **EUR**.
+3. Type the **amount the customer hands you** in that currency.
+4. The POS shows the conversion at today's locked rate. Tap **✓ Complete**.
+5. The receipt shows **both** amounts (SRD total and the foreign amount with
+   the rate used) — the customer sees exactly how it was converted.
+
+> **No rate locked today?** The payment screen will refuse with *"Geen
+> dagkoers beschikbaar"* — a manager must lock today's rate first
+> (Chapter 2). Change is given in SRD.
 
 ---
 
