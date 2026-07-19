@@ -211,6 +211,23 @@ Opens at **http://localhost:5174**. API calls proxy to `http://localhost:8080/ap
 
 ## URLs
 
+### Test droplet (142.93.88.143 — demo data, shared with the team)
+
+| URL | What | Login |
+|---|---|---|
+| `http://142.93.88.143:8080/api` | Backend REST API (`/health` open, `/v1/docs` Swagger) | Bearer token |
+| `http://142.93.88.143:8090` | **Super Admin Dashboard** | any dashboard account below |
+| `http://142.93.88.143:8090/belastingdienst` | Tax-inspector government portal | `belastingdienst@gov.sr` |
+| `http://142.93.88.143:8091` | **POS** (browser build of the till) | `kassa@dehoop.sr` |
+| `http://142.93.88.143:8095` | Documentation site (EN, `/nl/` for Dutch) | public |
+| `http://142.93.88.143:8095/internal/` | **Internal team portal** (HANDOVER, PENDING, runbooks, ops cheat-sheet, partner outreach) | user `itsea` / `itsea@123` — **team only, never share with customers** |
+| `https://142.93.88.143:8443` | Same API over TLS (self-signed until the domain exists) | — |
+| `ws://142.93.88.143:6001` | Reverb WebSocket (live dashboard updates) | — |
+
+> The droplet runs demo/seed data only. Real secrets (SSH key, `.env` values,
+> `APP_KEY`) are never in this repo — locations are inventoried in
+> `HANDOVER.md` (internal portal), values live in the password manager.
+
 ### Live stack (`docker compose up -d`)
 
 | URL | What |
@@ -248,6 +265,9 @@ docker compose -p josbin_demo \
 | `localhost:55433` | Demo PostgreSQL |
 | `localhost:6380` | Demo Redis |
 | `ws://localhost:6002` | Demo Reverb |
+
+Demo logins are identical to the table in [Authentication](#authentication) —
+the demo stack seeds the same accounts into its own isolated database.
 
 Full guide: see [docs/00-installation-and-setup.md](docs/00-installation-and-setup.md).
 
@@ -317,12 +337,22 @@ Returns `{ token, expires_at, user }`. Pass the token as `Authorization: Bearer 
 
 **Default seeded accounts:**
 
-| Role | Email | Password | 2FA? |
-|---|---|---|---|
-| Super Admin | `admin@josbin-pos.sr` | `JosbinPOS@2026!` | Yes (enforced) |
-| Organisation Admin (HQ) | `orgadmin@dehoop.sr` | `OrgAdmin@2026` | No |
-| Store Manager | `manager@dehoop.sr` | `Manager@2026` | No |
-| Cashier | `kassa@dehoop.sr` | `Cashier@2026` | No |
+| Role | Email | Password | 2FA? | Log in at |
+|---|---|---|---|---|
+| Super Admin | `admin@josbin-pos.sr` | `JosbinPOS@2026!` | Yes (enforced) | Dashboard |
+| Organisation Admin (HQ) | `orgadmin@dehoop.sr` | `OrgAdmin@2026` | No | Dashboard |
+| Store Manager | `manager@dehoop.sr` | `Manager@2026` | No | Dashboard or POS |
+| Cashier | `kassa@dehoop.sr` | `Cashier@2026` | No | POS |
+| Tax Inspector (Belastingdienst) | `belastingdienst@gov.sr` | `Inspector@2026` | Yes (mandatory for role) | Dashboard at **`/belastingdienst`** (own government-styled portal; `?belastingdienst` also works) |
+
+The same accounts exist on **every stack** (local live, local demo, droplet) —
+each stack has its own isolated database, so logging into demo never touches
+live data. These are seeded demo credentials: **rotate them all on prod-split
+day** (see `PENDING.md` §2) before any real customer data exists.
+
+**Sandbox API (Layer 3) credentials** — fixed and deliberately publishable
+(the sandbox is isolated):
+`API key: sk_sandbox_josbin_pos_demo_2026` · `webhook secret: whsec_sandbox_josbin_pos_demo_2026`
 
 `orgadmin@dehoop.sr` is the **HQ catalogue owner** — only role (besides Super Admin) that can bulk-import products, manage API keys, and push catalogue updates to all POS terminals.
 
