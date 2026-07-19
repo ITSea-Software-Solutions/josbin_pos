@@ -1,6 +1,21 @@
 # Production hardening override for single-Droplet deploy.
 services:
+  app:
+    volumes:
+      # Full opcode caching (no per-request file stats) + a real FPM pool.
+      # Deploys MUST restart this container so new code loads —
+      # scripts/deploy-server.sh does.
+      - ./docker/php/opcache-prod.ini:/usr/local/etc/php/conf.d/zz-opcache-prod.ini:ro
+      - ./docker/php/fpm-prod.conf:/usr/local/etc/php-fpm.d/zz-prod.conf:ro
   postgres:
+    # WAL archiving pairs with the weekly base backup from scripts/backup.sh
+    # → point-in-time recovery to any minute. /wal-archive is pruned by the
+    # same script to the oldest kept base snapshot.
+    command: >
+      postgres -c wal_level=replica -c archive_mode=on -c archive_timeout=300
+      -c archive_command='test ! -f /wal-archive/%f && cp %p /wal-archive/%f'
+    volumes:
+      - /var/backups/josbin/wal:/wal-archive
     ports: !override []
   redis:
     ports: !override []

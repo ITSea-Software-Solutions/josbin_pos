@@ -71,3 +71,4 @@ deploy.env
 
 # Self-signed TLS certs for the HTTPS dashboard (generated on the host)
 docker/frontends/certs/
+scripts/.k6-tokens.json

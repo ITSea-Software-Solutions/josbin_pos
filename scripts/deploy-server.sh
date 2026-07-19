@@ -87,8 +87,10 @@ log "Rebuilding caches"
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE exec -T app php artisan config:cache && $COMPOSE exec -T app php artisan route:cache && $COMPOSE exec -T app php artisan view:cache"
 
 # ── 4. Restart workers + frontend nginx ───────────────────────────────────────
-log "Restarting queue (Horizon), Reverb, and frontend containers"
-"${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE exec -T app php artisan horizon:terminate || true"
+log "Restarting app (opcache full-cache mode), queue, Reverb, and frontend containers"
+# Prod runs opcache.validate_timestamps=0 — new PHP code only loads on an app
+# restart. Horizon runs in its own container and must be bounced separately.
+"${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE restart app horizon scheduler"
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE restart reverb dashboard-web pos-web"
 # docs-web may be new on first deploy — `up -d` creates it, no-op afterwards.
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE up -d docs-web"
