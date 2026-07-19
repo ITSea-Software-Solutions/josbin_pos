@@ -268,6 +268,7 @@ export default defineConfig({
     'CLAUDE_WORKING_GUIDE.md',
     'FEATURES_AND_FLOWS.md',
     'HANDOVER.md',
+    'PENDING.md',
     'AUDIT_FINDINGS*.md',
     '.claude/**',
     'Phase1&2 Tickets/**',

@@ -63,5 +63,8 @@ services:
     volumes:
       - ./docs-site/.vitepress/dist:/usr/share/nginx/html:ro
       - ./docker/frontends/docs.conf:/etc/nginx/conf.d/default.conf:ro
+      # Password-protected internal docs (built by scripts/build-internal-docs.mjs)
+      - ./internal-docs-dist:/usr/share/nginx/internal:ro
+      - ./docker/frontends/internal.htpasswd:/etc/nginx/internal.htpasswd:ro
     networks:
       - josbin_pos_internal

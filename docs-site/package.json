@@ -11,6 +11,7 @@
     "preview": "vitepress preview --port 5180"
   },
   "devDependencies": {
+    "marked": "^18.0.6",
     "vitepress": "^1.6.4"
   }
 }

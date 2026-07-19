@@ -50,6 +50,8 @@ log "Building POS web SPA"
 
 log "Building docs site (manual + flow diagrams)"
 ( cd docs-site && npm ci --silent && npm run build ) || fail "docs build failed"
+log "Building internal docs (password-protected /internal/)"
+node scripts/build-internal-docs.mjs || fail "internal docs build failed"
 # Fold the standalone diagram pages into the same web root so they are served
 # at /flows.html and /architecture.html alongside the VitePress manual.
 cp docs/flows.html docs/architecture.html docs/card-payments.html docs-site/.vitepress/dist/ || fail "docs asset copy failed"
