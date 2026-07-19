@@ -29,7 +29,9 @@ wordt bepaald door configuratie, niet door aparte builds.
 | ☐ | **Licentieserver live + pilotlicentie uitgegeven** | activeren → valideren → verval-/gracegedrag end-to-end geverifieerd (dashboardhandleiding h. 15–16) |
 | ☐ | **SMTP-gegevens geconfigureerd** | bonnen / welkomstmails / BTW-notificaties blijven stil zonder; de in-app-bel werkt sowieso |
 | ☐ | **Wisselkoers-API-sleutel gezet** | `EXCHANGERATE_API_KEY` in de backend-`.env`; dagelijkse vergrendeling 06:00 AST + halfuurlijkse self-heal nemen het over |
-| ☐ | **Back-ups aan** | nachtelijke `pg_dump` + kopie op afstand (3-2-1-regel; gids Deel I) — niet onderhandelbaar zodra er echte winkeldata bestaat |
+| ☐ | **Back-ups aan** | één cronregel installeert `scripts/backup.sh` (nachtelijke dump + wekelijkse basis-snapshot + WAL-archivering = herstel tot op de minuut); bewijs het met `scripts/backup-restore-test.sh` en haal de kopie-op-afstand op via `scripts/pull-backup.sh` (gids Deel I) |
+| ☐ | **Belastingtest op de productiebox** | `k6 run -e BASE=… scripts/load-test.js` — het budget van ≤200 ms p95 moet op de echte server gemeten worden, niet op een laptop |
+| ☐ | **Geseedde demowachtwoorden geroteerd** | de demo-logins uit de README staan publiek in de repo — roteer elk account op de productiestack vóór er echte data bestaat |
 | ☐ | **Offline USB-installatiekit** | ga ervan uit dat het winkelinternet slecht is *tijdens* de installatie: Docker Desktop-installer · vooraf getrokken images (`docker save`-tarballs) · repo-bundel + `.env`-sjabloon · kassa-`Setup.exe` · geprinte Nederlandse installatiegids |
 | ☐ | **Generale repetitie op een schone Windows-machine** | loop de Installatiegids van begin tot eind alsof je op locatie bent; herstel elke afwijking. De waardevolste stap vóór vertrek |
 | ☐ | **IonCube-encodering** | alleen wanneer code op hardware landt die het leverteam niet beheert; overslaan voor een zelfbeheerde pilot |
@@ -69,5 +71,6 @@ supportlijn van de partner → ITSea.
 ☐ Testverkoop geprint + gemaild ☐ Lade opent ☐ Scanner leest schapproduct
 ☐ Weegschaal-indeling geverifieerd op *hun* weegschaal (indien gebruikt)
 ☐ Wallet-QR zichtbaar op de kassa ☐ Offline stekkertest geslaagd
-☐ Z-rapport gesloten + gesynct naar HQ ☐ Back-up draaide vannacht
-☐ Manager kan de docs-site bereiken
+☐ Z-rapport gesloten + gesynct naar HQ
+☐ Back-up draaide vannacht **en de restore-oefening van deze maand slaagde**
+☐ Demo-/seedwachtwoorden geroteerd ☐ Manager kan de docs-site bereiken

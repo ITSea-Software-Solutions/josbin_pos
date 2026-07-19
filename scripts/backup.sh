@@ -38,7 +38,8 @@ echo "[$(date '+%F %T')] dump ok: josbin-$STAMP.dump ($SIZE)"
 ls -1t "$ROOT"/db/josbin-*.dump 2>/dev/null | tail -n +15 | xargs -r rm -f
 
 # ── weekly physical base backup (Sunday) for point-in-time recovery ──────────
-if [ "$(date +%u)" = "7" ] || [ ! -e "$ROOT"/base/base-*.tar.gz ]; then
+if [ "$(date +%u)" = "7" ] || ! ls "$ROOT"/base/base-*.tar.gz >/dev/null 2>&1; then
+    docker exec "$CONTAINER" rm -rf /tmp/base   # clear any aborted previous run
     docker exec "$CONTAINER" pg_basebackup -U "$DB_USER" -D /tmp/base -Ft -z -X none
     docker exec "$CONTAINER" sh -c 'cd /tmp/base && tar -czf - .' > "$ROOT/base/base-$STAMP.tar.gz"
     docker exec "$CONTAINER" rm -rf /tmp/base

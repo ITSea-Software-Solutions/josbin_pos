@@ -71,6 +71,19 @@ Facts that bite if forgotten:
   Deploying it + issuing the pilot licence is a Phase-1 playbook item.
 - No domain, no public TLS yet — IP + ports only. Docs/marketing links shared
   with the client use `http://142.93.88.143:8095/…`.
+- **Backups live since 2026-07-19**: cron 03:30 AST runs `scripts/backup.sh`
+  (nightly dump ×14 + Sunday base snapshot ×2 into `/var/backups/josbin/`),
+  Postgres archives WAL to `…/wal/` (prod compose) → point-in-time recovery;
+  restore drill (`scripts/backup-restore-test.sh`) passed on day one. Pull
+  the off-site copy with `scripts/pull-backup.sh` from the laptop.
+- **fail2ban** active (sshd jail). **gzip** on all SPA/docs nginx. Prod PHP
+  runs `opcache.validate_timestamps=0` + 12 FPM workers
+  (docker-compose.prod.yml) — deploys must restart `app` (script does).
+- **Server also has a root `/var/www/html/.env` (mode 600, NOT in git)**
+  pinning compose-interpolation secrets (REDIS_PASSWORD, DB_*) to the real
+  backend/.env values. Without it, `${VAR:-secret}` defaults win at container
+  (re)creation — that's how Redis silently ran with password "secret" until
+  2026-07-19. Include this file in the §3.2 secrets backup.
 
 ## 3. What git does NOT carry — back these up
 
@@ -80,7 +93,7 @@ this laptop dies, these are what you'd actually lose:
 | # | Item | Lives where today | How to make it laptop-independent |
 |---|---|---|---|
 | 1 | **SSH private key** for `root@142.93.88.143` | `~/.ssh/` on this laptop | Add a 2nd key from any machine: `ssh-copy-id root@142.93.88.143` (needs an existing session), or paste the new pubkey into `~/.ssh/authorized_keys` via the DO console. Keep a copy in the password manager. |
-| 2 | **Droplet `backend/.env`** (all runtime secrets, incl. `APP_KEY`) | `/var/www/html/backend/.env` on the droplet only | `ssh root@142.93.88.143 'cat /var/www/html/backend/.env'` → store the output in the password manager. **`APP_KEY` is critical**: it encrypts customer PII fields; losing it makes that data unrecoverable. |
+| 2 | **Droplet `backend/.env` + root `/var/www/html/.env`** (all runtime secrets, incl. `APP_KEY`; the root file pins compose interpolation) | droplet only | `ssh root@142.93.88.143 'cat /var/www/html/backend/.env /var/www/html/.env'` → store in the password manager. **`APP_KEY` is critical**: it encrypts customer PII fields; losing it makes that data unrecoverable. |
 | 3 | **GitHub access** | Personal token baked into this laptop's git remote | Repo is under the org — grant collaborators / issue a new token from any account with access. Never commit or echo tokens. |
 | 4 | **DigitalOcean account** | User's DO login (firewall, console, snapshots) | Already account-based, not laptop-based. Enable droplet backups/snapshots in the panel. |
 | 5 | **`deploy.env`** | Repo root, gitignored | Recreatable in seconds from `deploy.env.example` (which contains the real test-droplet values). |
@@ -122,7 +135,12 @@ pages; exchange-rate + OpenAI keys wired. 2026-07-18: dependency
 freshness/security sweep (Laravel 13.20, Electron 41.7, 0 npm vulns in both
 SPAs, spatie/permission 8 deliberately held) + hardware-compatibility batch
 (CP858 thermal encoding, 58 mm paper, widened scanner symbologies, POS
-camera scanner, install-guide §F0 device matrix).
+camera scanner, install-guide §F0 device matrix). 2026-07-19 (later):
+org-configurable payment pick-lists; schema hardening (FK indexes, RESTRICT
+financial cascades, DB-level append-only audit log); P0 ops batch — backups
++ passed restore drill + WAL/PITR, gzip, prod opcache/FPM tuning, fail2ban,
+k6 load-test harness (contract p95 to be measured on the prod box), and the
+Redis "secret"-password find fixed via the pinned root compose `.env`.
 
 **Blocked on the user (deployment gating list):**
 
@@ -131,6 +149,7 @@ camera scanner, install-guide §F0 device matrix).
 | DO firewall inbound rules for 8080/8090/8091/8095/8443/6001 | Panel access only — public URLs unreachable until then |
 | OpenAI billing credits | 429 on every call; AI features skip until funded |
 | SMTP credentials | No email delivery until set |
+| Error-tracking account (Sentry free tier or similar) | Wiring is trivial once a DSN exists; until then failures are silent |
 | Domain name decision | Then: prod droplet (or subdomain routing past `ams_*`), Let's Encrypt, port-free URLs |
 | Code-signing certificate (yes/no) | Unsigned `.exe` shows SmartScreen warning |
 | On-site visit date | Triggers the playbook Phase-2 rehearsal + travel kit |

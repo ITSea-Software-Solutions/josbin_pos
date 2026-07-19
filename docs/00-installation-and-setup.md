@@ -450,18 +450,30 @@ If any step fails → see [13-dev-workflow.md](13-dev-workflow.md) §Troubleshoo
 
 ## Part I — Backups, monitoring, ongoing ops
 
-### I1. Database backups (3-2-1 rule)
+### I1. Database backups (3-2-1 rule) — scripted
 
-Set this up on the server PC.
+The repo ships ready-made backup tooling; install it once per server:
 
 ```bash
-# Daily dump at 02:00 AST, kept 30 days locally
-0 2 * * * docker compose exec -T postgres pg_dump -U josbin_pos josbin_pos | gzip > /var/backups/josbin-$(date +\%Y\%m\%d).sql.gz && find /var/backups -name "josbin-*.sql.gz" -mtime +30 -delete
+# One cron line — nightly at 03:30 AST:
+30 3 * * * /var/www/html/scripts/backup.sh >> /var/backups/josbin/backup.log 2>&1
 ```
 
-Second copy: weekly sync of `/var/backups/` to external drive (NAS or rotating USB). Third copy: monthly upload to off-site (S3, encrypted).
+`scripts/backup.sh` does everything: a compressed nightly dump into
+`/var/backups/josbin/db/` (14 kept), a weekly Sunday base snapshot into
+`…/base/` (2 kept), and it prunes the write-ahead archive. Together with the
+WAL archiving that the production compose file switches on, this gives
+**point-in-time recovery to any minute**, not just to last night.
 
-**Test the restore monthly.** Untested backups are not backups.
+- **Second copy (off the server):** run `scripts/pull-backup.sh` from the
+  office laptop — it fetches the newest dump over SSH into `~/JosbinBackups/`.
+- **Third copy:** point the `OFFSITE_CMD` hook in `backup.sh` at an encrypted
+  bucket once one exists.
+
+**Test the restore monthly** — `scripts/backup-restore-test.sh` does it
+non-destructively: restores the newest dump into a scratch database, checks
+the row counts of six core tables against live, prints PASS/FAIL, and drops
+the scratch. Untested backups are not backups.
 
 ### I2. Queue monitoring
 

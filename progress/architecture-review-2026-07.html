@@ -93,12 +93,13 @@
 <div class="wrap">
   <div class="eyebrow">Josbin POS · Internal engineering review — do not distribute</div>
   <h1>Architecture &amp; Excellence Review</h1>
-  <p class="meta">19 July 2026 · full-stack audit (schema, security, performance, operations, spec conformance) · repo at <code>40fed56</code> · live droplet verified</p>
+  <p class="meta">19 July 2026 (updated same day after P0 execution) · full-stack audit (schema, security, performance, operations, spec conformance) · repo at <code>40fed56</code> · live droplet verified</p>
 
   <div class="verdict">
-    <b>Verdict: the engineering core is genuinely strong — the remaining distance to "top-notch" is almost entirely operational, not architectural.</b>
-    Money integrity, audit tamper-proofing, offline resilience, test discipline and dependency hygiene are at a level most production POS systems never reach.
-    What's missing is the unglamorous layer around it: backups, monitoring, public HTTPS, and a load test. All of it is reachable in days, and none of it requires redesigning anything.
+    <b>Verdict (updated 19 Jul, evening): the P0 operational layer is now largely EXECUTED.</b>
+    Backups run nightly with a passed restore drill and to-the-minute recovery, assets ship compressed, production PHP is tuned, fail2ban watches SSH,
+    and the load-test harness proved correctness under concurrency — it even flushed out (and fixed) a weak Redis password hiding since launch.
+    What remains needs <i>your</i> accounts/decisions: the domain (→ HTTPS), an error-tracking account, the DO firewall, and the prod-box p95 measurement at the production split.
   </div>
 
   <section>
@@ -113,7 +114,7 @@
       <div class="dim"><div class="grade g-b">B+</div><div><h3>Backend performance</h3><p>OPcache production-tuned, PgBouncer pooling, hot-path indexes, queues on Redis. No server-side report caching; 200 ms budget unproven under load.</p></div></div>
       <div class="dim"><div class="grade g-b">B+</div><div><h3>Frontend performance</h3><p>React 19, code-split routes, lazy chart chunk. Assets ship uncompressed — gzip alone would cut ~70% off the wire on Suriname connections.</p></div></div>
       <div class="dim"><div class="grade g-c">C</div><div><h3>Transport security</h3><p>Public traffic is plain HTTP on numbered ports; TLS only on a self-signed :8443. Entirely blocked on the domain decision — one day of work once made.</p></div></div>
-      <div class="dim"><div class="grade g-c">C</div><div><h3>Operations &amp; disaster recovery</h3><p>The weakest area, verified live: <b>no backups exist</b> (no cron, no dumps), no WAL archiving, no error tracking or alerting, single droplet shared with another project.</p></div></div>
+      <div class="dim"><div class="grade g-b">B+</div><div><h3>Operations &amp; disaster recovery</h3><p><b>Fixed 19 Jul:</b> nightly dumps + weekly base + WAL archiving (restore drill PASSED), fail2ban, laptop off-site pulls. Still open: error-tracking/alerting account, off-site bucket, single shared droplet.</p></div></div>
     </div>
   </section>
 
@@ -137,15 +138,15 @@
     <p class="sec-note">P0 = go-live gates. P1 = first month after. P2 = SaaS-scale horizon. "Dev" = I can do it; "You" = needs your account/decision; "Ext" = external party.</p>
     <div class="tblwrap"><table>
       <tr><th>Prio</th><th>Item</th><th>Why it matters</th><th>Effort</th><th>Owner</th></tr>
-      <tr class="p0"><td>P0</td><td>Nightly pg_dump + off-site copy + <b>tested restore</b>, then WAL archiving for point-in-time recovery</td><td>Currently a droplet failure loses everything. The proposal promises PITR to any minute — today that promise is unbacked.</td><td>½ day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p0"><td>P0 ✓</td><td><b>DONE 19 Jul</b> — nightly dump + weekly base + WAL archiving live; restore drill passed (exact row counts); laptop pull script for the off-site copy. Remaining nicety: an encrypted bucket for copy #3.</td><td>PITR to any minute is now real.</td><td>—</td><td><span class="who who-dev">Dev ✓</span></td></tr>
       <tr class="p0"><td>P0</td><td>Domain + Let's Encrypt + HSTS, retire numbered ports</td><td>Plain HTTP on public ports is the single biggest security gap; also unlocks camera scanning and removes the VPN/firewall support class.</td><td>1 day</td><td><span class="who who-you">You: domain</span></td></tr>
       <tr class="p0"><td>P0</td><td>Error tracking + uptime alerting (Sentry free tier or Laravel Nightwatch) + Horizon queue alerts</td><td>Today nobody is paged when the queue dies or a 500 spikes — silence is indistinguishable from health.</td><td>½ day</td><td><span class="who who-you">You: account</span></td></tr>
-      <tr class="p0"><td>P0</td><td>Load test: 10 terminals, 1 000 sales/day/store, 50 stores syncing (k6 script)</td><td>The 200 ms query budget is a Phase-4 contract item and still unproven.</td><td>1 day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p0"><td>P0 ◐</td><td><b>Harness built &amp; run 19 Jul</b> — 10-till scenario: zero failures, 50 parallel sales all-201, limiters verified. The ≤200 ms p95 number itself must be measured on the production box (laptop numbers are an environment artifact) — one command at the prod split.</td><td>Correctness under load proven; contract figure pending prod hardware.</td><td>10 min at prod split</td><td><span class="who who-dev">Dev</span></td></tr>
       <tr class="p0"><td>P0</td><td>Rotate seeded passwords on the live stack; DO firewall inbound rules</td><td>Demo credentials are public in the repo; public URLs still intermittently blocked.</td><td>1 h</td><td><span class="who who-you">You</span></td></tr>
-      <tr class="p1"><td>P1</td><td>gzip/brotli on all four nginx frontends</td><td>~430 KB JS → ~120 KB on the wire; biggest single UX win for interior-Suriname connections.</td><td>1 h</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p1"><td>P1 ✓</td><td><b>DONE 19 Jul</b> — gzip on all frontends; POS bundle now 146 KB on the wire (was 448 KB). Bonus: production OPcache full-cache mode + 12 FPM workers (was 5).</td><td>Shipped.</td><td>—</td><td><span class="who who-dev">Dev ✓</span></td></tr>
       <tr class="p1"><td>P1</td><td>Passkeys for Super Admin / government accounts</td><td>Spec'd in the proposal (Fortify + column ready); strongest phishing resistance for the highest-privilege logins.</td><td>2–3 days</td><td><span class="who who-dev">Dev</span></td></tr>
       <tr class="p1"><td>P1</td><td>Server-side caching for heavy report endpoints (Redis, short TTL)</td><td>Consolidated/monthly reports recompute on every view; cache makes the dashboard feel instant at 50 stores.</td><td>1 day</td><td><span class="who who-dev">Dev</span></td></tr>
-      <tr class="p1"><td>P1</td><td>fail2ban + SSH hardening pass on the droplet; split prod droplet from the shared box</td><td>The proposal's infra layer (key-only SSH, isolated host) is written but not fully applied to this shared droplet.</td><td>½ day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p1"><td>P1 ◐</td><td><b>fail2ban live 19 Jul</b> (sshd jail, banning within minutes of install). Also fixed en route: Redis ran on the compose-default password "secret" since launch — now on the strong credential, interpolation pinned. Droplet split from the shared box remains a prod-split task.</td><td>Brute-force shielded; host isolation at prod split.</td><td>prod split</td><td><span class="who who-dev">Dev</span></td></tr>
       <tr class="p1"><td>P1</td><td>Uni5Pay+ dynamic-QR API integration</td><td>The one verified programmatic wallet rail in Suriname; slot is built and waiting.</td><td>3–5 days</td><td><span class="who who-ext">Ext: UPPS/SCB access</span></td></tr>
       <tr class="p1"><td>P1</td><td>pgvector embeddings + semantic search; first AI weekly summaries</td><td>Column and jobs exist; blocked only on OpenAI billing credits.</td><td>1 day</td><td><span class="who who-you">You: credits</span></td></tr>
       <tr class="p2"><td>P2</td><td>Decide the government-isolation model: activate database-per-tenant (stancl is installed but unused) or get client sign-off on the current row-level scoping</td><td>The proposal sells "government data in a completely isolated database"; the implementation is single-DB with org scoping. Either build it or renegotiate the wording — before the first government client.</td><td>1–2 wks or a meeting</td><td><span class="who who-you">You + client</span></td></tr>
@@ -164,9 +165,9 @@
       <tr><td>AI features v1</td><td><span class="st st-part">Partial</span></td><td>Anomaly job + weekly summary wired; silent until OpenAI credits; embeddings pending</td></tr>
       <tr><td>Passkeys (Fortify)</td><td><span class="st st-no">Not built</span></td><td>Column exists; feature not implemented</td></tr>
       <tr><td>Database-per-tenant / isolated government DB</td><td><span class="st st-no">Deviation</span></td><td>Single DB with strict org scoping; stancl/tenancy installed but never activated — needs a decision (P2)</td></tr>
-      <tr><td>WAL point-in-time recovery, 3-2-1 backups, monthly restore drills</td><td><span class="st st-no">Not built</span></td><td>WAL is on (Postgres default) but not archived; zero backups configured — P0</td></tr>
+      <tr><td>WAL point-in-time recovery, 3-2-1 backups, monthly restore drills</td><td><span class="st st-done">Done</span></td><td>Live 19 Jul: WAL archived + weekly base + nightly dumps; first restore drill passed; off-site = laptop pulls (bucket pending)</td></tr>
       <tr><td>IonCube, code signing, licence server deployed</td><td><span class="st st-part">Parked</span></td><td>Deliberately scheduled for client-delivery phase (playbook)</td></tr>
-      <tr><td>Load/performance test (10 terminals, ≤200 ms)</td><td><span class="st st-no">Not run</span></td><td>Phase-4 item, still open — P0</td></tr>
+      <tr><td>Load/performance test (10 terminals, ≤200 ms)</td><td><span class="st st-part">Partial</span></td><td>Harness built + run: correctness proven, zero failures; the p95 figure is measured on the prod box at the split (one command)</td></tr>
     </table></div>
   </section>
 
@@ -186,19 +187,22 @@
       <tr><td>npm audit (POS / dashboard)</td><td class="ok">0 / 0 vulnerabilities</td></tr>
       <tr><td>composer audit</td><td class="ok">no advisories</td></tr>
       <tr><td>backend tests / frontend tests</td><td class="ok">290 / 53 passing</td></tr>
-      <tr><td>backup cron or dump directory on droplet</td><td class="bad">none found</td></tr>
-      <tr><td>error tracking / alerting</td><td class="bad">none configured</td></tr>
+      <tr><td>backups (cron 03:30 AST, dump + base + WAL) &amp; restore drill</td><td class="ok">live — drill PASSED, row counts exact</td></tr>
+      <tr><td>error tracking / alerting</td><td class="bad">still none — needs your account (DSN)</td></tr>
+      <tr><td>fail2ban (sshd)</td><td class="ok">active</td></tr>
+      <tr><td>Redis password</td><td class="ok">rotated off compose-default "secret" → strong credential</td></tr>
       <tr><td>public TLS</td><td class="bad">HTTP only (self-signed :8443)</td></tr>
-      <tr><td>gzip on SPA nginx configs</td><td class="mid">absent (assets ship uncompressed)</td></tr>
+      <tr><td>gzip on SPA nginx configs</td><td class="ok">on — POS bundle 448→146 KB over the wire</td></tr>
       <tr><td>largest JS chunks (POS / dashboard)</td><td class="mid">448 KB / 408 KB uncompressed — code-split, cacheable</td></tr>
-      <tr><td>passkeys / tenancy activation / load test</td><td class="mid">not implemented / not activated / not run</td></tr>
+      <tr><td>load test (10 tills, k6)</td><td class="ok">run — 0 failures; p95 contract figure pending prod box</td></tr>
+      <tr><td>passkeys / tenancy activation</td><td class="mid">not implemented / not activated (unchanged)</td></tr>
     </table></div>
   </section>
 
   <div class="bottom">
-    <b>Bottom line.</b> Nothing in this review argues for changing the architecture — Laravel 13 + Postgres 16 + Redis + React 19 in Docker is the right stack, used well.
-    The route to "top-notch in the world" is a short, concrete list: back up the data, watch the system, encrypt the transport, prove the load numbers, then close the two spec deviations (passkeys, government-DB decision) on your own schedule.
-    Do the five P0 rows and this platform stands comparison with any commercial POS backend in the region — with an audit story most of them cannot match.
+    <b>Bottom line (post-execution).</b> The data is now backed up, provably restorable, and recoverable to the minute; the wire is compressed; the runtime is tuned; SSH is shielded — and the exercise caught a real latent flaw (Redis's default password) and killed it.
+    The remaining list is short and yours: domain → HTTPS, an error-tracking account, the DO firewall rules, then the prod-split day (droplet split, p95 measurement, password rotation, licence server).
+    After that, the two spec decisions — passkeys and the government-DB model — are the only distance left to "top-notch anywhere".
   </div>
 
   <footer>Prepared 19 July 2026 · sources: live schema interrogation, droplet inspection, dependency audits, verified market research, session test runs · canonical copy: progress/architecture-review-2026-07.html (internal, never published to the docs site)</footer>

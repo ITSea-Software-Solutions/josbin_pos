@@ -29,7 +29,9 @@ is decided by configuration, not by builds.
 | ☐ | **Licence server live + pilot licence issued** | activate → validate → expiry/grace behaviour verified end-to-end (dashboard manual ch 15–16) |
 | ☐ | **SMTP credentials configured** | receipts / welcome mails / BTW notifications stay silent without them; the in-app bell works regardless |
 | ☐ | **Exchange-rate API key set** | `EXCHANGERATE_API_KEY` in the backend `.env`; daily lock at 06:00 AST + half-hourly self-heal take over from there |
-| ☐ | **Backups on** | nightly `pg_dump` + off-site copy (3-2-1 rule; guide Part I) — non-negotiable before real store data exists |
+| ☐ | **Backups on** | one cron line installs `scripts/backup.sh` (nightly dump + weekly base snapshot + WAL archiving = to-the-minute recovery); prove it with `scripts/backup-restore-test.sh` and pull the off-site copy via `scripts/pull-backup.sh` (guide Part I) |
+| ☐ | **Load test on the production box** | `k6 run -e BASE=… scripts/load-test.js` — the ≤200 ms p95 budget must be measured on the real server, not a laptop |
+| ☐ | **Seeded demo passwords rotated** | the README demo logins are public in the repo — rotate every account on the production stack before any real data exists |
 | ☐ | **Offline USB install kit** | assume the store's internet is bad *during* install: Docker Desktop installer · pre-pulled images (`docker save` tarballs) · repo bundle + `.env` template · POS `Setup.exe` · printed Dutch install guide |
 | ☐ | **Dress rehearsal on a clean Windows machine** | walk the Installation Guide start → finish as if on-site; fix every place it drifts. The single highest-value pre-trip step |
 | ☐ | **IonCube encoding** | only when code lands on hardware the delivery team does not control; skip for a self-managed pilot |
@@ -69,4 +71,5 @@ Escalation path: printed cheat sheets → the in-app Help drawer → docs site
 ☐ Test sale printed + emailed ☐ Drawer opens ☐ Scanner scans shelf product
 ☐ Scale layout verified on *their* scale (if used) ☐ Wallet QR shows on POS
 ☐ Offline pull-the-plug test passed ☐ Z-report closed + synced to HQ
-☐ Backup ran last night ☐ Manager can reach the docs site
+☐ Backup ran last night **and this month's restore drill passed**
+☐ Demo/seed passwords rotated ☐ Manager can reach the docs site

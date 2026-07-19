@@ -452,18 +452,31 @@ Als een stap mislukt → zie [13-dev-workflow.md](13-dev-workflow.md) §Troubles
 
 ## Deel I — Backups, monitoring, lopende ops
 
-### I1. Database-backups (3-2-1-regel)
+### I1. Database-backups (3-2-1-regel) — gescript
 
-Zet dit op op de server-PC.
+De repo levert kant-en-klare backup-tooling mee; eenmalig per server
+installeren:
 
 ```bash
-# Daily dump at 02:00 AST, kept 30 days locally
-0 2 * * * docker compose exec -T postgres pg_dump -U josbin_pos josbin_pos | gzip > /var/backups/josbin-$(date +\%Y\%m\%d).sql.gz && find /var/backups -name "josbin-*.sql.gz" -mtime +30 -delete
+# Eén cronregel — elke nacht om 03:30 AST:
+30 3 * * * /var/www/html/scripts/backup.sh >> /var/backups/josbin/backup.log 2>&1
 ```
 
-Tweede kopie: wekelijkse sync van `/var/backups/` naar externe schijf (NAS of roterende USB). Derde kopie: maandelijkse upload naar off-site (S3, encrypted).
+`scripts/backup.sh` doet alles: een gecomprimeerde nachtelijke dump naar
+`/var/backups/josbin/db/` (14 bewaard), wekelijks op zondag een basis-snapshot
+naar `…/base/` (2 bewaard), en het opschonen van het write-ahead-archief.
+Samen met de WAL-archivering die het productie-composebestand aanzet levert
+dit **point-in-time recovery tot op de minuut**, niet alleen tot gisternacht.
 
-**Test de restore maandelijks.** Ongeteste backups zijn geen backups.
+- **Tweede kopie (buiten de server):** draai `scripts/pull-backup.sh` vanaf de
+  kantoorlaptop — haalt de nieuwste dump via SSH naar `~/JosbinBackups/`.
+- **Derde kopie:** wijs de `OFFSITE_CMD`-hook in `backup.sh` naar een
+  versleutelde bucket zodra die er is.
+
+**Test de restore maandelijks** — `scripts/backup-restore-test.sh` doet dat
+zonder risico: herstelt de nieuwste dump in een kladdatabase, vergelijkt de
+rijaantallen van zes kerntabellen met live, print PASS/FAIL en gooit de klad
+weer weg. Ongeteste backups zijn geen backups.
 
 ### I2. Queue monitoring
 
