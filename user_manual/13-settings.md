@@ -88,9 +88,14 @@ This is a per-terminal setting. See [Chapter 6 §6.2](06-receipts.md) for how it
 ### Language
 
 1. Find the **Language** section (Dutch: *"Taal"*).
-2. Click **Nederlands** for Dutch or **English** for English.
+2. Click **Nederlands**, **English**, or **Sranantongo**.
 3. The entire interface switches immediately — no restart needed.
 4. This preference is saved per user (each cashier can have their own language).
+
+> **Sranantongo is a draft.** The whole POS works in it (receipts sent via
+> WhatsApp follow along), but the wording is still being reviewed by native
+> speakers — error messages from the server appear in Dutch for now. Spot a
+> phrase a Paramaribo cashier would say differently? Tell your manager.
 
 ### Date format
 

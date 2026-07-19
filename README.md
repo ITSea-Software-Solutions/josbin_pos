@@ -64,7 +64,7 @@ The longer manual install / Docker / Electron / Android sections are below if yo
 | Frontend (POS) | React 19.2, TypeScript, Electron 33 (Windows) + Capacitor 6 (Android) |
 | Frontend (Dashboard) | React 19.2, TypeScript, Vite 6 |
 | State | Zustand 5, TanStack Query v5 |
-| i18n | i18next (Dutch / English) |
+| i18n | i18next (Dutch / English / Sranantongo *draft*) — instant per-user switch |
 | Hardware | ESC/POS thermal printing, cash drawer, USB barcode scanner |
 | Infrastructure | Docker + Docker Compose, Nginx |
 
@@ -326,6 +326,8 @@ Returns `{ token, expires_at, user }`. Pass the token as `Authorization: Bearer 
 
 `orgadmin@dehoop.sr` is the **HQ catalogue owner** — only role (besides Super Admin) that can bulk-import products, manage API keys, and push catalogue updates to all POS terminals.
 
+**Passkeys (WebAuthn).** Dashboard users can register a passkey (Face ID / Windows Hello / hardware key) under My Account → Profile & password, then sign in with `POST /api/auth/passkeys/login-options` + `POST /api/auth/passkeys/login` — one user-verified gesture replaces password *and* TOTP. Requires a secure context on a domain (localhost dev, HTTPS prod); on plain-IP hosts the UI hides itself. Config: `PASSKEYS_RP_ID` / `PASSKEYS_ALLOWED_ORIGINS` (authoritative values set in `AppServiceProvider::boot`).
+
 ---
 
 ## Printer & Cash Drawer Setup
@@ -384,6 +386,11 @@ All routes are under `/api` and require `Authorization: Bearer <token>` except w
 | `POST` | `/auth/logout-all` | Revoke all tokens |
 | `GET` | `/auth/me` | Current user + permissions |
 | `POST` | `/auth/refresh` | Rotate token |
+| `POST` | `/auth/passkeys/login-options` | Passkey login ceremony (guest, throttled) |
+| `POST` | `/auth/passkeys/login` | Verify passkey assertion → token |
+| `GET/POST/DELETE` | `/auth/passkeys[...]` | List / register (`/options` + verify) / remove own passkeys (auth) |
+| `GET` | `/registers/yesterday-status` | Morning-recovery status (stale sessions, unreconciled auto-closes, yesterday's Z-Report sync) |
+| `POST` | `/registers/sessions/{id}/reconcile` | Manager counts an auto-closed drawer (note required on discrepancy) |
 | `GET` | `/auth/two-factor/setup` | Get 2FA QR code |
 | `POST` | `/auth/two-factor/confirm` | Confirm TOTP code |
 | `POST` | `/auth/two-factor-challenge` | Complete 2FA login |
@@ -764,7 +771,7 @@ josbin_pos/
 │   │   ├── types/
 │   │   │   ├── models.ts
 │   │   │   └── electron.d.ts       # window.josbin_pos IPC type definitions
-│   │   └── i18n/               # nl.json, en.json (includes printer/drawer translations)
+│   │   └── i18n/               # nl.json, en.json, srn.json (Sranantongo draft)
 │
 ├── dashboard/                  # React 19 + Vite (Super Admin web app)
 │
@@ -831,6 +838,8 @@ josbin_pos/
 | `DB_DATABASE` | `josbin_pos` | Database name |
 | `DB_USERNAME` | `josbin_pos` | DB user |
 | `DB_PASSWORD` | `secret` | DB password |
+| `PASSKEYS_RP_ID` | host of `APP_URL` | WebAuthn Relying-Party domain (set to the real domain on prod) |
+| `PASSKEYS_ALLOWED_ORIGINS` | localhost dev origins + `APP_URL` | Comma list of extra origins allowed to complete passkey ceremonies |
 | `REDIS_HOST` | `redis` | Redis host |
 | `REDIS_PASSWORD` | `secret` | Redis password |
 | `EXCHANGERATE_API_KEY` | — | API key from exchangerate-api.com (free tier) |

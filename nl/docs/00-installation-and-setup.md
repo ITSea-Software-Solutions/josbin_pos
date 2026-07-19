@@ -324,6 +324,8 @@ Dit is een *machine*-account, geen persoon. Gebruikt door POS-systemen van derde
 
 Per USB aangeleverd of download van je distributieserver. Bestand: `Josbin POS-1.0.0-Setup.exe` (Windows) of `josbin-pos.apk` (Android).
 
+> **Verkeerd serveradres na installatie?** Geen nieuwe build nodig: tik op het inlogscherm op **⚙ Server**, voer het adres van de winkelserver in (bijv. `192.168.0.250:8080` — `http://` en `/api` worden automatisch toegevoegd), druk op **Testen** tot er *Verbonden* staat en dan **Opslaan & herstarten**. Managers vinden dezelfde optie onder Instellingen → Systeem.
+
 ### E2. Installeer op de terminal
 
 Windows: dubbelklik op `.exe`. De wizard installeert naar `C:\Program Files\Josbin POS\`. Maakt een desktop-shortcut.

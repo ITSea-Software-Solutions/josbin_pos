@@ -125,7 +125,7 @@ if queued classes read it — G-026).
 | `REVERB_APP_KEY` etc. | WebSocket auth | Semi-public (baked into SPA bundles); regenerate + redeploy SPAs together. |
 | License-server `.env` | (when deployed) its own APP_KEY + DB + signing keys | Not yet live — create at deploy time, then add to the §3.2 backup. |
 
-## 5. Status snapshot — 2026-07-18
+## 5. Status snapshot — 2026-07-19
 
 *(Snapshot only. The living record is `FEATURES_AND_FLOWS.md` + the
 changelog in `CLAUDE_WORKING_GUIDE.md` §10. `BUILD_STATUS.md` is historical,
@@ -148,6 +148,22 @@ financial cascades, DB-level append-only audit log); P0 ops batch — backups
 + passed restore drill + WAL/PITR, gzip, prod opcache/FPM tuning, fail2ban,
 k6 load-test harness (contract p95 to be measured on the prod box), and the
 Redis "secret"-password find fixed via the pinned root compose `.env`.
+2026-07-19 (later still): **morning-recovery batch** — "yesterday was never
+closed" gate (manager inline close / cashier call-manager screen), per-store
+closing-time nudge + logout guard, opt-in overnight auto-close with next-day
+reconciliation, yesterday-sync notice; two new scheduled commands
+(`registers:closing-reminder`, `registers:auto-close`, every 15 min) and
+store "End of day" settings. **Ideas batch** — Receipt via WhatsApp (wa.me
+text receipt, live-verified), Sranantongo POS draft (390 keys, native review
+pending), WebAuthn **passkeys** for the dashboard (e2e-proven with a virtual
+authenticator; domain+HTTPS gated — set `PASSKEYS_RP_ID` +
+`PASSKEYS_ALLOWED_ORIGINS` on prod-split day), runtime-configurable POS
+server address ("⚙ Server" on the login screen — a wrong baked IP is now a
+30-second field fix). Internal portal at :8095/internal/ now 17 pages incl.
+`OPS_CHEATSHEET.md` (the five ops moves) and `PARTNER_OUTREACH.md`
+(UPPS/Uni5Pay+ email draft EN+NL + gov-DB wording talking points).
+Migrations through `2026_07_19_170001` (register morning-recovery columns,
+`passkeys` table) applied on the droplet; backend 304 tests green.
 
 **Blocked on the user (deployment gating list):**
 

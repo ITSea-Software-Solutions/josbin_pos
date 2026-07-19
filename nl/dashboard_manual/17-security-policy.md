@@ -169,7 +169,7 @@ Aan de eindgebruikerszijde, met 2FA ingeschakeld, is de loginflow:
 
 Recovery codes (10 enkelvoudig-gebruik 8-tekens codes) worden **eenmaal** getoond bij inschrijving. De gebruiker moet ze ergens veilig opslaan — wanneer zij de telefoon verliezen, zijn dit hoe ze weer binnenkomen zonder helpdesk-betrokkenheid.
 
-Passkeys (FIDO2 / WebAuthn) worden ook ondersteund voor Super Admin en overheidsaccounts via Laravel Fortify. Het 2FA-per-rol-beleid onderscheidt op dit moment geen "TOTP" van "passkey" — beide tellen als de tweede factor. Zie het ontwikkelaarsdocument over Laravel Fortify voor de passkey-flow.
+Passkeys (FIDO2 / WebAuthn) zijn live voor **alle** dashboardrollen — elke gebruiker kan er een registreren onder Mijn Profiel en zonder wachtwoord inloggen. Een geverifieerde passkey telt op zichzelf als beide factoren; het 2FA-per-rol-beleid onderscheidt geen "TOTP" van "passkey". Let op: passkeys vereisen het HTTPS-productiedomein (verborgen op installaties met een kaal IP-adres). Details verderop en in Hoofdstuk 18.
 
 ---
 

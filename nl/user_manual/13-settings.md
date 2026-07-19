@@ -88,9 +88,11 @@ Dit is een instelling per terminal. Zie [Hoofdstuk 6 §6.2](06-receipts.md) voor
 ### Taal
 
 1. Zoek de sectie **Taal**.
-2. Klik op **Nederlands** voor Nederlands of **English** voor Engels.
+2. Klik op **Nederlands**, **English** of **Sranantongo**.
 3. De hele interface schakelt direct — geen herstart nodig.
 4. Deze voorkeur wordt per gebruiker opgeslagen (elke kassier kan zijn eigen taal hebben).
+
+> **Sranantongo is een concept.** De hele kassa werkt erin (WhatsApp-bonnen volgen mee), maar de formulering wordt nog door moedertaalsprekers nagekeken — foutmeldingen van de server verschijnen voorlopig in het Nederlands. Ziet u een zin die een kassier in Paramaribo anders zou zeggen? Meld het uw manager.
 
 ### Datumnotatie
 

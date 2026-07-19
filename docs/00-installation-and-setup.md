@@ -322,6 +322,12 @@ This is a *machine* account, not a person. Used by third-party POS systems to pu
 
 Hand-delivered USB or download from your distribution server. File: `Josbin POS-1.0.0-Setup.exe` (Windows) or `josbin-pos.apk` (Android).
 
+> **Wrong server address after install?** No rebuild needed: on the login
+> screen tap **⚙ Server**, enter the store server's address (e.g.
+> `192.168.0.250:8080` — `http://` and `/api` are added automatically),
+> press **Test** until it shows *Connected*, then **Save & restart**.
+> Managers find the same control under Settings → System.
+
 ### E2. Install on the terminal
 
 Windows: double-click `.exe`. Wizard installs to `C:\Program Files\Josbin POS\`. Creates a desktop shortcut.

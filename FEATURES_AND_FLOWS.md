@@ -39,7 +39,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | AUTH-07 | Token rotation (`/auth/refresh`) | ✅ | All | `AuthController::refresh` | — |
 | AUTH-08 | Logout / logout-all-devices | ✅ | All | `AuthController::logout(All)` | `dashboard_manual/18 §18.4` |
 | AUTH-09 | Rate limiting + progressive lockout | ✅ | All | `AuthController::login` + `RateLimiter` | `dashboard_manual/17 §17.3` |
-| AUTH-10 | Passkey login (WebAuthn) | 🔲 | SA + govt (planned) | — | CLAUDE.md §security |
+| AUTH-10 | Passkey login (WebAuthn) — register/list/remove in My Account, usernameless passwordless sign-in replacing password+TOTP in one gesture; single-use cached ceremonies, audit events, HTTPS/domain-only (lights up on prod domain; localhost dev) | ✅ | All dashboard roles (2FA-mandatory roles must finish TOTP setup first) | `Api/PasskeyController` + `dashboard/src/lib/passkeys.ts` + `passkeys` table | `dashboard_manual/18` Passkeys §; e2e-proven via virtual authenticator (2026-07-19) |
 | AUTH-11 | Forced re-login on role change | ✅ | All | `UserController::update` (revokes tokens) | — |
 
 ### 1.2 Organisation & user management
@@ -169,6 +169,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | POS-15a | Manual cash in/out (pay-in / pay-out) during shift → adjusts Z-Report expected cash | ✅ | Cashier, SM | `CashMovementModal.tsx` → `RegisterController::recordCashMovement` + `CashMovement` model | migration 2026_06_12_000001 |
 | POS-16 | PDF receipt download | ✅ | Cashier, SM | `SaleController::receiptPdf` | `user_manual/06 §6.4` |
 | POS-17 | Email receipt (bilingual HTML) | ✅ | Cashier | `SaleController::emailReceipt` | `user_manual/06 §6.5` |
+| POS-17a | Receipt via WhatsApp — wa.me deep link with a compact text receipt (items ≤15 lines, BTW, total, change; nl/en/srn); Suriname phone normalisation (7-digit → 597…), customer-number prefill, empty = chat picker; client-side only, formal receipt stays print/PDF | ✅ | Cashier | `lib/receiptText.ts` + `ReceiptModal.tsx` | `user_manual/06` WhatsApp § |
 | POS-18 | Hold bill / restore later | ✅ | Cashier | `SaleController::hold/held` + Activity API pre-render | `user_manual/09` |
 | POS-19 | Void sale (manager approval) | ✅ | SM+ | `SaleController::void` + `SalePolicy::void` | `user_manual/04 §4.10` |
 | POS-20 | Refund sale (partial or full) | ✅ | SM+ | `SaleController::refund` + `RefundModal.tsx` | task #65 (user_manual coverage pending) |
@@ -182,6 +183,9 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | POS-27 | Settings persist per-device | ✅ | All | `settingsStore.ts` (localStorage) | `user_manual/13` |
 | POS-28 | Daily USD→SRD rate lock screen | ✅ | SM | `RateController` + `RateScreen.tsx` | `user_manual/02 §2.3` |
 | POS-29 | Manual rate override | ✅ | SM | `RateController::override` | `user_manual/02 §2.4` |
+| POS-30 | Morning recovery — "Yesterday was never closed" gate: stale previous-day session blocks the new day into a guided flow (manager counts + closes inline; cashier gets call-manager screen with tel:/WhatsApp from store settings, no cash figures) | ✅ | Cashier, SM | `OpenRegisterGate.tsx` 'yesterday' step + `RegisterController::yesterdayStatus` | `user_manual/03` morning §; `dashboard_manual/19 §19.10` |
+| POS-31 | Closing-time nudge — per-store `closing_time`: amber POS strip past closing, once-a-day manager notification (`RegisterStillOpen`, bell+mail), logout guard while register open | ✅ | Cashier (sees), SM (notified) | `TopBar.tsx` + `ClosingTimeReminders` command (every 15 min) | `dashboard_manual/19 §19.10` |
+| POS-32 | Opt-in overnight auto-close — per-store `auto_close_enabled`+`auto_close_time`: forgotten sessions sealed *system-closed, cash not counted*; manager reconciles next day (skippable, note-required on discrepancy, audited `register.auto_closed`/`register.reconciled`) | ✅ | System + SM | `AutoCloseRegisters` command + `RegisterController::reconcile` | `dashboard_manual/19 §19.10` |
 
 ### 1.6 Reports
 
@@ -215,6 +219,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | SYNC-05 | Layer 5 — Catch-up sync on internet restore | ✅ | Auto | scheduler + `register_sessions.synced_at` | `dashboard_manual/11 §11.5.5` |
 | SYNC-06 | Mobile data dongle fallback (Digicel/Telesur 4G) | 🔲 | Local server setup | doc only; no app code needed | CLAUDE.md §offline |
 | SYNC-07 | Offline sale buffering (POS keeps selling without internet) | ✅ | Auto | `sales` written locally; sync layer pushes later | task #43 |
+| SYNC-08 | Yesterday-sync notice at the register gate — non-blocking "not at HQ yet" strip when yesterday's Z-Report hasn't synced, with a manager-only Retry (`POST /reports/z-report/{id}/submit`) | ✅ | All (see), SM (retry) | `OpenRegisterGate.tsx` sync-notice | `user_manual/03` morning § |
 
 ### 1.8 Open Integration API (Layer 3)
 
@@ -272,6 +277,9 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | SET-07 | Site name customisation (POS top bar) | ✅ | SM+ | `settingsStore.ts` | `user_manual/13 §13.7` |
 | SET-08 | Vendor contact (Josbin name/email/phone) on all "contact support" surfaces | ✅ | All | `config/josbin_pos.php vendor.*` + `useVendor` hook | G-014 in CLAUDE_WORKING_GUIDE.md |
 | SET-09 | Role-aware sectioned dashboard navigation (industry-standard SaaS admin layout) | ✅ | All | `DashboardLayout.tsx` `SECTION_ORDER` + `nav[].sections` | G-016 in CLAUDE_WORKING_GUIDE.md |
+| SET-10 | Runtime-configurable server address — `josbin_server_url` localStorage override beats the baked `VITE_API_URL`; "⚙ Server" on the POS login screen (normalise + /health test + save&restart + reset) and Settings → System (manager+); axios client, Reverb discovery and demo banner all read it | ✅ | Anyone at the till (login screen), SM+ (settings) | `lib/serverConfig.ts` + `ServerConfigModal.tsx` | FIELD_RUNBOOK terminal §; `user_manual/13` |
+| SET-11 | Sranantongo POS UI (draft) — third language `srn`, 390 keys, fallback srn→nl→en, 🇸🇷 in Settings; WhatsApp text receipts follow; API errors fall back to nl (SetLocale whitelist) | 🟡 draft — native review pending (see PENDING backlog) | All POS users | `i18n/srn.json` + `i18n/index.ts` | `user_manual/06` language §; review keys in generation notes |
+| SET-12 | Per-store end-of-day settings — `closing_time`, `auto_close_enabled`, `auto_close_time`, `manager_name`, `manager_phone` (drive POS-30/31/32) | ✅ | SM/OA edit | `StoreSettingsScreen.tsx` "End of day" + `StoreController` H:i validation | `dashboard_manual/19 §19.10` |
 
 ---
 
@@ -460,6 +468,33 @@ Rekenkamer can verify the filing history wasn't tampered with after the fact.
 ```
 
 ---
+
+### 3.9 Morning recovery — yesterday was never closed (new)
+
+```
+07:00 — first person unlocks the till
+  └─ POS gate calls GET /registers/yesterday-status
+       ├─ nothing stale → normal day (pick register → float → sell)
+       ├─ stale OPEN session from yesterday
+       │    ├─ MANAGER logged in → inline wizard: expected cash shown,
+       │    │   count drawer → note if different → "Close yesterday"
+       │    │   → today opens in the same motion
+       │    └─ CASHIER logged in → "Yesterday was never closed" screen:
+       │        📞 Call [manager] · WhatsApp buttons (store settings)
+       │        → manager closes (at the till or from home) → Refresh
+       └─ session auto-closed overnight (auto_close_enabled)
+            → day is NOT blocked; manager sees a skippable
+              "count yesterday's drawer" reconciliation task
+              (note required on discrepancy → audit `register.reconciled`)
+  └─ independent amber strip if yesterday's Z-Report hasn't reached HQ
+      (manager-only Retry; auto-retry continues regardless)
+Prevention side: past `closing_time` → amber strip + once-a-day manager
+notification + logout guard while the register is still open.
+```
+
+Everything time-based is per-store configurable (Dashboard → Store →
+**End of day**). Audit trail: `register.auto_closed` (user_id null),
+`register.reconciled`, plus the normal close events.
 
 ## §4 Feature deep-dives (the ones worth detailing)
 

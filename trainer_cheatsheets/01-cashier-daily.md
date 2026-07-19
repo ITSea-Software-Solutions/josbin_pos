@@ -31,7 +31,7 @@
 | 4. Discount (optional) | Per line: tap the line. Whole bill: bottom of cart |
 | 5. Hold the bill | **Hold bill / Bewaar bon** — load instantly later |
 | 6. **Pay / Betalen** | **Cash / Contant**, **Card/PIN**, or **Mixed**. Cash: type tendered → change shows live |
-| 7. Receipt | **Print** and/or **Email** — drawer pops automatically on cash |
+| 7. Receipt | **Print**, **Email** and/or **WhatsApp** (type the number, `+597` is added; opens WhatsApp ready to send) — drawer pops automatically on cash |
 | 8. New sale | **New sale / Nieuwe verkoop** → cart clears |
 
 🔍 **Barcode scanner:** USB scanners type into focused field. Keep focus on POS screen — no special key.

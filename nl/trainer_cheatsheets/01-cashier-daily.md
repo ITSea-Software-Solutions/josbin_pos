@@ -31,7 +31,7 @@
 | 4. Korting (optioneel) | Per regel: tik op de regel. Hele bon: onderaan winkelwagen |
 | 5. Bon vasthouden | **Bon vasthouden** — laad later direct terug |
 | 6. **Afrekenen** | **Contant**, **Pin**, of **Gemengd**. Contant: type ontvangen bedrag → wisselgeld verschijnt live |
-| 7. Bon | **Afdrukken** en/of **E-mailen** — kassalade gaat automatisch open bij contant |
+| 7. Bon | **Printen**, **E-mail** en/of **WhatsApp** (typ het nummer, `+597` komt er vanzelf bij; WhatsApp opent klaar om te verzenden) — lade springt automatisch open bij contant |
 | 8. Nieuwe verkoop | **Nieuwe verkoop** → winkelwagen wordt leeg |
 
 🔍 **Barcodescanner:** USB-scanners typen in het actieve veld. Houd de focus op het POS-scherm — geen speciale toets.

@@ -169,7 +169,7 @@ End-user side, with 2FA enabled, the login flow is:
 
 Recovery codes (10 single-use 8-character codes) are shown **once** at enrollment. The user must save them somewhere safe — when they lose the phone, these are how they get back in without help-desk involvement.
 
-Passkeys (FIDO2 / WebAuthn) are also supported for Super Admin and government accounts via Laravel Fortify. The 2FA-per-role policy doesn't currently distinguish "TOTP" from "passkey" — both count as the second factor. See the developer doc on Laravel Fortify for the passkey flow.
+Passkeys (FIDO2 / WebAuthn) are live for **all** dashboard roles — any user can register one under My Account and sign in without a password. A user-verified passkey counts as both factors on its own; the 2FA-per-role policy doesn't distinguish "TOTP" from "passkey". Note they require the HTTPS production domain (hidden on plain-IP installs). Details below and in Chapter 18.
 
 ---
 
@@ -245,6 +245,8 @@ RESET ONE USER      Users → row → Reset 2FA → next login prompts re-enroll
 WHERE STORED        app_settings.value = JSON array of role strings
                     Key: two_factor_required_roles
 ```
+
+**Passkeys.** Since July 2026 every dashboard user can also register a **passkey** (Face ID, Windows Hello, hardware key) — a phishing-resistant sign-in that replaces password *and* TOTP code in one user-verified gesture, and is therefore accepted as two factors on its own. Roles with mandatory 2FA must complete their TOTP setup before they can add one, every passkey event is in the audit log, and passkeys only function on the HTTPS production domain (and localhost during development). Registration and removal live in [Chapter 18 — My Account](18-my-account.md).
 
 For per-user 2FA setup, recovery codes, and how to disable your own 2FA when it's optional for your role, see [Chapter 18 — My Account](18-my-account.md). For the wider security architecture (bcrypt cost factor, geo-alerts, single-device enforcement, encrypted PII), see the project proposal §13 "Security Architecture".
 
