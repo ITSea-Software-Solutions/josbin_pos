@@ -44,6 +44,16 @@ is exactly when the "Sign in with a passkey" button starts appearing.
 | Loyalty / spaarpunten | design first | Not committed |
 | Sranantongo native-speaker review | ½ d with a native | Draft srn.json shipped 2026-07-19 (390 keys); the 15 least-certain keys are listed in the generation notes — have a Paramaribo native walk the POS in srn before advertising the language |
 
+
+## 3b. Watch list — strategic, no code scheduled
+
+| Item | Trigger to act | Where it stands |
+|---|---|---|
+| Uni5Pay+ / UPPS as a *channel* (partner listing, dynamic-QR API) | Client sends the drafted email (§1) and UPPS replies | Draft ready in `PARTNER_OUTREACH.md` §1 — the send is the whole next step |
+| Guyana expansion (second market) | Client decides to pilot via the partner's network | Technical enabler shipped (org-configurable payment pick-lists; MMG/Caripay/Kanoo research in `progress/research-regional-payments-2026-07.md`); GYD multi-currency would be the first real build item |
+| BTW e-invoicing mandate in Suriname | Any Belastingdienst announcement of e-invoicing / e-reporting | Nothing to build yet — but if it lands, "the POS that already files correctly" becomes the pitch; check for news each visit/quarter |
+| Aggregated market intelligence (consented, category-level, cross-store) | Deliberately parked — revisit only at real SaaS scale, WBP-S counsel first | Long-term prize; do NOT start without a privacy design + client consent framework |
+
 ## 4. Decisions needed before the first government client
 
 | Decision | Options |
