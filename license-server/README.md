@@ -11,6 +11,19 @@ period (handled in the main app's `LicenseService`).
 
 ---
 
+## URLs & deployment status
+
+| Environment | URL | Status |
+|---|---|---|
+| Local (`cd license-server && docker compose up -d`) | `http://localhost:8090` | works today |
+| Production | — | **NOT deployed yet** — goes live on prod-split day (`PENDING.md` §2) together with the pilot licence |
+
+> ⚠️ Port overlap to know about: on the **test droplet**, `:8090` is the
+> Super Admin **Dashboard**, not this app. The license server runs nowhere
+> but your machine until prod-split day. The admin API key is generated at
+> setup and lives in `license-server/.env` (never committed) — see
+> `HANDOVER.md` for the locations inventory.
+
 ## What it does
 
 - **Issues** licenses bound to a customer organisation (tier, store count,
