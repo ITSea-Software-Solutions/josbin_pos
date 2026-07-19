@@ -1,0 +1,205 @@
+<title>Josbin POS — Architecture & Excellence Review</title>
+<style>
+  :root{
+    --navy:#293371; --navy-deep:#1f2a63; --orange:#ef6c00;
+    --bg:#f7f8fc; --card:#ffffff; --ink:#1a2340; --muted:#5d6a8a; --line:#e3e8f4;
+    --head:#293371; --link:#293371;
+    --good:#15803d; --good-bg:#ecf9f0; --warn:#b45309; --warn-bg:#fdf6e7; --crit:#b91c1c; --crit-bg:#fdefef;
+    --mono-bg:#f0f3fa;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0e1526; --card:#16203a; --ink:#edf1fb; --muted:#93a0c0; --line:#26314f;
+      --head:#aab6e8; --link:#aab6e8;
+      --good:#4ade80; --good-bg:#12301e; --warn:#fbbf24; --warn-bg:#332609; --crit:#f87171; --crit-bg:#3a1414;
+      --mono-bg:#101a30;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e1526; --card:#16203a; --ink:#edf1fb; --muted:#93a0c0; --line:#26314f;
+    --head:#aab6e8; --link:#aab6e8;
+    --good:#4ade80; --good-bg:#12301e; --warn:#fbbf24; --warn-bg:#332609; --crit:#f87171; --crit-bg:#3a1414;
+    --mono-bg:#101a30;
+  }
+  :root[data-theme="light"]{
+    --bg:#f7f8fc; --card:#ffffff; --ink:#1a2340; --muted:#5d6a8a; --line:#e3e8f4;
+    --head:#293371; --link:#293371;
+    --good:#15803d; --good-bg:#ecf9f0; --warn:#b45309; --warn-bg:#fdf6e7; --crit:#b91c1c; --crit-bg:#fdefef;
+    --mono-bg:#f0f3fa;
+  }
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",system-ui,Roboto,sans-serif;
+    line-height:1.55;-webkit-font-smoothing:antialiased;margin:0}
+  .wrap{max-width:980px;margin:0 auto;padding:40px 22px 90px}
+  .eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--orange)}
+  h1{font-size:clamp(24px,4.5vw,32px);letter-spacing:-.02em;line-height:1.12;margin:8px 0 6px;color:var(--head);text-wrap:balance}
+  .meta{font-size:13px;color:var(--muted)}
+  .meta code{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:var(--mono-bg);padding:1px 6px;border-radius:5px}
+
+  .verdict{margin:26px 0 0;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--orange);
+    border-radius:12px;padding:18px 20px;font-size:15px}
+  .verdict b{color:var(--head)}
+
+  section{margin-top:44px}
+  h2{font-size:20px;letter-spacing:-.01em;color:var(--head);margin:0 0 4px}
+  .sec-note{font-size:13.5px;color:var(--muted);margin:0 0 16px;max-width:70ch}
+
+  /* scorecard */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+  .dim{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+  .grade{flex-shrink:0;width:46px;height:46px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+  .g-a{background:var(--good-bg);color:var(--good)} .g-b{background:var(--warn-bg);color:var(--warn)} .g-c{background:var(--crit-bg);color:var(--crit)}
+  .dim h3{margin:1px 0 3px;font-size:14.5px}
+  .dim p{margin:0;font-size:12.8px;color:var(--muted);line-height:1.45}
+
+  /* strengths */
+  .strong{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:8px 22px;padding:0;margin:0;list-style:none}
+  .strong li{font-size:13.8px;padding-left:22px;position:relative}
+  .strong li::before{content:"✓";position:absolute;left:0;color:var(--good);font-weight:800}
+  .strong b{color:var(--head)}
+
+  /* roadmap table */
+  .tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+  table{border-collapse:collapse;width:100%;font-size:13.3px}
+  th{font-size:11px;letter-spacing:.14em;text-transform:uppercase;text-align:left;color:var(--muted);
+    padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+  td{padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  td:first-child{white-space:nowrap;font-weight:800}
+  .p0{box-shadow:inset 3px 0 0 var(--crit)} .p0 td:first-child{color:var(--crit)}
+  .p1{box-shadow:inset 3px 0 0 var(--warn)} .p1 td:first-child{color:var(--warn)}
+  .p2{box-shadow:inset 3px 0 0 var(--muted)} .p2 td:first-child{color:var(--muted)}
+  .who{font-size:11.5px;font-weight:700;border-radius:100px;padding:2px 9px;white-space:nowrap}
+  .who-dev{background:var(--mono-bg);color:var(--head)}
+  .who-you{background:var(--warn-bg);color:var(--warn)}
+  .who-ext{background:var(--crit-bg);color:var(--crit)}
+
+  /* spec table status chips */
+  .st{font-size:11.5px;font-weight:800;border-radius:100px;padding:2px 10px;white-space:nowrap}
+  .st-done{background:var(--good-bg);color:var(--good)}
+  .st-part{background:var(--warn-bg);color:var(--warn)}
+  .st-no{background:var(--crit-bg);color:var(--crit)}
+
+  /* evidence */
+  .evi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 0;overflow-x:auto}
+  .evi table{font-family:ui-monospace,Menlo,monospace;font-size:12.3px}
+  .evi td:first-child{font-weight:400;color:var(--muted)}
+  .ok{color:var(--good);font-weight:700} .bad{color:var(--crit);font-weight:700} .mid{color:var(--warn);font-weight:700}
+
+  .bottom{margin-top:44px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;font-size:14.5px}
+  .bottom b{color:var(--head)}
+  footer{margin-top:34px;font-size:12px;color:var(--muted)}
+</style>
+
+<div class="wrap">
+  <div class="eyebrow">Josbin POS · Internal engineering review — do not distribute</div>
+  <h1>Architecture &amp; Excellence Review</h1>
+  <p class="meta">19 July 2026 · full-stack audit (schema, security, performance, operations, spec conformance) · repo at <code>40fed56</code> · live droplet verified</p>
+
+  <div class="verdict">
+    <b>Verdict: the engineering core is genuinely strong — the remaining distance to "top-notch" is almost entirely operational, not architectural.</b>
+    Money integrity, audit tamper-proofing, offline resilience, test discipline and dependency hygiene are at a level most production POS systems never reach.
+    What's missing is the unglamorous layer around it: backups, monitoring, public HTTPS, and a load test. All of it is reachable in days, and none of it requires redesigning anything.
+  </div>
+
+  <section>
+    <h2>Scorecard</h2>
+    <p class="sec-note">Nine dimensions, graded against "world-class production system", not against "good enough for a demo".</p>
+    <div class="grid">
+      <div class="dim"><div class="grade g-a">A</div><div><h3>Data &amp; schema integrity</h3><p>Zero float money columns, consistent NUMERIC precision, all PKs, 13 CHECKs, FK indexes complete, financial history RESTRICT-protected (hardened 19 Jul).</p></div></div>
+      <div class="dim"><div class="grade g-a">A</div><div><h3>Audit &amp; compliance layer</h3><p>Hash-chained audit log, now append-only at the database level (triggers). BTW filing pipeline with resubmission, inspector role, Rekenkamer export.</p></div></div>
+      <div class="dim"><div class="grade g-a">A</div><div><h3>Offline resilience</h3><p>Five-layer sync fallback implemented and end-to-end verified, incl. encrypted USB export and catch-up sync.</p></div></div>
+      <div class="dim"><div class="grade g-a">A−</div><div><h3>Application security</h3><p>RBAC deny-by-default, 2FA enforced (SA + inspector), PII field encryption, full security-header set incl. CSP, throttles, scoped tokens. Passkeys still pending.</p></div></div>
+      <div class="dim"><div class="grade g-a">A−</div><div><h3>Testing &amp; CI</h3><p>290 backend + 53 frontend tests, CI gates on every push, smoke script, adversarial review culture. No load test yet (spec requires one before go-live).</p></div></div>
+      <div class="dim"><div class="grade g-b">B+</div><div><h3>Backend performance</h3><p>OPcache production-tuned, PgBouncer pooling, hot-path indexes, queues on Redis. No server-side report caching; 200 ms budget unproven under load.</p></div></div>
+      <div class="dim"><div class="grade g-b">B+</div><div><h3>Frontend performance</h3><p>React 19, code-split routes, lazy chart chunk. Assets ship uncompressed — gzip alone would cut ~70% off the wire on Suriname connections.</p></div></div>
+      <div class="dim"><div class="grade g-c">C</div><div><h3>Transport security</h3><p>Public traffic is plain HTTP on numbered ports; TLS only on a self-signed :8443. Entirely blocked on the domain decision — one day of work once made.</p></div></div>
+      <div class="dim"><div class="grade g-c">C</div><div><h3>Operations &amp; disaster recovery</h3><p>The weakest area, verified live: <b>no backups exist</b> (no cron, no dumps), no WAL archiving, no error tracking or alerting, single droplet shared with another project.</p></div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Already at world-class level</h2>
+    <p class="sec-note">Specific, verified — not aspirational.</p>
+    <ul class="strong">
+      <li><b>Tamper-evident audit trail</b> — SHA-chained rows per organisation, database triggers rejecting any update/delete beyond the initial hash stamp, break-glass rebaseline command. This is bank-grade design.</li>
+      <li><b>Money correctness</b> — every monetary value NUMERIC(12,2), BTW extracted after discounts, rate locked per day and stamped on each sale, verified by dedicated test suites.</li>
+      <li><b>Offline-first sales</b> — a store keeps selling with zero internet; five recovery layers were physically tested, not just designed.</li>
+      <li><b>Payment architecture</b> — 7 methods, pending-confirmation queue, static-QR wallets with on-screen display, org-configurable pick-lists proven live; design validated by triple-verified market research.</li>
+      <li><b>Dependency hygiene</b> — 0 npm vulnerabilities in both SPAs, composer audit clean, Laravel 13.20 / Electron 41.7 current, license-server lock pinned.</li>
+      <li><b>Hardware reach</b> — CP858 thermal encoding, 58/80 mm paper, drawer pin 2/5, widened scanner symbologies, camera scanning, scale barcodes — matched to the actual South-American device market.</li>
+      <li><b>Documentation system</b> — bilingual manuals, dev docs, deployment playbook, visual guides, all served from the product itself and kept in sync by standing rule.</li>
+      <li><b>Test-DB isolation, per-store stock with CHECK-guarded non-negativity, idempotent external API, segregation-of-duties on refunds/confirmation</b> — each individually rare in POS codebases.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Priority roadmap</h2>
+    <p class="sec-note">P0 = go-live gates. P1 = first month after. P2 = SaaS-scale horizon. "Dev" = I can do it; "You" = needs your account/decision; "Ext" = external party.</p>
+    <div class="tblwrap"><table>
+      <tr><th>Prio</th><th>Item</th><th>Why it matters</th><th>Effort</th><th>Owner</th></tr>
+      <tr class="p0"><td>P0</td><td>Nightly pg_dump + off-site copy + <b>tested restore</b>, then WAL archiving for point-in-time recovery</td><td>Currently a droplet failure loses everything. The proposal promises PITR to any minute — today that promise is unbacked.</td><td>½ day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p0"><td>P0</td><td>Domain + Let's Encrypt + HSTS, retire numbered ports</td><td>Plain HTTP on public ports is the single biggest security gap; also unlocks camera scanning and removes the VPN/firewall support class.</td><td>1 day</td><td><span class="who who-you">You: domain</span></td></tr>
+      <tr class="p0"><td>P0</td><td>Error tracking + uptime alerting (Sentry free tier or Laravel Nightwatch) + Horizon queue alerts</td><td>Today nobody is paged when the queue dies or a 500 spikes — silence is indistinguishable from health.</td><td>½ day</td><td><span class="who who-you">You: account</span></td></tr>
+      <tr class="p0"><td>P0</td><td>Load test: 10 terminals, 1 000 sales/day/store, 50 stores syncing (k6 script)</td><td>The 200 ms query budget is a Phase-4 contract item and still unproven.</td><td>1 day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p0"><td>P0</td><td>Rotate seeded passwords on the live stack; DO firewall inbound rules</td><td>Demo credentials are public in the repo; public URLs still intermittently blocked.</td><td>1 h</td><td><span class="who who-you">You</span></td></tr>
+      <tr class="p1"><td>P1</td><td>gzip/brotli on all four nginx frontends</td><td>~430 KB JS → ~120 KB on the wire; biggest single UX win for interior-Suriname connections.</td><td>1 h</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p1"><td>P1</td><td>Passkeys for Super Admin / government accounts</td><td>Spec'd in the proposal (Fortify + column ready); strongest phishing resistance for the highest-privilege logins.</td><td>2–3 days</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p1"><td>P1</td><td>Server-side caching for heavy report endpoints (Redis, short TTL)</td><td>Consolidated/monthly reports recompute on every view; cache makes the dashboard feel instant at 50 stores.</td><td>1 day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p1"><td>P1</td><td>fail2ban + SSH hardening pass on the droplet; split prod droplet from the shared box</td><td>The proposal's infra layer (key-only SSH, isolated host) is written but not fully applied to this shared droplet.</td><td>½ day</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p1"><td>P1</td><td>Uni5Pay+ dynamic-QR API integration</td><td>The one verified programmatic wallet rail in Suriname; slot is built and waiting.</td><td>3–5 days</td><td><span class="who who-ext">Ext: UPPS/SCB access</span></td></tr>
+      <tr class="p1"><td>P1</td><td>pgvector embeddings + semantic search; first AI weekly summaries</td><td>Column and jobs exist; blocked only on OpenAI billing credits.</td><td>1 day</td><td><span class="who who-you">You: credits</span></td></tr>
+      <tr class="p2"><td>P2</td><td>Decide the government-isolation model: activate database-per-tenant (stancl is installed but unused) or get client sign-off on the current row-level scoping</td><td>The proposal sells "government data in a completely isolated database"; the implementation is single-DB with org scoping. Either build it or renegotiate the wording — before the first government client.</td><td>1–2 wks or a meeting</td><td><span class="who who-you">You + client</span></td></tr>
+      <tr class="p2"><td>P2</td><td>IonCube encoding + licence-server deployment + code-signing</td><td>All three are delivery-time protections, deliberately parked until code ships to hardware you don't control.</td><td>playbook Phase 1</td><td><span class="who who-dev">Dev</span></td></tr>
+      <tr class="p2"><td>P2</td><td>SaaS scale-out: managed Postgres or replica, CDN for assets, multi-droplet, ISO 27001 programme</td><td>None of it needed at pilot scale; architecture already permits all of it (stateless SPAs, Docker, Redis).</td><td>later</td><td><span class="who who-dev">Dev</span></td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Spec vs. implementation — the honest ledger</h2>
+    <p class="sec-note">Where the delivered system stands against the signed proposal.</p>
+    <div class="tblwrap"><table>
+      <tr><th>Proposal item</th><th>Status</th><th>Reality</th></tr>
+      <tr><td>BTW engine, receipts, reports, Z/X-reports, sync, open API, licence enforcement logic</td><td><span class="st st-done">Done</span></td><td>Implemented, tested, live on the droplet</td></tr>
+      <tr><td>Security layers 1–4 (RBAC, 2FA, encryption, headers, throttles, audit)</td><td><span class="st st-done">Done</span></td><td>Verified this review; passkeys the one open sub-item</td></tr>
+      <tr><td>AI features v1</td><td><span class="st st-part">Partial</span></td><td>Anomaly job + weekly summary wired; silent until OpenAI credits; embeddings pending</td></tr>
+      <tr><td>Passkeys (Fortify)</td><td><span class="st st-no">Not built</span></td><td>Column exists; feature not implemented</td></tr>
+      <tr><td>Database-per-tenant / isolated government DB</td><td><span class="st st-no">Deviation</span></td><td>Single DB with strict org scoping; stancl/tenancy installed but never activated — needs a decision (P2)</td></tr>
+      <tr><td>WAL point-in-time recovery, 3-2-1 backups, monthly restore drills</td><td><span class="st st-no">Not built</span></td><td>WAL is on (Postgres default) but not archived; zero backups configured — P0</td></tr>
+      <tr><td>IonCube, code signing, licence server deployed</td><td><span class="st st-part">Parked</span></td><td>Deliberately scheduled for client-delivery phase (playbook)</td></tr>
+      <tr><td>Load/performance test (10 terminals, ≤200 ms)</td><td><span class="st st-no">Not run</span></td><td>Phase-4 item, still open — P0</td></tr>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Evidence appendix</h2>
+    <p class="sec-note">What was actually checked on 19 July 2026, and what it showed.</p>
+    <div class="evi"><table>
+      <tr><td>float/double columns in schema</td><td class="ok">0</td></tr>
+      <tr><td>money columns NUMERIC(12,2) / rates (10,4) / qty (10,3)</td><td class="ok">40/40 consistent</td></tr>
+      <tr><td>FK columns without index</td><td class="ok">0 (21 added 19 Jul)</td></tr>
+      <tr><td>CASCADE deletes on financial tables (z_reports, cash_movements, register_sessions)</td><td class="ok">0 (7 retargeted RESTRICT)</td></tr>
+      <tr><td>audit_logs append-only triggers (live DB)</td><td class="ok">3 active</td></tr>
+      <tr><td>backend security headers (nginx)</td><td class="ok">X-Frame, nosniff, Referrer-Policy, Permissions-Policy, CSP</td></tr>
+      <tr><td>APP_DEBUG on production</td><td class="ok">false</td></tr>
+      <tr><td>OPcache</td><td class="ok">enabled, 256 MB, revalidate_freq=0</td></tr>
+      <tr><td>container restart policy</td><td class="ok">unless-stopped</td></tr>
+      <tr><td>npm audit (POS / dashboard)</td><td class="ok">0 / 0 vulnerabilities</td></tr>
+      <tr><td>composer audit</td><td class="ok">no advisories</td></tr>
+      <tr><td>backend tests / frontend tests</td><td class="ok">290 / 53 passing</td></tr>
+      <tr><td>backup cron or dump directory on droplet</td><td class="bad">none found</td></tr>
+      <tr><td>error tracking / alerting</td><td class="bad">none configured</td></tr>
+      <tr><td>public TLS</td><td class="bad">HTTP only (self-signed :8443)</td></tr>
+      <tr><td>gzip on SPA nginx configs</td><td class="mid">absent (assets ship uncompressed)</td></tr>
+      <tr><td>largest JS chunks (POS / dashboard)</td><td class="mid">448 KB / 408 KB uncompressed — code-split, cacheable</td></tr>
+      <tr><td>passkeys / tenancy activation / load test</td><td class="mid">not implemented / not activated / not run</td></tr>
+    </table></div>
+  </section>
+
+  <div class="bottom">
+    <b>Bottom line.</b> Nothing in this review argues for changing the architecture — Laravel 13 + Postgres 16 + Redis + React 19 in Docker is the right stack, used well.
+    The route to "top-notch in the world" is a short, concrete list: back up the data, watch the system, encrypt the transport, prove the load numbers, then close the two spec deviations (passkeys, government-DB decision) on your own schedule.
+    Do the five P0 rows and this platform stands comparison with any commercial POS backend in the region — with an audit story most of them cannot match.
+  </div>
+
+  <footer>Prepared 19 July 2026 · sources: live schema interrogation, droplet inspection, dependency audits, verified market research, session test runs · canonical copy: progress/architecture-review-2026-07.html (internal, never published to the docs site)</footer>
+</div>
