@@ -155,6 +155,80 @@ class SaleRefundTest extends TestCase
 
     // ─── 403 for cashier (manager+ only) ─────────────────────────────────────
 
+    /**
+     * P1-D3: refund legs must carry the original discounts (prorated), or
+     * discount/BTW reports double-count after refunds. Original here:
+     * 2 units, line discount 4.00, sale-level discount 6.00 on a 40.00
+     * gross → items stored net. Refunding 1 of 2 units must produce a
+     * refund item with discount_srd = -2.00 (half the line discount), a
+     * header discount of -3.00 (half the sale-level discount), and the
+     * subtotal − discount = total identity on the refund row.
+     */
+    public function test_refund_carries_prorated_discounts_for_report_netting(): void
+    {
+        // line: 2 × 20.00 = 40.00 gross, line discount 4.00 → 36.00;
+        // stored line_total additionally nets the distributed sale
+        // discount (6.00) → 30.00. BTW 10% inclusive on the net.
+        $discounted = Sale::create([
+            'store_id'           => $this->store->id,
+            'cashier_id'         => $this->cashier->id,
+            'sale_number'        => Sale::nextNumber($this->store->id),
+            'subtotal_srd'       => '36.00',
+            'discount_srd'       => '6.00',
+            'btw_srd'            => '2.73',
+            'total_srd'          => '30.00',
+            'payment_method'     => 'cash',
+            'cash_received_srd'  => '30.00',
+            'change_srd'         => '0.00',
+            'status'             => 'completed',
+            'source'             => 'pos',
+            'exchange_rate_used' => '38.5000',
+            'occurred_at'        => now(),
+        ]);
+        $discountedItem = SaleItem::create([
+            'sale_id'               => $discounted->id,
+            'product_id'            => $this->cola->id,
+            'product_name_snapshot' => $this->cola->name_nl,
+            'unit_price_srd'        => '20.00',
+            'quantity'              => '2.000',
+            'discount_srd'          => '10.00',
+            'discount_pct'          => '0.00',
+            'btw_rate'              => '10.00',
+            'btw_exempt'            => false,
+            'btw_srd'               => '2.73',
+            'line_total_srd'        => '30.00',
+        ]);
+
+        $res = $this->withToken($this->manager->createToken('t')->plainTextToken)
+            ->postJson("/api/sales/{$discounted->id}/refund", [
+                'reason' => 'Klant retourneerde één stuk',
+                'items'  => [[
+                    'sale_item_id' => $discountedItem->id,
+                    'quantity'     => '1.000',
+                ]],
+            ]);
+
+        $res->assertStatus(201);
+        $refund = Sale::findOrFail($res->json('data.id'));
+        $refundItem = $refund->items->first();
+
+        // Item leg: half the stored item discount (10.00 → 5.00), negative.
+        $this->assertSame('-5.00', (string) $refundItem->discount_srd);
+        $this->assertSame('-15.00', (string) $refundItem->line_total_srd);
+
+        // Header: money refunded is half the paid total…
+        $this->assertSame('-15.00', (string) $refund->total_srd);
+        // …the sale-level discount is prorated (6.00 × 15/30 = 3.00)…
+        $this->assertSame('-3.00', (string) $refund->discount_srd);
+        // …and subtotal − discount = total holds on the refund row:
+        // -18.00 − (-3.00) = -15.00.
+        $this->assertSame('-18.00', (string) $refund->subtotal_srd);
+        $this->assertSame(
+            (string) $refund->total_srd,
+            bcsub((string) $refund->subtotal_srd, (string) $refund->discount_srd, 2),
+        );
+    }
+
     public function test_cashier_cannot_refund_a_sale(): void
     {
         $originalItem = $this->originalSale->items()->first();

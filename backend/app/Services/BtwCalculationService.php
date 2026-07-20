@@ -136,12 +136,22 @@ class BtwCalculationService
             $subtotal = bcadd($subtotal, $result['line_total'], $scale);
         }
 
-        // Step 2: resolve sale-level discount amount
+        // Step 2: resolve sale-level discount amount. SRD and % components
+        // COMBINE ADDITIVELY — an automatic discount rule can contribute a
+        // fixed SRD amount while the cashier grants a percentage on top;
+        // the old either/or here silently dropped the percentage whenever
+        // any SRD discount was present (audit P1-D5). The % applies to the
+        // pre-sale-discount subtotal.
         $saleDiscount = '0.0000';
         if (bccomp($saleDiscountSrd, '0', $scale) > 0) {
             $saleDiscount = bcmul($saleDiscountSrd, '1', $scale);
-        } elseif (bccomp($saleDiscountPct, '0', $scale) > 0) {
-            $saleDiscount = bcdiv(bcmul($subtotal, $saleDiscountPct, $scale), '100', $scale);
+        }
+        if (bccomp($saleDiscountPct, '0', $scale) > 0) {
+            $saleDiscount = bcadd(
+                $saleDiscount,
+                bcdiv(bcmul($subtotal, $saleDiscountPct, $scale), '100', $scale),
+                $scale
+            );
         }
         // Cap discount at subtotal
         if (bccomp($saleDiscount, $subtotal, $scale) > 0) {

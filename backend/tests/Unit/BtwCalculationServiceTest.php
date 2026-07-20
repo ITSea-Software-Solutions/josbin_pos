@@ -276,14 +276,17 @@ class BtwCalculationServiceTest extends TestCase
     }
 
     /** @test */
-    public function test_cart_srd_discount_preferred_over_pct_when_both_given(): void
+    public function test_cart_srd_and_pct_discounts_are_additive_when_both_given(): void
     {
-        // If both saleDiscountSrd and saleDiscountPct are provided, SRD takes precedence
+        // P1-D5: this test used to assert "SRD wins" — which WAS the bug:
+        // a rule-produced SRD discount silently swallowed the cashier's
+        // percentage. Both components now apply: 5.00 + 50% of 100.00.
         $result = $this->btw->calculateCart([
             ['unit_price' => '100.00', 'quantity' => '1', 'btw_rate' => '10', 'btw_exempt' => false],
         ], saleDiscountSrd: '5.00', saleDiscountPct: '50');
 
-        $this->assertSame('5.00', $result['sale_discount']); // SRD wins
+        $this->assertSame('55.00', $result['sale_discount']);
+        $this->assertSame('45.00', $result['total']);
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -612,6 +615,29 @@ class BtwCalculationServiceTest extends TestCase
     }
 
     /** @test */
+    /**
+     * P1-D5: SRD and percentage sale-discounts must combine ADDITIVELY.
+     * A discount rule contributing SRD 10 plus a cashier-granted 10% used
+     * to silently drop the 10% (either/or). On a 100.00 subtotal the
+     * combined discount is 10 + 10 = 20, total 80.
+     */
+    public function test_srd_and_pct_sale_discounts_combine_additively(): void
+    {
+        $cart = $this->btw->calculateCart(
+            [[
+                'unit_price' => '100.00',
+                'quantity'   => '1',
+                'btw_rate'   => '10.00',
+                'btw_exempt' => false,
+            ]],
+            saleDiscountSrd: '10.00',
+            saleDiscountPct: '10.00',
+        );
+
+        $this->assertSame('20.00', $cart['sale_discount']);
+        $this->assertSame('80.00', $cart['total']);
+    }
+
     public function test_sale_discount_does_not_affect_exempt_item_btw(): void
     {
         $result = $this->btw->calculateCart([

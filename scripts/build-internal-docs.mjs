@@ -31,6 +31,8 @@ const DOCS = [
   ['progress/load-test-2026-07.md',             'load-test',        'Load-test results',          'k6 harness design + first-run results and interpretation'],
   ['progress/research-regional-payments-2026-07.md', 'payments-research', 'Regional payments research', 'Verified Suriname/Guyana/T&T/Brazil payment-landscape findings'],
   ['PARTNER_OUTREACH.md',                       'partner-outreach', 'Partner outreach — Uni5Pay+ draft & gov-DB wording', 'Ready-to-send UPPS/SCB email (EN+NL) and talking points for the government data-isolation conversation'],
+  ['legal/eula-draft-nl.md',                    'eula-nl',          'Licentieovereenkomst — werkconcept (NL)', 'EULA-sjabloon dat de gebouwde handhaving spiegelt (fingerprint, 72u-coulance, soft/hard lock, data-eigendom) — vóór gebruik door een Surinaamse advocaat laten toetsen'],
+  ['legal/eula-draft-en.md',                    'eula-en',          'Licence agreement — working draft (EN)', 'English mirror of the EULA template — lawyer review required before any signature'],
   ['FEATURES_AND_FLOWS.md',                     'features-and-flows', 'Features & flows registry', 'Living feature inventory, user journeys, dated changelog'],
   ['CLAUDE_WORKING_GUIDE.md',                   'working-guide',    'Engineering working guide',  'Discipline, surfaces checklist, gotcha registry, ops practices'],
   ['CLAUDE.md',                                 'product-brief',    'Product brief / master spec', 'The full platform specification the build follows'],

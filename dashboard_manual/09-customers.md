@@ -256,6 +256,30 @@ This is mostly invisible to back-office users — the only reason to know about 
 
 ---
 
+## 9.8a Customer detail view — purchase history & statement
+
+Click any customer row (or its **Details** button) to open the customer's
+detail page:
+
+- **Profile block** — the contact fields, plus the running aggregates:
+  total spend (SRD), number of visits, and the last visit date.
+- **Purchase history** — every sale attributed to this customer, newest
+  first, paginated: sale number, date, store, payment method, total and
+  BTW. Refund legs show as negative rows flagged *refund*; voided sales
+  show their status.
+- **Statement download** — pick a date range (default: the last 90 days)
+  and export a formal statement as **PDF** (letterhead-style, bilingual by
+  your language setting) or **CSV**. The footer nets it out: gross sales,
+  refunds, BTW, and the net amount. Useful for business customers who ask
+  "what did I buy from you this quarter?" and for reconciling a customer's
+  account balance discussion.
+
+Access follows the same rule as the rest of this screen (customer
+visibility permission); a tax inspector cannot open it. Opening a detail
+view or exporting a statement is itself recorded in the audit log
+(`customer.accessed`, `customer.statement_exported`) — WBP-S expects PII
+reads to leave a trace, and they do.
+
 ## 9.9 What's recorded in the audit log
 
 Every action on a customer creates an entry in the audit log (Chapter 13):

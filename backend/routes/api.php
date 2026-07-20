@@ -297,6 +297,12 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::get('/',          [CustomerController::class, 'index'])->name('index');
         Route::post('/',         [CustomerController::class, 'store'])->name('store');
         Route::post('import',    [CustomerController::class, 'import'])->name('import');
+        // Customer detail view (dashboard) — purchase history + statement
+        // export. Both resolve {customer} manually scoped to the caller's
+        // org (cross-org = 404, P0-6 pattern) — hence the string param, not
+        // implicit model binding.
+        Route::get('{customer}/history',   [CustomerController::class, 'history'])->name('history');
+        Route::get('{customer}/statement', [CustomerController::class, 'statement'])->name('statement');
         Route::get('{customer}', [CustomerController::class, 'show'])->name('show');
         Route::put('{customer}', [CustomerController::class, 'update'])->name('update');
         // WBP-S right-to-erasure — redacts PII, keeps the row. OA + SA only.

@@ -16,6 +16,7 @@ const LicenseScreen       = lazy(() => import('@/screens/LicenseScreen'))
 const CatalogueScreen       = lazy(() => import('@/screens/CatalogueScreen'))
 const RegistersScreen       = lazy(() => import('@/screens/RegistersScreen'))
 const CustomersScreen       = lazy(() => import('@/screens/CustomersScreen'))
+const CustomerDetailScreen  = lazy(() => import('@/screens/CustomerDetailScreen'))
 const StockScreen           = lazy(() => import('@/screens/StockScreen'))
 const AiInsightsScreen      = lazy(() => import('@/screens/AiInsightsScreen'))
 const PriceOverridesScreen  = lazy(() => import('@/screens/PriceOverridesScreen'))
@@ -34,7 +35,7 @@ const PendingPaymentsScreen        = lazy(() => import('@/screens/PendingPayment
 type Screen =
   | 'overview' | 'store' | 'reports' | 'organisations' | 'stores' | 'users' | 'api-keys'
   | 'z-reports' | 'audit-log' | 'licenses' | 'catalogue' | 'registers'
-  | 'customers' | 'stock' | 'ai-insights' | 'price-overrides' | 'discount-rules' | 'compare' | 'store-settings' | 'import-export'
+  | 'customers' | 'customer-detail' | 'stock' | 'ai-insights' | 'price-overrides' | 'discount-rules' | 'compare' | 'store-settings' | 'import-export'
   | 'my-account' | 'pos-launcher' | 'btw-submissions' | 'btw-submission-detail' | 'tax-dashboard' | 'pending-payments'
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -173,6 +174,9 @@ export default function DashboardLayout() {
   // Task #82 — BTW submission detail navigation. The list screen calls
   // openSubmissionDetail(id) which routes to the detail screen.
   const [selectedSubmissionId, setSelectedSubmissionId] = useState<string | null>(null)
+  // Customer detail navigation — Customers list row click → detail screen
+  // (purchase history + statement export). Same pattern as BTW detail.
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null)
   // Pre-applied filter when the user click-throughs from Tax Inspector
   // Dashboard's tiles into the list ("pending review" → status=filed).
   const [btwListInitialFilter, setBtwListInitialFilter] = useState<{ status?: 'filed' | 'disputed'; organisation_id?: string } | undefined>(undefined)
@@ -218,6 +222,11 @@ export default function DashboardLayout() {
   function openSubmissionDetail(id: string) {
     setSelectedSubmissionId(id)
     setScreen('btw-submission-detail')
+  }
+  // Open the customer detail screen (purchase history + statement export).
+  function openCustomerDetail(id: string) {
+    setSelectedCustomerId(id)
+    setScreen('customer-detail')
   }
   // Task #82 — landing-screen tile click jumps to the list with a filter pre-set.
   function openBtwListWithFilter(f?: { status?: 'filed' | 'disputed'; organisation_id?: string }) {
@@ -395,6 +404,8 @@ export default function DashboardLayout() {
   }
   const currentLabel = screen === 'store'
     ? (isNl ? 'Winkeldetails' : 'Store Details')
+    : screen === 'customer-detail'
+    ? (isNl ? 'Klantdetails' : 'Customer Details')
     : (nav.find(n => n.id === screen)?.[isNl ? 'nl' : 'en'] ?? '')
 
   // Chrome palette is role-aware: the Belastingdienst (tax_inspector) gets an
@@ -610,6 +621,7 @@ export default function DashboardLayout() {
             <HelpButton topic={
               screen === 'btw-submission-detail' ? 'btw-submissions'
               : screen === 'store' ? 'overview'
+              : screen === 'customer-detail' ? 'customers'
               : screen
             } />
             {/* Live dot */}
@@ -651,7 +663,13 @@ export default function DashboardLayout() {
             {screen === 'licenses'      && <LicenseScreen />}
             {screen === 'catalogue'     && <CatalogueScreen />}
             {screen === 'registers'     && <RegistersScreen />}
-            {screen === 'customers'     && <CustomersScreen />}
+            {screen === 'customers'     && <CustomersScreen onOpenDetail={openCustomerDetail} />}
+            {screen === 'customer-detail' && selectedCustomerId && (
+              <CustomerDetailScreen
+                customerId={selectedCustomerId}
+                onBack={() => { setScreen('customers'); setSelectedCustomerId(null) }}
+              />
+            )}
             {screen === 'stock'         && <StockScreen initialActiveTab={stockInitialTab} />}
             {screen === 'ai-insights'   && <AiInsightsScreen />}
             {screen === 'price-overrides' && <PriceOverridesScreen />}

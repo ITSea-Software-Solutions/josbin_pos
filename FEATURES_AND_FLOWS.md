@@ -61,6 +61,8 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | USER-08 | My Account — Performance + Shifts tabs (ring-up roles only) | ✅ | Cashier + Store Manager only | `MeController::salesSummary/shifts` + `MyAccountScreen` role gate | `dashboard_manual/18` (gated since G-015) |
 | USER-09 | My Account — Activity log (own logins, own audit trail) | ✅ | All roles | `MeController::activity` + `ActivityTab` in `MyAccountScreen` | task #72 |
 | USER-10 | My Account — Active sessions + revoke (with audit log) | ✅ | All roles | `MeController::sessions/revokeSession` + `SessionsTab` | task #72 |
+| CUST-01 | Customer detail view — profile + aggregates (spend / visits / last visit) + paginated purchase history with refund flags | ✅ | Roles with customer access (not tax inspector) | `CustomerController::history` + `CustomerDetailScreen.tsx` | `dashboard_manual/09 §9.8a` |
+| CUST-02 | Customer statement export — date range (default 90 d), PDF + CSV, netted totals (gross / refunds / BTW / net); PII reads audited (`customer.accessed`, `customer.statement_exported`) | ✅ | Same as CUST-01 | `CustomerController::statement` + `reports/customer_statement.blade.php` | `dashboard_manual/09 §9.8a` |
 
 ### 1.2b BTW filings to Belastingdienst Suriname (new)
 
@@ -301,6 +303,7 @@ These don't belong to one area — they're systemic.
 | Electron code signing (Windows) | 🔲 | Phase 4. |
 | OWASP Top 10 audit | 🔲 | Phase 4 — written report due before go-live. |
 | WBP-S compliance certification | 🔲 | Phase 4 — written documentation due. |
+| Report-endpoint caching (`app/Support/ReportCache.php`) — scope-keyed (platform / org / org+store) `Cache::remember` on 12 heavy GET endpoints; 60 s today-windows, 15 min closed ranges; keys hash ksorted params; locale omitted (payloads are pure data — PDFs uncached) | ✅ | `ReportController` + `DashboardController` + `ReportCacheTest` (7) |
 
 ---
 
@@ -654,6 +657,8 @@ Anything 🟡 in the inventory above is a candidate for a future task — explic
 ---
 
 ## §11 Changelog — every edit, dated
+
+- **2026-07-19 (pending-list clearance)** — Every developer-completable row on PENDING closed in one batch. **(1) EULA working draft** (`legal/eula-draft-nl.md` + EN, internal portal): licensed-not-sold, fingerprint binding + 72 h grace + the exact soft/hard-lock ladder the code enforces, customer-owns-data + 90-day export, WBP-S hook, audit clause — lawyer review is the remaining gate. **(2) Customer detail view + statement** (CUST-01/02): dashboard detail screen (profile, aggregates, paginated history with refund flags) + PDF/CSV statement with netted totals; org-scoped 404s, PII reads audited; 9 tests. **(3) Report caching**: 12 heavy GET report/dashboard endpoints behind `ReportCache` (scope-keyed platform/org/store — bleed impossible, proven by two-org tests; 60 s today / 15 min closed ranges; refund `occurred_at` verified never backdated; X-report timestamp stamped outside the cache); 7 tests incl. time-travel TTL. **(4) June-audit D-items closed** (task #127): D1 — `Sale::nextNumber()` now throws outside a transaction (advisory xact lock was silently scopeless; per-store unique index + per-store counting already existed; all callers verified transactional); D3 — refund legs carry prorated line + sale-level discounts negatively (money was already right, reports now net to the cent: −5.00 item / −3.00 header share proven); D5 — SRD + % sale discounts combine additively (legacy "SRD wins" test updated — it enshrined the bug). Full backend suite after merge: **323 passed / 1096 assertions**. Manuals: dashboard ch 9 §9.8a (EN+NL).
 
 - **2026-07-19 (offline chapter + sync truth-fix)** — `docs/07-sync-and-offline.md` was still a 🚧 stub; now the full install-to-daily-life offline story (EN+NL): what's installed where and why tills never need internet, the sale-commits-locally-first guarantee, the two deployment shapes (single-site = one DB, nothing to sync; multi-site cloud = the 5-layer ladder), per-layer step-by-step with HONEST availability (L3 submit + L4 USB ✓ today; L1/2/5 roadmap for the first cloud multi-store rollout), outage-hour-by-hour (rate stays locked, 72 h licence grace, e-mail queues), 4G-dongle guidance, where-to-see-sync-state table, FAQ. While writing it, §1.7's SYNC-01/02/05 rows were found marked ✅ against the code and the canonical verification doc — corrected to 🟡 with truthful notes (the old rows cited `DispatchWebhook`, which is the Layer-3 API webhook, not store→cloud sync). dashboard_manual ch 11 §11.6 already had the honest table and needed no change.
 

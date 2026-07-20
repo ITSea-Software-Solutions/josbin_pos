@@ -256,6 +256,32 @@ Dit is grotendeels onzichtbaar voor back-office-gebruikers — de enige reden om
 
 ---
 
+## 9.8a Klantdetailweergave — aankoopgeschiedenis & overzicht
+
+Klik op een klantregel (of de knop **Details**) om de detailpagina van de
+klant te openen:
+
+- **Profielblok** — de contactgegevens, plus de lopende totalen:
+  totale besteding (SRD), aantal bezoeken en de datum van het laatste
+  bezoek.
+- **Aankoopgeschiedenis** — elke verkoop op naam van deze klant, nieuwste
+  eerst, gepagineerd: bonnummer, datum, vestiging, betaalmethode, totaal en
+  BTW. Retourregels verschijnen als negatieve regels met de markering
+  *retour*; geannuleerde verkopen tonen hun status.
+- **Overzicht downloaden** — kies een periode (standaard: de laatste 90
+  dagen) en exporteer een formeel overzicht als **PDF** (briefhoofd-stijl,
+  tweetalig volgens uw taalinstelling) of **CSV**. De voettekst maakt de
+  balans op: bruto verkopen, retouren, BTW en het nettobedrag. Handig voor
+  zakelijke klanten die vragen "wat heb ik dit kwartaal bij u gekocht?" en
+  bij gesprekken over een openstaand saldo.
+
+Toegang volgt dezelfde regel als de rest van dit scherm
+(klant-inzagerecht); een belastinginspecteur kan het niet openen. Het
+openen van een detailweergave of het exporteren van een overzicht wordt
+zelf vastgelegd in het auditlogboek (`customer.accessed`,
+`customer.statement_exported`) — de WBP-S verwacht dat het inzien van
+persoonsgegevens een spoor achterlaat, en dat doet het.
+
 ## 9.9 Wat in het auditlogboek wordt vastgelegd
 
 Elke actie op een klant maakt een entry in het auditlogboek (Hoofdstuk 13):

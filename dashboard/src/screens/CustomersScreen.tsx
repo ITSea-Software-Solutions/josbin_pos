@@ -56,7 +56,12 @@ function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: bool
   )
 }
 
-export default function CustomersScreen() {
+interface Props {
+  /** Row click → customer detail screen (purchase history + statement export). */
+  onOpenDetail?: (customerId: string) => void
+}
+
+export default function CustomersScreen({ onOpenDetail }: Props) {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const qc = useQueryClient()
@@ -175,7 +180,9 @@ export default function CustomersScreen() {
               </td></tr>
             ) : sorted.map((c, i) => (
               <tr key={c.id}
-                style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .1s' }}
+                style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .1s', cursor: onOpenDetail ? 'pointer' : 'default' }}
+                onClick={() => onOpenDetail?.(c.id)}
+                title={onOpenDetail ? (isNl ? 'Klik voor aankoophistorie en overzicht' : 'Click for purchase history and statement') : undefined}
                 onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
                 onMouseLeave={e => (e.currentTarget.style.background = '')}
               >
@@ -202,15 +209,23 @@ export default function CustomersScreen() {
                 </td>
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', gap: 6 }}>
+                    {onOpenDetail && (
+                      <button
+                        onClick={e => { e.stopPropagation(); onOpenDetail(c.id) }}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #c7cdea', background: '#f4f6fc', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#293371' }}
+                      >
+                        {isNl ? 'Details' : 'Details'}
+                      </button>
+                    )}
                     <button
-                      onClick={() => setEditCustomer(c)}
+                      onClick={e => { e.stopPropagation(); setEditCustomer(c) }}
                       style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#f9f9f9', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#374151' }}
                     >
                       {isNl ? 'Bewerken' : 'Edit'}
                     </button>
                     {canRedact && (
                       <button
-                        onClick={() => setRedactTarget(c)}
+                        onClick={e => { e.stopPropagation(); setRedactTarget(c) }}
                         title={isNl ? 'Persoonsgegevens wissen (WBP-S)' : 'Erase personal data (WBP-S)'}
                         style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #fecaca', background: '#fef2f2', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#dc2626' }}
                       >

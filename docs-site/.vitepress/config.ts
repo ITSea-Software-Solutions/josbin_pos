@@ -272,6 +272,7 @@ export default defineConfig({
     'FIELD_RUNBOOK.md',
     'OPS_CHEATSHEET.md',
     'PARTNER_OUTREACH.md',
+    'legal/**',
     'AUDIT_FINDINGS*.md',
     '.claude/**',
     'Phase1&2 Tickets/**',

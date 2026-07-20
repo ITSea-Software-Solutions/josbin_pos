@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\ZReport;
 use App\Support\AstDates;
+use App\Support\ReportCache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,8 +30,18 @@ class ReportController extends Controller
             'date'     => ['nullable', 'date_format:Y-m-d'],
         ]);
 
-        $date = $request->input('date', today()->toDateString());
-        return response()->json(['data' => $this->buildDailySummary($request->input('store_id'), $date)]);
+        $date    = $request->input('date', today()->toDateString());
+        $storeId = $request->input('store_id');
+
+        // Cached (PERF): 60 s for today, 15 min for past days. The key is
+        // shared with xReport() — identical underlying aggregation.
+        $data = ReportCache::remember(
+            $request->user(), 'reports.daily',
+            ['store_id' => $storeId, 'date' => $date], $date,
+            fn () => $this->buildDailySummary($storeId, $date),
+        );
+
+        return response()->json(['data' => $data]);
     }
 
     // ─── Monthly Report ───────────────────────────────────────────────────
@@ -51,8 +62,21 @@ class ReportController extends Controller
         $to   = Carbon::create($request->integer('year'), $request->integer('month'), 1)
             ->endOfMonth()->toDateString();
 
-        $data = $this->buildRangeSummary($request->input('store_id'), $from, $to);
-        $data['period'] = $request->integer('year') . '-' . str_pad($request->integer('month'), 2, '0', STR_PAD_LEFT);
+        $storeId = $request->input('store_id');
+        $period  = $request->integer('year') . '-' . str_pad($request->integer('month'), 2, '0', STR_PAD_LEFT);
+
+        // Cached (PERF): a past month never touches today → 15 min TTL; the
+        // current month ends on/after today → 60 s TTL.
+        $data = ReportCache::remember(
+            $request->user(), 'reports.monthly',
+            ['store_id' => $storeId, 'from' => $from, 'to' => $to], $to,
+            function () use ($storeId, $from, $to, $period) {
+                $data = $this->buildRangeSummary($storeId, $from, $to);
+                $data['period'] = $period;
+
+                return $data;
+            },
+        );
 
         return response()->json(['data' => $data]);
     }
@@ -70,9 +94,18 @@ class ReportController extends Controller
             'date_to'   => ['required', 'date_format:Y-m-d', 'after_or_equal:date_from'],
         ]);
 
-        return response()->json(['data' =>
-            $this->buildRangeSummary($request->input('store_id'), $request->input('date_from'), $request->input('date_to'))
-        ]);
+        $storeId = $request->input('store_id');
+        $from    = $request->input('date_from');
+        $to      = $request->input('date_to');
+
+        // Cached (PERF): 60 s when the range includes today, 15 min when past.
+        $data = ReportCache::remember(
+            $request->user(), 'reports.custom',
+            ['store_id' => $storeId, 'from' => $from, 'to' => $to], $to,
+            fn () => $this->buildRangeSummary($storeId, $from, $to),
+        );
+
+        return response()->json(['data' => $data]);
     }
 
     // ─── Top Products ─────────────────────────────────────────────────────
@@ -94,22 +127,28 @@ class ReportController extends Controller
         $dateFrom = $request->input('date_from', today()->startOfMonth()->toDateString());
         $dateTo   = $request->input('date_to', today()->toDateString());
 
-        $products = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->where('sales.store_id', $storeId)
-            ->where('sales.status', 'completed')
-            ->where('sales.occurred_at', '>=', AstDates::dayStart($dateFrom))
-            ->where('sales.occurred_at', '<', AstDates::dayAfter($dateTo))
-            ->groupBy('sale_items.product_name_snapshot')
-            ->select([
-                'sale_items.product_name_snapshot as product_name',
-                DB::raw('SUM(sale_items.quantity) as total_qty'),
-                DB::raw('SUM(sale_items.line_total_srd) as total_revenue'),
-                DB::raw('COUNT(DISTINCT sales.id) as sale_count'),
-            ])
-            ->orderByDesc('total_revenue')
-            ->limit($limit)
-            ->get();
+        // Cached (PERF) — keyed on the RESOLVED defaults so "no params" and
+        // an explicit month-to-date request share one entry.
+        $products = ReportCache::remember(
+            $request->user(), 'reports.top-products',
+            ['store_id' => $storeId, 'from' => $dateFrom, 'to' => $dateTo, 'limit' => $limit], $dateTo,
+            fn () => DB::table('sale_items')
+                ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->where('sales.store_id', $storeId)
+                ->where('sales.status', 'completed')
+                ->where('sales.occurred_at', '>=', AstDates::dayStart($dateFrom))
+                ->where('sales.occurred_at', '<', AstDates::dayAfter($dateTo))
+                ->groupBy('sale_items.product_name_snapshot')
+                ->select([
+                    'sale_items.product_name_snapshot as product_name',
+                    DB::raw('SUM(sale_items.quantity) as total_qty'),
+                    DB::raw('SUM(sale_items.line_total_srd) as total_revenue'),
+                    DB::raw('COUNT(DISTINCT sales.id) as sale_count'),
+                ])
+                ->orderByDesc('total_revenue')
+                ->limit($limit)
+                ->get(),
+        );
 
         return response()->json([
             'store_id'   => $storeId,
@@ -130,7 +169,16 @@ class ReportController extends Controller
 
         $storeId = $request->input('store_id');
         $today   = today()->toDateString();
-        $summary = $this->buildDailySummary($storeId, $today);
+
+        // Same aggregation as the daily report — deliberately SHARES the
+        // "reports.daily" cache entry (60 s TTL). generated_at is stamped
+        // per-request below, outside the cache, so the printed snapshot
+        // timestamp stays honest.
+        $summary = ReportCache::remember(
+            $request->user(), 'reports.daily',
+            ['store_id' => $storeId, 'date' => $today], $today,
+            fn () => $this->buildDailySummary($storeId, $today),
+        );
         $summary['type'] = 'X-Report';
         $summary['generated_at'] = now()->setTimezone('America/Paramaribo')->toIso8601String();
         $summary['note'] = 'Dit is een tussentijds overzicht. De kassalade is NIET afgesloten.';
@@ -266,34 +314,42 @@ class ReportController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo   = $request->input('date_to');
 
-        $breakdown = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->where('sales.store_id', $storeId)
-            ->where('sales.status', 'completed')
-            ->where('sales.occurred_at', '>=', AstDates::dayStart($dateFrom))
-            ->where('sales.occurred_at', '<', AstDates::dayAfter($dateTo))
-            ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
-            ->select([
-                'sale_items.btw_rate',
-                'sale_items.btw_exempt',
-                DB::raw('SUM(sale_items.line_total_srd) as gross_incl_btw'),
-                DB::raw('SUM(sale_items.btw_srd) as btw_amount'),
-                DB::raw('SUM(sale_items.line_total_srd) - SUM(sale_items.btw_srd) as net_excl_btw'),
-            ])
-            ->orderBy('sale_items.btw_exempt')
-            ->orderBy('sale_items.btw_rate')
-            ->get();
+        // Cached (PERF): BTW filings are usually run over closed past periods
+        // → 15 min TTL; a range touching today falls back to 60 s.
+        $payload = ReportCache::remember(
+            $request->user(), 'reports.btw',
+            ['store_id' => $storeId, 'from' => $dateFrom, 'to' => $dateTo], $dateTo,
+            function () use ($storeId, $dateFrom, $dateTo) {
+                $breakdown = DB::table('sale_items')
+                    ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                    ->where('sales.store_id', $storeId)
+                    ->where('sales.status', 'completed')
+                    ->where('sales.occurred_at', '>=', AstDates::dayStart($dateFrom))
+                    ->where('sales.occurred_at', '<', AstDates::dayAfter($dateTo))
+                    ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
+                    ->select([
+                        'sale_items.btw_rate',
+                        'sale_items.btw_exempt',
+                        DB::raw('SUM(sale_items.line_total_srd) as gross_incl_btw'),
+                        DB::raw('SUM(sale_items.btw_srd) as btw_amount'),
+                        DB::raw('SUM(sale_items.line_total_srd) - SUM(sale_items.btw_srd) as net_excl_btw'),
+                    ])
+                    ->orderBy('sale_items.btw_exempt')
+                    ->orderBy('sale_items.btw_rate')
+                    ->get();
 
-        $totalBtw = $breakdown->sum('btw_amount');
+                return [
+                    'store_id'    => $storeId,
+                    'date_from'   => $dateFrom,
+                    'date_to'     => $dateTo,
+                    'breakdown'   => $breakdown,
+                    'total_btw'   => number_format($breakdown->sum('btw_amount'), 2, '.', ''),
+                    'format'      => 'Belastingdienst Suriname',
+                ];
+            },
+        );
 
-        return response()->json([
-            'store_id'    => $storeId,
-            'date_from'   => $dateFrom,
-            'date_to'     => $dateTo,
-            'breakdown'   => $breakdown,
-            'total_btw'   => number_format($totalBtw, 2, '.', ''),
-            'format'      => 'Belastingdienst Suriname',
-        ]);
+        return response()->json($payload);
     }
 
     // ─── PDF export ───────────────────────────────────────────────────────
@@ -514,6 +570,24 @@ class ReportController extends Controller
         $dateTo   = $data['date_to'];
         $storeId  = $data['store_id'] ?? null;
 
+        // Cached (PERF) — five aggregation queries over sale_items. The key's
+        // visibility scope already separates SA (platform-wide) from org
+        // callers, so the $isSuper/$orgId branch below can never leak across
+        // tenants. `date` validation accepts more than Y-m-d, so normalise
+        // the TTL date. 60 s when the range touches today, 15 min when past.
+        $payload = ReportCache::remember(
+            $request->user(), 'reports.profit',
+            ['store_id' => $storeId ?? 'all', 'from' => $dateFrom, 'to' => $dateTo],
+            Carbon::parse($dateTo)->toDateString(),
+            fn () => $this->buildProfitData($orgId, $isSuper, $dateFrom, $dateTo, $storeId),
+        );
+
+        return response()->json(['data' => $payload]);
+    }
+
+    /** Heavy lifting for profit() — extracted so the cache wrapper stays readable. */
+    private function buildProfitData(?string $orgId, bool $isSuper, string $dateFrom, string $dateTo, ?string $storeId): array
+    {
         // Base query — completed sales in this org (SA bypass), date range,
         // optional single-store filter. Joined to sale_items for line-level
         // profit roll-up.
@@ -637,22 +711,20 @@ class ReportController extends Controller
                 'profit_srd'  => number_format((float) $r->profit,  2, '.', ''),
             ]);
 
-        return response()->json([
-            'data' => [
-                'date_from'          => $dateFrom,
-                'date_to'            => $dateTo,
-                'store_id'           => $storeId,
-                'revenue_srd'        => number_format((float) ($totals?->revenue ?? 0), 2, '.', ''),
-                'cost_srd'           => number_format((float) ($totals?->cost    ?? 0), 2, '.', ''),
-                'profit_srd'         => number_format((float) ($totals?->profit  ?? 0), 2, '.', ''),
-                'margin_pct'         => $marginPct,
-                'transactions'       => (int) ($totals?->transactions ?? 0),
-                'items_without_cost' => (int) ($totals?->items_without_cost ?? 0),
-                'per_store'          => $perStore,
-                'top_products_by_profit' => $topByProfit,
-                'daily'              => $daily,
-                'loss_makers'        => $lossMakers,
-            ],
-        ]);
+        return [
+            'date_from'          => $dateFrom,
+            'date_to'            => $dateTo,
+            'store_id'           => $storeId,
+            'revenue_srd'        => number_format((float) ($totals?->revenue ?? 0), 2, '.', ''),
+            'cost_srd'           => number_format((float) ($totals?->cost    ?? 0), 2, '.', ''),
+            'profit_srd'         => number_format((float) ($totals?->profit  ?? 0), 2, '.', ''),
+            'margin_pct'         => $marginPct,
+            'transactions'       => (int) ($totals?->transactions ?? 0),
+            'items_without_cost' => (int) ($totals?->items_without_cost ?? 0),
+            'per_store'          => $perStore,
+            'top_products_by_profit' => $topByProfit,
+            'daily'              => $daily,
+            'loss_makers'        => $lossMakers,
+        ];
     }
 }

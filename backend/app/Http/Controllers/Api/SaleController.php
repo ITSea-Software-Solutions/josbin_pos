@@ -628,6 +628,12 @@ class SaleController extends Controller
                 $qtyRatio    = bcdiv((string) $refundItem['quantity'], (string) $original->quantity, 6);
                 $lineTotal   = bcmul((string) $original->line_total_srd, $qtyRatio, 2);
                 $btwAmount   = bcmul((string) $original->btw_srd, $qtyRatio, 2);
+                // P1-D3: carry the original line's discount onto the refund
+                // leg, prorated by refunded quantity. line_total_srd is
+                // already NET of every discount (the money is right); the
+                // discount COLUMN must mirror it negatively or discount/BTW
+                // reports double-count the original discount after a refund.
+                $discAmount  = bcmul((string) $original->discount_srd, $qtyRatio, 2);
                 $refundTotal = bcadd($refundTotal, $lineTotal, 2);
                 $refundBtw   = bcadd($refundBtw, $btwAmount, 2);
 
@@ -642,7 +648,7 @@ class SaleController extends Controller
                     'product_name_snapshot' => $original->product_name_snapshot,
                     'unit_price_srd'        => (string) $original->unit_price_srd,
                     'quantity'              => '-' . $refundItem['quantity'],
-                    'discount_srd'          => '0.00',
+                    'discount_srd'          => bccomp($discAmount, '0', 2) > 0 ? '-' . $discAmount : '0.00',
                     'discount_pct'          => '0.00',
                     'btw_rate'              => (string) $original->btw_rate,
                     'btw_exempt'            => $original->btw_exempt,
@@ -651,13 +657,29 @@ class SaleController extends Controller
                 ];
             }
 
+            // P1-D3 (header side): mirror the original's sale-level discount
+            // onto the refund header, prorated by the refunded share of the
+            // net total. line_total_srd is net of everything, so the money
+            // (total_srd) is already right — this split only keeps
+            // header-level report sums (Σ subtotal, Σ discount) netting to
+            // the truth after refunds. Identity subtotal − discount = total
+            // holds on the refund row by construction.
+            $saleShare = '0.00';
+            if (bccomp((string) $sale->discount_srd, '0', 2) > 0 && bccomp((string) $sale->total_srd, '0', 2) > 0) {
+                $saleShare = bcmul(
+                    (string) $sale->discount_srd,
+                    bcdiv($refundTotal, (string) $sale->total_srd, 6),
+                    2
+                );
+            }
+
             $refundSale = Sale::create([
                 'store_id'           => $sale->store_id,
                 'cashier_id'         => $request->user()->id,
                 'customer_id'        => $sale->customer_id,
                 'sale_number'        => Sale::nextNumber($sale->store_id),
-                'subtotal_srd'       => '-' . $refundTotal,
-                'discount_srd'       => '0.00',
+                'subtotal_srd'       => '-' . bcadd($refundTotal, $saleShare, 2),
+                'discount_srd'       => bccomp($saleShare, '0', 2) > 0 ? '-' . $saleShare : '0.00',
                 'btw_srd'            => '-' . $refundBtw,
                 'total_srd'          => '-' . $refundTotal,
                 'payment_method'     => $sale->payment_method,

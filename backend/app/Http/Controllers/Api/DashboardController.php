@@ -8,6 +8,7 @@ use App\Models\Sale;
 use App\Models\Store;
 use App\Models\ZReport;
 use App\Support\AstDates;
+use App\Support\ReportCache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,14 +30,28 @@ class DashboardController extends Controller
         $user = $request->user();
         $isSuperAdmin = $user->role === 'super_admin';
 
+        $today = now()->timezone('America/Paramaribo')->toDateString();
+
+        // Cached (PERF): today-anchored → 60 s TTL, matching the dashboard's
+        // poll cadence. The caller scope in the key keeps the SA platform view
+        // and each org admin's org view in separate entries.
+        $payload = ReportCache::remember(
+            $user, 'dashboard.summary', ['date' => $today], $today,
+            fn () => $this->buildSummaryData($user, $isSuperAdmin, $today),
+        );
+
+        return response()->json(['data' => $payload]);
+    }
+
+    /** Heavy lifting for summary() — extracted so the cache wrapper stays readable. */
+    private function buildSummaryData(\App\Models\User $user, bool $isSuperAdmin, string $today): array
+    {
         $orgQuery = Organisation::query()->where('is_active', true);
         if (! $isSuperAdmin) {
             $orgQuery->where('id', $user->organisation_id);
         }
 
         $orgs = $orgQuery->with('stores')->get();
-
-        $today = now()->timezone('America/Paramaribo')->toDateString();
 
         // Aggregate today's sales per store using a single efficient query
         $storeTodaySales = Sale::query()
@@ -118,17 +133,15 @@ class DashboardController extends Controller
         $totalOnline  = $orgData->sum(fn ($o) => $o['online_stores']);
         $totalStores  = $orgData->sum(fn ($o) => $o['store_count']);
 
-        return response()->json([
-            'data' => [
-                'total_organisations'  => $orgData->count(),
-                'total_stores'         => $totalStores,
-                'online_stores'        => $totalOnline,
-                'today_revenue_srd'    => number_format($totalRevenue, 2, '.', ''),
-                'today_transactions'   => $totalTrans,
-                'today_btw_srd'        => number_format($totalBtw, 2, '.', ''),
-                'orgs'                 => $orgData->values(),
-            ],
-        ]);
+        return [
+            'total_organisations'  => $orgData->count(),
+            'total_stores'         => $totalStores,
+            'online_stores'        => $totalOnline,
+            'today_revenue_srd'    => number_format($totalRevenue, 2, '.', ''),
+            'today_transactions'   => $totalTrans,
+            'today_btw_srd'        => number_format($totalBtw, 2, '.', ''),
+            'orgs'                 => $orgData->values(),
+        ];
     }
 
     /**
@@ -154,6 +167,23 @@ class DashboardController extends Controller
         $orgId   = $request->input('org_id');
         $storeId = $request->input('store_id');
 
+        // Cached (PERF): the heaviest dashboard query — three aggregations
+        // across every in-scope store. 60 s when the range touches today,
+        // 15 min for past ranges. Key scope = caller's visibility, so an SA's
+        // platform-wide payload can never be served to an org admin with the
+        // same query string (store resolution happens inside the closure).
+        $payload = ReportCache::remember(
+            $user, 'dashboard.consolidated',
+            ['from' => $from, 'to' => $to, 'org_id' => $orgId ?? 'all', 'store_id' => $storeId ?? 'all'], $to,
+            fn () => $this->buildConsolidatedData($user, $from, $to, $orgId, $storeId),
+        );
+
+        return response()->json($payload);
+    }
+
+    /** Heavy lifting for consolidatedReport() — extracted for the cache wrapper. */
+    private function buildConsolidatedData(\App\Models\User $user, string $from, string $to, ?string $orgId, ?string $storeId): array
+    {
         // Resolve which store IDs to aggregate
         if ($user->isSuperAdmin()) {
             $orgQuery = Organisation::query()->where('is_active', true);
@@ -236,7 +266,7 @@ class DashboardController extends Controller
             ->limit(10)
             ->get();
 
-        return response()->json([
+        return [
             'date_from'         => $from,
             'date_to'           => $to,
             'transaction_count' => (int) ($totals->transaction_count ?? 0),
@@ -255,7 +285,7 @@ class DashboardController extends Controller
             ],
             'per_store'         => $perStore->values(),
             'top_products'      => $topProducts,
-        ]);
+        ];
     }
 
     /**
@@ -280,51 +310,59 @@ class DashboardController extends Controller
         $orgId   = $request->input('org_id');
         $storeId = $request->input('store_id');
 
-        if ($user->isSuperAdmin()) {
-            $orgQuery = Organisation::query()->where('is_active', true);
-            if ($orgId) $orgQuery->where('id', $orgId);
-            $storeIds = $orgQuery->with('stores:id,organisation_id')->get()
-                ->flatMap(fn ($o) => $o->stores->pluck('id'));
-        } else {
-            $storeIds = Store::where('organisation_id', $user->organisation_id)
-                ->where('is_active', true)
-                ->pluck('id');
-        }
+        // Cached (PERF): BTW consolidation is normally run for closed past
+        // periods → 15 min TTL; ranges touching today get 60 s. Caller scope
+        // in the key prevents SA/org-admin payload sharing.
+        $payload = ReportCache::remember(
+            $user, 'dashboard.btw',
+            ['from' => $from, 'to' => $to, 'org_id' => $orgId ?? 'all', 'store_id' => $storeId ?? 'all'], $to,
+            function () use ($user, $from, $to, $orgId, $storeId) {
+                if ($user->isSuperAdmin()) {
+                    $orgQuery = Organisation::query()->where('is_active', true);
+                    if ($orgId) $orgQuery->where('id', $orgId);
+                    $storeIds = $orgQuery->with('stores:id,organisation_id')->get()
+                        ->flatMap(fn ($o) => $o->stores->pluck('id'));
+                } else {
+                    $storeIds = Store::where('organisation_id', $user->organisation_id)
+                        ->where('is_active', true)
+                        ->pluck('id');
+                }
 
-        if ($storeId && $storeIds->contains($storeId)) {
-            $storeIds = collect([$storeId]);
-        }
+                if ($storeId && $storeIds->contains($storeId)) {
+                    $storeIds = collect([$storeId]);
+                }
 
-        $breakdown = DB::table('sale_items')
-            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
-            ->whereIn('sales.store_id', $storeIds)
-            ->where('sales.status', 'completed')
-            ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
-            ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
-            ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
-            ->select([
-                'sale_items.btw_rate',
-                'sale_items.btw_exempt',
-                DB::raw('SUM(sale_items.line_total_srd) as gross_incl_btw'),
-                DB::raw('SUM(sale_items.btw_srd) as btw_amount'),
-                DB::raw('SUM(sale_items.line_total_srd) - SUM(sale_items.btw_srd) as net_excl_btw'),
-                DB::raw('COUNT(DISTINCT sales.id) as sale_count'),
-            ])
-            ->orderBy('sale_items.btw_exempt')
-            ->orderBy('sale_items.btw_rate')
-            ->get();
+                $breakdown = DB::table('sale_items')
+                    ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                    ->whereIn('sales.store_id', $storeIds)
+                    ->where('sales.status', 'completed')
+                    ->where('sales.occurred_at', '>=', AstDates::dayStart($from))
+                    ->where('sales.occurred_at', '<', AstDates::dayAfter($to))
+                    ->groupBy('sale_items.btw_rate', 'sale_items.btw_exempt')
+                    ->select([
+                        'sale_items.btw_rate',
+                        'sale_items.btw_exempt',
+                        DB::raw('SUM(sale_items.line_total_srd) as gross_incl_btw'),
+                        DB::raw('SUM(sale_items.btw_srd) as btw_amount'),
+                        DB::raw('SUM(sale_items.line_total_srd) - SUM(sale_items.btw_srd) as net_excl_btw'),
+                        DB::raw('COUNT(DISTINCT sales.id) as sale_count'),
+                    ])
+                    ->orderBy('sale_items.btw_exempt')
+                    ->orderBy('sale_items.btw_rate')
+                    ->get();
 
-        $totalBtw   = $breakdown->sum('btw_amount');
-        $totalGross = $breakdown->sum('gross_incl_btw');
+                return [
+                    'date_from'    => $from,
+                    'date_to'      => $to,
+                    'breakdown'    => $breakdown,
+                    'total_btw'    => number_format($breakdown->sum('btw_amount'), 2, '.', ''),
+                    'total_gross'  => number_format($breakdown->sum('gross_incl_btw'), 2, '.', ''),
+                    'format'       => 'Belastingdienst Suriname',
+                ];
+            },
+        );
 
-        return response()->json([
-            'date_from'    => $from,
-            'date_to'      => $to,
-            'breakdown'    => $breakdown,
-            'total_btw'    => number_format($totalBtw, 2, '.', ''),
-            'total_gross'  => number_format($totalGross, 2, '.', ''),
-            'format'       => 'Belastingdienst Suriname',
-        ]);
+        return response()->json($payload);
     }
 
     /**
@@ -399,6 +437,22 @@ class DashboardController extends Controller
         $yesterday = now()->timezone($tz)->subDay()->toDateString();
         $sevenAgo  = now()->timezone($tz)->subDays(6)->toDateString();
 
+        // Cached (PERF): ~12 queries per render, polled every 60 s per store
+        // card the dashboard has open — the 60 s TTL matches that cadence, so
+        // N concurrent viewers cost one render per store per minute. Reverb
+        // broadcasts still live-increment the tiles between refreshes.
+        $payload = ReportCache::remember(
+            $user, 'dashboard.store-detail',
+            ['store_id' => $store->id, 'date' => $today], $today,
+            fn () => $this->buildStoreDetailData($store, $today, $yesterday, $sevenAgo, $tz),
+        );
+
+        return response()->json(['data' => $payload]);
+    }
+
+    /** Heavy lifting for storeDetail() — extracted so the cache wrapper stays readable. */
+    private function buildStoreDetailData(Store $store, string $today, string $yesterday, string $sevenAgo, string $tz): array
+    {
         // ─── Today + yesterday KPIs (delta % computed below) ────────────────
         $kpiToday     = $this->storeKpis($store->id, $today, $today);
         $kpiYesterday = $this->storeKpis($store->id, $yesterday, $yesterday);
@@ -520,8 +574,7 @@ class DashboardController extends Controller
 
         $registerCount = (int) DB::table('registers')->where('store_id', $store->id)->where('is_active', true)->count();
 
-        return response()->json([
-            'data' => [
+        return [
                 // ── Identity + metadata ─────────────────────────────────────
                 'store_id'                => $store->id,
                 'store_name'              => $store->name,
@@ -564,8 +617,7 @@ class DashboardController extends Controller
                 'sync_status'             => $latestZReport?->sync_status ?? 'never',
                 'last_z_report_date'      => $latestZReport?->report_date?->toDateString(),
                 'last_sync_at'            => $latestZReport?->synced_at?->toIso8601String(),
-            ],
-        ]);
+        ];
     }
 
     /** Aggregate revenue/count/btw/avg-basket for a store over a date range. */
@@ -815,6 +867,22 @@ class DashboardController extends Controller
         $tz = config('josbin_pos.timezone', 'America/Paramaribo');
         $now = \Illuminate\Support\Carbon::now($tz);
 
+        // Cached (PERF): today-anchored vendor pulse → 60 s TTL. SA-only
+        // (checked above), scope "platform". generated_at inside the payload
+        // is the computation time — under caching it honestly reports the
+        // age of the numbers.
+        $payload = ReportCache::remember(
+            $user, 'dashboard.platform-overview',
+            ['date' => $now->toDateString()], $now->toDateString(),
+            fn () => $this->buildPlatformOverviewData($now, $tz),
+        );
+
+        return response()->json(['data' => $payload]);
+    }
+
+    /** Heavy lifting for platformOverview() — extracted for the cache wrapper. */
+    private function buildPlatformOverviewData(\Illuminate\Support\Carbon $now, string $tz): array
+    {
         // ── Org licence health buckets ───────────────────────────────────────
         $orgs = \App\Models\Organisation::query()
             ->select(['id', 'name', 'is_active'])
@@ -892,31 +960,29 @@ class DashboardController extends Controller
             ->limit(10)
             ->get(['id', 'event', 'user_id', 'auditable_type', 'auditable_id', 'created_at']);
 
-        return response()->json([
-            'data' => [
-                'generated_at'      => $now->toIso8601String(),
-                'orgs' => [
-                    'total'    => $orgs->count(),
-                    'active'   => $orgs->where('is_active', true)->count(),
-                    'inactive' => $orgs->where('is_active', false)->count(),
-                    'license_health' => $licenseStatusBuckets,
-                ],
-                'revenue_srd' => [
-                    'today' => number_format((float) ($revenue->today ?? 0), 2, '.', ''),
-                    'week'  => number_format((float) ($revenue->week  ?? 0), 2, '.', ''),
-                    'month' => number_format((float) ($revenue->month ?? 0), 2, '.', ''),
-                ],
-                'transactions_today' => (int) ($revenue->tx_today ?? 0),
-                'terminals' => [
-                    'active_24h' => $activeRegisters,
-                    'total'      => $totalRegisters,
-                ],
-                'btw' => [
-                    'filings_pending_inspector_review' => $pendingFilings,
-                ],
-                'next_expiring_licenses' => $nextExpiring,
-                'recent_sa_actions'      => $recentSaActions,
+        return [
+            'generated_at'      => $now->toIso8601String(),
+            'orgs' => [
+                'total'    => $orgs->count(),
+                'active'   => $orgs->where('is_active', true)->count(),
+                'inactive' => $orgs->where('is_active', false)->count(),
+                'license_health' => $licenseStatusBuckets,
             ],
-        ]);
+            'revenue_srd' => [
+                'today' => number_format((float) ($revenue->today ?? 0), 2, '.', ''),
+                'week'  => number_format((float) ($revenue->week  ?? 0), 2, '.', ''),
+                'month' => number_format((float) ($revenue->month ?? 0), 2, '.', ''),
+            ],
+            'transactions_today' => (int) ($revenue->tx_today ?? 0),
+            'terminals' => [
+                'active_24h' => $activeRegisters,
+                'total'      => $totalRegisters,
+            ],
+            'btw' => [
+                'filings_pending_inspector_review' => $pendingFilings,
+            ],
+            'next_expiring_licenses' => $nextExpiring,
+            'recent_sa_actions'      => $recentSaActions,
+        ];
     }
 }

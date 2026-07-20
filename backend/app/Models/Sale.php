@@ -138,6 +138,17 @@ class Sale extends Model implements Auditable
      */
     public static function nextNumber(string $storeId): string
     {
+        // The advisory lock below is a TRANSACTION-scoped lock: outside a
+        // transaction it releases immediately and two concurrent sales can
+        // compute the same number (unique-index 500 on the busiest moment
+        // of the day). Fail loudly instead of racing quietly.
+        if (DB::transactionLevel() === 0) {
+            throw new \RuntimeException(
+                'Sale::nextNumber() must be called inside a DB transaction — '
+                . 'the pg_advisory_xact_lock is otherwise scopeless.'
+            );
+        }
+
         $year = now()->format('Y');
 
         DB::select('SELECT pg_advisory_xact_lock(hashtext(?))', ["sale_number:{$storeId}:{$year}"]);

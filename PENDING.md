@@ -18,7 +18,7 @@
 | **On-site visit date** | Travel planning | Playbook Phase 2 (hardware day, edge-case script, training) |
 | **Uni5Pay+ merchant-API access** — email UPPS / Southern Commercial Bank. **Draft ready in `PARTNER_OUTREACH.md` §1 (EN+NL) — review & send** | Partner-driven onboarding, no self-serve portal; sending is yours (pick recipient + sender address per the checklist) | Dynamic per-transaction QR at the till (code slot ready, feature-flagged) |
 | **Gov-DB wording conversation with the client** — before the first government tender. Talking points ready in `PARTNER_OUTREACH.md` §2 | Proposal says "completely isolated database"; build is single-cluster with org-scoped queries (§4 decision row) — client must renegotiate wording or commission DB-per-tenant | Contract wording matches the system before any tender reviewer or auditor finds the gap |
-| **Licence agreement / EULA — draft before first customer install.** The technical protection (IonCube, fingerprint licensing, kill-switch) is built, but no legal document exists that the customer signs. Needs: licensed-not-sold clause, no reverse-engineering/redistribution, per-store+terminal counts, renewal/soft-lock terms mirroring the built enforcement, audit clause; NL primary. Ask the developer to draft the working template, then have a Surinamese lawyer review before signature. | — | user-gated |
+| **Licence agreement / EULA — lawyer review before first customer install.** Working template DRAFTED 2026-07-19 in `legal/eula-draft-nl.md` (primary) + `-en.md` (mirror), also on the internal portal: licensed-not-sold, no reverse engineering, fingerprint binding + 72 h offline grace + the exact renewal/soft-lock/hard-lock ladder the code enforces, customer-owns-data + 90-day export guarantee, WBP-S/Verwerkersovereenkomst hook, audit clause, [placeholders] per customer. | Surinamese attorney must review/adapt; fees + SLA blanks are business decisions | Signable contract at the first install |
 
 ## 2. Prod-split day (one working session, when the domain exists)
 
@@ -36,10 +36,10 @@ is exactly when the "Sign in with a passkey" button starts appearing.
 | Item | Size | Notes |
 |---|---|---|
 | ~~Passkeys for Super Admin / government accounts~~ | done | **Shipped 2026-07-19** — WebAuthn register (My Account) + passwordless login, e2e-proven with a virtual authenticator; lights up for real users on prod-split day (HTTPS + domain, §2) |
-| Customer detail view: purchase history + statement export | 1–2 d | User parked it earlier ("will check later") |
-| Server-side caching for heavy report endpoints | 1 d | Redis, short TTL — dashboard snappiness at 50 stores |
-| D1: per-store sale-number sequence | ½ d | Numbering semantics change — do together with a Z-report review |
-| D3: refund discount handling · D5: discount combine rules | ½ d | Edge-case correctness from the June audit |
+| ~~Customer detail view: purchase history + statement export~~ | done | **Shipped 2026-07-19** — dashboard customer detail page (profile + aggregates + paginated history incl. refund flags) + PDF/CSV statement with netted totals; PII reads audited (`customer.accessed` / `customer.statement_exported`); 9 feature tests |
+| ~~Server-side caching for heavy report endpoints~~ | done | **Shipped 2026-07-19** — 12 heavy GET report/dashboard endpoints behind scope-keyed `Cache::remember` (platform/org/store scope in the key — cross-org bleed impossible, tested), 60 s TTL for today-windows / 15 min for closed ranges (refunds verified never backdated); X-report timestamp stays per-request |
+| ~~D1: per-store sale-number sequence~~ | done | **Closed 2026-07-19** — per-store uniqueness + per-store counting already existed; the remaining audit risk (advisory xact lock silently scopeless outside a transaction) is now a loud RuntimeException guard; all callers verified transactional |
+| ~~D3: refund discount handling · D5: discount combine rules~~ | done | **Shipped 2026-07-19** — refund legs now carry prorated line + sale-level discounts negatively (money was already right; reports now net exactly — tested to the cent), and SRD + % sale discounts combine additively instead of % being silently dropped |
 | pgvector embeddings + semantic product search | 1 d | Blocked on OpenAI credits (row above) |
 | ~~Runtime-configurable server URL in the POS desktop app~~ | done | **Shipped 2026-07-19** — "⚙ Server" on the login screen + Settings → System (manager+): test /health, save & restart, reset to default. A wrong baked IP is now a 30-second on-site fix |
 | Loyalty / spaarpunten | design first | Not committed |
