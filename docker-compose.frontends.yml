@@ -66,5 +66,8 @@ services:
       # Password-protected internal docs (built by scripts/build-internal-docs.mjs)
       - ./internal-docs-dist:/usr/share/nginx/internal:ro
       - ./docker/frontends/internal.htpasswd:/etc/nginx/internal.htpasswd:ro
+      # Installer downloads — persistent dir on the host, populated out of band
+      # (rsync the .exe there); NOT in git, survives doc redeploys.
+      - ./downloads:/usr/share/nginx/downloads:ro
     networks:
       - josbin_pos_internal

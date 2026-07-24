@@ -33,6 +33,16 @@ export default defineConfig({
       outDir: 'dist',
       rollupOptions: {
         input: resolve(__dirname, 'index.html'),
+        // Android-only Capacitor plugins: `src/lib/capacitor-printer.ts` is
+        // reached ONLY through a dynamic import guarded by detectPlatform()
+        // === 'android', so on the Electron/desktop build this chunk is never
+        // loaded at runtime. Externalise the plugins so Rollup doesn't try to
+        // resolve them at build time (they're not installed in the desktop
+        // dependency set) — without this the whole `.exe` build fails.
+        external: [
+          '@capacitor-community/tcp-sockets',
+          '@capgo/capacitor-printer',
+        ],
       },
     },
     resolve: {

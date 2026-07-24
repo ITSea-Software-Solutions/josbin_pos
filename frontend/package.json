@@ -75,20 +75,11 @@
     "productName": "Josbin POS",
     "copyright": "Copyright © 2025 Josbin POS",
     "win": {
-      "target": "nsis",
-      "icon": "resources/icon.ico",
-      "signingHashAlgorithms": [
-        "sha256"
-      ],
-      "requestedExecutionLevel": "requireAdministrator"
+      "target": "nsis"
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "installerLanguages": [
-        "Dutch",
-        "English"
-      ]
+      "allowToChangeInstallationDirectory": true
     },
     "mac": {
       "target": [
