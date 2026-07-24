@@ -322,6 +322,25 @@ Dit is een *machine*-account, geen persoon. Gebruikt door POS-systemen van derde
 
 ### E1. Haal de installer op
 
+**Evaluatie-/demoversie — nu downloaden:**
+
+> 💾 **[Download Josbin POS voor Windows (demo)](http://142.93.88.143:8095/downloads/josbin-pos-demo-Setup-1.0.0.exe)** — 108 MB, Windows 10/11 (64-bit).
+
+Deze versie is gekoppeld aan de **demoserver** (`142.93.88.143:8080`) en werkt
+direct na installatie — log in met de demokassier (`kassa@dehoop.sr` /
+`Cashier@2026`) en verkoop tegen live demodata. Twee dingen om te verwachten
+bij een demoversie:
+
+- **Windows SmartScreen** toont een "onbekende uitgever"-waarschuwing (de demo
+  is niet code-signed). Klik op **Meer info → Toch uitvoeren**. Een
+  productieversie voor een betalende klant is wél gesigneerd en toont geen
+  waarschuwing.
+- Hij wijst naar de demoserver, niet naar een winkelserver. Voor een echte
+  winkel krijgt u een versie die aan die winkelserver is gekoppeld — of stel
+  elke versie opnieuw in via **⚙ Server** op het inlogscherm (hieronder).
+
+---
+
 Per USB aangeleverd of download van je distributieserver. Bestand: `Josbin POS-1.0.0-Setup.exe` (Windows) of `josbin-pos.apk` (Android).
 
 > **Verkeerd serveradres na installatie?** Geen nieuwe build nodig: tik op het inlogscherm op **⚙ Server**, voer het adres van de winkelserver in (bijv. `192.168.0.250:8080` — `http://` en `/api` worden automatisch toegevoegd), druk op **Testen** tot er *Verbonden* staat en dan **Opslaan & herstarten**. Managers vinden dezelfde optie onder Instellingen → Systeem.

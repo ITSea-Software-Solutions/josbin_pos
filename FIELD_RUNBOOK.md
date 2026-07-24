@@ -62,7 +62,7 @@ cd frontend && npm ci
 VITE_API_URL=http://192.168.0.250:8080/api \
 VITE_REVERB_HOST=192.168.0.250 VITE_REVERB_PORT=6001 VITE_REVERB_SCHEME=http \
 VITE_REVERB_APP_KEY=josbin_pos-key npm run build:win
-# → dist-electron/ "Josbin POS-…-Setup.exe" → copy to USB
+# → frontend/release/ "Josbin POS Setup 1.0.0.exe" (~108 MB) → copy to USB
 cd ..
 
 # 2. Docker images as tarballs (server PC loads these without internet)
@@ -207,6 +207,32 @@ Per till (Windows):
    connection, paper width, drawer pin — then Test print + Test drawer.
 5. Built the exe with a different IP than the store uses? Rebuild on ANY
    machine with node: the exact command block is in Phase 0.3 — swap the IP.
+
+### Building & publishing an installer to the download server
+
+The demo installer at
+`http://142.93.88.143:8095/downloads/josbin-pos-demo-Setup-1.0.0.exe`
+(linked from install-guide §E1) is produced like this. Repeat with a
+different `VITE_API_URL` to make a store-specific build.
+
+```bash
+cd frontend && npm ci
+# Point the build at whichever server this installer should talk to:
+VITE_API_URL=http://142.93.88.143:8080/api \
+VITE_REVERB_APP_KEY=josbin_pos-key npm run build:win
+#   → frontend/release/"Josbin POS Setup 1.0.0.exe" (~108 MB)
+
+# Publish it to the download folder the docs nginx serves (persistent,
+# gitignored, survives doc redeploys):
+scp "release/Josbin POS Setup 1.0.0.exe" \
+    root@142.93.88.143:/var/www/html/downloads/josbin-pos-demo-Setup-1.0.0.exe
+```
+
+Notes: builds from **macOS work** (no wine needed — electron-builder
+downloads its own NSIS). The build is **unsigned** → Windows SmartScreen
+warns "unknown publisher" until the code-signing cert lands (PENDING §1).
+The `/downloads/` nginx location forces `Content-Disposition: attachment`,
+so the browser downloads rather than trying to render 108 MB.
 
 ## Phase 4 — Hardware & payments (one device at a time)
 

@@ -322,6 +322,22 @@ This is a *machine* account, not a person. Used by third-party POS systems to pu
 
 Hand-delivered USB or download from your distribution server. File: `Josbin POS-1.0.0-Setup.exe` (Windows) or `josbin-pos.apk` (Android).
 
+**Evaluation / demo build — download now:**
+
+> 💾 **[Download Josbin POS for Windows (demo)](http://142.93.88.143:8095/downloads/josbin-pos-demo-Setup-1.0.0.exe)** — 108 MB, Windows 10/11 (64-bit).
+
+This build is wired to the **demo server** (`142.93.88.143:8080`) so it works
+the moment it's installed — log in with the demo cashier
+(`kassa@dehoop.sr` / `Cashier@2026`) and start selling against live demo data.
+Two things to expect on a demo build:
+
+- **Windows SmartScreen** shows an "unknown publisher" warning (the demo isn't
+  code-signed). Click **More info → Run anyway**. A production build for a
+  paying client is code-signed and shows no warning.
+- It points at the demo server, not a store server. For a real store you get a
+  build wired to that store's server — or just repoint any build on the login
+  screen via **⚙ Server** (below).
+
 > **Wrong server address after install?** No rebuild needed: on the login
 > screen tap **⚙ Server**, enter the store server's address (e.g.
 > `192.168.0.250:8080` — `http://` and `/api` are added automatically),
