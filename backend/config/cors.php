@@ -37,8 +37,12 @@ return [
         'http://localhost:8080',  // Backend self
         'http://localhost:8082',  // Demo backend self
         'http://localhost:8091',  // Sandbox backend self
-        'capacitor://localhost',  // Capacitor Android shell
-        'http://localhost',       // Capacitor / Electron edge cases
+        'https://localhost',      // Capacitor Android WebView (androidScheme defaults to https since Cap 5)
+        'capacitor://localhost',  // Capacitor iOS shell (future)
+        'http://localhost',       // Electron dev / edge cases
+        'null',                   // Packaged Electron app: file:// pages send the literal Origin "null".
+                                  // Safe here because authorisation is the Bearer token, never the
+                                  // origin — CORS only gates response *readability* for browser JS.
     ],
 
     /**

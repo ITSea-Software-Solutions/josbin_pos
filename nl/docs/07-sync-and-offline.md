@@ -16,6 +16,34 @@ De korte versie:
 
 ---
 
+## 7.0 Welke opzet past bij welke winkel?
+
+Zelfde product, drie manieren om het te draaien. Kies per winkel — later
+opschalen kan (verhuizen is een geplande datamigratie, zie de
+installatiegids).
+
+| Winkel | Opzet | Internet nodig om te verkopen? | Kosten |
+|---|---|---|---|
+| 1 kassa, verder niets | **Alleen cloud** — de kassa verbindt via internet met de cloudserver | **Ja** — geen internet, geen verkoop (een telefoonhotspot overbrugt de meeste storingen; een verkoop is enkele KB's) | Geen hardware |
+| 1–2 kassa's + *een* PC in de winkel | **Lokale server** — de eigen PC van de winkel (een gewone Windows-PC volstaat) draait het hele systeem; kassa's verbinden via de winkel-wifi/LAN | **Nee** — het lokale netwerk blijft werken als het internet wegvalt | De PC die er al staat |
+| Meerdere kassa's / meerdere winkels | **Lokale server per winkel + clouddashboard** — de volledige opzet uit dit hoofdstuk | **Nee** voor verkopen; internet alleen voor synchronisatie met het hoofdkantoor | Back-office-PC per winkel |
+
+Twee feiten die de middelste optie groter maken dan ze lijkt:
+
+- **De "server" is gewoon een PC.** Heeft de winkel een willekeurige
+  Windows-PC — de kantoormachine van de eigenaar, een oude desktop — dan
+  draait de Josbin POS-serverstack daarop en is de winkel volledig
+  offline-bestendig. "Geen serverbudget" betekent meestal "wist niet dat de
+  oude PC meetelt".
+- **Het lokale netwerk is niet het internet.** De wifi-router van de winkel
+  verbindt kassa, server-PC en printer helemaal zelf met elkaar. Valt de
+  internetverbinding weg, dan draait dat lokale netwerk — en het verkopen —
+  gewoon door.
+
+De enige opzet die écht van internet afhangt is alleen-cloud. Dat is de
+juiste keuze voor een kleine winkel in Paramaribo met stabiel internet en
+zonder PC; overal anders: zet de server in de winkel.
+
 ## 7.1 Waarom offline werkt: wat waar geïnstalleerd wordt
 
 Dit wordt bepaald bij de installatie (zie de

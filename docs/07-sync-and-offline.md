@@ -16,6 +16,31 @@ The short version:
 
 ---
 
+## 7.0 Which setup fits which store?
+
+Same product, three ways to run it. Pick per store — you can move up later
+(moving is a planned data migration, see the install guide).
+
+| Store | Setup | Internet needed to sell? | Cost |
+|---|---|---|---|
+| 1 till, nothing else | **Cloud-only** — the till connects to the cloud server over the internet | **Yes** — no internet, no sales (a phone hotspot bridges most outages; a sale is a few KB) | Zero hardware |
+| 1–2 tills + *any* PC in the shop | **Local server** — the shop's own PC (an ordinary Windows PC is fine) runs the whole system; tills connect over the shop wi-fi/LAN | **No** — the local network keeps working when the internet drops | The PC you already have |
+| Multiple tills / multiple stores | **Local server per store + cloud dashboard** — the full setup this chapter describes | **No** for selling; internet only for head-office sync | Back-office PC per store |
+
+Two facts that make the middle option bigger than it looks:
+
+- **The "server" is just a PC.** If the shop has any Windows PC — the owner's
+  office machine, an old desktop — the Josbin POS server stack runs on it and
+  the store is fully offline-capable. "No server budget" usually means "didn't
+  know the old PC counts".
+- **The local network is not the internet.** The shop's wi-fi router connects
+  the till, the server PC and the printer to each other all by itself. When
+  the internet feed dies, that local network — and selling — carries on.
+
+The one setup that truly depends on the internet is cloud-only. It is the
+right choice for a small Paramaribo shop with stable internet and no PC; for
+everywhere else, put the server in the shop.
+
 ## 7.1 Why offline works: what gets installed where
 
 This is decided at installation (see the
