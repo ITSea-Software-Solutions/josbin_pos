@@ -40,7 +40,6 @@ export default defineConfig({
         // resolve them at build time (they're not installed in the desktop
         // dependency set) — without this the whole `.exe` build fails.
         external: [
-          '@capacitor-community/tcp-sockets',
           '@capgo/capacitor-printer',
         ],
       },

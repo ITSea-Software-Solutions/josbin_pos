@@ -15,19 +15,6 @@ export default defineConfig({
     },
   },
 
-  // ── Capacitor / Android build ───────────────────────────────────────────
-  // @capacitor-community/tcp-sockets is a native-only Android plugin.
-  // It has no npm package — it is injected by the Capacitor runtime inside
-  // the compiled APK. Rollup must not try to bundle it.
-  optimizeDeps: {
-    exclude: ['@capacitor-community/tcp-sockets'],
-  },
-  build: {
-    rollupOptions: {
-      external: ['@capacitor-community/tcp-sockets'],
-    },
-  },
-
   // ── Dev-only API proxy ──────────────────────────────────────────────────
   // Lets `npm run dev` talk to a remote backend (e.g. the demo droplet)
   // without CORS / sandbox issues: the browser stays same-origin and the

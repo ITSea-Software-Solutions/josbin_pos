@@ -16,8 +16,9 @@ const config: CapacitorConfig = {
     backgroundColor: '#1a1a2e',
   },
   plugins: {
-    // No Capacitor plugins require config here — @anuradev/capacitor-printer
-    // and @capacitor-community/tcp-sockets are configured via their own APIs.
+    // No plugin config needed: @capgo/capacitor-printer is driven via its own
+    // API, and raw ESC/POS + cash-drawer TCP goes through our local native
+    // plugin (android/.../TcpSocketPlugin.java, registered in MainActivity).
   },
 }
 

@@ -33,6 +33,7 @@ export default function PosLauncherScreen() {
   const [reach, setReach] = useState<Reachability>('unknown')
   const [dlPct, setDlPct]   = useState<number | null>(null)
   const [dlBusy, setDlBusy] = useState(false)
+  const [dlPlat, setDlPlat] = useState<'windows' | 'android' | null>(null)
   const [dlErr, setDlErr]   = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
@@ -47,17 +48,18 @@ export default function PosLauncherScreen() {
 
   const serverAddress = posServerAddress()
 
-  async function handleDownload() {
-    if (!installer?.filename) return
-    setDlBusy(true); setDlErr(null); setDlPct(0)
+  async function handleDownload(platform: 'windows' | 'android' = 'windows') {
+    const filename = platform === 'android' ? installer?.android?.filename : installer?.filename
+    if (!filename) return
+    setDlBusy(true); setDlPlat(platform); setDlErr(null); setDlPct(0)
     try {
-      await downloadInstaller(installer.filename, setDlPct)
+      await downloadInstaller(filename, setDlPct, platform)
     } catch {
       setDlErr(isNl
         ? 'Download mislukt. Controleer de verbinding met de server en probeer opnieuw.'
         : 'Download failed. Check the connection to the server and try again.')
     } finally {
-      setDlBusy(false); setDlPct(null)
+      setDlBusy(false); setDlPlat(null); setDlPct(null)
     }
   }
 
@@ -122,7 +124,7 @@ export default function PosLauncherScreen() {
           <span style={{ ...pill('unknown'), background: '#eef2ff', color: '#1a234f', borderColor: '#c7d2fe' }}>
             {isNl ? '📦 Voor kassaterminals' : '📦 For till terminals'}
           </span>
-          <h3 style={cardH()}>{isNl ? 'Windows-installer' : 'Windows installer'}</h3>
+          <h3 style={cardH()}>{isNl ? 'Installer voor kassa’s' : 'Till installer'}</h3>
 
           {installer?.available ? (
             <>
@@ -131,25 +133,52 @@ export default function PosLauncherScreen() {
                   ? 'Download op de kassaterminal zelf en voer hem uit. Werkt volledig via het winkelnetwerk — internet is niet nodig.'
                   : 'Download on the till itself and run it. Works entirely over the store network — no internet needed.'}
               </p>
-              <p style={mono()}>
-                {installer.filename}
-                {installer.size_bytes
-                  ? `  ·  ${(installer.size_bytes / 1048576).toFixed(0)} MB`
-                  : ''}
-              </p>
-              <button onClick={handleDownload} disabled={dlBusy} style={primaryBtn(!dlBusy)}>
-                {dlBusy
-                  ? (dlPct !== null
-                      ? `${isNl ? 'Downloaden' : 'Downloading'}… ${dlPct}%`
-                      : (isNl ? 'Downloaden…' : 'Downloading…'))
-                  : (isNl ? '⬇ Installer downloaden' : '⬇ Download installer')}
-              </button>
+
+              {installer.filename && (
+                <>
+                  <p style={mono()}>
+                    🪟 {installer.filename}
+                    {installer.size_bytes
+                      ? `  ·  ${(installer.size_bytes / 1048576).toFixed(0)} MB`
+                      : ''}
+                  </p>
+                  <button onClick={() => handleDownload('windows')} disabled={dlBusy} style={primaryBtn(!dlBusy)}>
+                    {dlBusy && dlPlat === 'windows'
+                      ? (dlPct !== null
+                          ? `${isNl ? 'Downloaden' : 'Downloading'}… ${dlPct}%`
+                          : (isNl ? 'Downloaden…' : 'Downloading…'))
+                      : (isNl ? '⬇ Windows-installer (.exe)' : '⬇ Windows installer (.exe)')}
+                  </button>
+                  <p style={{ fontSize: 12, color: '#7e88a0', margin: 0 }}>
+                    {isNl
+                      ? 'Windows kan "onbekende uitgever" tonen bij een niet-ondertekende versie: Meer info → Toch uitvoeren.'
+                      : 'Windows may warn "unknown publisher" on an unsigned build: More info → Run anyway.'}
+                  </p>
+                </>
+              )}
+
+              {installer.android && (
+                <>
+                  <p style={mono()}>
+                    🤖 {installer.android.filename}
+                    {`  ·  ${(installer.android.size_bytes / 1048576).toFixed(1)} MB`}
+                  </p>
+                  <button onClick={() => handleDownload('android')} disabled={dlBusy} style={primaryBtn(!dlBusy)}>
+                    {dlBusy && dlPlat === 'android'
+                      ? (dlPct !== null
+                          ? `${isNl ? 'Downloaden' : 'Downloading'}… ${dlPct}%`
+                          : (isNl ? 'Downloaden…' : 'Downloading…'))
+                      : (isNl ? '⬇ Android-app (.apk)' : '⬇ Android app (.apk)')}
+                  </button>
+                  <p style={{ fontSize: 12, color: '#7e88a0', margin: 0 }}>
+                    {isNl
+                      ? 'Voor Android-kassaterminals (bijv. Posiflex RT): download in Chrome op de terminal zelf, tik op het bestand en sta "onbekende apps installeren" toe.'
+                      : 'For Android till terminals (e.g. Posiflex RT): download in Chrome on the terminal itself, tap the file, and allow "install unknown apps".'}
+                  </p>
+                </>
+              )}
+
               {dlErr && <p style={{ margin: 0, fontSize: 12, color: '#b91c1c' }}>{dlErr}</p>}
-              <p style={{ fontSize: 12, color: '#7e88a0', margin: 0 }}>
-                {isNl
-                  ? 'Windows kan "onbekende uitgever" tonen bij een niet-ondertekende versie: Meer info → Toch uitvoeren.'
-                  : 'Windows may warn "unknown publisher" on an unsigned build: More info → Run anyway.'}
-              </p>
             </>
           ) : (
             <>

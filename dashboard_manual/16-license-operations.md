@@ -205,14 +205,29 @@ per-store version: the address is set on the till, not baked into the file.
 > is offline resilience — no internet, no selling.
 
 > **"No installer deployed on this server"?** The file has not been placed in
-> the server's installer folder yet. Drop the `.exe` there and the download
-> button appears — no restart needed.
+> the server's installer folder yet. Drop the `.exe` (and optionally the `.apk`) there and the download
+> button(s) appear — no restart needed.
 
-### 16.5.4 Android tablets — same flow, different installer
+### 16.5.4 Android terminals & tablets — same flow, different installer
 
-1. Sideload the signed `.apk` (or install from your private play-store track).
-2. First launch — back-office server URL.
-3. Login. Same terminal-count rule applies.
+Android till terminals (e.g. **Posiflex RT series**) run the native Android
+app instead of the Windows exe. The flow is the same, the file is different:
+
+1. Get the `.apk` — when it is deployed on the store server, the same
+   dashboard card shows a second button: **⬇ Android app (.apk)**. Download it
+   in Chrome **on the terminal itself**, tap the file, allow *install unknown
+   apps*.
+2. First launch: **⚙ Server** → the store server address → Test → Save.
+3. Login. The same terminal-count rule applies — an Android till occupies a
+   licence slot exactly like a Windows till.
+
+Hardware note for Android: the **receipt printer must be on the network**
+(LAN/Wi-Fi, port 9100) — USB-only printers are not supported for receipts on
+Android. Scanner and cash drawer work as usual. Full steps and the hardware
+table: install guide §E5.
+
+> **Pilot status.** The Android app is newer than the Windows app — plan a
+> test day (sell, print, drawer, scan) before a first Android go-live.
 
 ---
 

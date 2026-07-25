@@ -65,21 +65,26 @@ async function printEscPos(opts: {
 
 /**
  * Send raw bytes over TCP to port 9100 (ESC/POS network printing).
- * Used for cash drawer pulse on Android since Android PrintManager
- * does not support raw byte jobs.
+ * Used for receipts AND the cash drawer pulse on Android, since Android's
+ * PrintManager does not support raw byte jobs.
  *
- * Requires @capacitor-community/tcp-sockets if available, otherwise
- * falls back to XMLHttpRequest (works if backend has a TCP proxy endpoint).
+ * Backed by our own native plugin (android/.../TcpSocketPlugin.java),
+ * registered in MainActivity — not an npm package. registerPlugin() returns
+ * a proxy that only resolves inside the compiled APK; on any other platform
+ * the calls reject and we fall through to the ePOS HTTP fallback below.
  */
+interface TcpSocketPlugin {
+  connect(options: { host: string; port: number }): Promise<void>
+  write(options: { data: number[] }): Promise<void>
+  disconnect(): Promise<void>
+}
+
 async function tcpPrint(ip: string, port: number, data: number[]): Promise<PrintResult> {
   try {
-    // Try Capacitor TCP socket plugin — only available inside a compiled Android APK,
-    // not on npm. @vite-ignore suppresses the "cannot resolve" pre-bundling warning.
-    // @ts-ignore
-    const { TcpSocket } = await import(/* @vite-ignore */ '@capacitor-community/tcp-sockets')
-    const bytes = new Uint8Array(data)
+    const { registerPlugin } = await import('@capacitor/core')
+    const TcpSocket = registerPlugin<TcpSocketPlugin>('TcpSocket')
     await TcpSocket.connect({ host: ip, port })
-    await TcpSocket.write({ data: Array.from(bytes) })
+    await TcpSocket.write({ data })
     await TcpSocket.disconnect()
     return { success: true }
   } catch {

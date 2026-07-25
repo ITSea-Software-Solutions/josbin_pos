@@ -71,7 +71,51 @@ class InstallerDownloadTest extends TestCase
             ->assertJsonPath('available', true)
             ->assertJsonPath('filename', 'Josbin POS Setup 1.0.0.exe')
             ->assertJsonPath('version', '1.0.0')
-            ->assertJsonPath('size_bytes', 4096);
+            ->assertJsonPath('size_bytes', 4096)
+            // No APK deployed → the Android slot is explicitly null,
+            // so the dashboard can hide that row without special-casing.
+            ->assertJsonPath('android', null);
+    }
+
+    public function test_reports_android_apk_alongside_the_exe(): void
+    {
+        file_put_contents($this->dir . '/Josbin POS Setup 1.0.0.exe', str_repeat('a', 2048));
+        file_put_contents($this->dir . '/josbin-pos-1.1.0.apk', str_repeat('b', 1024));
+
+        $res = $this->withToken($this->token($this->manager))->getJson('/api/installer');
+
+        $res->assertOk()
+            ->assertJsonPath('available', true)
+            ->assertJsonPath('filename', 'Josbin POS Setup 1.0.0.exe')
+            ->assertJsonPath('android.filename', 'josbin-pos-1.1.0.apk')
+            ->assertJsonPath('android.version', '1.1.0')
+            ->assertJsonPath('android.size_bytes', 1024);
+    }
+
+    public function test_download_platform_android_streams_the_apk_with_its_mime(): void
+    {
+        file_put_contents($this->dir . '/josbin-pos-1.0.0.apk', 'PK-fake-apk');
+
+        $res = $this->withToken($this->token($this->manager))
+            ->get('/api/installer/download?platform=android');
+
+        $res->assertOk();
+        $this->assertSame('application/vnd.android.package-archive', $res->headers->get('content-type'));
+        $this->assertStringContainsString('josbin-pos-1.0.0.apk', (string) $res->headers->get('content-disposition'));
+
+        // The Windows download must NOT fall back to the APK.
+        $this->withToken($this->token($this->manager))
+            ->get('/api/installer/download')
+            ->assertStatus(404);
+    }
+
+    public function test_download_rejects_unknown_platform(): void
+    {
+        file_put_contents($this->dir . '/josbin-pos-1.0.0.apk', 'PK-fake-apk');
+
+        $this->withToken($this->token($this->manager))
+            ->get('/api/installer/download?platform=linux')
+            ->assertStatus(422);
     }
 
     public function test_download_streams_the_binary(): void

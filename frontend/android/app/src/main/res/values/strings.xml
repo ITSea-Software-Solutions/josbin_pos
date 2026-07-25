@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Josbin POS</string>
+    <string name="title_activity_main">Josbin POS</string>
+    <string name="package_name">sr.josbin_pos.pos</string>
+    <string name="custom_url_scheme">sr.josbin_pos.pos</string>
+</resources>

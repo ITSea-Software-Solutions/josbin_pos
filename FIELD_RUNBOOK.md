@@ -65,6 +65,17 @@ VITE_REVERB_APP_KEY=josbin_pos-key npm run build:win
 # → frontend/release/ "Josbin POS Setup 1.0.0.exe" (~108 MB) → copy to USB
 cd ..
 
+# 1b. Android terminals (Posiflex RT etc.): also copy the APK to the USB.
+#     Build (needs ANDROID_HOME + node22 for the Capacitor CLI):
+#       npx vite build --config vite.config.ts   (same VITE_* env as above)
+#       npx cap sync android && cd android && ./gradlew assembleDebug
+#       → android/app/build/outputs/apk/debug/app-debug.apk
+#     Or grab the current one from :8095/downloads/. On the terminal:
+#     Chrome → download → allow unknown apps → ⚙ Server → sell.
+#     Android hardware rule: receipt printer MUST be network-attached
+#     (LAN module in the PP-9000 class printers); USB-only printers do
+#     not print receipts on Android. Scanner is HID — works everywhere.
+
 # 2. Docker images as tarballs (server PC loads these without internet)
 docker compose build app
 docker save -o usb/josbin-app.tar     $(docker compose images app -q)

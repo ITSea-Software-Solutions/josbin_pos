@@ -210,11 +210,30 @@ gebakken.
 > installermap van de server. Zet de `.exe` daar neer en de downloadknop
 > verschijnt — herstarten is niet nodig.
 
-### 16.5.4 Android-tablets — zelfde flow, andere installer
+### 16.5.4 Android-kassa's & tablets — zelfde flow, andere installer
 
-1. Sideload de signed `.apk` (of installeer vanuit uw private play-store-track).
-2. Eerste launch — back-office server-URL.
-3. Login. Zelfde terminalcountregel is van toepassing.
+Android-kassaterminals (bijv. **Posiflex RT-serie**) draaien de native
+Android-app in plaats van de Windows-exe. De flow is gelijk, het bestand
+verschilt:
+
+1. Haal de `.apk` op — staat die op de winkelserver, dan toont dezelfde
+   dashboardkaart een tweede knop: **⬇ Android-app (.apk)**. Download in
+   Chrome **op de terminal zelf**, tik op het bestand, sta *onbekende apps
+   installeren* toe.
+2. Eerste start: **⚙ Server** → het serveradres van de winkel → Test →
+   Opslaan.
+3. Inloggen. Dezelfde terminaltelling geldt — een Android-kassa neemt een
+   licentieplek in, precies zoals een Windows-kassa.
+
+Hardware op Android: de **bonprinter moet op het netwerk** zitten (LAN/wifi,
+poort 9100) — printers met alleen USB worden op Android niet ondersteund voor
+bonnen. Scanner en geldlade werken zoals gebruikelijk. Volledige stappen en de
+hardwaretabel: installatiegids §E5.
+
+> **Pilotstatus.** De Android-app is nieuwer dan de Windows-app — plan een
+> testdag (verkopen, printen, lade, scannen) vóór een eerste livegang op
+> Android.
+
 
 ---
 

@@ -7,14 +7,24 @@ import { apiClient } from './client'
  * till with the internet cable unplugged — which is the entire point.
  */
 
+export interface PlatformInstaller {
+  filename: string
+  size_bytes: number
+  updated_at: string
+  version: string | null
+}
+
 export interface InstallerInfo {
   available: boolean
   reason?: string
   expected_dir?: string
+  // Flat fields = the Windows exe (original contract)
   filename?: string
   size_bytes?: number
   updated_at?: string
   version?: string | null
+  // APK for Android terminals (Posiflex RT etc.); null when not deployed
+  android?: PlatformInstaller | null
 }
 
 export async function getInstallerInfo(): Promise<InstallerInfo> {
@@ -32,8 +42,10 @@ export async function getInstallerInfo(): Promise<InstallerInfo> {
 export async function downloadInstaller(
   filename: string,
   onProgress?: (pct: number | null) => void,
+  platform: 'windows' | 'android' = 'windows',
 ): Promise<void> {
   const res = await apiClient.get('/installer/download', {
+    params: { platform },
     responseType: 'blob',
     timeout: 0, // large file over a shop LAN — no client-side deadline
     onDownloadProgress: (e) => {

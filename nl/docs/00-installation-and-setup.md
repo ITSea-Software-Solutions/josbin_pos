@@ -423,6 +423,54 @@ Als je het gelicentieerde terminal-aantal raakt, toont de volgende installatie *
 
 ---
 
+### E5. Android-kassa's (Posiflex RT-serie, tablets)
+
+Veel moderne kassaterminals — bijv. de Posiflex RT-1000-serie — draaien op
+**Android**, niet op Windows. Josbin POS draait daar ook, als native
+Android-app (APK) met dezelfde schermen, dezelfde login en dezelfde
+serverlogica als de Windows-versie.
+
+> **Pilotstatus.** De Android-app is nieuwer dan de Windows-app en wordt nu op
+> echte terminals in de praktijk getest. Plan bij een eerste livegang op
+> Android-hardware een korte testdag met uw leverancier: verkopen, printen,
+> lade openen, scannen — vóórdat caissières live gaan.
+
+**Controleer eerst de terminal**
+Op de terminal: *Instellingen → Over*. Staat er Windows, gebruik dan de normale
+installer (§E1–E2) en sla deze sectie over. Staat er Android (7.0 of nieuwer),
+lees verder.
+
+**De app installeren**
+1. Open de browser op de terminal en download de APK — vanuit uw eigen
+   winkeldashboard (**Dashboard → POS-app → ⬇ Android-app (.apk)**, werkt op
+   het winkelnetwerk zonder internet), of de publieke demoversie:
+   `http://142.93.88.143:8095/downloads/josbin-pos-demo-1.0.0.apk`.
+2. Tik op het gedownloade bestand. Android vraagt of installaties uit deze bron
+   zijn toegestaan — sta dit toe (*Onbekende apps installeren*).
+3. Open **Josbin POS**, tik op **⚙ Server** op het inlogscherm en vul het
+   serveradres van uw winkel in (§E3 — meestal `192.168.0.250:8080`).
+   Test → Opslaan.
+4. Log in als caissière, precies zoals op Windows.
+
+**Hardware op Android — wat u moet weten**
+
+| Apparaat | Aansluiting | Werkt? |
+|---|---|---|
+| Barcodescanner (USB-dongle of Bluetooth, bijv. NT-M8) | Gedraagt zich als toetsenbord | ✅ Inpluggen en scannen — niets in te stellen |
+| Bonprinter | **Netwerk (LAN/wifi), poort 9100** | ✅ Stel het IP-adres van de printer in onder *Instellingen → Hardware*, net als op Windows |
+| Bonprinter | Alleen USB | ⚠️ Niet ondersteund voor bonnen op Android — plaats de netwerk (LAN)-interfacemodule van de printer, of gebruik een netwerkprinter |
+| Geldlade | RJ11-kabel in de **printer** | ✅ Opent bij contant/gemengd — werkt zodra de printer werkt |
+| Klantenscherm (tweede scherm) | HDMI/USB-monitor | 🔲 Spiegelt vandaag de kassa; een echt klantenscherm staat op de roadmap |
+
+De vuistregel: **op Android moet de bonprinter op het netwerk zitten.**
+Printers zoals de Posiflex PP-9000 hebben een optionele LAN-interfacemodule —
+daarmee werken bonnen en de geldlade precies zoals op Windows. De scanner
+heeft nooit iets nodig: die typt als een toetsenbord op elk platform.
+
+**Bijwerken** — installeer de nieuwere APK over de oude heen; instellingen en
+het serveradres blijven bewaard. Automatisch bijwerken is er op Android nog
+niet.
+
 ## Deel F — Hardware-setup (per terminal)
 
 POS-app → **Instellingen** → **Printer & Kassalade**.

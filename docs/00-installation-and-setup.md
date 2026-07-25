@@ -418,6 +418,51 @@ If you hit the licensed terminal count, the next install shows **"License limit 
 
 ---
 
+### E5. Android terminals (Posiflex RT-series, tablets)
+
+Many modern POS terminals — e.g. the Posiflex RT-1000 series — run **Android**,
+not Windows. Josbin POS runs there too, as a native Android app (APK) with the
+same screens, the same login and the same server logic as the Windows build.
+
+> **Pilot status.** The Android app is newer than the Windows app and is being
+> field-verified on real terminals now. For a first store go-live on Android
+> hardware, plan a short test day with your supplier: sell, print, open the
+> drawer, scan — before cashiers go live.
+
+**Check the terminal first**
+On the terminal: *Settings → About*. If it shows Windows, use the normal
+installer (§E1–E2) and skip this section. If it shows Android (7.0 or newer),
+continue.
+
+**Install the app**
+1. Open the browser on the terminal and download the APK — from your own
+   store dashboard (**Dashboard → POS app → ⬇ Android app (.apk)**, works on
+   the shop LAN with no internet), or the public demo copy:
+   `http://142.93.88.143:8095/downloads/josbin-pos-demo-1.0.0.apk`.
+2. Tap the downloaded file. Android asks to allow installs from this source —
+   allow it (*Install unknown apps*).
+3. Open **Josbin POS**, tap **⚙ Server** on the login screen, and enter your
+   store server address (§E3 — usually `192.168.0.250:8080`). Test → Save.
+4. Log in as the cashier, exactly as on Windows.
+
+**Hardware on Android — what to know**
+
+| Device | How it connects | Works? |
+|---|---|---|
+| Barcode scanner (USB dongle or Bluetooth, e.g. NT-M8) | Acts as a keyboard | ✅ Plug and scan — nothing to configure |
+| Receipt printer | **Network (LAN/Wi-Fi) interface, port 9100** | ✅ Set the printer's IP under *Settings → Hardware*, same as Windows |
+| Receipt printer | USB only | ⚠️ Not supported for receipts on Android — fit the printer's network (LAN) interface module, or use a network-capable printer |
+| Cash drawer | RJ11 cable into the **printer** | ✅ Opens on cash/mixed sales — works whenever the printer works |
+| Customer-facing second screen | HDMI/USB monitor | 🔲 Mirrors the till today; a dedicated customer display is on the roadmap |
+
+The rule of thumb: **on Android, the receipt printer must be on the network.**
+Printers like the Posiflex PP-9000 take an optional LAN interface module —
+with that fitted, receipts and the cash drawer behave exactly as on Windows.
+The scanner never needs anything: it types like a keyboard on every platform.
+
+**Updating** — install the newer APK over the old one; settings and the server
+address are kept. There is no auto-update on Android yet.
+
 ## Part F — Hardware setup (per terminal)
 
 POS app → **Settings** → **Printer & Cash Drawer**.
