@@ -105,6 +105,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | POS desktop installer
+    |--------------------------------------------------------------------------
+    |
+    | Directory on THIS server holding the Windows installer (*.exe). The
+    | dashboard offers the newest file there as a download, so a manager can
+    | add a till from the shop LAN with no internet. Empty / missing dir =
+    | the download card simply hides; that is a normal state, not an error.
+    |
+    | Mounted into the app container from the host's ./downloads folder (see
+    | docker-compose.yml), so the SAME file backs both the public download
+    | page and this authenticated endpoint — one 100 MB artifact, not two.
+    |
+    */
+    'installer_dir' => env('JOSBIN_POS_INSTALLER_DIR', '/var/www/installers'),
+
+    /*
+    |--------------------------------------------------------------------------
     | QR / mobile-wallet webhook ingestion (Phase 3, task #79)
     |--------------------------------------------------------------------------
     |

@@ -3,7 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss: http://localhost:* ws://localhost:*;" />
+    <!--
+      connect-src is deliberately open to http:/https:.
+
+      This is a DESKTOP POS whose API address is chosen by the operator at
+      install time (⚙ Server / Find my server) — it can be 192.168.0.250, a
+      customer's own domain, or our cloud. A CSP host allow-list cannot express
+      "whatever LAN address this shop uses", so restricting it to localhost
+      silently breaks every real install: the renderer resolves the address,
+      then cannot fetch from it. Verified in a packaged-style file:// window —
+      localhost passed, the same server via its IP was blocked.
+
+      What still protects us is unchanged and is where the actual risk lives:
+      default-src/script-src/style-src stay 'self' (no remote code execution),
+      img-src is limited to self/data/blob, and there is no frame-src. Widening
+      connect-src only permits data fetches to the server the operator
+      configured — which is the app's entire purpose.
+    -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' http: https: ws: wss:;" />
     <title>SuraPOS</title>
   </head>
   <body>

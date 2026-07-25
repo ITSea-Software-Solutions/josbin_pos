@@ -204,7 +204,14 @@
       "testFail": "No man doro a server",
       "saveRestart": "Kibri & start baka",
       "reset": "Teki a standaard",
-      "hint": "Kenki disi soso na installatie noso te a wenkri-server kisi wan nyun adres. Efu yu no de seiker, aksi yu manager — a app e start baka te yu kibri en."
+      "hint": "Kenki disi soso na installatie noso te a wenkri-server kisi wan nyun adres. Efu yu no de seiker, aksi yu manager — a app e start baka te yu kibri en.",
+      "find": "🔍 Suku mi server",
+      "findUnavailable": "A suku na a netwerk e wroko soso na ini a kassa-app di seti na a computer. Na ini wan browser yu musu tayp a adres.",
+      "searching": "E suku na a lokaal netwerk…",
+      "foundOne": "Wan server feni na a netwerk — kontroleer na ondro.",
+      "foundMany": "{{n}} server feni na a netwerk. Teki a wan fu a wenkri disi:",
+      "foundNone": "No wan server feni na a netwerk disi. Luku efu a kassa de na a wenkri-netwerk (kabel noso a wifi fu a wenkri), aksi yu manager gi a server-adres, noso tayp a adres nanga anu efu a server de na wan tra presi.",
+      "pickPrompt": "Teki wan server"
     },
     "discount": {
       "title": "Poti korting",

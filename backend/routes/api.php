@@ -103,6 +103,13 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
             ->whereNumber('passkeyId')->name('destroy');
     });
 
+    // POS desktop installer — served from THIS server so a store can add a
+    // till over its own LAN with no internet. Manager-gated inside the
+    // controller; metadata endpoint never 404s so the dashboard can hide the
+    // card when no installer is deployed here.
+    Route::get('installer',          [\App\Http\Controllers\Api\InstallerController::class, 'show'])->name('installer.show');
+    Route::get('installer/download', [\App\Http\Controllers\Api\InstallerController::class, 'download'])->name('installer.download');
+
     // Self-service: personal stats + profile + password change.
     // Strictly scoped to $request->user() — see MeController for the rule.
     Route::prefix('me')->name('me.')->group(function () {

@@ -9,6 +9,8 @@
  * banner) reads through getApiBaseUrl() so one override moves them all.
  */
 
+import type { DiscoveredServer } from './lan'
+
 const STORAGE_KEY = 'josbin_server_url'
 
 export function getDefaultApiUrl(): string {
@@ -53,6 +55,32 @@ export function saveServerUrl(input: string): string {
 
 export function clearServerUrl(): void {
   localStorage.removeItem(STORAGE_KEY)
+}
+
+// ── "Find my server" — LAN auto-discovery ──────────────────────────────────
+// The sweep itself runs in the Electron main process (raw sockets; see
+// electron/main.ts + src/lib/lan.ts). This is only the bridge.
+
+export type { DiscoveredServer }
+
+/** True when this build can sweep the LAN — Electron only, no sockets in a browser. */
+export function isDiscoverySupported(): boolean {
+  return typeof window !== 'undefined' && typeof window.josbin_pos?.discoverServers === 'function'
+}
+
+/**
+ * Ask the till to find Josbin servers on its own /24. Bounded to ~6s by the
+ * main process. Returns [] in a browser and on any failure — the operator can
+ * always still type the address by hand.
+ */
+export async function discoverServers(): Promise<DiscoveredServer[]> {
+  if (!isDiscoverySupported()) return []
+  try {
+    const results = await window.josbin_pos.discoverServers()
+    return Array.isArray(results) ? results : []
+  } catch {
+    return []
+  }
 }
 
 export interface ServerTestResult {

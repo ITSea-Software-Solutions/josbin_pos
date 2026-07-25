@@ -24,6 +24,11 @@ contextBridge.exposeInMainWorld('josbin_pos', {
   // ── Printer discovery ─────────────────────────────────────────────────────────
   listPrinters: () => ipcRenderer.invoke('printers:list'),
 
+  // ── Store-server discovery ("Find my server" on the server-address dialog) ────
+  // Sweeps the till's own /24 for a Josbin server so a field install with a
+  // wrong baked IP is fixable without anyone hunting for the address.
+  discoverServers: () => ipcRenderer.invoke('network:discoverServers'),
+
   // ── License ───────────────────────────────────────────────────────────────────
   getHardwareFingerprint: () => ipcRenderer.invoke('license:fingerprint'),
 

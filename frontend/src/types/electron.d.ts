@@ -16,6 +16,15 @@ interface Window {
       data: number[]
     }) => Promise<{ success: boolean; error?: string }>
     listPrinters: () => Promise<{ name: string; description: string; isDefault: boolean }[]>
+    // LAN sweep for the store server — see src/lib/lan.ts. Always resolves
+    // (empty array when nothing is found), never rejects on a wedged socket.
+    discoverServers: () => Promise<{
+      url: string
+      ip: string
+      port: number
+      appEnv: string | null
+      timezone: string | null
+    }[]>
     getHardwareFingerprint: () => Promise<{ mac: string; cpuId: string; uuid: string }>
     saveFile: (options: { defaultPath?: string; filters?: { name: string; extensions: string[] }[] }) => Promise<string | null>
     getVersion: () => Promise<string>

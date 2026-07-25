@@ -350,15 +350,65 @@ Windows: double-click `.exe`. Wizard installs to `C:\Program Files\Josbin POS\`.
 
 Android: enable "Install from unknown sources" for the file manager once, then tap the `.apk`.
 
-### E3. Point at the backend
+### E3. Point the till at its server
 
-First launch shows a **Server URL** field. Enter:
+**One installer works for every store.** The address baked into the build is
+only a starting point — each till stores its own, so you never need a
+per-store build.
 
-```
-http://<server-LAN-IP>:8080
-```
+The app resolves the server in this order:
 
-The POS does a `/api/health` ping. Green = good, red = check network/firewall.
+1. **An address saved on this till** (⚙ Server) — always wins.
+2. **The address baked into the installer** — by convention every store server
+   we install is given the fixed LAN address `192.168.0.250`, so a standard
+   install needs no configuration at all.
+3. `localhost` — development only.
+
+**When the convention fits, do nothing.** Install, log in, sell.
+
+**When it doesn't** (the shop's router uses a different range such as
+`192.168.1.x`, or the store runs against a remote/cloud server):
+
+1. On the login screen tap **⚙ Server** (managers: Settings → System →
+   Server address).
+2. Enter the address — `192.168.0.250:8080`, or a domain like
+   `pos.klantnaam.sr`. The `http://` and `/api` parts are added for you.
+3. Press **Test** until it says *Connected*, then **Save & restart**.
+4. Don't know the address? Press **🔍 Find my server** — the till scans its
+   own network for the Josbin server and fills it in. If more than one is
+   found you pick from a list.
+
+**Use default** clears a saved address and returns the till to the baked one.
+
+> **⚠️ Every till in one store must use the same address.** Two tills pointed
+> at different servers means two separate sets of books for the same shop.
+> Check per till under Settings → System, which always shows the address in
+> use and flags it as *custom* when it was set by hand.
+
+> **Local server or remote?** Hardware is unaffected either way — the printer,
+> cash drawer and scanner are driven by the app on the till, never by the
+> server. What differs is resilience: with the server **in the store**, an
+> internet outage changes nothing; with a **remote** server, the till cannot
+> sell while the connection is down. See
+> [Sync & offline](07-sync-and-offline.md).
+
+> **Switching a live store between servers later** is not just an address
+> change — the sales history lives on the server, so moving from cloud to a
+> local box (or the reverse) is a planned data migration, not a setting.
+
+### E3a. Where the installer comes from (per store)
+
+Once a store server is running, the installer is available **from the store's
+own dashboard** — no internet, no USB stick:
+
+**Dashboard → POS app → Windows installer → ⬇ Download installer**
+
+The same screen shows the exact server address to enter, with a copy button.
+Visible to Store Managers and above; cashiers don't see it.
+
+If the card says no installer is deployed, the file has not been placed on
+that server yet — the vendor drops it into the server's installer folder and
+the download button appears (no restart needed).
 
 ### E4. Hardware fingerprint takes a license slot
 

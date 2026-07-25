@@ -204,7 +204,14 @@
       "testFail": "Cannot reach the server",
       "saveRestart": "Save & restart",
       "reset": "Use default",
-      "hint": "Only change this during installation or when the store server got a new address. Ask your manager if unsure — the app restarts after saving."
+      "hint": "Only change this during installation or when the store server got a new address. Ask your manager if unsure — the app restarts after saving.",
+      "find": "🔍 Find my server",
+      "findUnavailable": "Searching the network only works in the installed till app. In a browser, type the address.",
+      "searching": "Searching the local network…",
+      "foundOne": "Found a server on the network — checked below.",
+      "foundMany": "Found {{n}} servers on the network. Choose the one for this store:",
+      "foundNone": "No server found on this network. Check the till is on the shop's network (cable or shop Wi-Fi), ask your manager for the server address, or — if the server is at another location — type its address by hand.",
+      "pickPrompt": "Choose a server"
     },
     "discount": {
       "title": "Add Discount",

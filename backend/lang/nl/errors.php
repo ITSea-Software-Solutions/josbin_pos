@@ -57,4 +57,7 @@ return [
     'passkey_ceremony_expired'      => 'Het passkey-verzoek is verlopen. Probeer het opnieuw.',
     'passkey_invalid'               => 'Deze passkey kon niet worden geverifieerd. Probeer het opnieuw.',
     'not_found'                     => 'Niet gevonden.',
+
+    // POS installer download
+    'installer_not_deployed'        => 'Op deze server staat nog geen installer. Vraag uw Josbin POS-contactpersoon.',
 ];

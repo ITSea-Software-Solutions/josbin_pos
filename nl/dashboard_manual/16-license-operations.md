@@ -168,12 +168,47 @@ Wat er onder de motorkap gebeurt:
 
 Na activering verdwijnt de **rode licentiebanner** uit het dashboard. Als dat niet zo is, zie §16.10 (probleemoplossing).
 
-### 16.5.3 POS-terminals — eenmaal per kassa
+### 16.5.3 Kassaterminals — één keer per kassa
 
-1. Op elke kassamachine, voer `Josbin POS-Setup.exe` uit (de code-signed installer die u heeft verzonden).
-2. Eerste launch vraagt om de back-office server-URL: voer `http://<back-office-ip>:8080` in (gebruik het LAN-IP, niet `localhost`).
-3. Loginscherm verschijnt. Kassier logt in met zijn inloggegevens (aangemaakt door de manager in het dashboard).
-4. De back-office Laravel-app verifieert: "is deze terminal onder de gelicentieerde terminalcount?" — geteld door `installation.uuid`-bestanden. Als onder limiet: terminal geregistreerd, login slaagt. Als op limiet: de gebruiker ziet *"License limit reached — contact your manager"* en login is geblokkeerd.
+**Eén installer werkt voor elke klant en elke vestiging.** U bouwt nooit een
+versie per winkel: het adres wordt op de kassa ingesteld, niet in het bestand
+gebakken.
+
+**De installer op de kassa krijgen — twee routes:**
+
+- **Vanuit het dashboard van de winkel zelf (voorkeur zodra de server draait).**
+  Op elke pc op het winkelnetwerk: **Dashboard → POS-app → Windows-installer →
+  ⬇ Installer downloaden**. Dit werkt met de internetkabel eruit, en dat is
+  precies de bedoeling — een manager voegt op dinsdagochtend een vierde kassa
+  toe zonder iemand te bellen. Zichtbaar voor vestigingsmanagers en hoger.
+- **Vanaf onze downloadserver of een USB-stick**, voor de allereerste kassa
+  (vóór de winkelserver bestaat) of voor een evaluatie.
+
+**De kassa naar zijn server wijzen:**
+
+1. Installer uitvoeren → wizard → bureaubladpictogram. Een niet-ondertekende
+   versie toont de melding "onbekende uitgever": Meer info → Toch uitvoeren.
+2. Volgt de winkelserver onze conventie `192.168.0.250`, dan hoeft u **niets
+   in te stellen** — inloggen en verkopen.
+3. Anders: **⚙ Server** op het inlogscherm → adres plakken (het POS-app-scherm
+   in het dashboard toont het met een kopieerknop) → **Testen** → **Opslaan &
+   herstarten**. Adres onbekend? **🔍 Zoek mijn server** doorzoekt het lokale
+   netwerk en vult het in.
+4. De kassier logt in met de gegevens die de manager heeft aangemaakt.
+
+> **Controleer dat elke kassa hetzelfde adres gebruikt.** Instellingen →
+> Systeem toont het gebruikte adres en markeert het als *aangepast* wanneer het
+> handmatig is ingesteld. Twee kassa's op verschillende servers = twee
+> gescheiden administraties voor één winkel.
+
+> **Hardware staat los van waar de server staat.** Printer, kassalade en
+> scanner worden aangestuurd door de app op de kassa, dus ze werken hetzelfde
+> tegen een lokale of een externe server. Wat een alleen-op-afstand-opstelling
+> kost, is robuustheid: geen internet, geen verkoop.
+
+> **"Nog geen installer op deze server"?** Het bestand staat nog niet in de
+> installermap van de server. Zet de `.exe` daar neer en de downloadknop
+> verschijnt — herstarten is niet nodig.
 
 ### 16.5.4 Android-tablets — zelfde flow, andere installer
 

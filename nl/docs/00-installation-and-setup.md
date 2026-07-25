@@ -351,15 +351,69 @@ Windows: dubbelklik op `.exe`. De wizard installeert naar `C:\Program Files\Josb
 
 Android: zet "Installeren uit onbekende bronnen" eenmalig aan voor de bestandsbeheerder, tik dan op de `.apk`.
 
-### E3. Richt op de backend
+### E3. De kassa naar zijn server wijzen
 
-De eerste launch toont een veld **Server URL**. Voer in:
+**Eén installer werkt voor elke winkel.** Het adres dat in de build zit is
+slechts een startpunt — elke kassa bewaart zijn eigen adres, dus een aparte
+build per winkel is nooit nodig.
 
-```
-http://<server-LAN-IP>:8080
-```
+De app bepaalt de server in deze volgorde:
 
-De POS doet een `/api/health`-ping. Groen = goed, rood = check netwerk/firewall.
+1. **Een op deze kassa opgeslagen adres** (⚙ Server) — wint altijd.
+2. **Het adres in de installer** — per conventie krijgt elke winkelserver die
+   wij installeren het vaste LAN-adres `192.168.0.250`, zodat een standaard
+   installatie helemaal niets hoeft in te stellen.
+3. `localhost` — alleen voor ontwikkeling.
+
+**Past de conventie, doe dan niets.** Installeren, inloggen, verkopen.
+
+**Past hij niet** (de router van de winkel gebruikt een ander bereik zoals
+`192.168.1.x`, of de winkel werkt tegen een server op afstand):
+
+1. Tik op het inlogscherm op **⚙ Server** (managers: Instellingen → Systeem →
+   Serveradres).
+2. Voer het adres in — `192.168.0.250:8080`, of een domein zoals
+   `pos.klantnaam.sr`. `http://` en `/api` worden automatisch aangevuld.
+3. Druk op **Testen** tot er *Verbonden* staat, dan **Opslaan & herstarten**.
+4. Adres onbekend? Druk op **🔍 Zoek mijn server** — de kassa doorzoekt het
+   eigen netwerk en vult het adres in. Worden er meerdere gevonden, dan kiest
+   u uit een lijst.
+
+**Standaard gebruiken** wist een opgeslagen adres en zet de kassa terug op het
+ingebouwde adres.
+
+> **⚠️ Alle kassa's van één vestiging moeten hetzelfde adres gebruiken.** Twee
+> kassa's die naar verschillende servers wijzen, betekent twee gescheiden
+> administraties voor dezelfde winkel. Controleer per kassa via Instellingen →
+> Systeem: daar staat altijd het gebruikte adres, met de markering *aangepast*
+> als het handmatig is ingesteld.
+
+> **Lokale server of op afstand?** Voor de hardware maakt het niets uit — de
+> printer, kassalade en scanner worden aangestuurd door de app op de kassa,
+> nooit door de server. Het verschil zit in robuustheid: met de server **in de
+> winkel** verandert een internetstoring niets; met een server **op afstand**
+> kan de kassa niet verkopen zolang de verbinding weg is. Zie
+> [Sync & offline](07-sync-and-offline.md).
+
+> **Een draaiende winkel later naar een andere server verhuizen** is meer dan
+> een adreswijziging — de verkoopgeschiedenis staat op de server, dus van
+> cloud naar een lokale server (of andersom) is een geplande datamigratie, geen
+> instelling.
+
+### E3a. Waar de installer vandaan komt (per winkel)
+
+Zodra een winkelserver draait, is de installer beschikbaar **vanuit het
+dashboard van de winkel zelf** — geen internet, geen USB-stick nodig:
+
+**Dashboard → POS-app → Windows-installer → ⬇ Installer downloaden**
+
+Op datzelfde scherm staat het exacte serveradres dat u moet invoeren, met een
+kopieerknop. Zichtbaar voor vestigingsmanagers en hoger; kassiers zien het
+niet.
+
+Staat er dat er nog geen installer is, dan is het bestand nog niet op die
+server geplaatst — de leverancier zet het in de installermap van de server en
+de downloadknop verschijnt (herstarten is niet nodig).
 
 ### E4. Hardware fingerprint neemt een licentie-slot
 

@@ -208,6 +208,19 @@ Per till (Windows):
 5. Built the exe with a different IP than the store uses? Rebuild on ANY
    machine with node: the exact command block is in Phase 0.3 — swap the IP.
 
+### Two ways a till gets the installer
+
+1. **From the store's own dashboard** (once the store server runs): Dashboard →
+   POS app → Windows installer → Download. Works with no internet — this is the
+   route the customer uses forever after go-live. Put the `.exe` in the
+   server's installer dir (`JOSBIN_POS_INSTALLER_DIR`, default `downloads/`
+   beside the repo) and the button appears; no restart.
+2. **From our download server / the USB kit** — for the very first till, before
+   the store server exists.
+
+Either way the address is set per till (⚙ Server / 🔍 Find my server), so ONE
+installer file serves every customer.
+
 ### Building & publishing an installer to the download server
 
 The demo installer at

@@ -73,5 +73,6 @@ deploy.env
 docker/frontends/certs/
 scripts/.k6-tokens.json
 internal-docs-dist/
-downloads/
+downloads/*
+!downloads/.gitkeep
 frontend/release/

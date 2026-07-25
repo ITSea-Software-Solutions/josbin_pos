@@ -86,6 +86,10 @@ class HealthController extends Controller
         $status = $healthy ? 200 : 503;
 
         return response()->json([
+            // Stable product identifier — lets the Electron till's LAN
+            // "Find my server" sweep recognise a Josbin server by identity
+            // instead of guessing from the shape of the response.
+            'app'        => 'josbin_pos',
             'status'     => $healthy ? 'ok' : 'degraded',
             'timestamp'  => now()->toIso8601String(),
             'timezone'   => 'America/Paramaribo',

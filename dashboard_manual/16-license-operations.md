@@ -170,10 +170,43 @@ After activation the **red license banner disappears** from the dashboard. If it
 
 ### 16.5.3 POS terminals — once per till
 
-1. On each till machine, run `Josbin POS-Setup.exe` (the code-signed installer you sent).
-2. First launch asks for the back-office server URL: enter `http://<back-office-ip>:8080` (use the LAN IP, not `localhost`).
-3. Login screen appears. Cashier logs in with their credentials (created by the manager in the dashboard).
-4. The back-office Laravel app verifies: "is this terminal under the licensed terminal count?" — counted by `installation.uuid` files. If under limit: terminal registered, login succeeds. If at limit: the user sees *"License limit reached — contact your manager"* and login is blocked.
+**One installer works for every customer and every store.** You never build a
+per-store version: the address is set on the till, not baked into the file.
+
+**Getting the installer onto the till — two routes:**
+
+- **From the store's own dashboard (preferred once the server runs).** On any
+  PC on the shop network: **Dashboard → POS app → Windows installer → ⬇
+  Download installer**. This works with the internet cable unplugged, which is
+  the whole point — a manager can add a fourth till on a Tuesday morning
+  without calling anyone. Visible to Store Managers and above.
+- **From our download server or a USB stick**, for the very first till (before
+  the store server exists) or an evaluation.
+
+**Pointing the till at its server:**
+
+1. Run the installer → wizard → desktop icon. An unsigned build shows Windows'
+   "unknown publisher" notice: More info → Run anyway.
+2. If the store server follows our `192.168.0.250` convention, there is
+   **nothing to configure** — log in and sell.
+3. Otherwise: **⚙ Server** on the login screen → paste the address (the POS-app
+   screen in the dashboard shows it with a copy button) → **Test** →
+   **Save & restart**. Don't know it? **🔍 Find my server** scans the local
+   network and fills it in.
+4. Cashier logs in with the credentials the manager created.
+
+> **Check every till uses the same address.** Settings → System shows the
+> address in use and marks it *custom* when set by hand. Two tills on
+> different servers = two separate sets of books for one shop.
+
+> **Hardware is independent of where the server lives.** The printer, cash
+> drawer and scanner are driven by the app on the till, so they work the same
+> against a local server or a remote one. What a remote-only setup costs you
+> is offline resilience — no internet, no selling.
+
+> **"No installer deployed on this server"?** The file has not been placed in
+> the server's installer folder yet. Drop the `.exe` there and the download
+> button appears — no restart needed.
 
 ### 16.5.4 Android tablets — same flow, different installer
 

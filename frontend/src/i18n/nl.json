@@ -204,7 +204,14 @@
       "testFail": "Server niet bereikbaar",
       "saveRestart": "Opslaan & herstarten",
       "reset": "Standaard gebruiken",
-      "hint": "Wijzig dit alleen tijdens installatie of als de winkelserver een nieuw adres heeft gekregen. Vraag het uw manager bij twijfel — de app herstart na opslaan."
+      "hint": "Wijzig dit alleen tijdens installatie of als de winkelserver een nieuw adres heeft gekregen. Vraag het uw manager bij twijfel — de app herstart na opslaan.",
+      "find": "🔍 Zoek mijn server",
+      "findUnavailable": "Zoeken op het netwerk werkt alleen in de geïnstalleerde kassa-app. Typ in een browser het adres in.",
+      "searching": "Bezig met zoeken op het lokale netwerk…",
+      "foundOne": "Server gevonden op het netwerk — hieronder gecontroleerd.",
+      "foundMany": "{{n}} servers gevonden op het netwerk. Kies die van deze winkel:",
+      "foundNone": "Geen server gevonden op dit netwerk. Controleer of de kassa op het winkelnetwerk zit (kabel of winkel-wifi), vraag uw manager om het serveradres, of typ het adres handmatig in als de server op een andere locatie staat.",
+      "pickPrompt": "Kies een server"
     },
     "discount": {
       "title": "Korting toevoegen",

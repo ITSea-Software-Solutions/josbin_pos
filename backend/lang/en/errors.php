@@ -48,4 +48,7 @@ return [
     'passkey_ceremony_expired'      => 'The passkey request expired. Please try again.',
     'passkey_invalid'               => 'That passkey could not be verified. Please try again.',
     'not_found'                     => 'Not found.',
+
+    // POS installer download
+    'installer_not_deployed'        => 'No installer has been deployed on this server yet. Ask your Josbin POS contact.',
 ];

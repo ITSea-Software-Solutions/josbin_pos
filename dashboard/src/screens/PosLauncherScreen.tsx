@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useQuery } from '@tanstack/react-query'
+import {
+  downloadInstaller, getInstallerInfo, posServerAddress,
+} from '@/api/installer'
 
 /**
  * PosLauncherScreen — a "front door" for the POS app from inside the dashboard.
@@ -27,6 +31,42 @@ export default function PosLauncherScreen() {
   const posUrl = (import.meta.env.VITE_POS_URL as string | undefined) ?? POS_URL_DEFAULT
 
   const [reach, setReach] = useState<Reachability>('unknown')
+  const [dlPct, setDlPct]   = useState<number | null>(null)
+  const [dlBusy, setDlBusy] = useState(false)
+  const [dlErr, setDlErr]   = useState<string | null>(null)
+  const [copied, setCopied] = useState(false)
+
+  // Is an installer deployed on THIS server? A 403 (cashier) or a missing file
+  // both simply mean "don't show the card" — never an error state.
+  const { data: installer } = useQuery({
+    queryKey: ['installer-info'],
+    queryFn: getInstallerInfo,
+    retry: false,
+    staleTime: 5 * 60_000,
+  })
+
+  const serverAddress = posServerAddress()
+
+  async function handleDownload() {
+    if (!installer?.filename) return
+    setDlBusy(true); setDlErr(null); setDlPct(0)
+    try {
+      await downloadInstaller(installer.filename, setDlPct)
+    } catch {
+      setDlErr(isNl
+        ? 'Download mislukt. Controleer de verbinding met de server en probeer opnieuw.'
+        : 'Download failed. Check the connection to the server and try again.')
+    } finally {
+      setDlBusy(false); setDlPct(null)
+    }
+  }
+
+  function copyAddress() {
+    navigator.clipboard?.writeText(serverAddress).then(
+      () => { setCopied(true); setTimeout(() => setCopied(false), 2000) },
+      () => {/* clipboard blocked — the address is on screen to type */},
+    )
+  }
 
   // Ping the POS to tell the manager if it's actually running.
   useEffect(() => {
@@ -77,30 +117,81 @@ export default function PosLauncherScreen() {
           </button>
         </div>
 
-        {/* Electron installer */}
+        {/* Electron installer — real download from THIS server */}
         <div style={card()}>
           <span style={{ ...pill('unknown'), background: '#eef2ff', color: '#1a234f', borderColor: '#c7d2fe' }}>
             {isNl ? '📦 Voor kassaterminals' : '📦 For till terminals'}
           </span>
           <h3 style={cardH()}>{isNl ? 'Windows-installer' : 'Windows installer'}</h3>
-          <p style={cardP()}>
-            {isNl
-              ? 'De officiële installer voor Windows-kassaterminals. Op de eerste start opent Josbin POS automatisch als de kassa wordt aangezet.'
-              : 'The official installer for Windows till terminals. After first launch, Josbin POS opens automatically when the till boots.'}
-          </p>
-          <p style={mono()}>Josbin POS-{`{version}`}-Setup.exe</p>
-          <p style={{ fontSize: 12, color: '#7e88a0', marginBottom: 12 }}>
-            {isNl
-              ? 'Vraag uw Josbin POS-contactpersoon om de actuele installer voor uw licentie.'
-              : 'Ask your Josbin POS contact for the current installer for your license.'}
-          </p>
-          <button onClick={() => alert(isNl
-                ? 'Neem contact op met uw Josbin POS-leverancier voor de installer.'
-                : 'Contact your Josbin POS vendor for the installer.')}
-            style={secondaryBtn()}>
-            {isNl ? 'Hoe krijg ik de installer?' : 'How do I get the installer?'}
+
+          {installer?.available ? (
+            <>
+              <p style={cardP()}>
+                {isNl
+                  ? 'Download op de kassaterminal zelf en voer hem uit. Werkt volledig via het winkelnetwerk — internet is niet nodig.'
+                  : 'Download on the till itself and run it. Works entirely over the store network — no internet needed.'}
+              </p>
+              <p style={mono()}>
+                {installer.filename}
+                {installer.size_bytes
+                  ? `  ·  ${(installer.size_bytes / 1048576).toFixed(0)} MB`
+                  : ''}
+              </p>
+              <button onClick={handleDownload} disabled={dlBusy} style={primaryBtn(!dlBusy)}>
+                {dlBusy
+                  ? (dlPct !== null
+                      ? `${isNl ? 'Downloaden' : 'Downloading'}… ${dlPct}%`
+                      : (isNl ? 'Downloaden…' : 'Downloading…'))
+                  : (isNl ? '⬇ Installer downloaden' : '⬇ Download installer')}
+              </button>
+              {dlErr && <p style={{ margin: 0, fontSize: 12, color: '#b91c1c' }}>{dlErr}</p>}
+              <p style={{ fontSize: 12, color: '#7e88a0', margin: 0 }}>
+                {isNl
+                  ? 'Windows kan "onbekende uitgever" tonen bij een niet-ondertekende versie: Meer info → Toch uitvoeren.'
+                  : 'Windows may warn "unknown publisher" on an unsigned build: More info → Run anyway.'}
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={cardP()}>
+                {isNl
+                  ? 'Op deze server staat nog geen installer. Uw Josbin POS-contactpersoon plaatst het bestand op de winkelserver, daarna verschijnt hier een downloadknop.'
+                  : 'No installer is deployed on this server yet. Your Josbin POS contact places the file on the store server, after which a download button appears here.'}
+              </p>
+              {installer?.expected_dir && (
+                <p style={{ ...mono(), fontSize: 11.5 }}>{installer.expected_dir}</p>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Server address — what a fresh till must be pointed at */}
+      <div style={{ ...card(), marginTop: 24, borderColor: '#c7d2fe', background: '#f8faff' }}>
+        <h3 style={cardH()}>
+          {isNl ? '🔗 Serveradres voor de kassa\'s' : '🔗 Server address for the tills'}
+        </h3>
+        <p style={cardP()}>
+          {isNl
+            ? 'Elke kassa moet naar deze server wijzen. Eén installer werkt voor iedere winkel — het adres stelt u per kassa in, opnieuw bouwen is nooit nodig.'
+            : 'Every till must point at this server. One installer works for every store — you set the address per till, a rebuild is never needed.'}
+        </p>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+          <span style={{ ...mono(), margin: 0, fontSize: 15, fontWeight: 700 }}>{serverAddress}</span>
+          <button onClick={copyAddress} style={secondaryBtn()}>
+            {copied ? (isNl ? '✓ Gekopieerd' : '✓ Copied') : (isNl ? '📋 Kopiëren' : '📋 Copy')}
           </button>
         </div>
+        <ol style={{ margin: '10px 0 0 18px', padding: 0, color: '#374151', fontSize: 13.5, lineHeight: 1.75 }}>
+          <li>{isNl ? 'Open de POS-app op de kassa.' : 'Open the POS app on the till.'}</li>
+          <li>{isNl ? 'Klik op ⚙ Server op het inlogscherm (of Instellingen → Systeem).' : 'Click ⚙ Server on the login screen (or Settings → System).'}</li>
+          <li>{isNl ? 'Plak het adres hierboven → Testen → Opslaan & herstarten.' : 'Paste the address above → Test → Save & restart.'}</li>
+        </ol>
+        <p style={{ margin: '4px 0 0', fontSize: 12.5, color: '#6b7280', lineHeight: 1.6 }}>
+          {isNl
+            ? '⚠ Alle kassa\'s van één vestiging moeten hetzelfde adres gebruiken — anders komen verkopen in twee gescheiden administraties terecht. Controleer per kassa via Instellingen → Systeem.'
+            : '⚠ All tills in one store must use the same address — otherwise sales end up in two separate sets of books. Verify per till under Settings → System.'}
+        </p>
       </div>
 
       {/* How a cashier logs in */}
