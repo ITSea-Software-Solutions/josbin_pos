@@ -12,6 +12,9 @@ hero:
     - theme: alt
       text: User Manual
       link: /user_manual/
+    - theme: alt
+      text: 🎬 Video's & presentatie
+      link: /videos.html
 
 features:
   - icon: 🏗️
@@ -37,6 +40,12 @@ features:
     details: Single end-to-end runbook covering server install, organisation onboarding, hardware setup, first live sale.
     linkText: Installation & Setup Guide
     link: /docs/00-installation-and-setup
+
+  - icon: 🎬
+    title: Watch instead of read
+    details: The platform presentation (13 chapters, ±3 min, NL/EN with voice-over) plus the promo and teaser — ideal for a team session or a first demo.
+    linkText: Open the video overview
+    link: /videos.html
 
   - icon: 📐
     title: Architecture in one read
