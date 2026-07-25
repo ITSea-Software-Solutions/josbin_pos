@@ -402,7 +402,8 @@
       "helpElectron": "Netwerk (TCP): koppel a printer na a LAN èn poti en IP-adres. Wi e rai en gi EPSON TM-T20 nanga Ethernet.\nUSB: teki a printer soleki fa a sori ini Windows Apparaten.",
       "helpAndroid": "Netwerk (TCP): poti a IP-adres fu a printer. Wi e rai disi.\nUSB: yu abi a @anuradev/capacitor-printer plugin fanowdu (luku README).",
       "autoPrint": "Prenti a bon automatisch baka ibri seri",
-      "autoPrintHelp": "Wan bon-printer e prenti safri sondro aksi; sondro printer a print-venster e opo baka ibri seri."
+      "autoPrintHelp": "Wan bon-printer e prenti safri sondro aksi; sondro printer a print-venster e opo baka ibri seri.",
+      "networkOnlyHint": "USB print e wroko soso na a Windows-app — na tapu a masyin disi gebroiki wan netwerk printer (en IP-adres)."
     },
     "system": {
       "title": "Systeem",

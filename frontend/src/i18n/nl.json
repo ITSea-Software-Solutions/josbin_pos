@@ -402,7 +402,8 @@
       "helpElectron": "Netwerk (TCP): sluit de printer aan op het LAN en voer het IP-adres in. Aanbevolen voor EPSON TM-T20 met Ethernet.\nUSB: kies de printer zoals die staat in Windows Apparaten.",
       "helpAndroid": "Netwerk (TCP): voer het IP-adres van de printer in. Aanbevolen.\nUSB: vereist de @anuradev/capacitor-printer plugin (zie README).",
       "autoPrint": "Bon automatisch afdrukken na elke verkoop",
-      "autoPrintHelp": "Thermische printers drukken stil af; zonder printer opent na elke verkoop het afdrukvenster."
+      "autoPrintHelp": "Thermische printers drukken stil af; zonder printer opent na elke verkoop het afdrukvenster.",
+      "networkOnlyHint": "USB-printen werkt alleen op de Windows-app — gebruik op dit apparaat een netwerkprinter (het IP-adres)."
     },
     "system": {
       "title": "Systeem",

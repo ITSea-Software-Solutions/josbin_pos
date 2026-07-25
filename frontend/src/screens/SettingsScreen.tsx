@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
@@ -38,6 +38,16 @@ export default function SettingsScreen() {
 
   const platform = detectPlatform()
   const [saved, setSaved] = useState(false)
+
+  // Heal a saved 'usb' printer config on platforms that can't drive USB
+  // (e.g. an Android till configured before that option stopped being
+  // offered there) — otherwise the hidden setting keeps failing tests.
+  useEffect(() => {
+    if (platform !== 'electron' && printer.type === 'usb') {
+      updatePrinter({ type: 'network' })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [windowsPrinters, setWindowsPrinters] = useState<string[]>([])
   const [drawerTestStatus, setDrawerTestStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle')
 
@@ -215,11 +225,14 @@ export default function SettingsScreen() {
             <HelpButton topic="hardware" />
           </div>
 
-          {/* Connection type */}
+          {/* Connection type. USB goes through the Windows print spooler, which
+              only exists in the Electron build — on Android/web offering it
+              would be a dead end (drawer test fails with a vague error), so
+              those platforms get network-only. */}
           <div>
             <label style={labelSt}>{t('settings.printer.type')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              {(['none', 'network', 'usb'] as const).map((type) => (
+              {(platform === 'electron' ? (['none', 'network', 'usb'] as const) : (['none', 'network'] as const)).map((type) => (
                 <button
                   key={type}
                   onClick={() => updatePrinter({ type })}
@@ -238,6 +251,11 @@ export default function SettingsScreen() {
                 </button>
               ))}
             </div>
+            {platform !== 'electron' && (
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                {t('settings.printer.networkOnlyHint')}
+              </div>
+            )}
           </div>
 
           {/* Auto-print after each sale (works with or without a thermal

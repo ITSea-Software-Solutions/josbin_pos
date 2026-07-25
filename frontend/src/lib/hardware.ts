@@ -75,6 +75,11 @@ export async function printEscPos(
 
   // ── Android (Capacitor) ───────────────────────────────────────────────────
   if (platform === 'android') {
+    if (config.type === 'usb') {
+      // Android has no print-spooler path for raw ESC/POS — only the network
+      // socket works. Name the real cause instead of a generic failure.
+      return { success: false, error: 'USB printing is not supported on Android — use a network printer' }
+    }
     try {
       const { CapacitorPrinter } = await import('./capacitor-printer')
       return CapacitorPrinter.printEscPos({ data: Array.from(bytes), config })
