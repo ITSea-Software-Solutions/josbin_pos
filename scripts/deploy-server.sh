@@ -58,6 +58,7 @@ cp docs/flows.html docs/architecture.html docs/card-payments.html docs-site/.vit
 # Marketing sizzle-reel + teaser + landing page (self-contained bilingual HTML)
 # → /promo.html, /teaser.html, /videos.html (the one link to share with clients).
 cp marketing/josbin-pos-promo.html  docs-site/.vitepress/dist/promo.html  || fail "promo copy failed"
+cp marketing/josbin-pos-platform-tour.html docs-site/.vitepress/dist/tour.html || fail "tour copy failed"
 cp marketing/josbin-pos-teaser.html docs-site/.vitepress/dist/teaser.html || fail "teaser copy failed"
 cp marketing/videos.html            docs-site/.vitepress/dist/videos.html || fail "videos copy failed"
 

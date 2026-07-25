@@ -1,0 +1,805 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0a0e1a">
+<title>Josbin POS — Platform-presentatie / Platform Tour (NL/EN)</title>
+</head>
+<body>
+<style>
+  :root{
+    --ink:#0a0e1a; --stage:#0c1322; --surface:#141d31; --surface2:#1b2640;
+    --line:#25314e; --line-soft:#1a2440;
+    --em:#1f9bde; --em-deep:#0a72ac; --em-glow:rgba(31,155,222,.45);
+    --gold:#ef6c00; --red:#e5484d; --sky:#5cc8ff;
+    --text:#eef2fb; --muted:#94a2c2; --dim:#6b7a9c;
+    --stack:-apple-system,"SF Pro Display","Segoe UI Variable","Segoe UI",system-ui,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  .promo-wrap{
+    min-height:100dvh; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; padding:22px 16px 26px;
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(31,155,222,.10), transparent 60%),
+      radial-gradient(900px 500px at 110% 120%, rgba(239,108,0,.07), transparent 55%),
+      var(--ink);
+    color:var(--text); font-family:var(--stack); -webkit-font-smoothing:antialiased;
+  }
+
+  .stage{
+    position:relative; width:min(1180px,94vw); aspect-ratio:16/9;
+    container-type:size; border-radius:20px; overflow:hidden; isolation:isolate;
+    background:radial-gradient(120% 120% at 12% 8%, #12203a 0%, var(--stage) 42%, #080d18 100%);
+    box-shadow:0 40px 120px -30px rgba(0,0,0,.8), 0 0 0 1px var(--line), inset 0 0 0 1px rgba(255,255,255,.02);
+  }
+  .stage::before{
+    content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.5;
+    background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);
+    background-size:5cqi 5cqi; mask:radial-gradient(120% 90% at 50% 40%,#000 30%,transparent 78%);
+  }
+  .stage::after{
+    content:""; position:absolute; z-index:0; width:60cqi; height:60cqi; left:-10cqi; top:-24cqi;
+    background:radial-gradient(closest-side,var(--em-glow),transparent 70%); filter:blur(8px);
+    animation:drift 18s ease-in-out infinite alternate;
+  }
+  @keyframes drift{from{transform:translate(0,0)}to{transform:translate(70cqi,26cqi)}}
+
+  .scene{
+    position:absolute; inset:0; z-index:1; padding:6.4cqi 7.6cqi;
+    display:flex; flex-direction:column; justify-content:center;
+    opacity:0; visibility:hidden; transform:scale(1.02);
+    transition:opacity .55s ease, transform .7s cubic-bezier(.2,.7,.2,1), visibility 0s .55s;
+  }
+  .scene.is-active{opacity:1; visibility:visible; transform:none; transition:opacity .55s ease, transform .7s cubic-bezier(.2,.7,.2,1);}
+
+  .eyebrow{font-size:1.5cqi; font-weight:700; letter-spacing:.3em; text-transform:uppercase; color:var(--em); margin-bottom:2.2cqi; display:flex; align-items:center; gap:1.2cqi;}
+  .eyebrow::before{content:""; width:2.6cqi; height:.28cqi; border-radius:2px; background:linear-gradient(90deg,var(--em),transparent);}
+  .headline{font-size:5.4cqi; font-weight:800; line-height:.99; letter-spacing:-.02em; text-wrap:balance; margin:0;}
+  .headline .accent{color:var(--em);}
+  .headline .gold{color:var(--gold);}
+  .subline{font-size:2.05cqi; color:var(--muted); font-weight:500; margin-top:1.8cqi; max-width:56cqi;}
+
+  .scene.is-active .r1{animation:rise .7s .05s both cubic-bezier(.2,.7,.2,1)}
+  .scene.is-active .r2{animation:rise .7s .18s both cubic-bezier(.2,.7,.2,1)}
+  .scene.is-active .r3{animation:rise .7s .32s both cubic-bezier(.2,.7,.2,1)}
+  .scene.is-active .r4{animation:rise .7s .46s both cubic-bezier(.2,.7,.2,1)}
+  @keyframes rise{from{opacity:0;transform:translateY(2.6cqi)}to{opacity:1;transform:none}}
+
+  .chips{display:flex; flex-wrap:wrap; gap:1.3cqi; margin-top:3cqi;}
+  .chip{font-size:1.65cqi; font-weight:600; padding:1cqi 1.9cqi; border-radius:100px; background:var(--surface); border:1px solid var(--line); color:var(--text); display:flex; align-items:center; gap:.8cqi;}
+  .chip .dot{width:1cqi;height:1cqi;border-radius:50%;background:var(--em);box-shadow:0 0 0 .5cqi var(--em-glow)}
+  .chip.gold .dot{background:var(--gold);box-shadow:0 0 0 .5cqi rgba(239,108,0,.3)}
+
+  .brand{display:flex; align-items:center; gap:2cqi; margin-bottom:2.6cqi;}
+  .logo{width:8.4cqi; height:8.4cqi; border-radius:2.2cqi; display:grid; place-items:center; font-weight:800; font-size:4cqi; color:#04140d;
+    background:linear-gradient(135deg,var(--em),#5cc8ff); box-shadow:0 12px 30px -6px var(--em-glow), inset 0 0 0 1px rgba(255,255,255,.25);}
+  .wordmark{font-size:7cqi; font-weight:800; letter-spacing:-.03em; line-height:1;}
+  .wordmark b{color:var(--em)}
+  .flag{display:flex;flex-direction:column;width:5.4cqi;height:3.6cqi;border-radius:.8cqi;overflow:hidden;box-shadow:0 0 0 1px rgba(255,255,255,.15)}
+  .flag i{display:block;width:100%}
+  .flag .g{height:26%;background:#377e3f}.flag .w{height:12%;background:#fff}.flag .r{height:24%;background:#b40a2d;position:relative}
+  .flag .r::after{content:"★";position:absolute;inset:0;display:grid;place-items:center;color:var(--gold);font-size:2cqi;line-height:0}
+
+  .split{display:grid; grid-template-columns:1.25fr .95fr; gap:2.8cqi; align-items:stretch; margin-top:.6cqi;}
+  .panel{background:linear-gradient(180deg,var(--surface),#111a2c); border:1px solid var(--line); border-radius:2.2cqi; padding:2.2cqi; position:relative; overflow:hidden;}
+  .panel-title{font-size:1.45cqi;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:1.6cqi;display:flex;justify-content:space-between}
+  .grid6{display:grid; grid-template-columns:repeat(3,1fr); gap:1.3cqi;}
+  .tile{background:var(--surface2); border:1px solid var(--line); border-radius:1.5cqi; padding:1.4cqi 1.1cqi; display:flex; flex-direction:column; gap:.5cqi; min-height:10.4cqi; justify-content:space-between;}
+  .tile .emo{font-size:3.2cqi; line-height:1}
+  .tile .nm{font-size:1.45cqi; font-weight:600; color:var(--text); line-height:1.1}
+  .tile .pr{font-size:1.45cqi; font-weight:700; color:var(--em); font-variant-numeric:tabular-nums}
+  .scene.is-active .tile{animation:pop .5s both}
+  .scene.is-active .tile:nth-child(2){animation-delay:.06s}.scene.is-active .tile:nth-child(3){animation-delay:.12s}
+  .scene.is-active .tile:nth-child(4){animation-delay:.18s}.scene.is-active .tile:nth-child(5){animation-delay:.24s}.scene.is-active .tile:nth-child(6){animation-delay:.3s}
+  @keyframes pop{from{opacity:0;transform:scale(.9) translateY(1.4cqi)}to{opacity:1;transform:none}}
+  .tile.zap{animation:zap 1.1s .8s both !important}
+  @keyframes zap{0%,60%{box-shadow:0 0 0 0 transparent;border-color:var(--line)}70%{box-shadow:0 0 0 .5cqi var(--em-glow);border-color:var(--em)}100%{box-shadow:0 0 0 0 transparent;border-color:var(--line)}}
+
+  .cart{display:flex;flex-direction:column;height:100%}
+  .cart .lines{display:flex;flex-direction:column;gap:1.1cqi;flex:1}
+  .line{display:flex;justify-content:space-between;align-items:center;font-size:1.7cqi;opacity:0}
+  .line .l{display:flex;gap:1cqi;align-items:center;color:var(--text)}
+  .line .q{color:var(--dim);font-variant-numeric:tabular-nums}
+  .line .amt{font-weight:700;font-variant-numeric:tabular-nums}
+  .scene.is-active .line{animation:slideIn .5s both}
+  .scene.is-active .line:nth-child(1){animation-delay:.5s}.scene.is-active .line:nth-child(2){animation-delay:.9s}.scene.is-active .line:nth-child(3){animation-delay:1.3s}
+  @keyframes slideIn{from{opacity:0;transform:translateX(2cqi)}to{opacity:1;transform:none}}
+  .total-row{margin-top:1.6cqi;padding-top:1.6cqi;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline}
+  .total-row .lab{font-size:1.65cqi;color:var(--muted);font-weight:600}
+  .total-row .big{font-size:4.4cqi;font-weight:800;color:var(--em);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .scan-beam{position:absolute;left:2.2cqi;right:2.2cqi;height:.4cqi;top:40%;background:linear-gradient(90deg,transparent,var(--em),transparent);border-radius:2px;opacity:0;filter:drop-shadow(0 0 1cqi var(--em))}
+  .scene.is-active .scan-beam{animation:scan 1.4s .2s ease-in-out}
+  @keyframes scan{0%{opacity:0;top:22%}20%{opacity:1}80%{opacity:1}100%{opacity:0;top:78%}}
+
+  /* Product form */
+  .form{background:linear-gradient(180deg,var(--surface),#111a2c);border:1px solid var(--line);border-radius:2cqi;padding:2.4cqi 2.6cqi;width:54cqi}
+  .form .ft{font-size:1.5cqi;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:1.6cqi;display:flex;justify-content:space-between}
+  .frow{display:grid;grid-template-columns:1fr 1fr;gap:1.3cqi;margin-bottom:1.3cqi}
+  .field{background:var(--surface2);border:1px solid var(--line);border-radius:1cqi;padding:1cqi 1.3cqi}
+  .field .k{font-size:1.15cqi;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+  .field .v{font-size:1.85cqi;font-weight:600;margin-top:.35cqi;color:var(--text);font-variant-numeric:tabular-nums}
+  .field.sel{border-color:rgba(31,155,222,.4);background:linear-gradient(90deg,rgba(31,155,222,.1),var(--surface2))}
+  .field.sel .v{display:flex;justify-content:space-between;color:var(--em)}
+  .field.sel .v span:last-child{color:var(--dim);font-size:1.4cqi}
+  .variants{display:flex;gap:1cqi;flex-wrap:wrap;margin-top:.5cqi}
+  .vchip{font-size:1.5cqi;font-weight:600;padding:.75cqi 1.4cqi;border-radius:.9cqi;background:rgba(31,155,222,.1);border:1px solid rgba(31,155,222,.35);color:var(--em);display:flex;gap:.8cqi;align-items:center}
+  .vchip .p{color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* Payment */
+  .paygrid{display:flex;gap:2.2cqi;align-items:center;margin-top:.6cqi}
+  .payways{display:flex;flex-direction:column;gap:1.3cqi;flex:1}
+  .payway{display:flex;align-items:center;gap:1.6cqi;background:var(--surface);border:1px solid var(--line);border-radius:1.4cqi;padding:1.5cqi 1.9cqi;font-size:1.95cqi;font-weight:600;opacity:.4}
+  .payway .ic{width:3.8cqi;height:3.8cqi;border-radius:1cqi;display:grid;place-items:center;font-size:2.1cqi;background:var(--surface2)}
+  .scene.is-active .payway:nth-child(1){animation:payCycle 5.4s both}
+  .scene.is-active .payway:nth-child(2){animation:payCycle2 5.4s both}
+  .scene.is-active .payway:nth-child(3){animation:payCycle3 5.4s both}
+  .scene.is-active .payway:nth-child(4){animation:payCycle4 5.4s both}
+  @keyframes payCycle{0%,22%{opacity:1;border-color:var(--em)}30%,100%{opacity:.4;border-color:var(--line)}}
+  @keyframes payCycle2{0%,24%{opacity:.4}30%,46%{opacity:1;border-color:var(--em)}54%,100%{opacity:.4;border-color:var(--line)}}
+  @keyframes payCycle3{0%,48%{opacity:.4}54%,70%{opacity:1;border-color:var(--em)}78%,100%{opacity:.4;border-color:var(--line)}}
+  @keyframes payCycle4{0%,72%{opacity:.4}80%,96%{opacity:1;border-color:var(--em)}100%{opacity:.4}}
+  .change{width:31cqi;background:var(--surface);border:1px solid var(--line);border-radius:1.8cqi;padding:2.4cqi;text-align:center}
+  .change .k{font-size:1.45cqi;color:var(--dim);text-transform:uppercase;letter-spacing:.16em;font-weight:700}
+  .change .v{font-size:5.2cqi;font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;line-height:1.1;margin-top:.5cqi}
+  .change .sub{font-size:1.5cqi;color:var(--muted);margin-top:.5cqi}
+
+  /* PCI card */
+  .pcigrid{display:flex;gap:3cqi;align-items:center;margin-top:.6cqi}
+  .cardface{width:42cqi;height:25cqi;border-radius:2.4cqi;padding:2.8cqi;position:relative;color:#eaf6ff;
+    background:linear-gradient(135deg,#173453,#0b1f38);border:1px solid #2c4a68;box-shadow:0 24px 60px -18px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.05);overflow:hidden}
+  .cardface::after{content:"";position:absolute;width:20cqi;height:20cqi;right:-6cqi;top:-8cqi;border-radius:50%;background:radial-gradient(closest-side,rgba(31,155,222,.35),transparent)}
+  .cardchip{width:5cqi;height:3.6cqi;border-radius:.8cqi;background:linear-gradient(135deg,#e9c86b,#b8922f);margin-bottom:2.6cqi}
+  .cardnum{font-size:3.2cqi;font-weight:700;letter-spacing:.15em;font-variant-numeric:tabular-nums;display:flex;gap:1.4cqi}
+  .cardnum .mask{color:#54708f}
+  .cardnum .last{color:#fff}
+  .cardrow{display:flex;justify-content:space-between;margin-top:2.4cqi;font-size:1.5cqi;color:#9fb6d0}
+  .lockbadge{position:absolute;right:2.4cqi;bottom:2.4cqi;font-size:1.5cqi;font-weight:700;color:var(--em);display:flex;align-items:center;gap:.7cqi}
+
+  /* Security grid */
+  .secgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.7cqi;margin-top:1.8cqi}
+  .sec{background:var(--surface);border:1px solid var(--line);border-radius:1.6cqi;padding:1.9cqi;display:flex;flex-direction:column;gap:.9cqi}
+  .sec .ic{font-size:2.8cqi;line-height:1}
+  .sec .t{font-size:1.85cqi;font-weight:700}
+  .sec .d{font-size:1.4cqi;color:var(--muted);line-height:1.35}
+  .scene.is-active .sec{animation:pop .5s both}
+  .scene.is-active .sec:nth-child(2){animation-delay:.07s}.scene.is-active .sec:nth-child(3){animation-delay:.14s}
+  .scene.is-active .sec:nth-child(4){animation-delay:.21s}.scene.is-active .sec:nth-child(5){animation-delay:.28s}.scene.is-active .sec:nth-child(6){animation-delay:.35s}
+
+  /* Roles tree */
+  .tree{display:flex;flex-direction:column;align-items:center;gap:.9cqi;margin-top:.6cqi}
+  .node{background:var(--surface);border:1px solid var(--line);border-radius:1.3cqi;padding:1.2cqi 2.2cqi;font-size:1.9cqi;font-weight:700;display:flex;align-items:center;gap:1.2cqi}
+  .node .b{font-size:1.35cqi;color:var(--dim);font-weight:500}
+  .node.top{border-color:var(--em);background:linear-gradient(90deg,rgba(31,155,222,.14),var(--surface))}
+  .node.gov{border-color:rgba(239,108,0,.4);background:linear-gradient(90deg,rgba(239,108,0,.1),var(--surface))}
+  .conn{width:2px;height:1.8cqi;background:var(--line)}
+  .branch{display:flex;gap:2.4cqi;margin-top:.4cqi}
+  .scene.is-active .node{animation:rise .5s both}
+  .scene.is-active .node:nth-child(3){animation-delay:.1s}.scene.is-active .node:nth-child(5){animation-delay:.2s}.scene.is-active .node:nth-child(7){animation-delay:.3s}
+
+  /* BTW flow */
+  .flow{display:flex;align-items:stretch;gap:1.4cqi;margin-top:2cqi;justify-content:center;flex-wrap:wrap}
+  .fstep{background:var(--surface);border:1px solid var(--line);border-radius:1.4cqi;padding:1.6cqi 1.8cqi;font-size:1.7cqi;font-weight:600;text-align:center;width:20cqi;display:flex;flex-direction:column;justify-content:center;gap:.5cqi}
+  .fstep .ic{font-size:2.6cqi}
+  .fstep .s{font-size:1.35cqi;color:var(--dim);font-weight:500}
+  .fstep.ok{border-color:var(--em)}.fstep.ok .ic{color:var(--em)}
+  .fstep.bad{border-color:var(--red)}.fstep.bad .ic{color:#ff8a8d}
+  .farrow{align-self:center;color:var(--em);font-size:2.4cqi;font-weight:800}
+  .outcome{display:flex;flex-direction:column;gap:1cqi;justify-content:center}
+  .scene.is-active .fstep{animation:pop .5s both}
+  .scene.is-active .fstep:nth-child(3){animation-delay:.15s}.scene.is-active .outcome{animation:rise .6s .3s both}
+
+  /* Tax inspector — Belastingdienst portal window (official light theme) */
+  .bdwin{width:100%;flex-shrink:0;margin-top:.5cqi;border-radius:1.3cqi;overflow:hidden;color:#0e1a14;background:#f4f7f5;
+    box-shadow:0 22px 52px -22px rgba(0,0,0,.72),0 0 0 1px #cfe0d5}
+  .bdbar{display:flex;align-items:center;gap:.9cqi;padding:.65cqi 1.2cqi;background:#e9efe9;border-bottom:1px solid #d8e2db}
+  .bddots{display:flex;gap:.5cqi}
+  .bddots i{width:.9cqi;height:.9cqi;border-radius:50%;display:block}
+  .bdurl{margin-left:.5cqi;font-size:1.1cqi;color:#5b6b62;background:#fff;border:1px solid #d8e2db;border-radius:100px;padding:.28cqi 1.1cqi}
+  .bdbody{padding:1cqi 1.3cqi 1.2cqi}
+  .bdhead{display:flex;align-items:center;justify-content:space-between;gap:1.2cqi;background:linear-gradient(135deg,#1f6b3b,#0c3a22);color:#fff;border-radius:.85cqi;padding:.85cqi 1.4cqi;position:relative;overflow:hidden}
+  .bdhead .star{position:absolute;right:1.1cqi;bottom:-2.2cqi;font-size:6.4cqi;color:rgba(244,196,48,.14);line-height:1}
+  .bdhead .ov{font-size:.9cqi;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(244,196,48,.92)}
+  .bdhead .ti{font-size:1.8cqi;font-weight:900;letter-spacing:-.01em;margin-top:.08cqi}
+  .bdhead .updated{font-size:.92cqi;color:rgba(234,242,236,.8);text-align:right;position:relative;z-index:1;line-height:1.35}
+  .bdkpis{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:.85cqi;margin-top:.9cqi}
+  .bdk{background:#fff;border:1px solid #d8e2db;border-radius:.85cqi;padding:.75cqi 1cqi;position:relative;overflow:hidden}
+  .bdk.hero{background:linear-gradient(140deg,#1f6b3b,#0c3a22);color:#fff;border:0}
+  .bdk .kl{font-size:.88cqi;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b62}
+  .bdk.hero .kl{color:rgba(244,196,48,.92)}
+  .bdk .kv{font-size:2.1cqi;font-weight:900;letter-spacing:-.02em;margin-top:.18cqi;font-variant-numeric:tabular-nums;color:#0e1a14;line-height:1.05}
+  .bdk.hero .kv{color:#fff}.bdk.hero .kv small{font-size:1.1cqi;font-weight:700;opacity:.82;margin-right:.3cqi}
+  .bdk .kv.amber{color:#a16207}.bdk .kv.red{color:#c8102e}.bdk .kv.green{color:#1f6b3b}
+  .bdk .kh{font-size:.82cqi;color:#5b6b62;margin-top:.12cqi}.bdk.hero .kh{color:rgba(234,242,236,.72)}
+  .bddelta{display:inline-flex;align-items:center;gap:.3cqi;font-size:.95cqi;font-weight:800;background:rgba(244,196,48,.22);color:#f4c430;border-radius:100px;padding:.1cqi .65cqi;margin-top:.35cqi}
+  .bdlist{background:#fff;border:1px solid #d8e2db;border-radius:.85cqi;margin-top:.85cqi;overflow:hidden}
+  .bdrow{display:grid;grid-template-columns:2.6fr 1fr 1.2fr 1.25fr;align-items:center;gap:1cqi;padding:.58cqi 1.3cqi;border-bottom:1px solid #eef2ef}
+  .bdrow:last-child{border-bottom:0}
+  .bdrow.h{background:#f4f7f5;font-size:.85cqi;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#5b6b62;padding-top:.5cqi;padding-bottom:.5cqi}
+  .bdrow .org{font-size:1.25cqi;font-weight:700;color:#0e1a14}
+  .bdrow .sub{font-size:.9cqi;color:#5b6b62;font-weight:500;margin-top:.06cqi;display:flex;align-items:center;gap:.5cqi}
+  .srcchip{font-size:.8cqi;font-weight:800;border-radius:100px;padding:.08cqi .6cqi;background:#e6efe9;color:#1f6b3b;letter-spacing:.02em}
+  .srcchip.ext{background:#eef1f4;color:#64748b}
+  .bdrow .per{font-size:1.12cqi;color:#5b6b62;font-variant-numeric:tabular-nums}
+  .bdrow .amt{font-size:1.25cqi;font-weight:800;color:#1f6b3b;font-variant-numeric:tabular-nums;text-align:right}
+  .pill{justify-self:start;font-size:1cqi;font-weight:800;border-radius:100px;padding:.25cqi .85cqi;white-space:nowrap}
+  .pill.ok{background:#e6efe9;color:#1f6b3b}
+  .pill.filed{background:#fff8e6;color:#a16207}
+  .pill.dis{background:#fdecec;color:#c8102e}
+  .scene.is-active .bdk{animation:pop .5s both}
+  .scene.is-active .bdk:nth-child(2){animation-delay:.06s}.scene.is-active .bdk:nth-child(3){animation-delay:.12s}.scene.is-active .bdk:nth-child(4){animation-delay:.18s}
+  .scene.is-active .bdlist .bdrow{animation:slideIn .45s both}
+  .scene.is-active .bdlist .bdrow:nth-child(3){animation-delay:.14s}.scene.is-active .bdlist .bdrow:nth-child(4){animation-delay:.26s}
+
+  /* Currency */
+  .ratewrap{display:flex;gap:3cqi;align-items:center;margin-top:.6cqi}
+  .ratecard{width:44cqi;background:linear-gradient(180deg,var(--surface),#111a2c);border:1px solid var(--line);border-radius:2cqi;padding:2.6cqi}
+  .rate-big{font-size:4.6cqi;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .rate-big .u{color:var(--muted);font-size:2.2cqi;font-weight:600}
+  .rate-meta{font-size:1.4cqi;color:var(--dim);margin-top:1cqi;display:flex;gap:1.2cqi;flex-wrap:wrap}
+  .rate-meta span{background:var(--surface2);border:1px solid var(--line);border-radius:100px;padding:.6cqi 1.2cqi}
+  .conv{display:flex;align-items:center;gap:1.6cqi;margin-top:2cqi;padding-top:2cqi;border-top:1px dashed var(--line);font-size:2.6cqi;font-weight:800;font-variant-numeric:tabular-nums}
+  .conv .eq{color:var(--em)}.conv .srd{color:var(--gold)}
+
+  /* Multi-language */
+  .langcols{display:grid;grid-template-columns:1fr auto 1fr;gap:2.4cqi;align-items:center;margin-top:1.4cqi}
+  .langcol{background:var(--surface);border:1px solid var(--line);border-radius:1.6cqi;padding:1.9cqi 2.1cqi}
+  .langcol h5{margin:0 0 1.1cqi;font-size:1.5cqi;color:var(--em);letter-spacing:.14em;text-transform:uppercase;display:flex;align-items:center;gap:.8cqi}
+  .langcol .row{font-size:1.85cqi;padding:.6cqi 0;color:var(--text);border-bottom:1px solid var(--line-soft)}
+  .langcol .row:last-child{border:0}
+  .toggle{width:8cqi;height:4cqi;border-radius:100px;background:var(--surface2);border:1px solid var(--line);position:relative;flex:none;margin:0 auto}
+  .toggle::after{content:"";position:absolute;top:.45cqi;left:.45cqi;width:3cqi;height:3cqi;border-radius:50%;background:linear-gradient(135deg,var(--em),#6fd0ff);box-shadow:0 4px 10px -2px var(--em-glow)}
+  .scene.is-active .toggle::after{animation:tog 3.4s infinite}
+  @keyframes tog{0%,42%{left:.45cqi}58%,100%{left:4.55cqi}}
+
+  /* Dashboard */
+  .stores{display:grid;grid-template-columns:repeat(3,1fr);gap:1.8cqi;margin-top:1.2cqi}
+  .store{background:var(--surface);border:1px solid var(--line);border-radius:1.8cqi;padding:1.9cqi}
+  .store .nm{font-size:1.6cqi;font-weight:700;display:flex;align-items:center;gap:1cqi}
+  .store .nm .live{width:.9cqi;height:.9cqi;border-radius:50%;background:var(--em);box-shadow:0 0 0 .4cqi var(--em-glow);animation:pulse 1.6s infinite}
+  @keyframes pulse{50%{box-shadow:0 0 0 .9cqi transparent}}
+  .store .big{font-size:3.2cqi;font-weight:800;font-variant-numeric:tabular-nums;margin-top:.9cqi;color:var(--text)}
+  .store .d{font-size:1.35cqi;color:var(--dim);margin-top:.3cqi}
+  .spark{display:flex;align-items:flex-end;gap:.7cqi;height:5.6cqi;margin-top:1.6cqi}
+  .spark i{flex:1;background:linear-gradient(180deg,var(--em),rgba(31,155,222,.15));border-radius:2px;transform-origin:bottom;transform:scaleY(0)}
+  .scene.is-active .spark i{animation:grow .6s both}
+  .scene.is-active .spark i:nth-child(2){animation-delay:.06s}.scene.is-active .spark i:nth-child(3){animation-delay:.12s}
+  .scene.is-active .spark i:nth-child(4){animation-delay:.18s}.scene.is-active .spark i:nth-child(5){animation-delay:.24s}
+  .scene.is-active .spark i:nth-child(6){animation-delay:.3s}.scene.is-active .spark i:nth-child(7){animation-delay:.36s}
+  @keyframes grow{to{transform:scaleY(1)}}
+
+  /* Offline */
+  .netbox{display:flex;flex-direction:column;align-items:center;gap:2.2cqi;margin-top:.6cqi}
+  .netpill{display:flex;align-items:center;gap:1.3cqi;font-size:2.5cqi;font-weight:700;padding:1.5cqi 2.8cqi;border-radius:100px;border:1px solid var(--line);background:var(--surface)}
+  .netpill .st{width:1.5cqi;height:1.5cqi;border-radius:50%}
+  .of .st{background:var(--red);box-shadow:0 0 0 .6cqi rgba(229,72,77,.25)}
+  .of{opacity:0}
+  .scene.is-active .of{animation:offSeq 4.8s both}
+  @keyframes offSeq{0%{opacity:0}9%{opacity:1}68%{opacity:1}77%{opacity:0}100%{opacity:0}}
+  .on2 .st{background:var(--em);box-shadow:0 0 0 .6cqi var(--em-glow)}
+  .on2{opacity:0}
+  .scene.is-active .on2{animation:onSeq 4.8s both}
+  @keyframes onSeq{0%,72%{opacity:0;transform:translateY(1cqi)}82%{opacity:1;transform:none}100%{opacity:1}}
+  .netnote{font-size:1.8cqi;color:var(--muted);opacity:0}
+  .scene.is-active .netnote{animation:offSeq 4.8s both}
+
+  /* Outro */
+  .outro{align-items:center;text-align:center}
+  .checklist{display:grid;grid-template-columns:repeat(3,auto);gap:1.2cqi 3.4cqi;margin:2.6cqi 0;justify-content:center}
+  .check{display:flex;align-items:center;gap:1.2cqi;font-size:1.85cqi;font-weight:600;opacity:0}
+  .check .tick{width:2.4cqi;height:2.4cqi;border-radius:50%;background:var(--em);color:#04140d;display:grid;place-items:center;font-weight:800;font-size:1.5cqi;flex:none}
+  .scene.is-active .check{animation:rise .45s both}
+  .scene.is-active .check:nth-child(1){animation-delay:.08s}.scene.is-active .check:nth-child(2){animation-delay:.16s}
+  .scene.is-active .check:nth-child(3){animation-delay:.24s}.scene.is-active .check:nth-child(4){animation-delay:.32s}
+  .scene.is-active .check:nth-child(5){animation-delay:.4s}.scene.is-active .check:nth-child(6){animation-delay:.48s}
+  .scene.is-active .check:nth-child(7){animation-delay:.56s}.scene.is-active .check:nth-child(8){animation-delay:.64s}
+  .scene.is-active .check:nth-child(9){animation-delay:.72s}
+  .cta{display:inline-flex;align-items:center;gap:1.4cqi;background:linear-gradient(135deg,var(--em),#6fd0ff);color:#04140d;font-weight:800;font-size:2.1cqi;padding:1.5cqi 3cqi;border-radius:100px;box-shadow:0 16px 40px -10px var(--em-glow)}
+
+  /* chrome */
+  .kicker{font-size:1.35cqi;font-weight:700;color:var(--dim);letter-spacing:.2em;text-transform:uppercase;position:absolute;top:5cqi;right:7.6cqi;z-index:3}
+  .brandmini{position:absolute;top:4.6cqi;left:7.6cqi;z-index:3;display:flex;align-items:center;gap:1cqi;font-weight:800;font-size:1.9cqi;letter-spacing:-.02em}
+  .brandmini .d{width:1.5cqi;height:1.5cqi;border-radius:.5cqi;background:linear-gradient(135deg,var(--em),#6fd0ff)}
+  .brandmini b{color:var(--em)}
+  .progress{position:absolute;left:0;right:0;bottom:0;height:.5cqi;background:rgba(255,255,255,.06);z-index:4}
+  .progress .fill{height:100%;width:0;background:linear-gradient(90deg,var(--em),var(--gold));box-shadow:0 0 1cqi var(--em-glow)}
+  .fill.run{animation:fillbar linear forwards}
+  @keyframes fillbar{to{width:100%}}
+  .dots{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .dots button{width:8px;height:8px;border-radius:50%;border:0;background:var(--line);cursor:pointer;padding:0;transition:.3s}
+  .dots button[aria-current="true"]{background:var(--em);width:22px;border-radius:5px}
+  .dots button:focus-visible{outline:2px solid var(--em);outline-offset:3px}
+  .bar{display:flex;align-items:center;gap:16px;width:min(1180px,94vw);justify-content:space-between}
+  .bar .left{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .ctrl{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:100px;padding:9px 15px;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:.2s}
+  .btn:hover{border-color:var(--em);color:var(--em)}
+  .btn:focus-visible{outline:2px solid var(--em);outline-offset:2px}
+  .btn[disabled]{opacity:.5;cursor:not-allowed}
+  .btn#lang{border-color:rgba(239,108,0,.4)}
+  .hint{font-size:12px;color:var(--dim)}.hint b{color:var(--muted);font-weight:600}
+  .credit{font-size:11.5px;color:var(--dim)}.credit b{color:var(--muted)}
+
+  @media (max-width:640px){ .bar{flex-direction:column;gap:12px} .headline{font-size:6.4cqi} }
+  @media (prefers-reduced-motion:reduce){
+    .stage *{animation:none !important}.stage::after{animation:none !important}
+    .scene{transition:opacity .2s !important}
+    .payway{opacity:1}.line,.of,.on2,.netnote,.scan-beam,.check,.sec,.node,.fstep,.outcome{opacity:1}
+    .spark i{transform:scaleY(.7)}.tile{opacity:1}
+  }
+
+  /* ── platform-tour additions (pt-) ── */
+  .scene.dense{padding-top:4.2cqi;padding-bottom:4.2cqi}
+  .scene.dense .headline{font-size:3.9cqi !important}
+  .scene.dense .eyebrow{margin-bottom:1.4cqi}
+  .scene.dense .tile{min-height:8.6cqi}
+  .scene.dense .tile .emo{font-size:2.6cqi}
+  .scene.dense .chip{font-size:1.45cqi;padding:.8cqi 1.5cqi}
+  .scene.dense .pt-step{font-size:1.68cqi;padding:1.05cqi 1.4cqi}
+  .scene.dense .pt-steps{gap:.95cqi;margin-top:1.7cqi}
+  .scene.dense .pt-role{font-size:1.5cqi;padding:.85cqi 1.3cqi}
+  .scene.dense .subline{font-size:1.8cqi;margin-top:1.2cqi}
+
+  .pt-steps{display:flex;flex-direction:column;gap:1.15cqi;counter-reset:pt;margin-top:2.2cqi;max-width:74cqi}
+  .pt-step{display:flex;gap:1.6cqi;align-items:flex-start;background:var(--surface);border:1px solid var(--line);
+    border-radius:1.6cqi;padding:1.35cqi 1.7cqi;font-size:1.85cqi;line-height:1.35}
+  .pt-step::before{counter-increment:pt;content:counter(pt);flex:0 0 auto;width:3.1cqi;height:3.1cqi;border-radius:50%;
+    display:grid;place-items:center;font-weight:800;font-size:1.7cqi;color:#04140d;
+    background:linear-gradient(135deg,var(--em),#5cc8ff);box-shadow:0 0 0 .4cqi var(--em-glow)}
+  .pt-step.gold::before{background:linear-gradient(135deg,var(--gold),#ffb066);box-shadow:0 0 0 .4cqi rgba(239,108,0,.3)}
+  .pt-step b{color:var(--em)}
+  .pt-step .g{color:var(--gold);font-weight:700}
+  .scene.is-active .pt-step{animation:rise .55s both}
+  .scene.is-active .pt-step:nth-child(2){animation-delay:.12s}.scene.is-active .pt-step:nth-child(3){animation-delay:.24s}
+  .scene.is-active .pt-step:nth-child(4){animation-delay:.36s}.scene.is-active .pt-step:nth-child(5){animation-delay:.48s}
+  .scene.is-active .pt-step:nth-child(6){animation-delay:.6s}
+
+  .pt-two{display:grid;grid-template-columns:1fr 1fr;gap:2.4cqi;margin-top:2.2cqi}
+  .pt-roles{display:flex;flex-direction:column;gap:.9cqi}
+  .pt-role{display:flex;align-items:center;gap:1.2cqi;background:var(--surface2);border:1px solid var(--line);
+    border-radius:1.2cqi;padding:1cqi 1.4cqi;font-size:1.62cqi;font-weight:600}
+  .pt-role .ic{font-size:2cqi;line-height:1}
+  .pt-role .who{flex:1}
+  .pt-role .what{color:var(--dim);font-weight:500;font-size:1.4cqi}
+  .pt-role.crown{border-color:rgba(239,108,0,.55)}
+  .scene.is-active .pt-role{animation:slideIn .45s both}
+  .scene.is-active .pt-role:nth-child(2){animation-delay:.08s}.scene.is-active .pt-role:nth-child(3){animation-delay:.16s}
+  .scene.is-active .pt-role:nth-child(4){animation-delay:.24s}.scene.is-active .pt-role:nth-child(5){animation-delay:.32s}
+  .scene.is-active .pt-role:nth-child(6){animation-delay:.4s}.scene.is-active .pt-role:nth-child(7){animation-delay:.48s}
+
+  .pt-dl{background:linear-gradient(180deg,var(--surface),#111a2c);border:1px solid rgba(239,108,0,.5);border-radius:2cqi;
+    padding:2cqi 2.4cqi;margin-top:2.2cqi;max-width:76cqi}
+  .pt-dl .lab{font-size:1.4cqi;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:1cqi}
+  .pt-dl code{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.7cqi;color:var(--sky);
+    word-break:break-all;line-height:1.45}
+  .pt-dl .meta{font-size:1.5cqi;color:var(--muted);margin-top:1cqi}
+
+  .pt-langs{display:flex;gap:2cqi;margin-top:2.6cqi;flex-wrap:wrap}
+  .pt-lang{background:var(--surface);border:1px solid var(--line);border-radius:2cqi;padding:2cqi 2.6cqi;min-width:19cqi;text-align:center}
+  .pt-lang .big2{font-size:3.4cqi;font-weight:800}
+  .pt-lang .sm{font-size:1.5cqi;color:var(--muted);margin-top:.6cqi}
+  .pt-lang.draft{border-style:dashed;border-color:rgba(239,108,0,.6)}
+  .pt-lang .tag{display:inline-block;margin-top:.7cqi;font-size:1.2cqi;font-weight:700;color:var(--gold);
+    border:1px solid rgba(239,108,0,.5);border-radius:100px;padding:.25cqi 1cqi;letter-spacing:.08em;text-transform:uppercase}
+  .scene.is-active .pt-lang{animation:pop .5s both}
+  .scene.is-active .pt-lang:nth-child(2){animation-delay:.12s}.scene.is-active .pt-lang:nth-child(3){animation-delay:.24s}
+</style>
+
+<div class="promo-wrap">
+  <div class="stage" id="stage" aria-label="Josbin POS platform tour">
+
+    <!-- 01 · Title -->
+    <section class="scene" data-dur="6200">
+      <div class="brand r1">
+        <div class="logo">J</div>
+        <div class="wordmark">Josbin&nbsp;<b>POS</b></div>
+        <div class="flag" aria-hidden="true"><i class="g"></i><i class="w"></i><i class="r"></i><i class="w"></i><i class="g"></i></div>
+      </div>
+      <h1 class="headline r2" data-en='Platform tour — <span class="accent">how everything works.</span>'>Platform-presentatie — <span class="accent">zo werkt alles.</span></h1>
+      <p class="subline r3" data-en='From the till to the Tax Office — 13 chapters, ±3 minutes. Use ⏸ and the arrow keys while presenting.'>Van de kassa tot de Belastingdienst — 13 hoofdstukken, ±3 minuten. Gebruik ⏸ en de pijltjestoetsen tijdens het presenteren.</p>
+      <div class="chips r4">
+        <div class="chip"><span class="dot"></span>SRD</div>
+        <div class="chip"><span class="dot"></span>BTW 10%</div>
+        <div class="chip"><span class="dot"></span>America/Paramaribo</div>
+        <div class="chip gold"><span class="dot"></span>NL · EN · Sranantongo</div>
+      </div>
+    </section>
+
+    <!-- 02 · POS features -->
+    <section class="scene dense" data-dur="8200">
+      <div class="eyebrow r1" data-en='Chapter 1 · The till'>Hoofdstuk 1 · De kassa</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='Everything a cashier needs — <span class="accent">one screen.</span>'>Alles wat een kassier nodig heeft — <span class="accent">één scherm.</span></h1>
+      <div class="split r2" style="margin-top:2.4cqi">
+        <div class="panel">
+          <div class="panel-title" data-en='POS features'>Kassafuncties</div>
+          <div class="grid6">
+            <div class="tile"><span class="emo">🛒</span><span class="nm" data-en='Scan or tap — barcode, camera or search'>Scan of tik — barcode, camera of zoeken</span></div>
+            <div class="tile"><span class="emo">⏸️</span><span class="nm" data-en='Hold bills — park &amp; resume instantly'>Bonnen parkeren — direct verder waar u was</span></div>
+            <div class="tile"><span class="emo">🏷️</span><span class="nm" data-en='Discounts — per line or whole sale'>Kortingen — per regel of hele bon</span></div>
+            <div class="tile"><span class="emo">↩️</span><span class="nm" data-en='Refunds with reason, manager-approved'>Retouren met reden, door manager</span></div>
+            <div class="tile"><span class="emo">🧾</span><span class="nm" data-en='Receipt: thermal · PDF · e-mail · WhatsApp'>Bon: thermisch · PDF · e-mail · WhatsApp</span></div>
+            <div class="tile zap"><span class="emo">👤</span><span class="nm" data-en='Add a customer mid-sale'>Klant toevoegen tijdens de verkoop</span></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title" data-en='Built for speed'>Gebouwd op snelheid</div>
+          <div class="chips" style="margin-top:.4cqi">
+            <div class="chip"><span class="dot"></span><span data-en='Keyboard shortcuts F2·F4·F9·F12'>Sneltoetsen F2·F4·F9·F12</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='On-screen keyboard (touch tills)'>On-screen toetsenbord (touch)</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='Product variants (size / flavour)'>Varianten (maat / smaak)</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='Weighed goods'>Weegartikelen</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='Stock warnings live on the grid'>Voorraadwaarschuwing op het grid</span></div>
+            <div class="chip gold"><span class="dot"></span><span data-en='Cash drawer opens ONLY on cash sales'>Kassalade opent alléén bij contant</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03 · Payments -->
+    <section class="scene" data-dur="8200">
+      <div class="eyebrow r1" data-en='Chapter 2 · Payments'>Hoofdstuk 2 · Betalen</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='Seven ways to pay — <span class="accent">the Suriname way.</span>'>Zeven manieren om te betalen — <span class="accent">zoals Suriname betaalt.</span></h1>
+      <div class="chips r2" style="margin-top:2.4cqi">
+        <div class="chip"><span class="dot"></span>Contant</div>
+        <div class="chip"><span class="dot"></span>Pin</div>
+        <div class="chip"><span class="dot"></span><span data-en='Mixed'>Gemengd</span></div>
+        <div class="chip gold"><span class="dot"></span>QR — Mopé · Uni5Pay+</div>
+        <div class="chip"><span class="dot"></span><span data-en='Bank transfer'>Overschrijving</span></div>
+        <div class="chip"><span class="dot"></span><span data-en='Mobile transfer'>Mobiele overboeking</span></div>
+        <div class="chip"><span class="dot"></span>USD / EUR</div>
+      </div>
+      <div class="pt-steps r3">
+        <div class="pt-step"><span data-en='<b>Card:</b> customer pays on the bank terminal — cashier copies the slip (bank · AUTH · last 4) so the Z-report matches the bank statement, per bank.'><b>Pin:</b> klant betaalt op de bankterminal — kassier neemt de pinbon over (bank · AUTH · laatste 4) zodat het Z-rapport per bank klopt met het bankafschrift.</span></div>
+        <div class="pt-step"><span data-en='<b>QR wallet:</b> customer scans the store QR, pays in the app — cashier sees "payment received" and confirms at the till.'><b>QR-wallet:</b> klant scant de winkel-QR, betaalt in de app — kassier ziet "betaling ontvangen" en bevestigt aan de kassa.</span></div>
+        <div class="pt-step"><span data-en='<b>Transfers:</b> recorded as awaiting confirmation — head office marks them paid once the money lands. Never counted as cash in hand.'><b>Overboekingen:</b> vastgelegd als wacht-op-bevestiging — hoofdkantoor markeert betaald zodra het geld binnen is. Telt nooit als contant.</span></div>
+      </div>
+    </section>
+
+    <!-- 04 · Users & security -->
+    <section class="scene dense" data-dur="8600">
+      <div class="eyebrow r1" data-en='Chapter 3 · People &amp; security'>Hoofdstuk 3 · Mensen &amp; beveiliging</div>
+      <h1 class="headline r1" style="font-size:4.4cqi" data-en='Seven roles. <span class="accent">Everyone sees exactly enough.</span>'>Zeven rollen. <span class="accent">Iedereen ziet precies genoeg.</span></h1>
+      <div class="pt-two r2">
+        <div class="pt-roles">
+          <div class="pt-role crown"><span class="ic">👑</span><span class="who">Super Admin</span><span class="what" data-en='whole platform · 2FA required'>hele platform · 2FA verplicht</span></div>
+          <div class="pt-role"><span class="ic">🏢</span><span class="who">Organisatie-admin</span><span class="what" data-en='own organisation'>eigen organisatie</span></div>
+          <div class="pt-role"><span class="ic">🏪</span><span class="who">Vestigingsmanager</span><span class="what" data-en='own store(s)'>eigen vestiging(en)</span></div>
+          <div class="pt-role"><span class="ic">🧑‍💼</span><span class="who">Kassier</span><span class="what" data-en='POS only, own register'>alleen kassa, eigen sessie</span></div>
+          <div class="pt-role"><span class="ic">🔍</span><span class="who">Auditor</span><span class="what" data-en='read-only'>alleen-lezen</span></div>
+          <div class="pt-role"><span class="ic">🤖</span><span class="who">API-integratie</span><span class="what" data-en='machine account'>machine-account</span></div>
+          <div class="pt-role"><span class="ic">🏛️</span><span class="who">Belastinginspecteur</span><span class="what" data-en='own portal — next chapters'>eigen portaal — zo dadelijk</span></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title" data-en='Security, in the walls'>Beveiliging, in de muren</div>
+          <div class="chips" style="margin-top:.4cqi">
+            <div class="chip"><span class="dot"></span><span data-en='Denied by default — at the API, not the UI'>Standaard geweigerd — op de API, niet de UI</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='2FA mandatory for admin &amp; government'>2FA verplicht voor admin &amp; overheid</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='Passkeys — sign in with fingerprint/face'>Passkeys — inloggen met vingerafdruk/gezicht</span></div>
+            <div class="chip"><span class="dot"></span><span data-en='Customer data encrypted in the database'>Klantgegevens versleuteld in de database</span></div>
+            <div class="chip gold"><span class="dot"></span><span data-en='Audit log: append-only, hash-chained — nobody can rewrite history'>Auditlog: alleen-toevoegen, hash-keten — niemand herschrijft de geschiedenis</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05 · Languages -->
+    <section class="scene" data-dur="7000">
+      <div class="eyebrow r1" data-en='Chapter 4 · Language'>Hoofdstuk 4 · Taal</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='Three languages. <span class="accent">One tap.</span>'>Drie talen. <span class="accent">Eén tik.</span></h1>
+      <div class="pt-langs r2">
+        <div class="pt-lang"><div class="big2">Nederlands</div><div class="sm" data-en='default'>standaard</div></div>
+        <div class="pt-lang"><div class="big2">English</div><div class="sm">volledig</div></div>
+        <div class="pt-lang draft"><div class="big2">Sranantongo</div><div class="sm" data-en='390 phrases'>390 zinnen</div><span class="tag" data-en='draft — native review'>concept — native check</span></div>
+      </div>
+      <p class="subline r3" data-en='Per user, instantly, no restart. Receipts and error messages follow the till&rsquo;s language. A fourth language = one translation file.'>Per gebruiker, direct, zonder herstart. Bonnen en foutmeldingen volgen de taal van de kassa. Een vierde taal = één vertaalbestand.</p>
+    </section>
+
+    <!-- 06 · Daily rate -->
+    <section class="scene" data-dur="7600">
+      <div class="eyebrow r1" data-en='Chapter 5 · Exchange rate'>Hoofdstuk 5 · Wisselkoers</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='One rate per day. <span class="accent">Locked and stamped.</span>'>Eén koers per dag. <span class="accent">Vergrendeld en gestempeld.</span></h1>
+      <div class="pt-steps r2">
+        <div class="pt-step"><span data-en='<b>06:00</b> — the USD→SRD rate is fetched automatically and <b>locked</b> for the whole day.'><b>06:00</b> — de USD→SRD-koers wordt automatisch opgehaald en <b>vergrendeld</b> voor de hele dag.</span></div>
+        <div class="pt-step"><span data-en='Every sale is <b>stamped</b> with the rate used — auditors can verify any day, years later.'>Elke verkoop wordt <b>gestempeld</b> met de gebruikte koers — controleurs kunnen elke dag verifiëren, jaren later.</span></div>
+        <div class="pt-step"><span data-en='Manager can <b>override manually</b> — no internet at 06:00? Yesterday&rsquo;s rate stays valid until a new lock.'>Manager kan <b>handmatig overschrijven</b> — geen internet om 06:00? De vorige koers blijft gelden tot een nieuwe vergrendeling.</span></div>
+        <div class="pt-step gold"><span data-en='Tourists pay in <b>USD or EUR</b> — converted at the locked rate, both amounts on the receipt, change in SRD.'>Toeristen betalen in <b>USD of EUR</b> — omgerekend tegen de vaste koers, beide bedragen op de bon, wisselgeld in SRD.</span></div>
+      </div>
+    </section>
+
+    <!-- 07 · Offline -->
+    <section class="scene dense" data-dur="8600">
+      <div class="eyebrow r1" data-en='Chapter 6 · Offline-first'>Hoofdstuk 6 · Offline-first</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='Internet down? <span class="accent">The store never notices.</span>'>Internet weg? <span class="accent">De winkel merkt het niet.</span></h1>
+      <p class="subline r2" data-en='The server lives INSIDE the store — tills talk to it over the shop&rsquo;s own network. Selling, printing, registers, reports: all local.'>De server staat ÍN de winkel — kassa&rsquo;s praten ermee over het eigen netwerk. Verkopen, printen, kassa&rsquo;s, rapporten: alles lokaal.</p>
+      <div class="pt-steps r3">
+        <div class="pt-step"><span data-en='<b>Internet drops</b> → nothing changes at the till. Sales commit to the store server first, always.'><b>Internet valt weg</b> → aan de kassa verandert niets. Verkopen landen éérst op de winkelserver, altijd.</span></div>
+        <div class="pt-step"><span data-en='<b>Back online</b> → the day&rsquo;s totals reach head office with one tap (Z-report submit), or…'><b>Verbinding terug</b> → de dagcijfers bereiken het hoofdkantoor met één tik (Z-rapport verzenden), of…</span></div>
+        <div class="pt-step gold"><span data-en='<b>The lifeline:</b> an AES-256 encrypted file on USB — or WhatsApp — imported at head office as if it synced normally. Proven end-to-end.'><b>De reddingslijn:</b> een AES-256-versleuteld bestand op USB — of via WhatsApp — bij hoofdkantoor geïmporteerd alsof het normaal syncte. End-to-end bewezen.</span></div>
+        <div class="pt-step"><span data-en='Interior stores: a <b>4G dongle</b> as second path — a whole day of data is smaller than one photo.'>Binnenland: een <b>4G-dongle</b> als tweede route — een hele dag aan data is kleiner dan één foto.</span></div>
+      </div>
+    </section>
+
+    <!-- 08 · End of day + backups -->
+    <section class="scene" data-dur="8200">
+      <div class="eyebrow r1" data-en='Chapter 7 · End of day &amp; backups'>Hoofdstuk 7 · Einde dag &amp; back-ups</div>
+      <h1 class="headline r1" style="font-size:4.4cqi" data-en='Every evening: <span class="accent">count, close, prove.</span>'>Elke avond: <span class="accent">tellen, sluiten, bewijzen.</span></h1>
+      <div class="pt-steps r2">
+        <div class="pt-step"><span data-en='Each cashier <b>counts the drawer</b> — a difference needs a note. Forgot to close? The system auto-closes overnight and the manager reconciles in the morning.'>Elke kassier <b>telt de la</b> — een verschil vereist een toelichting. Vergeten te sluiten? Het systeem sluit &rsquo;s nachts automatisch en de manager stemt &rsquo;s ochtends af.</span></div>
+        <div class="pt-step"><span data-en='The <b>Z-report</b> rolls it up: totals, BTW, payment methods per bank/wallet, top products — print it or send it to head office.'>Het <b>Z-rapport</b> vat samen: totalen, BTW, betaalmethoden per bank/wallet, topproducten — printen of naar hoofdkantoor.</span></div>
+        <div class="pt-step gold"><span data-en='<b>Backups run themselves:</b> every night (14 kept) + a full weekly snapshot — and the restore is DRILLED monthly, not assumed.'><b>Back-ups lopen vanzelf:</b> elke nacht (14 bewaard) + wekelijks volledig — en de restore wordt maandelijks GEOEFEND, niet aangenomen.</span></div>
+      </div>
+    </section>
+
+    <!-- 09 · BTW flow -->
+    <section class="scene dense" data-dur="9000">
+      <div class="eyebrow r1" data-en='Chapter 8 · BTW, step by step'>Hoofdstuk 8 · BTW, stap voor stap</div>
+      <h1 class="headline r1" style="font-size:4.4cqi" data-en='From receipt to Tax Office — <span class="accent">automatically correct.</span>'>Van kassabon tot Belastingdienst — <span class="accent">automatisch correct.</span></h1>
+      <div class="pt-steps r2">
+        <div class="pt-step"><span data-en='Every sale: BTW per line, <b>after discounts</b> — the legally correct order. Exempt items (food, medicine) stay clean.'>Elke verkoop: BTW per regel, <b>ná kortingen</b> — de wettelijk juiste volgorde. Vrijgestelde artikelen (voeding, medicijnen) blijven schoon.</span></div>
+        <div class="pt-step"><span data-en='Period totals build up per organisation — every report in the <b>Belastingdienst format</b>.'>Periodetotalen groeien per organisatie — elk rapport in het <b>Belastingdienst-formaat</b>.</span></div>
+        <div class="pt-step"><span data-en='Admin <b>generates the filing</b> — sealed in a hash chain: it cannot be altered afterwards, and every version is kept.'>Admin <b>genereert de aangifte</b> — verzegeld in een hash-keten: achteraf niet te wijzigen, en elke versie blijft bewaard.</span></div>
+        <div class="pt-step"><span data-en='<b>Submit</b> → the inspector sees it instantly in their own portal.'><b>Indienen</b> → de inspecteur ziet hem direct in het eigen portaal.</span></div>
+        <div class="pt-step gold"><span data-en='Inspector <b>accepts or disputes</b> with one click — a dispute comes back with feedback, and a corrected re-filing supersedes the old one. Full trail kept.'>Inspecteur <b>accepteert of betwist</b> met één klik — een geschil komt terug met toelichting, en een gecorrigeerde heraangifte vervangt de oude. Volledig spoor bewaard.</span></div>
+      </div>
+    </section>
+
+    <!-- 10 · Inspector portal -->
+    <section class="scene dense" data-dur="8200">
+      <div class="eyebrow r1" data-en='Chapter 9 · The inspector&rsquo;s portal'>Hoofdstuk 9 · Het inspecteursportaal</div>
+      <h1 class="headline r1" style="font-size:4.4cqi" data-en='The Tax Office gets its <span class="accent">own front door.</span>'>De Belastingdienst krijgt een <span class="accent">eigen voordeur.</span></h1>
+      <div class="chips r2" style="margin-top:2.4cqi">
+        <div class="chip gold"><span class="dot"></span><span data-en='Separate government-styled login: /belastingdienst'>Aparte overheidsinlog: /belastingdienst</span></div>
+        <div class="chip"><span class="dot"></span><span data-en='Read-only — can never change anything'>Alleen-lezen — kan nooit iets wijzigen</span></div>
+        <div class="chip"><span class="dot"></span><span data-en='Sees BTW filings ONLY — no sales, no customers'>Ziet alléén BTW-aangiftes — geen verkopen, geen klanten</span></div>
+        <div class="chip"><span class="dot"></span><span data-en='All organisations in one overview'>Alle organisaties in één overzicht</span></div>
+      </div>
+      <div class="pt-steps r3">
+        <div class="pt-step"><span data-en='<b>2FA is mandatory</b> for the inspector and cannot be switched off — policy-level, not a checkbox.'><b>2FA is verplicht</b> voor de inspecteur en kan niet uitgezet worden — op beleidsniveau, geen vinkje.</span></div>
+        <div class="pt-step"><span data-en='Every view the inspector opens is <b>itself recorded</b> in the immutable audit log — oversight works both ways.'>Elke inzage van de inspecteur wordt <b>zelf vastgelegd</b> in het onwijzigbare auditlog — toezicht werkt twee kanten op.</span></div>
+        <div class="pt-step"><span data-en='A login from <b>outside Suriname</b> triggers an alert.'>Een inlog van <b>buiten Suriname</b> geeft direct een melding.</span></div>
+      </div>
+    </section>
+
+    <!-- 11 · Install the app -->
+    <section class="scene dense" data-dur="8600">
+      <div class="eyebrow r1" data-en='Chapter 10 · The desktop app'>Hoofdstuk 10 · De desktop-app</div>
+      <h1 class="headline r1" style="font-size:4.4cqi" data-en='Installing a till takes <span class="accent">three minutes.</span>'>Een kassa installeren duurt <span class="accent">drie minuten.</span></h1>
+      <div class="pt-steps r2">
+        <div class="pt-step"><span data-en='<b>Download</b> the installer (below) or run it from the USB kit.'><b>Download</b> de installer (hieronder) of start hem vanaf de USB-kit.</span></div>
+        <div class="pt-step"><span data-en='<b>Install</b> — wizard, desktop icon. Windows warns "unknown publisher" on the demo build: More info → Run anyway.'><b>Installeren</b> — wizard, bureaubladpictogram. Windows waarschuwt "onbekende uitgever" bij de demoversie: Meer info → Toch uitvoeren.</span></div>
+        <div class="pt-step"><span data-en='<b>⚙ Server</b> on the login screen → enter the store server&rsquo;s address → Test → Save. Log in, open the register, sell.'><b>⚙ Server</b> op het inlogscherm → adres van de winkelserver → Testen → Opslaan. Inloggen, kassa openen, verkopen.</span></div>
+      </div>
+      <div class="pt-dl r3">
+        <div class="lab" data-en='Try it now — demo build (Windows 10/11, 108 MB)'>Probeer nu — demoversie (Windows 10/11, 108 MB)</div>
+        <code>142.93.88.143:8095/downloads/josbin-pos-demo-Setup-1.0.0.exe</code>
+        <div class="meta" data-en='Wired to the demo server — log in as kassa@dehoop.sr and sell immediately. Full steps: manual §E1.'>Gekoppeld aan de demoserver — log in als kassa@dehoop.sr en verkoop direct. Volledige stappen: handleiding §E1.</div>
+      </div>
+    </section>
+
+    <!-- 12 · And more -->
+    <section class="scene" data-dur="8200">
+      <div class="eyebrow r1" data-en='Chapter 11 · And there&rsquo;s more'>Hoofdstuk 11 · En er is meer</div>
+      <h1 class="headline r1" style="font-size:4.6cqi" data-en='The rest of the platform — <span class="accent">at a glance.</span>'>De rest van het platform — <span class="accent">in één blik.</span></h1>
+      <div class="panel r2" style="margin-top:2.4cqi">
+        <div class="grid6">
+          <div class="tile"><span class="emo">📊</span><span class="nm" data-en='Head-office dashboard — every store live'>Hoofdkantoor-dashboard — elke winkel live</span></div>
+          <div class="tile"><span class="emo">🧾</span><span class="nm" data-en='Customer statements — PDF/CSV per period'>Klantoverzichten — PDF/CSV per periode</span></div>
+          <div class="tile"><span class="emo">📦</span><span class="nm" data-en='Stock per store + low-stock warnings'>Voorraad per vestiging + waarschuwingen</span></div>
+          <div class="tile"><span class="emo">🤖</span><span class="nm" data-en='AI watches for unusual voids &amp; discounts'>AI let op vreemde annuleringen &amp; kortingen</span></div>
+          <div class="tile"><span class="emo">🔌</span><span class="nm" data-en='Open API + webhooks for other systems'>Open API + webhooks voor andere systemen</span></div>
+          <div class="tile"><span class="emo">🔑</span><span class="nm" data-en='Licensing with grace periods — data never hostage'>Licenties met coulance — data nooit gegijzeld</span></div>
+        </div>
+      </div>
+      <p class="subline r3" style="max-width:none" data-en='Profit reports, audit exports for the Rekenkamer, built-in help on every screen, bilingual manuals online.'>Winstrapporten, audit-exports voor de Rekenkamer, ingebouwde help op elk scherm, tweetalige handleidingen online.</p>
+    </section>
+
+    <!-- 13 · Outro -->
+    <section class="scene outro" data-dur="7600">
+      <div class="brand r1" style="justify-content:center">
+        <div class="logo">J</div>
+        <div class="wordmark">Josbin&nbsp;<b>POS</b></div>
+        <div class="flag" aria-hidden="true"><i class="g"></i><i class="w"></i><i class="r"></i><i class="w"></i><i class="g"></i></div>
+      </div>
+      <h1 class="headline r1" style="font-size:4.2cqi;text-align:center" data-en='Built for Suriname. <span class="gold">Ready for the first store.</span>'>Gebouwd voor Suriname. <span class="gold">Klaar voor de eerste winkel.</span></h1>
+      <div class="checks r2">
+        <div class="check" data-en='<span class="tick">✓</span>Register &amp; barcode'><span class="tick">✓</span>Kassa &amp; barcode</div>
+        <div class="check" data-en='<span class="tick">✓</span>7 payment methods'><span class="tick">✓</span>7 betaalmethoden</div>
+        <div class="check" data-en='<span class="tick">✓</span>BTW → Tax Office'><span class="tick">✓</span>BTW → Belastingdienst</div>
+        <div class="check" data-en='<span class="tick">✓</span>Inspector portal'><span class="tick">✓</span>Inspecteursportaal</div>
+        <div class="check" data-en='<span class="tick">✓</span>Offline-first'><span class="tick">✓</span>Offline-first</div>
+        <div class="check" data-en='<span class="tick">✓</span>Backups, drilled'><span class="tick">✓</span>Back-ups, geoefend</div>
+        <div class="check" data-en='<span class="tick">✓</span>Roles &amp; audit trail'><span class="tick">✓</span>Rollen &amp; auditspoor</div>
+        <div class="check" data-en='<span class="tick">✓</span>NL · EN · Sranantongo'><span class="tick">✓</span>NL · EN · Sranantongo</div>
+        <div class="check" data-en='<span class="tick">✓</span>Daily locked rate'><span class="tick">✓</span>Dagelijks vaste koers</div>
+      </div>
+      <p class="subline r3" style="text-align:center;max-width:none" data-en='Manuals &amp; docs: 142.93.88.143:8095 — this presentation lives under “Video&rsquo;s”.'>Handleidingen &amp; docs: 142.93.88.143:8095 — deze presentatie staat onder “Video&rsquo;s”.</p>
+    </section>
+
+
+    <div class="kicker" id="kicker">01 / 15</div>
+    <div class="progress"><div class="fill" id="fill"></div></div>
+  </div>
+
+  <div class="bar">
+    <div class="left">
+      <div class="ctrl">
+        <button class="btn" id="play" aria-label="Pauzeren / afspelen">⏸ Pauze</button>
+        <button class="btn" id="replay" aria-label="Opnieuw afspelen">↻ Opnieuw</button>
+        <button class="btn" id="voice" aria-pressed="false" aria-label="Nederlandse stem aan of uit">🔇 Stem uit</button>
+        <button class="btn" id="lang" aria-label="Taal / Language">🌐 English</button>
+      </div>
+      <div class="dots" id="dots" role="tablist" aria-label="Scenes"></div>
+    </div>
+    <div class="right ctrl">
+      <span class="hint" id="hint">🎬 <b>Tip:</b> ↻ Opnieuw → 🔊 Stem aan, dan scherm opnemen = ingesproken promovideo</span>
+    </div>
+  </div>
+  <div class="credit"><b>Josbin POS</b> — platform-presentatie · Paramaribo, Suriname</div>
+</div>
+
+<script>
+(function(){
+  var stage = document.getElementById('stage');
+  var scenes = Array.prototype.slice.call(stage.querySelectorAll('.scene'));
+  var fill = document.getElementById('fill');
+  var kicker = document.getElementById('kicker');
+  var dotsWrap = document.getElementById('dots');
+  var playBtn = document.getElementById('play');
+  var replayBtn = document.getElementById('replay');
+  var voiceBtn = document.getElementById('voice');
+  var langBtn = document.getElementById('lang');
+  var hintEl = document.getElementById('hint');
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var durs = scenes.map(function(s){ return parseInt(s.getAttribute('data-dur'),10) || 5000; });
+  var i = 0, paused = false, lang = 'nl';
+
+  /* control-bar labels per language */
+  var UI = {
+    nl:{ pause:'⏸ Pauze', play:'▶ Afspelen', replay:'↻ Opnieuw', vOn:'🔊 Stem aan', vOff:'🔇 Stem uit', vNo:'🔇 Geen stem', step:'▶ Volgende', lang:'🌐 English',
+         hint:'🎬 <b>Tip:</b> ↻ Opnieuw → 🔊 Stem aan, dan scherm opnemen = ingesproken promovideo' },
+    en:{ pause:'⏸ Pause', play:'▶ Play', replay:'↻ Replay', vOn:'🔊 Voice on', vOff:'🔇 Voice off', vNo:'🔇 No voice', step:'▶ Next', lang:'🌐 Nederlands',
+         hint:'🎬 <b>Tip:</b> ↻ Replay → 🔊 Voice on, then screen-record = narrated promo video' }
+  };
+
+  /* voice-over lines per language (Web Speech API — local, no network) */
+  var VO_NL = [
+    "Josbin P O S. De platform-presentatie: van de kassa tot de Belastingdienst, in dertien hoofdstukken.",
+    "De kassa: scannen of tikken, bonnen parkeren, kortingen, retouren, en de bon via print, P D F, e-mail of WhatsApp. De kassalade opent alléén bij contante verkoop.",
+    "Zeven betaalmethoden, zoals Suriname betaalt: contant, pin met bonafstemming per bank, Q R-wallets zoals Mopé en Uni5Pay, overboekingen met bevestiging door hoofdkantoor, en vreemde valuta.",
+    "Zeven rollen, van Super Admin tot kassier. Alles standaard geweigerd op de A P I, twee-factor verplicht voor beheer en overheid, en een auditlog dat niemand kan herschrijven.",
+    "Drie talen: Nederlands, Engels, en Sranantongo als concept. Per gebruiker, direct wisselen, zonder herstart.",
+    "Eén wisselkoers per dag: om zes uur opgehaald en vergrendeld, op elke bon gestempeld. Toeristen betalen in dollars of euro's tegen de vaste koers.",
+    "Internet weg? De winkel merkt het niet: de server staat in de winkel zelf. Terug online gaan de cijfers met één tik naar hoofdkantoor, of via een versleuteld U S B-bestand.",
+    "Elke avond telt de kassier de la, sluit het Z-rapport de dag af, en draaien de back-ups vanzelf. De restore wordt maandelijks geoefend, niet aangenomen.",
+    "B T W, stap voor stap: per regel berekend ná korting, periodetotalen in het formaat van de Belastingdienst, aangifte verzegeld met een hash-keten, indienen, en de inspecteur accepteert of betwist.",
+    "De inspecteur krijgt een eigen portaal: alleen-lezen, alléén aangiftes, verplichte twee-factor, en elke inzage wordt zelf vastgelegd.",
+    "Een kassa installeren duurt drie minuten: downloaden, installeren, server instellen, inloggen. De demoversie staat online om direct te proberen.",
+    "En verder: het live hoofdkantoor-dashboard, klantoverzichten, voorraadbeheer, A I-detectie, een open A P I, en licenties waarbij data nooit gegijzeld wordt.",
+    "Josbin P O S. Gebouwd voor Suriname, klaar voor de eerste winkel."
+  ];
+  var VO_EN = [
+    "Josbin P O S. The platform tour: from the till to the Tax Office, in thirteen chapters.",
+    "The till: scan or tap, hold bills, discounts, refunds, and the receipt by print, P D F, e-mail or WhatsApp. The cash drawer opens only on cash sales.",
+    "Seven payment methods, the Suriname way: cash, card with per-bank slip reconciliation, Q R wallets like Mopé and Uni5Pay, transfers confirmed by head office, and foreign cash.",
+    "Seven roles, from Super Admin to cashier. Everything denied by default at the A P I, two-factor mandatory for admin and government, and an audit log nobody can rewrite.",
+    "Three languages: Dutch, English, and Sranantongo as a draft. Per user, switched instantly, no restart.",
+    "One exchange rate per day: fetched and locked at six, stamped on every receipt. Tourists pay in dollars or euros at the locked rate.",
+    "Internet down? The store never notices: the server lives inside the store. Back online, the day reaches head office with one tap, or via an encrypted U S B file.",
+    "Every evening the cashier counts the drawer, the Z-report closes the day, and backups run themselves. The restore is drilled monthly, not assumed.",
+    "V A T, step by step: calculated per line after discounts, period totals in the Tax Office format, the filing sealed with a hash chain, submitted, and the inspector accepts or disputes.",
+    "The inspector gets their own portal: read-only, filings only, mandatory two-factor, and every view is itself recorded.",
+    "Installing a till takes three minutes: download, install, set the server, log in. The demo build is online to try right now.",
+    "And beyond: the live head-office dashboard, customer statements, stock control, A I detection, an open A P I, and licensing where data is never held hostage.",
+    "Josbin P O S. Built for Suriname, ready for the first store."
+  ];
+  var synth = window.speechSynthesis || null;
+  var voiceOn = false, nlVoice = null, enVoice = null, voiceReady = false;
+  function pickVoice(){
+    if(!synth) return;
+    var vs = synth.getVoices() || [];
+    nlVoice = vs.filter(function(v){ return /^nl(\b|[-_])/i.test(v.lang); })[0] ||
+              vs.filter(function(v){ return /nederlands|dutch|belg|flemish|vlaams/i.test(v.name); })[0] || null;
+    enVoice = vs.filter(function(v){ return /^en(\b|[-_])/i.test(v.lang); })[0] ||
+              vs.filter(function(v){ return /english/i.test(v.name); })[0] || null;
+    voiceReady = true;
+  }
+  if(synth){ pickVoice(); try{ synth.onvoiceschanged = pickVoice; }catch(e){} }
+  function voArr(){ return lang === 'en' ? VO_EN : VO_NL; }
+  function speak(n){
+    if(!synth || !voiceOn) return;
+    try{ synth.cancel(); }catch(e){}
+    var line = voArr()[n]; if(!line) return;
+    var u = new SpeechSynthesisUtterance(line);
+    u.lang = (lang === 'en') ? 'en-US' : 'nl-NL'; u.rate = 0.98; u.pitch = 1.0;
+    var v = (lang === 'en') ? enVoice : nlVoice;
+    if(v){ u.voice = v; }
+    try{ synth.speak(u); }catch(e){}
+  }
+  function voDur(n){
+    if(!voiceOn) return durs[n];
+    var line = voArr()[n]; var est = (line ? line.length : 0) * 62 + 900;
+    return Math.max(durs[n], est);
+  }
+
+  scenes.forEach(function(s, n){
+    var b = document.createElement('button');
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-label','Scene ' + (n+1));
+    b.addEventListener('click', function(){ go(n); });
+    dotsWrap.appendChild(b);
+  });
+  var dots = Array.prototype.slice.call(dotsWrap.children);
+  function pad(n){ return (n<10?'0':'') + n; }
+
+  function runFill(ms){
+    fill.classList.remove('run'); fill.style.width='0';
+    fill.style.animationDuration = ms + 'ms';
+    void fill.offsetWidth;
+    fill.classList.add('run');
+    fill.style.animationPlayState = paused ? 'paused' : 'running';
+  }
+  function show(n){
+    scenes.forEach(function(s,k){ s.classList.toggle('is-active', k===n); });
+    dots.forEach(function(d,k){ d.setAttribute('aria-current', k===n ? 'true':'false'); });
+    kicker.textContent = pad(n+1) + ' / ' + pad(scenes.length);
+    speak(n);
+    if(!reduced){ runFill(voDur(n)); }
+  }
+  function next(){ go((i+1) % scenes.length); }
+  function go(n){ i = n; show(i); }
+  fill.addEventListener('animationend', function(){ if(!paused && !reduced) next(); });
+
+  function setPaused(p){
+    paused = p; stage.classList.toggle('paused', p);
+    var all = stage.querySelectorAll('*');
+    for(var k=0;k<all.length;k++){ all[k].style.animationPlayState = p ? 'paused' : 'running'; }
+    fill.style.animationPlayState = p ? 'paused' : 'running';
+    if(synth){ try{ p ? synth.pause() : synth.resume(); }catch(e){} }
+    playBtn.textContent = reduced ? UI[lang].step : (p ? UI[lang].play : UI[lang].pause);
+  }
+
+  /* apply language to all scene text + control chrome */
+  function applyLang(){
+    var els = stage.querySelectorAll('[data-en]');
+    for(var k=0;k<els.length;k++){
+      var el = els[k];
+      if(el._nl == null){ el._nl = el.innerHTML; }
+      el.innerHTML = (lang === 'en') ? el.getAttribute('data-en') : el._nl;
+    }
+    var u = UI[lang];
+    playBtn.textContent = reduced ? u.step : (paused ? u.play : u.pause);
+    replayBtn.textContent = u.replay;
+    voiceBtn.textContent = !synth ? u.vNo : (voiceOn ? u.vOn : u.vOff);
+    langBtn.textContent = u.lang;
+    if(hintEl){ hintEl.innerHTML = u.hint; }
+  }
+  function setLang(l){
+    lang = l; applyLang();
+    if(voiceOn && !paused){ speak(i); if(!reduced){ runFill(voDur(i)); } }
+  }
+
+  function setVoice(on){
+    voiceOn = on && !!synth;
+    voiceBtn.setAttribute('aria-pressed', voiceOn ? 'true' : 'false');
+    voiceBtn.textContent = voiceOn ? UI[lang].vOn : UI[lang].vOff;
+    if(voiceOn){ if(!voiceReady){ pickVoice(); } if(!paused){ speak(i); if(!reduced){ runFill(voDur(i)); } } }
+    else if(synth){ try{ synth.cancel(); }catch(e){} }
+  }
+
+  playBtn.addEventListener('click', function(){ if(reduced){ next(); } else { setPaused(!paused); } });
+  replayBtn.addEventListener('click', function(){ if(synth){ try{ synth.cancel(); }catch(e){} } setPaused(false); go(0); });
+  voiceBtn.addEventListener('click', function(){ setVoice(!voiceOn); });
+  langBtn.addEventListener('click', function(){ setLang(lang === 'nl' ? 'en' : 'nl'); });
+  document.addEventListener('keydown', function(e){
+    if(e.code==='Space'){ e.preventDefault(); if(!reduced) setPaused(!paused); }
+    else if(e.code==='ArrowRight'){ next(); }
+    else if(e.code==='ArrowLeft'){ go((i-1+scenes.length)%scenes.length); }
+  });
+
+  if(!synth){ voiceBtn.disabled = true; }
+  applyLang();
+  show(0);
+})();
+</script>
+</body>
+</html>

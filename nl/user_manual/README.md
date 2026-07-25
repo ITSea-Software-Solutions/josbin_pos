@@ -6,6 +6,12 @@ Welkom bij de gebruikershandleiding van Josbin POS. Deze handleiding is geschrev
 
 Er is geen technische kennis vereist. Elke functie wordt stap voor stap in begrijpelijke taal uitgelegd.
 
+> 🎬 **Liever eerst kijken?** De [platform-presentatie](/tour.html) loopt in
+> 13 korte hoofdstukken (±3 min, NL/EN, met optionele stem) door het hele
+> systeem — de kassa, betalen, rollen & beveiliging, offline & sync,
+> Z-rapporten, de BTW-flow naar de Belastingdienst, het inspecteursportaal en
+> het installeren van de desktop-app. Meer video's: [video-overzicht](/videos.html).
+
 ---
 
 ## Hoe gebruikt u deze handleiding

@@ -6,6 +6,12 @@ Welcome to the Josbin POS user manual. This guide is written for everyone who us
 
 No technical knowledge is required. Every feature is explained step by step with plain language.
 
+> 🎬 **Prefer to watch first?** The [platform presentation](/tour.html) walks
+> through the whole system in 13 short chapters (±3 min, NL/EN, with optional
+> voice-over) — the till, payments, roles & security, offline & sync,
+> Z-reports, the BTW flow to the Belastingdienst, the inspector's portal and
+> installing the desktop app. More videos: [video overview](/videos.html).
+
 ---
 
 ## How to use this manual
