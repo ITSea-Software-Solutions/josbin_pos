@@ -33,6 +33,15 @@
         "cd frontend && VITE_API_URL=/api VITE_DEV_PROXY_TARGET=http://142.93.88.143:8080 npx vite --port 5180 --strictPort"
       ],
       "port": 5180
+    },
+    {
+      "name": "pos-web-demo",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": [
+        "-lc",
+        "cd frontend && VITE_API_URL=/api VITE_DEV_PROXY_TARGET=http://localhost:8082 npx vite --port 5181 --strictPort"
+      ],
+      "port": 5181
     }
   ]
 }

@@ -60,17 +60,20 @@ The cash drawer pin determines which connector the drawer is plugged into on the
 | **Pin 2 (most printers)** | Default. Use this unless the drawer does not open. |
 | **Pin 5** | Some older printers use Pin 5. Try this if Pin 2 doesn't work. |
 
-### Step 4 — Test the cash drawer
+### Step 4 — Test the printer, cash drawer and labels
 
-1. Click the **Test drawer** button (Dutch: *"Lade testen"*).
-2. The system sends a pulse to the printer.
-3. If configured correctly, the cash drawer opens.
-4. The button shows "Opened ✓" in green, or "Error" in red.
+Three test buttons sit below the pin setting. Use them after every change on this page — each shows a green "✓" on success or a red error:
 
-If it shows Error:
-- Check all cable connections.
-- Try the other pin setting (Pin 2 vs Pin 5).
-- Make sure the printer is on and connected.
+1. **Print test receipt** (Dutch: *"Testbon afdrukken"*) — prints a short sample receipt through exactly the same path a real sale uses. If this prints correctly, sales receipts will too.
+2. **Test cash drawer** (Dutch: *"Test kassalade openen"*) — sends the open pulse to the drawer through the printer.
+3. **Print test label** (Dutch: *"Testetiket afdrukken"*) — prints a small sample price label. On Windows the print dialog opens (pick your label printer); on an Android terminal the Android print dialog opens. This button also works when the connection type above is **None**, because labels can go to any printer — not just the thermal one.
+
+All three buttons work the same on Windows terminals and Android terminals.
+
+If a test shows Error:
+- Check all cable connections, and that the printer is on.
+- Receipt or drawer: try the other pin setting (Pin 2 vs Pin 5). On an Android terminal, remember the receipt printer must be connected via the network — USB-only receipt printers are not supported on Android.
+- Label: make sure a printer is installed in Windows, or that a print service is enabled on the Android terminal (Android Settings → Printing).
 
 ### Step 5 — Auto-print receipts (optional)
 

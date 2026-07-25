@@ -271,6 +271,12 @@
       "httpsOnly": "Camerascannen werkt alleen via een beveiligde verbinding (HTTPS) of in de desktop-app. Gebruik een USB-barcodescanner of typ de barcode in het zoekveld.",
       "denied": "Cameratoegang geweigerd — sta de camera toe en probeer opnieuw.",
       "failed": "Camera kon niet starten. Gebruik een USB-scanner of typ de barcode. ({{error}})"
+    },
+    "labels": {
+      "printersDetected": "Printers gedetecteerd: {{n}}",
+      "noPrintersFound": "Geen printers gevonden — controleer de printeraansluiting in Windows",
+      "printerHint": "Beschikbare printers verschijnen in het afdrukvenster. Test de bonprinter via Instellingen → Printer & Kassalade.",
+      "printFailed": "Afdrukken mislukt: {{error}}"
     }
   },
   "reports": {
@@ -400,10 +406,17 @@
       "drawerOpened": "Kassalade geopend!",
       "drawerError": "Fout — controleer verbinding",
       "helpElectron": "Netwerk (TCP): sluit de printer aan op het LAN en voer het IP-adres in. Aanbevolen voor EPSON TM-T20 met Ethernet.\nUSB: kies de printer zoals die staat in Windows Apparaten.",
-      "helpAndroid": "Netwerk (TCP): voer het IP-adres van de printer in. Aanbevolen.\nUSB: vereist de @anuradev/capacitor-printer plugin (zie README).",
+      "helpAndroid": "Netwerk (TCP): voer het IP-adres van de printer in — op Android moet de bonprinter via het netwerk aangesloten zijn; printers met alleen USB worden niet ondersteund.\nEtiketten en testpagina's drukken af via het Android-afdrukvenster.",
       "autoPrint": "Bon automatisch afdrukken na elke verkoop",
       "autoPrintHelp": "Thermische printers drukken stil af; zonder printer opent na elke verkoop het afdrukvenster.",
-      "networkOnlyHint": "USB-printen werkt alleen op de Windows-app — gebruik op dit apparaat een netwerkprinter (het IP-adres)."
+      "networkOnlyHint": "USB-printen werkt alleen op de Windows-app — gebruik op dit apparaat een netwerkprinter (het IP-adres).",
+      "testPrint": "Testbon afdrukken",
+      "testingPrint": "Bezig met afdrukken...",
+      "printOk": "Testbon verzonden!",
+      "printError": "Fout — controleer verbinding",
+      "testLabel": "Testetiket afdrukken",
+      "labelOk": "Testetiket verzonden!",
+      "labelError": "Fout — afdrukken mislukt"
     },
     "system": {
       "title": "Systeem",

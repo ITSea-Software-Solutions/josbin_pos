@@ -271,6 +271,12 @@
       "httpsOnly": "Camera scanning only works over a secure (HTTPS) connection or in the desktop app. Use a USB barcode scanner or type the barcode in the search field.",
       "denied": "Camera access was denied — allow the camera and try again.",
       "failed": "Camera could not start. Use a USB scanner or type the barcode. ({{error}})"
+    },
+    "labels": {
+      "printersDetected": "Printers detected: {{n}}",
+      "noPrintersFound": "No printers found — check the printer connection in Windows",
+      "printerHint": "Available printers appear in the print dialog. Test the receipt printer under Settings → Printer & Cash Drawer.",
+      "printFailed": "Printing failed: {{error}}"
     }
   },
   "reports": {
@@ -400,10 +406,17 @@
       "drawerOpened": "Cash drawer opened!",
       "drawerError": "Error — check connection",
       "helpElectron": "Network (TCP): connect the printer to the LAN and enter its IP. Recommended for EPSON TM-T20 with Ethernet.\nUSB: choose the printer as shown in Windows Devices.",
-      "helpAndroid": "Network (TCP): enter the printer IP address. Recommended.\nUSB: requires the @anuradev/capacitor-printer plugin (see README).",
+      "helpAndroid": "Network (TCP): enter the printer IP address — on Android the receipt printer must be network-attached; USB-only printers are not supported.\nLabels and test pages print via the Android print dialog.",
       "autoPrint": "Print receipt automatically after each sale",
       "autoPrintHelp": "Thermal printers print silently; without one the print dialog opens after each sale.",
-      "networkOnlyHint": "USB printing works on the Windows app only — on this device use a network printer (its IP address)."
+      "networkOnlyHint": "USB printing works on the Windows app only — on this device use a network printer (its IP address).",
+      "testPrint": "Print test receipt",
+      "testingPrint": "Printing...",
+      "printOk": "Test receipt sent!",
+      "printError": "Error — check connection",
+      "testLabel": "Print test label",
+      "labelOk": "Test label sent!",
+      "labelError": "Error — printing failed"
     },
     "system": {
       "title": "System",

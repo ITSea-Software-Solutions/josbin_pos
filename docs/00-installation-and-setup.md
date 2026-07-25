@@ -453,6 +453,7 @@ continue.
 | Receipt printer | **Network (LAN/Wi-Fi) interface, port 9100** | ✅ Set the printer's IP under *Settings → Hardware*, same as Windows |
 | Receipt printer | USB only | ⚠️ Not supported for receipts on Android — fit the printer's network (LAN) interface module, or use a network-capable printer |
 | Cash drawer | RJ11 cable into the **printer** | ✅ Opens on cash/mixed sales — works whenever the printer works |
+| Label printer | Android print service (Wi-Fi/Bluetooth/USB via the maker's print-service app) | ✅ The Labels screen and the Settings label test print via the Android print dialog |
 | Customer-facing second screen | HDMI/USB monitor | 🔲 Mirrors the till today; a dedicated customer display is on the roadmap |
 
 The rule of thumb: **on Android, the receipt printer must be on the network.**
@@ -485,8 +486,9 @@ POS app → **Settings** → **Printer & Cash Drawer**.
 1. Print a self-test on the printer (usually hold Feed while powering on) to find its IP.
 2. In Settings → Printer → **Network (TCP)** → enter IP, port `9100`.
 3. Set **Paper width** to match the roll: 80 mm (countertop) or 58 mm (compact).
-4. Click **Test print** → should print a sample receipt.
+4. Click **Print test receipt** → should print a sample receipt.
 5. Click **Test cash drawer** → drawer should pop.
+6. Click **Print test label** → the print dialog opens with a sample price label. Labels can go to any installed printer — not only the thermal one.
 
 Works on Windows and Android without drivers. Same printer can serve multiple terminals.
 

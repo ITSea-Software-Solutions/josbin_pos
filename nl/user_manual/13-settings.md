@@ -60,17 +60,20 @@ De kassalade-pin bepaalt op welke connector de lade is aangesloten op de achterk
 | **Pin 2 (de meeste printers)** | Standaard. Gebruik dit tenzij de lade niet open gaat. |
 | **Pin 5** | Sommige oudere printers gebruiken Pin 5. Probeer dit als Pin 2 niet werkt. |
 
-### Stap 4 — Test de kassalade
+### Stap 4 — Test de printer, kassalade en etiketten
 
-1. Klik op de knop **Lade testen**.
-2. Het systeem stuurt een puls naar de printer.
-3. Als correct geconfigureerd, gaat de kassalade open.
-4. De knop toont "Geopend ✓" in groen, of "Fout" in rood.
+Onder de pin-instelling staan drie testknoppen. Gebruik ze na elke wijziging op deze pagina — elke knop toont een groene "✓" bij succes of een rode fout:
 
-Als het Fout toont:
-- Controleer alle kabelverbindingen.
-- Probeer de andere pin-instelling (Pin 2 vs Pin 5).
-- Zorg ervoor dat de printer aan en aangesloten is.
+1. **Testbon afdrukken** — drukt een korte voorbeeldbon af via exact hetzelfde pad als een echte verkoop. Drukt deze goed af, dan drukken verkoopbonnen ook goed af.
+2. **Test kassalade openen** — stuurt de openingspuls via de printer naar de lade.
+3. **Testetiket afdrukken** — drukt een klein voorbeeld-prijsetiket af. Op Windows opent het afdrukvenster (kies uw etiketprinter); op een Android-terminal opent het Android-afdrukvenster. Deze knop werkt ook als het verbindingstype hierboven op **Geen** staat, want etiketten kunnen naar elke printer — niet alleen de thermische.
+
+Alle drie de knoppen werken hetzelfde op Windows-terminals en Android-terminals.
+
+Als een test Fout toont:
+- Controleer alle kabelverbindingen, en of de printer aan staat.
+- Bon of lade: probeer de andere pin-instelling (Pin 2 vs Pin 5). Op een Android-terminal moet de bonprinter via het netwerk aangesloten zijn — bonprinters met alleen USB worden op Android niet ondersteund.
+- Etiket: zorg dat er een printer in Windows is geïnstalleerd, of dat op de Android-terminal een afdrukservice is ingeschakeld (Android-instellingen → Afdrukken).
 
 ### Stap 5 — Bonnen automatisch afdrukken (optioneel)
 

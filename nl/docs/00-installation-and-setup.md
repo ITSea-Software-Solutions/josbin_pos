@@ -460,6 +460,7 @@ lees verder.
 | Bonprinter | **Netwerk (LAN/wifi), poort 9100** | ✅ Stel het IP-adres van de printer in onder *Instellingen → Hardware*, net als op Windows |
 | Bonprinter | Alleen USB | ⚠️ Niet ondersteund voor bonnen op Android — plaats de netwerk (LAN)-interfacemodule van de printer, of gebruik een netwerkprinter |
 | Geldlade | RJ11-kabel in de **printer** | ✅ Opent bij contant/gemengd — werkt zodra de printer werkt |
+| Etiketprinter | Android-afdrukservice (Wi-Fi/Bluetooth/USB via de afdrukservice-app van de fabrikant) | ✅ Het Etiketten-scherm en de etikettest in Instellingen printen via het Android-afdrukvenster |
 | Klantenscherm (tweede scherm) | HDMI/USB-monitor | 🔲 Spiegelt vandaag de kassa; een echt klantenscherm staat op de roadmap |
 
 De vuistregel: **op Android moet de bonprinter op het netwerk zitten.**
@@ -493,8 +494,9 @@ POS-app → **Instellingen** → **Printer & Kassalade**.
 1. Print een self-test op de printer (meestal Feed ingedrukt houden tijdens aanzetten) om zijn IP te vinden.
 2. In Instellingen → Printer → **Network (TCP)** → voer IP in, poort `9100`.
 3. Stel **Papierbreedte** in op de rol: 80 mm (toonbank) of 58 mm (compact).
-4. Klik **Testafdruk** → moet een voorbeeldbon afdrukken.
-5. Klik **Test kassalade** → de lade moet openspringen.
+4. Klik **Testbon afdrukken** → moet een voorbeeldbon afdrukken.
+5. Klik **Test kassalade openen** → de lade moet openspringen.
+6. Klik **Testetiket afdrukken** → het afdrukvenster opent met een voorbeeld-prijsetiket. Etiketten kunnen naar elke geïnstalleerde printer — niet alleen de thermische.
 
 Werkt op Windows en Android zonder drivers. Dezelfde printer kan meerdere terminals bedienen.
 

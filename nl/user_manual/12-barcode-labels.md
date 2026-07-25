@@ -119,6 +119,10 @@ Beide zijn standaard aangevinkt. Vink een van beide uit als u die niet op het et
 
 > **Tip:** Etiketprinters moeten meestal als standaardprinter in Windows worden ingesteld. Eenmaal als standaard ingesteld, is de juiste printer meestal voorgeselecteerd in het venster.
 
+> **Android-terminals:** de knop **Afdrukken** opent hier het Android-afdrukvenster (hetzelfde venster als Chrome gebruikt). Kies daar uw etiketprinter. Staan er geen printers in de lijst, schakel dan eerst de afdrukservice van uw printer in op de terminal (Android-instellingen → Afdrukken).
+
+**De printerregel boven de knop Afdrukken** vertelt wat de app over uw printers weet: op de Windows-desktopapp telt hij de printers die in Windows zijn geïnstalleerd (bijv. "Printers gedetecteerd: 2" — of een waarschuwing als er geen zijn gevonden); in de browser en op Android kan de app de printerlijst niet zien en herinnert de regel u eraan dat printers in het afdrukvenster zelf verschijnen.
+
 **Als het afdrukvenster opent maar er niets wordt afgedrukt:**
 - Controleer of de juiste printer is geselecteerd.
 - Controleer of het etikettenpapier correct is geladen.
@@ -143,6 +147,7 @@ Voor de beste resultaten configureert u de etiketprinter in Windows voordat u di
 
 | Probleem | Oplossing |
 |---------|----------|
+| De knop Afdrukken doet niets op een Android-terminal | Werk de app bij — etiketten afdrukken op Android vereist de build van juli 2026 of nieuwer. Controleer daarna of een afdrukservice is ingeschakeld (Android-instellingen → Afdrukken). |
 | Barcodes verschijnen alleen als nummers (geen graphic) | Dit was een bekende bug, nu opgelost. Zorg ervoor dat u de nieuwste versie heeft. |
 | Etiketten hebben de verkeerde grootte | Controleer of de etiketgrootte in het rechterpaneel overeenkomt met het papier in uw printer, en dat het papierformaat van de printer correct is ingesteld in het afdrukvenster. |
 | Product staat niet in de lijst | Het product staat mogelijk niet in de catalogus voor deze vestiging. Neem contact op met uw manager. |

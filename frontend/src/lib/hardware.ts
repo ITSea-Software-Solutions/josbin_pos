@@ -91,6 +91,57 @@ export async function printEscPos(
   return { success: false, error: 'Hardware printing not available in browser' }
 }
 
+// ── Print an HTML sheet (labels, test pages) ────────────────────────────────
+
+/** Delay before print() on the hidden iframe — lets the freshly written
+ *  document finish decoding its inline images first. */
+const IFRAME_PRINT_DELAY_MS = 400
+
+let printFrame: HTMLIFrameElement | null = null
+
+function getPrintFrame(): HTMLIFrameElement {
+  if (printFrame && document.body.contains(printFrame)) return printFrame
+  const frame = document.createElement('iframe')
+  frame.style.display = 'none'
+  frame.title = 'josbin-print'
+  frame.setAttribute('data-josbin-print-frame', '')
+  document.body.appendChild(frame)
+  printFrame = frame
+  return frame
+}
+
+/**
+ * Print a self-contained HTML document.
+ *
+ *   electron/web → hidden iframe + window.print(): OS print dialog, any
+ *                  installed printer (incl. label printers via their driver)
+ *   android      → native PrintManager via the Capacitor bridge, because
+ *                  window.print() is a silent no-op inside the WebView
+ */
+export async function printHtmlSheet(
+  name: string,
+  html: string,
+): Promise<{ success: boolean; error?: string }> {
+  if (detectPlatform() === 'android') {
+    try {
+      const { CapacitorPrinter } = await import('./capacitor-printer')
+      return CapacitorPrinter.printHtml(name, html)
+    } catch {
+      return { success: false, error: 'Capacitor printer plugin not available' }
+    }
+  }
+
+  const frame = getPrintFrame()
+  const doc = frame.contentDocument ?? frame.contentWindow?.document
+  if (!doc) return { success: false, error: 'Print frame unavailable' }
+
+  doc.open()
+  doc.write(html)
+  doc.close()
+  setTimeout(() => frame.contentWindow?.print(), IFRAME_PRINT_DELAY_MS)
+  return { success: true }
+}
+
 // ── Cash drawer ─────────────────────────────────────────────────────────────
 
 /**

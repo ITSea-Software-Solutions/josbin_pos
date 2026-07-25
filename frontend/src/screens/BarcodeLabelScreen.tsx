@@ -3,16 +3,20 @@
  *
  * Search products → select → configure qty → preview → print to label printer.
  * Supports EAN-13, Code 128, QR barcode symbologies.
- * Uses browser print dialog (Electron's window.print()) for label printers.
- * Generates a printable label sheet with inline CSS — no external dependencies.
+ * Printing is platform-routed via printHtmlSheet: OS print dialog on
+ * Electron/web, native PrintManager on Android (where window.print() is a
+ * silent no-op). Sheet generation lives in lib/labelSheet.ts.
  */
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import JsBarcode from 'jsbarcode'
-import QRCode from 'qrcode'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
+import { detectPlatform, listPrinters, printHtmlSheet } from '@/lib/hardware'
+import {
+  LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML, labelCode,
+  type BarcodeType, type LabelItem, type LabelSize,
+} from '@/lib/labelSheet'
 import apiClient from '@/api/client'
 
 interface Product {
@@ -22,124 +26,6 @@ interface Product {
   barcode: string | null
   price: string
   btw_rate: string
-}
-
-interface LabelItem {
-  product: Product
-  qty: number
-}
-
-type BarcodeType = 'EAN13' | 'Code128' | 'QR'
-type LabelSize   = '36x24' | '50x30' | '60x40'
-
-const LABEL_SIZES: Record<LabelSize, { w: number; h: number; label: string }> = {
-  '36x24': { w: 36, h: 24, label: '36 × 24 mm' },
-  '50x30': { w: 50, h: 30, label: '50 × 30 mm' },
-  '60x40': { w: 60, h: 40, label: '60 × 40 mm' },
-}
-
-/**
- * Generate a barcode/QR data URL entirely in-browser using jsbarcode + qrcode.
- * No network requests — works offline and inside Docker.
- */
-async function barcodeDataUrl(code: string, type: BarcodeType, widthPx: number, heightPx: number): Promise<string> {
-  if (type === 'QR') {
-    return QRCode.toDataURL(code, {
-      width: Math.min(widthPx, heightPx),
-      margin: 1,
-      errorCorrectionLevel: 'M',
-    })
-  }
-
-  // EAN-13: code must be exactly 12 or 13 digits. Fall back to CODE128 if invalid.
-  const format = type === 'EAN13' ? 'EAN13' : 'CODE128'
-  const safeCode = format === 'EAN13' ? toEan13(code) : code
-
-  const canvas = document.createElement('canvas')
-  try {
-    JsBarcode(canvas, safeCode, {
-      format,
-      displayValue: false,
-      margin: 2,
-      width: Math.max(1, Math.round(widthPx / Math.max(safeCode.length * 7, 40))),
-      height: Math.round(heightPx * 0.85),
-    })
-  } catch {
-    // If JsBarcode rejects the value (e.g. bad EAN-13 check digit), fall back to CODE128
-    JsBarcode(canvas, code, { format: 'CODE128', displayValue: false, margin: 2, height: Math.round(heightPx * 0.85) })
-  }
-  return canvas.toDataURL('image/png')
-}
-
-/**
- * Normalise a string to a valid 12-digit EAN-13 body (checksum auto-calculated by JsBarcode).
- * Strips non-digits and zero-pads or truncates to 12 digits.
- */
-function toEan13(code: string): string {
-  const digits = code.replace(/\D/g, '').slice(0, 12).padStart(12, '0')
-  return digits
-}
-
-function generatePrintHTML(
-  items: LabelItem[],
-  labelSize: LabelSize,
-  showPrice: boolean,
-  showName: boolean,
-  isNl: boolean,
-  dataUrls: Map<string, string>,   // productId → barcode data URL
-): string {
-  const { w, h } = LABEL_SIZES[labelSize]
-
-  const labels: string[] = []
-  for (const { product, qty } of items) {
-    const code = product.barcode ?? product.id.replace(/-/g, '').slice(0, 12)
-    const name = isNl ? product.name_nl : product.name_en
-    const price = `SRD ${parseFloat(product.price).toFixed(2)}`
-    const imgUrl = dataUrls.get(product.id) ?? ''
-
-    for (let i = 0; i < qty; i++) {
-      labels.push(`
-        <div class="label">
-          ${showName ? `<div class="lname">${name}</div>` : ''}
-          ${imgUrl ? `<img src="${imgUrl}" alt="${code}" class="bimg" />` : ''}
-          <div class="bcode">${code}</div>
-          ${showPrice ? `<div class="lprice">${price}</div>` : ''}
-        </div>
-      `)
-    }
-  }
-
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8"/>
-<title>Labels</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; }
-  .sheet { display: flex; flex-wrap: wrap; gap: 2mm; padding: 5mm; }
-  .label {
-    width: ${w}mm; height: ${h}mm;
-    border: 0.3mm solid #ccc;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    padding: 1mm; overflow: hidden; page-break-inside: avoid;
-  }
-  .lname { font-size: 6px; font-weight: 600; text-align: center; width: 100%;
-    overflow: hidden; white-space: nowrap; text-overflow: ellipsis; margin-bottom: 1px; }
-  .bimg { max-width: 100%; max-height: ${Math.round(h * 0.5)}mm; object-fit: contain; }
-  .bcode { font-size: 5px; margin-top: 1px; letter-spacing: 0.5px; color: #333; }
-  .lprice { font-size: 7px; font-weight: 700; margin-top: 1px; color: #000; }
-  @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    .sheet { padding: 3mm; gap: 1mm; }
-  }
-</style>
-</head>
-<body>
-  <div class="sheet">${labels.join('')}</div>
-</body>
-</html>`
 }
 
 // ─── Product Row in selection table ──────────────────────────────────────────
@@ -191,10 +77,11 @@ function ProductRow({
 
 // ─── Main Screen ──────────────────────────────────────────────────────────────
 export default function BarcodeLabelScreen() {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const user = useAuthStore((s) => s.user)
   const storeId = useSettingsStore((s) => s.storeId)
+  const platform = detectPlatform()
 
   const [search, setSearch]           = useState('')
   const [selection, setSelection]     = useState<Map<string, LabelItem>>(new Map())
@@ -202,7 +89,17 @@ export default function BarcodeLabelScreen() {
   const [labelSize, setLabelSize]     = useState<LabelSize>('50x30')
   const [showPrice, setShowPrice]     = useState(true)
   const [showName, setShowName]       = useState(true)
-  const printFrameRef = useRef<HTMLIFrameElement>(null)
+  const [printError, setPrintError]   = useState<string | null>(null)
+
+  // Only Electron can enumerate system printers (IPC to the main process);
+  // browsers and the Android WebView have no API for it.
+  const { data: printerCount } = useQuery<number>({
+    queryKey: ['printers-detected'],
+    queryFn: async () => (await listPrinters()).length,
+    enabled: platform === 'electron',
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  })
 
   const { data, isLoading, isFetching, refetch } = useQuery<{ data: Product[] }>({
     queryKey: ['products-all', user?.organisation_id],
@@ -259,29 +156,23 @@ export default function BarcodeLabelScreen() {
   async function handlePrint() {
     const items = Array.from(selection.values())
     if (items.length === 0) return
+    setPrintError(null)
 
     // Generate all barcode images locally (no network) before building the HTML
     const { w, h } = LABEL_SIZES[labelSize]
-    const wpx = Math.round(w * 3.78)
-    const hpx = Math.round(h * 3.78)
+    const wpx = Math.round(w * PX_PER_MM)
+    const hpx = Math.round(h * PX_PER_MM)
 
     const dataUrls = new Map<string, string>()
     for (const { product } of items) {
-      const code = product.barcode ?? product.id.replace(/-/g, '').slice(0, 12)
-      dataUrls.set(product.id, await barcodeDataUrl(code, barcodeType, wpx, hpx))
+      dataUrls.set(product.id, await barcodeDataUrl(labelCode(product), barcodeType, wpx, hpx))
     }
 
-    const html = generatePrintHTML(items, labelSize, showPrice, showName, isNl, dataUrls)
-
-    // Write to hidden iframe and trigger print
-    const frame = printFrameRef.current
-    if (!frame) return
-    const doc = frame.contentDocument ?? frame.contentWindow?.document
-    if (!doc) return
-    doc.open()
-    doc.write(html)
-    doc.close()
-    setTimeout(() => frame.contentWindow?.print(), 400)
+    const html = generateLabelSheetHTML(items, labelSize, showPrice, showName, isNl, dataUrls)
+    const result = await printHtmlSheet('Josbin POS Labels', html)
+    if (!result.success) {
+      setPrintError(t('pos.labels.printFailed', { error: result.error ?? '' }))
+    }
   }
 
   const totalLabels = Array.from(selection.values()).reduce((s, i) => s + i.qty, 0)
@@ -308,9 +199,6 @@ export default function BarcodeLabelScreen() {
 
   return (
     <div style={{ display: 'flex', height: '100%', overflow: 'hidden', background: '#f2f5fb' }}>
-      {/* Hidden print iframe */}
-      <iframe ref={printFrameRef} style={{ display: 'none' }} title="print-labels" />
-
       {/* Left: product selector */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Header */}
@@ -462,6 +350,21 @@ export default function BarcodeLabelScreen() {
           </div>
         )}
 
+        {/* Printer presence: Electron enumerates system printers; browser and
+            Android WebView cannot, so those get one static guidance line. */}
+        {(platform !== 'electron' || printerCount !== undefined) && (
+          <p style={{
+            fontSize: 11, lineHeight: 1.5,
+            color: platform === 'electron' && printerCount === 0 ? '#b45309' : '#7e88a0',
+          }}>
+            {platform === 'electron'
+              ? (printerCount ?? 0) > 0
+                ? `🖨 ${t('pos.labels.printersDetected', { n: printerCount })}`
+                : `⚠ ${t('pos.labels.noPrintersFound')}`
+              : t('pos.labels.printerHint')}
+          </p>
+        )}
+
         {/* Print button */}
         <button
           onClick={handlePrint}
@@ -484,6 +387,10 @@ export default function BarcodeLabelScreen() {
           🖨 {T.print}
           {totalLabels > 0 ? ` (${totalLabels})` : ''}
         </button>
+
+        {printError && (
+          <p style={{ fontSize: 11, lineHeight: 1.5, color: '#b91c1c' }}>{printError}</p>
+        )}
       </div>
     </div>
   )

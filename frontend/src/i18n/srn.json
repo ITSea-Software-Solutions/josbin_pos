@@ -271,6 +271,12 @@
       "httpsOnly": "Camera-scan e wroko soso nanga wan beveiligde verbinding (HTTPS) noso ini a desktop-app. Gebruik wan USB-barcodescanner noso tik a barcode ini a suku-veld.",
       "denied": "A camera no kisi permissie — gi a camera permissie èn pruberi baka.",
       "failed": "A camera no man opo. Gebruik wan USB-scanner noso tik a barcode. ({{error}})"
+    },
+    "labels": {
+      "printersDetected": "Printer di feni: {{n}}",
+      "noPrintersFound": "No wan printer feni — luku a printer-verbinding ini Windows",
+      "printerHint": "Den printer di de e sori ini a print-venster. Test a bonprinter ini Seti → Printer & Kassalade.",
+      "printFailed": "A printi no wroko: {{error}}"
     }
   },
   "reports": {
@@ -400,10 +406,17 @@
       "drawerOpened": "A kassalade opo!",
       "drawerError": "Fowtu — luku a verbinding",
       "helpElectron": "Netwerk (TCP): koppel a printer na a LAN èn poti en IP-adres. Wi e rai en gi EPSON TM-T20 nanga Ethernet.\nUSB: teki a printer soleki fa a sori ini Windows Apparaten.",
-      "helpAndroid": "Netwerk (TCP): poti a IP-adres fu a printer. Wi e rai disi.\nUSB: yu abi a @anuradev/capacitor-printer plugin fanowdu (luku README).",
+      "helpAndroid": "Netwerk (TCP): poti a IP-adres fu a printer — na Android a bonprinter musu de na a netwerk; printer di abi soso USB no e wroko.\nEtiket nanga testpagina e printi nanga a Android-printvenster.",
       "autoPrint": "Prenti a bon automatisch baka ibri seri",
       "autoPrintHelp": "Wan bon-printer e prenti safri sondro aksi; sondro printer a print-venster e opo baka ibri seri.",
-      "networkOnlyHint": "USB print e wroko soso na a Windows-app — na tapu a masyin disi gebroiki wan netwerk printer (en IP-adres)."
+      "networkOnlyHint": "USB print e wroko soso na a Windows-app — na tapu a masyin disi gebroiki wan netwerk printer (en IP-adres).",
+      "testPrint": "Printi wan testbon",
+      "testingPrint": "E printi...",
+      "printOk": "Testbon seni!",
+      "printError": "Fowtu — luku a verbinding",
+      "testLabel": "Printi wan test-etiket",
+      "labelOk": "Test-etiket seni!",
+      "labelError": "Fowtu — a printi no wroko"
     },
     "system": {
       "title": "Systeem",

@@ -117,6 +117,24 @@ async function tcpPrint(ip: string, port: number, data: number[]): Promise<Print
   }
 }
 
+/**
+ * Print an arbitrary HTML document (barcode label sheets, test pages)
+ * through Android's PrintManager — opens the system print dialog with
+ * every printer the device knows about.
+ *
+ * Screens must route HTML printing through here on Android because
+ * window.print() is a silent no-op inside the Capacitor WebView.
+ */
+async function printHtml(name: string, html: string): Promise<PrintResult> {
+  try {
+    const { Printer } = await import('@capgo/capacitor-printer')
+    await Printer.printHtml({ name, html })
+    return { success: true }
+  } catch (err: any) {
+    return { success: false, error: String(err?.message ?? err) }
+  }
+}
+
 /** Wrap plain text in a minimal HTML receipt layout for PrintManager. */
 function buildHtmlFromText(text: string): string {
   const escaped = text
@@ -138,4 +156,4 @@ function buildHtmlFromText(text: string): string {
 </html>`
 }
 
-export const CapacitorPrinter = { printEscPos, tcpPrint }
+export const CapacitorPrinter = { printEscPos, tcpPrint, printHtml }

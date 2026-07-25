@@ -119,6 +119,10 @@ Both are checked by default. Uncheck either one if you do not want it on the lab
 
 > **Tip:** Label printers typically need to be set as the default printer in Windows. Once set as default, the correct printer is usually pre-selected in the dialog.
 
+> **Android terminals:** the **Print** button opens the Android print dialog instead (the same one Chrome uses). Pick the label printer there. If no printers are listed, enable your printer's print service on the terminal first (Android Settings → Printing).
+
+**The printer line above the Print button** tells you what the app knows about your printers: on the Windows desktop app it counts the printers installed in Windows (e.g. "Printers detected: 2" — or a warning when none are found); in the browser and on Android the app cannot see the printer list, so it reminds you that printers appear in the print dialog itself.
+
 **If the print dialog opens but nothing prints:**
 - Check that the correct printer is selected.
 - Check that the label paper is loaded correctly.
@@ -143,6 +147,7 @@ For best results, configure the label printer in Windows before using this scree
 
 | Problem | Solution |
 |---------|----------|
+| Print button does nothing on an Android terminal | Update the app — label printing on Android needs the July 2026 build or newer. Then check that a print service is enabled (Android Settings → Printing). |
 | Barcodes appear as numbers only (no graphic) | This was a known bug, now fixed. Make sure you are on the latest version. |
 | Labels are the wrong size | Check that the label size in the right panel matches the paper in your printer, and that the printer paper size is set correctly in the print dialog. |
 | Product is not in the list | The product may not be in the catalogue for this store. Contact your manager. |

@@ -3,13 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
 import { getStore } from '@/api/stores'
-import { listPrinters, openCashDrawer, detectPlatform } from '@/lib/hardware'
+import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform } from '@/lib/hardware'
+import { buildReceiptBytes } from '@/lib/escpos'
+import { LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML } from '@/lib/labelSheet'
 import type { ProductDisplay } from '@/store/settingsStore'
 import type { PrinterConfig } from '@/lib/hardware'
 import { SystemActions } from '@/components/settings/SystemActions'
 import HelpButton from '@/components/shared/HelpButton'
 
 const DATE_FORMATS = ['DD-MM-YYYY', 'MM-DD-YYYY', 'YYYY-MM-DD', 'D MMMM YYYY', 'D MMM YYYY', 'DD/MM/YY']
+
+type HardwareTestStatus = 'idle' | 'testing' | 'ok' | 'error'
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation()
@@ -49,7 +53,9 @@ export default function SettingsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [windowsPrinters, setWindowsPrinters] = useState<string[]>([])
-  const [drawerTestStatus, setDrawerTestStatus] = useState<'idle' | 'testing' | 'ok' | 'error'>('idle')
+  const [drawerTestStatus, setDrawerTestStatus] = useState<HardwareTestStatus>('idle')
+  const [receiptTestStatus, setReceiptTestStatus] = useState<HardwareTestStatus>('idle')
+  const [labelTestStatus, setLabelTestStatus] = useState<HardwareTestStatus>('idle')
 
   function handleSave() {
     setSaved(true)
@@ -66,6 +72,82 @@ export default function SettingsScreen() {
     const result = await openCashDrawer(printer)
     setDrawerTestStatus(result.success ? 'ok' : 'error')
     setTimeout(() => setDrawerTestStatus('idle'), 3000)
+  }
+
+  // Sends a real ESC/POS ticket through the exact same path a sale receipt
+  // takes (CP858 encoding, paper width, platform routing) — so a green test
+  // here means sales will print.
+  async function testReceiptPrint() {
+    setReceiptTestStatus('testing')
+    try {
+      const locale = i18n.language === 'nl' ? 'nl' : 'en'
+      const bytes = buildReceiptBytes({
+        sale: {
+          sale_number: 'TEST-0001',
+          occurred_at: new Date().toISOString(),
+          cashier_name: 'Josbin POS',
+          payment_method: 'cash',
+          subtotal_srd: '10.00',
+          discount_srd: '0.00',
+          total_srd: '10.00',
+          btw_srd: '0.91',
+          cash_tendered: '10.00',
+          change: '0.00',
+          items: [{
+            product_name: locale === 'nl' ? 'Testproduct' : 'Test product',
+            quantity: '1',
+            unit_price_srd: '10.00',
+            line_total_srd: '10.00',
+            discount_srd: '0.00',
+            btw_rate: '10.00',
+            btw_exempt: false,
+          }],
+        },
+        store: {
+          name: 'Josbin POS',
+          receipt_footer: locale === 'nl' ? 'Testbon — geen verkoop' : 'Test receipt — not a sale',
+        },
+        locale,
+        paperWidth: printer.paperWidth ?? 80,
+      })
+      const result = await printEscPos(bytes, printer)
+      setReceiptTestStatus(result.success ? 'ok' : 'error')
+    } catch {
+      setReceiptTestStatus('error')
+    }
+    setTimeout(() => setReceiptTestStatus('idle'), 3000)
+  }
+
+  // Label test goes through printHtmlSheet: OS print dialog on Electron/web,
+  // native PrintManager on Android. Independent of the ESC/POS config above,
+  // so it stays available even with the receipt printer disabled.
+  async function testLabelPrint() {
+    setLabelTestStatus('testing')
+    try {
+      const size = '50x30' as const
+      const { w, h } = LABEL_SIZES[size]
+      const dataUrl = await barcodeDataUrl(
+        '871000000000', 'EAN13', Math.round(w * PX_PER_MM), Math.round(h * PX_PER_MM),
+      )
+      const html = generateLabelSheetHTML(
+        [{
+          product: {
+            id: 'test',
+            name_nl: 'Testetiket',
+            name_en: 'Test label',
+            barcode: '871000000000',
+            price: '9.99',
+          },
+          qty: 2,
+        }],
+        size, true, true, i18n.language === 'nl', new Map([['test', dataUrl]]),
+      )
+      const result = await printHtmlSheet('Josbin POS Test Label', html)
+      setLabelTestStatus(result.success ? 'ok' : 'error')
+    } catch {
+      setLabelTestStatus('error')
+    }
+    setTimeout(() => setLabelTestStatus('idle'), 3000)
   }
 
   function updatePrinter(patch: Partial<PrinterConfig>) {
@@ -95,6 +177,14 @@ export default function SettingsScreen() {
     fontSize: 'var(--font-size-base)', padding: '0 14px', outline: 'none', width: '100%',
     cursor: 'pointer',
   }
+
+  const testBtnSt = (status: HardwareTestStatus): React.CSSProperties => ({
+    height: 44, borderRadius: 'var(--border-radius)',
+    border: `1px solid ${status === 'ok' ? 'var(--color-success)' : status === 'error' ? 'var(--color-error)' : 'var(--border-color)'}`,
+    background: 'var(--bg-elevated)',
+    color: status === 'ok' ? 'var(--color-success)' : status === 'error' ? 'var(--color-error)' : 'var(--text-primary)',
+    cursor: 'pointer', fontWeight: 600, fontSize: 'var(--font-size-sm)',
+  })
 
   return (
     <div style={{ height: '100%', overflowY: 'auto', padding: 24 }}>
@@ -405,19 +495,29 @@ export default function SettingsScreen() {
             </div>
           )}
 
-          {/* Test cash drawer button */}
+          {/* Hardware tests: receipt print + cash drawer need the ESC/POS
+              config; the label test prints via the OS/Android print dialog
+              and works even with the receipt printer disabled. */}
+          {printer.type !== 'none' && (
+            <button
+              onClick={testReceiptPrint}
+              disabled={receiptTestStatus === 'testing'}
+              data-testid="btn-test-receipt"
+              style={testBtnSt(receiptTestStatus)}
+            >
+              {receiptTestStatus === 'testing' ? `⏳ ${t('settings.printer.testingPrint')}` :
+               receiptTestStatus === 'ok'      ? `✓ ${t('settings.printer.printOk')}` :
+               receiptTestStatus === 'error'   ? `✗ ${t('settings.printer.printError')}` :
+               `🧾 ${t('settings.printer.testPrint')}`}
+            </button>
+          )}
+
           {printer.type !== 'none' && (
             <button
               onClick={testDrawer}
               disabled={drawerTestStatus === 'testing'}
               data-testid="btn-test-drawer"
-              style={{
-                height: 44, borderRadius: 'var(--border-radius)',
-                border: `1px solid ${drawerTestStatus === 'ok' ? 'var(--color-success)' : drawerTestStatus === 'error' ? 'var(--color-error)' : 'var(--border-color)'}`,
-                background: 'var(--bg-elevated)',
-                color: drawerTestStatus === 'ok' ? 'var(--color-success)' : drawerTestStatus === 'error' ? 'var(--color-error)' : 'var(--text-primary)',
-                cursor: 'pointer', fontWeight: 600, fontSize: 'var(--font-size-sm)',
-              }}
+              style={testBtnSt(drawerTestStatus)}
             >
               {drawerTestStatus === 'testing' ? `⏳ ${t('settings.printer.testingDrawer')}` :
                drawerTestStatus === 'ok'      ? `✓ ${t('settings.printer.drawerOpened')}` :
@@ -425,6 +525,18 @@ export default function SettingsScreen() {
                `🗄 ${t('settings.printer.testDrawer')}`}
             </button>
           )}
+
+          <button
+            onClick={testLabelPrint}
+            disabled={labelTestStatus === 'testing'}
+            data-testid="btn-test-label"
+            style={testBtnSt(labelTestStatus)}
+          >
+            {labelTestStatus === 'testing' ? `⏳ ${t('settings.printer.testingPrint')}` :
+             labelTestStatus === 'ok'      ? `✓ ${t('settings.printer.labelOk')}` :
+             labelTestStatus === 'error'   ? `✗ ${t('settings.printer.labelError')}` :
+             `🏷 ${t('settings.printer.testLabel')}`}
+          </button>
 
           {/* Info box */}
           <div style={{
