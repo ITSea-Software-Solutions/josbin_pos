@@ -225,6 +225,8 @@ verschilt:
 3. Inloggen. Dezelfde terminaltelling geldt — een Android-kassa neemt een
    licentieplek in, precies zoals een Windows-kassa.
 
+Het complete Android-verhaal (topologie, checks, probleemoplossing): dev-docs hoofdstuk 15 "Android-kassaterminals".
+
 Hardware op Android: de **bonprinter moet op het netwerk** zitten (LAN/wifi,
 poort 9100) — printers met alleen USB worden op Android niet ondersteund voor
 bonnen. Scanner en geldlade werken zoals gebruikelijk. Volledige stappen en de

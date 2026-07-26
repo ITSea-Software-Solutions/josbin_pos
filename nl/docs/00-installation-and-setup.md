@@ -425,6 +425,11 @@ Als je het gelicentieerde terminal-aantal raakt, toont de volgende installatie *
 
 ### E5. Android-kassa's (Posiflex RT-serie, tablets)
 
+> **Volledige gids:** alles wat Android-specifiek is — topologie, bekabeling,
+> verbindingschecks, verschillen met Windows, probleemoplossing — staat in
+> [hoofdstuk 15: Android-kassaterminals](/nl/docs/15-android-terminals).
+> Deze sectie bevat alleen de installatiestappen.
+
 Veel moderne kassaterminals — bijv. de Posiflex RT-1000-serie — draaien op
 **Android**, niet op Windows. Josbin POS draait daar ook, als native
 Android-app (APK) met dezelfde schermen, dezelfde login en dezelfde

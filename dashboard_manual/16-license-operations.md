@@ -221,6 +221,8 @@ app instead of the Windows exe. The flow is the same, the file is different:
 3. Login. The same terminal-count rule applies — an Android till occupies a
    licence slot exactly like a Windows till.
 
+The complete Android story (topology, checks, troubleshooting): dev docs chapter 15 "Android terminals".
+
 Hardware note for Android: the **receipt printer must be on the network**
 (LAN/Wi-Fi, port 9100) — USB-only printers are not supported for receipts on
 Android. Scanner and cash drawer work as usual. Full steps and the hardware

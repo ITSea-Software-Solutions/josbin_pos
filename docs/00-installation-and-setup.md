@@ -420,6 +420,11 @@ If you hit the licensed terminal count, the next install shows **"License limit 
 
 ### E5. Android terminals (Posiflex RT-series, tablets)
 
+> **Full guide:** everything Android-specific — topology, wiring, connection
+> checks, differences vs Windows, troubleshooting — lives in
+> [chapter 15: Android terminals](/docs/15-android-terminals). This section
+> is just the install steps.
+
 Many modern POS terminals — e.g. the Posiflex RT-1000 series — run **Android**,
 not Windows. Josbin POS runs there too, as a native Android app (APK) with the
 same screens, the same login and the same server logic as the Windows build.
