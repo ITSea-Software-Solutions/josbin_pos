@@ -613,6 +613,12 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
   })
   const parseList = (v: string) => v.split(',').map((s) => s.trim()).filter(Boolean)
 
+  // Register policy: self-service shift handover (multi-shift stores).
+  // Off = a register closed today needs a manager for the next shift.
+  const [selfHandover, setSelfHandover] = useState<boolean>(
+    Boolean((org.settings?.register_policy as { self_service_handover?: boolean } | undefined)?.self_service_handover),
+  )
+
   const mutation = useMutation({
     mutationFn: () => updateOrganisation(org.id, {
       ...form,
@@ -622,6 +628,7 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
         transfer_banks: parseList(payLists.transfer_banks),
         mobile_apps:    parseList(payLists.mobile_apps),
       },
+      register_policy: { self_service_handover: selfHandover },
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['organisations'] })
@@ -699,6 +706,28 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
               <option value="professional">Professional</option>
               <option value="enterprise">Enterprise</option>
             </select>
+          </div>
+          {/* Register policy — self-service shift handover */}
+          <div>
+            <label style={{ display: 'block', fontSize: 12.5, fontWeight: 700, color: '#374151', marginBottom: 3 }}>
+              {isNl ? 'Kassabeleid' : 'Register policy'}
+            </label>
+            <div
+              onClick={() => setSelfHandover((v) => !v)}
+              style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 12px', borderRadius: 10, border: '1px solid #e5e7eb', background: selfHandover ? '#f0f4ff' : '#fafafa', cursor: 'pointer' }}
+            >
+              <input type="checkbox" checked={selfHandover} readOnly style={{ marginTop: 2, cursor: 'pointer' }} data-testid="toggle-self-handover" />
+              <div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#111827' }}>
+                  {isNl ? 'Zelfstandige ploegwissel (zonder beheerder)' : 'Self-service shift handover (no manager)'}
+                </div>
+                <p style={{ fontSize: 11.5, color: '#7e88a0', margin: '3px 0 0', lineHeight: 1.45 }}>
+                  {isNl
+                    ? 'Aan: een caissière van de volgende ploeg mag zelf een NIEUWE sessie openen op een vandaag gesloten kassa — eigen wisselgeld, beide tellingen blijven apart en volledig gelogd. Uit (standaard): de beheerder heropent per ploegwissel. Aanbevolen "aan" voor winkels met meerdere ploegen.'
+                    : 'On: the next shift\'s cashier may open a NEW session on a register already closed today — own float, both counts stay separate and fully logged. Off (default): a manager reopens at each shift change. Recommended "on" for multi-shift stores.'}
+                </p>
+              </div>
+            </div>
           </div>
           {/* Payment pick-lists (POS chips) */}
           <div>

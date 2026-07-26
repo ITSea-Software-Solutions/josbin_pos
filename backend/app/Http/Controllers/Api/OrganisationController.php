@@ -117,10 +117,26 @@ class OrganisationController extends Controller
             'payment_options.transfer_banks.*' => ['string', 'max:40', 'distinct'],
             'payment_options.mobile_apps'      => ['sometimes', 'array', 'max:20'],
             'payment_options.mobile_apps.*'    => ['string', 'max:40', 'distinct'],
+            // Register policy: self-service shift handover. Default OFF =
+            // a register closed today needs a manager to start the next
+            // shift. ON = the incoming cashier opens a NEW session with
+            // their own float — the lade-wissel model multi-shift stores
+            // use; every session stays individually counted and audited.
+            'register_policy'                       => ['sometimes', 'array'],
+            'register_policy.self_service_handover' => ['sometimes', 'boolean'],
         ]);
 
+        if (array_key_exists('register_policy', $data)) {
+            $settings = $data['settings'] ?? $organisation->settings ?? [];
+            $settings['register_policy'] = [
+                'self_service_handover' => (bool) ($data['register_policy']['self_service_handover'] ?? false),
+            ];
+            $data['settings'] = $settings;
+            unset($data['register_policy']);
+        }
+
         if (array_key_exists('payment_options', $data)) {
-            $settings = $organisation->settings ?? [];
+            $settings = $data['settings'] ?? $organisation->settings ?? [];
             $settings['payment_options'] = collect($data['payment_options'])
                 ->map(fn ($list) => array_values(array_filter(array_map('trim', $list), fn ($v) => $v !== '' && strcasecmp($v, 'Other') !== 0)))
                 ->all();

@@ -264,3 +264,30 @@ the [audit log](13-audit-log.md) (`register.auto_closed`,
 - [Chapter 11 — Z-Reports & End-of-Day Sync](11-z-reports-and-end-of-day-sync.md) — the day-level close that rolls these sessions up
 - [Chapter 13 — Audit Log](13-audit-log.md) — every register / session event is logged here
 - [Chapter 1 §1.3 — Store Manager role](01-roles-and-permissions.md) — the role authorised to do most actions on this screen
+
+## 19.x Register policy: self-service shift handover
+
+**The question this answers:** a store with 10 counters and 3 shifts would
+need a manager at every counter at every shift change — ±20 "reopen"
+approvals a day. Real multi-shift stores run the *drawer-swap* model
+instead: the outgoing cashier closes and counts, the incoming cashier
+starts fresh with their own float, and no manager is involved at the
+handover itself.
+
+**Where:** Organisations → edit → **Register policy** → *Self-service
+shift handover*. Org-wide, default **off**.
+
+| | Off (default — strict) | On (multi-shift stores) |
+|---|---|---|
+| Register closed today, next shift arrives | Manager must reopen | Incoming cashier opens a NEW session with their own float |
+| Outgoing cashier's count | Sealed, untouched | Sealed, untouched — exactly the same |
+| Accountability | Per session, audited | Per session, audited — nothing is lost |
+| Manager's daily register work | ~2 × counters approvals | Discrepancy review + one Z-report |
+
+What the toggle **never** changes: one live session per register at a
+time, every open and close is logged with who/when/float/count, and
+discrepancies still demand a note. The policy relaxes *who may start the
+next shift* — never the counting.
+
+**Recommended:** on for supermarkets with shifts; off for single-shift
+shops and government sites that want the four-eyes handover.

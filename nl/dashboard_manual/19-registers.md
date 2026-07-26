@@ -264,3 +264,30 @@ afsluiting en afstemming staat in het [auditlogboek](13-audit-log.md)
 - [Hoofdstuk 11 — Z-Rapporten & Einde-dag Synchronisatie](11-z-reports-and-end-of-day-sync.md) — de dag-niveau-sluiting die deze sessies oprolt
 - [Hoofdstuk 13 — Auditlogboek](13-audit-log.md) — elke kassa / sessiegebeurtenis wordt hier gelogd
 - [Hoofdstuk 1 §1.3 — Vestigingsmanager-rol](01-roles-and-permissions.md) — de rol geautoriseerd om de meeste acties op dit scherm te doen
+
+## 19.x Kassabeleid: zelfstandige ploegwissel
+
+**De vraag die dit beantwoordt:** een winkel met 10 kassa's en 3 ploegen
+zou bij elke ploegwissel bij elke kassa een beheerder nodig hebben — ±20
+"heropen"-acties per dag. Echte ploegenwinkels werken met het
+*ladewissel*-model: de vertrekkende caissière sluit en telt, de komende
+caissière start vers met eigen wisselgeld, en er komt geen beheerder aan
+te pas bij de overdracht zelf.
+
+**Waar:** Organisaties → bewerken → **Kassabeleid** → *Zelfstandige
+ploegwissel*. Organisatiebreed, standaard **uit**.
+
+| | Uit (standaard — strikt) | Aan (ploegenwinkels) |
+|---|---|---|
+| Kassa vandaag gesloten, volgende ploeg komt | Beheerder moet heropenen | Komende caissière opent een NIEUWE sessie met eigen wisselgeld |
+| Telling van de vertrekkende caissière | Verzegeld, onaangeroerd | Verzegeld, onaangeroerd — precies hetzelfde |
+| Verantwoording | Per sessie, gelogd | Per sessie, gelogd — er gaat niets verloren |
+| Dagelijks kassawerk beheerder | ±2 × aantal kassa's goedkeuringen | Verschillen beoordelen + één Z-rapport |
+
+Wat de schakelaar **nooit** verandert: één live sessie per kassa
+tegelijk, elke opening en sluiting wordt gelogd met wie/wanneer/
+wisselgeld/telling, en verschillen vereisen nog steeds een notitie. Het
+beleid versoepelt *wie de volgende ploeg mag starten* — nooit het tellen.
+
+**Aanbevolen:** aan voor supermarkten met ploegen; uit voor
+éénploegswinkels en overheidslocaties die de vier-ogen-overdracht willen.

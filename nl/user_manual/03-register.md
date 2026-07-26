@@ -227,3 +227,11 @@ opnieuw proberen, maar het wordt ook vanzelf opnieuw geprobeerd.
 ---
 
 → Volgende: [Hoofdstuk 4 — Een verkoop maken](04-making-a-sale.md)
+
+::: tip Ploegwissel zonder beheerder?
+Als uw winkel dit heeft ingeschakeld, is een kassa die vandaag **Gesloten**
+toont gewoon te openen: selecteer hem, vul **uw eigen** wisselgeld in en
+begin uw dienst — de telling van de vorige caissière blijft verzegeld.
+Staat er *vraag beheerder*, dan gebruikt uw winkel het strikte model en
+start de beheerder de volgende ploeg.
+:::

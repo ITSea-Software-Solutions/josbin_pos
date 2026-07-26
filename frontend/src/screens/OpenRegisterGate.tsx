@@ -60,6 +60,7 @@ export default function OpenRegisterGate() {
   const setSession = useRegisterStore(s => s.setSession)
 
   const [registers, setRegisters]       = useState<Register[]>([])
+  const [selfHandover, setSelfHandover]  = useState(false)
   const [selected, setSelected]         = useState<Register | null>(null)
   const [float, setFloat]               = useState('0')
   const [loading, setLoading]           = useState(true)
@@ -82,7 +83,9 @@ export default function OpenRegisterGate() {
       getMySession(storeId),
       getYesterdayStatus(storeId).catch(() => null),
       getStore(storeId).catch(() => null),
-    ]).then(([regs, existing, ystat, store]) => {
+    ]).then(([regsRes, existing, ystat, store]) => {
+      const regs = regsRes.registers
+      setSelfHandover(regsRes.selfServiceHandover)
       setYStatus(ystat)
       setStoreInfo(store)
 
@@ -376,13 +379,19 @@ export default function OpenRegisterGate() {
               const isOpen        = r.status === 'open' || r.status === 'reopen_requested'
               const isClosedToday = r.status === 'closed_today'
               const isAvailable   = r.status === 'available'
-              const disabled      = !isAvailable
+              // Self-service handover (org policy): a closed register is
+              // openable by the next shift — new session, own float.
+              const disabled      = !(isAvailable || (isClosedToday && selfHandover))
               const subLine = isOpen
                 ? (isNl ? `In gebruik door ${r.session?.cashier_name ?? '—'}` : `In use by ${r.session?.cashier_name ?? '—'}`)
                 : isClosedToday
-                  ? (isNl
-                      ? `Gesloten ${r.closed_today?.closed_at?.slice(11,16) ?? ''} door ${r.closed_today?.cashier_name ?? '—'} · vraag beheerder`
-                      : `Closed ${r.closed_today?.closed_at?.slice(11,16) ?? ''} by ${r.closed_today?.cashier_name ?? '—'} · ask manager`)
+                  ? (selfHandover
+                      ? (isNl
+                          ? `Gesloten ${r.closed_today?.closed_at?.slice(11,16) ?? ''} door ${r.closed_today?.cashier_name ?? '—'} · volgende ploeg kan openen`
+                          : `Closed ${r.closed_today?.closed_at?.slice(11,16) ?? ''} by ${r.closed_today?.cashier_name ?? '—'} · next shift can open`)
+                      : (isNl
+                          ? `Gesloten ${r.closed_today?.closed_at?.slice(11,16) ?? ''} door ${r.closed_today?.cashier_name ?? '—'} · vraag beheerder`
+                          : `Closed ${r.closed_today?.closed_at?.slice(11,16) ?? ''} by ${r.closed_today?.cashier_name ?? '—'} · ask manager`))
                   : null
               const badge = isOpen
                 ? { text: isNl ? 'Bezet' : 'Occupied', fg: '#f87171', bg: 'rgba(239,68,68,.1)', bd: 'rgba(239,68,68,.25)' }
@@ -426,7 +435,7 @@ export default function OpenRegisterGate() {
                 </button>
               )
             })}
-            {registers.length > 0 && registers.every(r => r.status === 'closed_today') && (
+            {!selfHandover && registers.length > 0 && registers.every(r => r.status === 'closed_today') && (
               <div style={{ marginTop: 10, padding: '12px 14px', borderRadius: 12, background: 'rgba(251,191,36,.08)', border: '1px solid rgba(251,191,36,.25)', color: '#fde68a', fontSize: 12, lineHeight: 1.5 }}>
                 {isNl
                   ? 'Alle kassa\'s zijn vandaag al gesloten. Vraag uw beheerder om een nieuwe sessie te openen voor de volgende ploeg.'

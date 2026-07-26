@@ -225,3 +225,11 @@ reached head office yet; a manager can retry, but it also retries on its own.
 ---
 
 → Next: [Chapter 4 — Making a Sale](04-making-a-sale.md)
+
+::: tip Shift handover without a manager?
+If your store has this enabled, a register that says **Closed** today is
+still openable: select it, enter **your own** float, and start your shift
+— the previous cashier's count stays sealed. If the register says *ask
+manager* instead, your store uses the strict model and the manager starts
+the next shift.
+:::

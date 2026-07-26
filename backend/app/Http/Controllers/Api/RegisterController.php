@@ -125,7 +125,15 @@ class RegisterController extends Controller
             ->get()
             ->map(fn ($r) => $this->formatRegister($r));
 
-        return response()->json(['data' => $registers]);
+        // Org policy the gate screen needs: with self-service handover ON,
+        // closed-today registers render as openable for the next shift.
+        $selfServiceHandover = (bool) data_get(
+            \App\Models\Store::with('organisation:id,settings')->find($request->store_id)?->organisation?->settings,
+            'register_policy.self_service_handover',
+            false
+        );
+
+        return response()->json(['data' => $registers, 'self_service_handover' => $selfServiceHandover]);
     }
 
     // ─── Open a register session ──────────────────────────────────────────
@@ -168,7 +176,17 @@ class RegisterController extends Controller
         // be re-opened without manager involvement. The books are sealed.
         // Managers (and above) can force a new session — typically for a
         // shift handover where the previous cashier already left.
-        if (! $user->isAtLeastManager()) {
+        //
+        // EXCEPTION — self-service shift handover (org policy, default off):
+        // multi-shift stores run the lade-wissel model, where the incoming
+        // cashier starts a NEW session with their own float without a
+        // manager. The closed session stays sealed and counted; what changes
+        // hands is the register position, not the books.
+        $selfServiceHandover = (bool) data_get(
+            $register->store?->organisation?->settings, 'register_policy.self_service_handover', false
+        );
+
+        if (! $user->isAtLeastManager() && ! $selfServiceHandover) {
             $closedToday = RegisterSession::where('register_id', $register->id)
                 ->where('status', 'closed')
                 ->whereDate('closed_at', today())

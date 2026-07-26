@@ -24,7 +24,8 @@ export interface Organisation {
   created_at: string
   allow_impersonation?: boolean
   admin_user?: { id: string; name: string; email: string } | null
-  settings?: { payment_options?: PaymentOptions } & Record<string, unknown>
+  settings?: { payment_options?: PaymentOptions
+    register_policy?: { self_service_handover: boolean } } & Record<string, unknown>
   /** Effective lists (override or default) — appended by the API. */
   payment_options?: PaymentOptions
 }
@@ -97,7 +98,7 @@ export async function createOrganisation(payload: CreateOrgPayload): Promise<Org
 
 export async function updateOrganisation(
   id: string,
-  payload: Partial<CreateOrgPayload> & { is_active?: boolean; allow_impersonation?: boolean; block_oversell?: boolean; payment_options?: PaymentOptions },
+  payload: Partial<CreateOrgPayload> & { is_active?: boolean; allow_impersonation?: boolean; block_oversell?: boolean; payment_options?: PaymentOptions; register_policy?: { self_service_handover: boolean } },
 ): Promise<Organisation> {
   const res = await apiClient.put<{ data: Organisation }>(`/organisations/${id}`, payload)
   return res.data.data

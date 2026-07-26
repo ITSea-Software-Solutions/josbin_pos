@@ -102,9 +102,18 @@ export async function reconcileSession(sessionId: string, countedCash: number, n
   return res.data.data
 }
 
-export async function getRegisters(storeId: string): Promise<Register[]> {
-  const res = await apiClient.get<{ data: Register[] }>('/registers', { params: { store_id: storeId } })
-  return res.data.data
+export interface RegistersResponse {
+  registers: Register[]
+  /** Org policy: closed-today registers may be opened by the next shift's
+   *  cashier (new session, own float) without a manager. */
+  selfServiceHandover: boolean
+}
+
+export async function getRegisters(storeId: string): Promise<RegistersResponse> {
+  const res = await apiClient.get<{ data: Register[]; self_service_handover?: boolean }>(
+    '/registers', { params: { store_id: storeId } },
+  )
+  return { registers: res.data.data, selfServiceHandover: res.data.self_service_handover ?? false }
 }
 
 export async function getMySession(storeId: string): Promise<RegisterSession | null> {
