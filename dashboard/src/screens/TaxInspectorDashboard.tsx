@@ -1,6 +1,13 @@
+import type { CSSProperties } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
-import { getInspectorDashboard } from '@/api/btwSubmissions'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  getInspectorDashboard,
+  getOverdueFilings,
+  remindOverdueStore,
+  escalateOverdueStore,
+  setStoreFilingPeriod,
+} from '@/api/btwSubmissions'
 import { useDashboardAuthStore } from '@/store/authStore'
 import { BD, bdCard } from '@/theme/belastingdienst'
 import { BelastingdienstHeader } from '@/components/shared/BelastingdienstHeader'
@@ -34,6 +41,7 @@ export default function TaxInspectorDashboard({ onNavigateToSubmissions }: Props
   const isNl = i18n.language === 'nl'
   const user = useDashboardAuthStore((s) => s.user)
   const isInspector = user?.role === 'tax_inspector'
+  const canManageOverdue = user?.role === 'tax_inspector' || user?.role === 'super_admin'
 
   const { data, isLoading } = useQuery({
     queryKey: ['btw-inspector-dashboard'],
@@ -224,6 +232,8 @@ export default function TaxInspectorDashboard({ onNavigateToSubmissions }: Props
         )}
       </div>
 
+      {canManageOverdue && <OverdueFilingsPanel isNl={isNl} />}
+
       <p style={{ fontSize: 11, color: BD.muted, textAlign: 'right', marginTop: 14 }}>
         {isNl ? 'Bijgewerkt:' : 'Updated:'} {new Date(data.generated_at).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })} · {isNl ? 'auto-ververst elke 60s' : 'auto-refresh 60s'}
       </p>
@@ -247,6 +257,110 @@ function StatCard({ label, value, tone, icon, hint, onClick }: {
       </div>
       <div style={{ fontSize: 30, fontWeight: 900, color: toneColor, letterSpacing: '-0.5px' }}>{value}</div>
       <div style={{ fontSize: 11, color: BD.muted, marginTop: 4, lineHeight: 1.35 }}>{hint}</div>
+    </div>
+  )
+}
+
+const thStyle: CSSProperties = { padding: '6px 8px', fontWeight: 800, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '.5px' }
+const tdStyle: CSSProperties = { padding: '9px 8px', verticalAlign: 'middle' }
+const btnGhost: CSSProperties = { fontSize: 12, fontWeight: 700, padding: '4px 10px', marginLeft: 6, borderRadius: 7, border: `1px solid ${BD.border}`, background: '#fff', color: BD.green, cursor: 'pointer' }
+const btnDanger: CSSProperties = { fontSize: 12, fontWeight: 800, padding: '4px 10px', marginLeft: 6, borderRadius: 7, border: 'none', background: BD.red, color: '#fff' }
+
+/**
+ * BTW-FILING-16 — overdue-filing oversight. Stores past their filing window,
+ * with a per-store cadence (7/30d), reminders that notify the store, and
+ * escalation to an inspection case once >= threshold reminders go unanswered.
+ */
+function OverdueFilingsPanel({ isNl }: { isNl: boolean }) {
+  const queryClient = useQueryClient()
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['btw-overdue'],
+    queryFn: getOverdueFilings,
+    refetchInterval: 60_000,
+  })
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['btw-overdue'] })
+  const remind    = useMutation({ mutationFn: (storeId: string) => remindOverdueStore(storeId), onSuccess: invalidate })
+  const escalate  = useMutation({ mutationFn: (storeId: string) => escalateOverdueStore(storeId), onSuccess: invalidate })
+  const setPeriod = useMutation({ mutationFn: (v: { storeId: string; days: number }) => setStoreFilingPeriod(v.storeId, v.days), onSuccess: invalidate })
+  const busy = remind.isPending || escalate.isPending || setPeriod.isPending
+
+  const rows = data?.data ?? []
+  const threshold = data?.escalation_threshold ?? 3
+
+  return (
+    <div style={{ ...bdCard, padding: '18px 22px', marginTop: 16, borderTop: `3px solid ${BD.red}` }}>
+      <div style={{ fontSize: 12, fontWeight: 800, color: BD.red, textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 4 }}>
+        ⚠ {isNl ? 'BTW-aangiftes te laat' : 'Overdue BTW filings'}
+      </div>
+      <p style={{ fontSize: 11.5, color: BD.muted, margin: '0 0 14px', lineHeight: 1.45 }}>
+        {isNl
+          ? `Winkels die hun BTW-aangifte niet binnen de termijn hebben ingediend. Na ${threshold} herinneringen kunt u een inspectiedossier openen.`
+          : `Stores that missed their BTW filing window. After ${threshold} reminders you can open an inspection case.`}
+      </p>
+
+      {isLoading ? (
+        <p style={{ fontSize: 13, color: BD.muted, margin: '12px 0' }}>{isNl ? 'Laden…' : 'Loading…'}</p>
+      ) : rows.length === 0 ? (
+        <p style={{ fontSize: 13, color: BD.green, margin: '12px 0', fontWeight: 600 }}>
+          ✓ {isNl ? 'Alle winkels zijn bij met hun aangiftes.' : 'All stores are up to date on their filings.'}
+        </p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ textAlign: 'left', color: BD.muted }}>
+                <th style={thStyle}>{isNl ? 'Winkel' : 'Store'}</th>
+                <th style={thStyle}>{isNl ? 'Organisatie' : 'Organisation'}</th>
+                <th style={{ ...thStyle, textAlign: 'right' }}>{isNl ? 'Te laat' : 'Overdue'}</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>{isNl ? 'Termijn' : 'Period'}</th>
+                <th style={{ ...thStyle, textAlign: 'center' }}>{isNl ? 'Herinneringen' : 'Reminders'}</th>
+                <th style={{ ...thStyle, textAlign: 'right' }}>{isNl ? 'Acties' : 'Actions'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.store_id} style={{ borderTop: `1px solid ${BD.paper}` }}>
+                  <td style={tdStyle}><span style={{ fontWeight: 600, color: BD.ink }}>{r.store_name}</span></td>
+                  <td style={{ ...tdStyle, color: BD.muted }}>{r.organisation_name ?? '—'}</td>
+                  <td style={{ ...tdStyle, textAlign: 'right' }}>
+                    <span style={{ fontWeight: 900, color: BD.red, background: BD.redSoft, borderRadius: 20, padding: '2px 9px' }}>{r.days_overdue}d</span>
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center' }}>
+                    <select value={r.period_days} disabled={busy}
+                      onChange={(e) => setPeriod.mutate({ storeId: r.store_id, days: Number(e.target.value) })}
+                      style={{ fontSize: 12, padding: '3px 6px', borderRadius: 6, border: `1px solid ${BD.border}`, color: BD.ink, background: '#fff' }}>
+                      <option value={7}>7 {isNl ? 'dg' : 'd'}</option>
+                      <option value={30}>30 {isNl ? 'dg' : 'd'}</option>
+                    </select>
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'center', fontWeight: 700, color: r.reminder_count >= threshold ? BD.red : BD.ink }}>
+                    {r.reminder_count}/{threshold}
+                  </td>
+                  <td style={{ ...tdStyle, textAlign: 'right', whiteSpace: 'nowrap' }}>
+                    {r.open_case_id ? (
+                      <span style={{ fontSize: 11.5, fontWeight: 800, color: BD.red }}>{isNl ? 'Dossier open' : 'Case open'}</span>
+                    ) : (
+                      <>
+                        <button disabled={busy} onClick={() => remind.mutate(r.store_id)} style={btnGhost}>
+                          {isNl ? 'Herinner' : 'Remind'}
+                        </button>
+                        <button disabled={busy || !r.can_escalate}
+                          title={r.can_escalate ? '' : (isNl ? `Minstens ${threshold} herinneringen nodig` : `At least ${threshold} reminders required`)}
+                          onClick={() => { if (window.confirm(isNl ? 'Inspectiedossier openen voor deze winkel?' : 'Open an inspection case for this store?')) escalate.mutate(r.store_id) }}
+                          style={{ ...btnDanger, opacity: r.can_escalate ? 1 : 0.45, cursor: r.can_escalate && !busy ? 'pointer' : 'not-allowed' }}>
+                          {isNl ? 'Inspectie' : 'Inspect'}
+                        </button>
+                      </>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   )
 }

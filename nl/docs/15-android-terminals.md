@@ -12,6 +12,9 @@ kassa's Windows-machines, dan kunt u dit hoofdstuk overslaan.
 > Android-hardware een korte testdag: verkopen, printen, lade openen,
 > scannen — met uw leverancier erbij.
 
+> **Eerst uitzoomen?** [Hoofdstuk 16](/nl/docs/16-deployment-options) vergelijkt
+> alle vier de opzetten (Windows/Android × lokale/cloudserver) met diagrammen.
+
 ## 15.1 Het ene denkmodel om te onthouden
 
 **Op Android raakt de terminal alleen de scanner aan. Al het andere loopt

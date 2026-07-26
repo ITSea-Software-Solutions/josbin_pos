@@ -18,6 +18,10 @@ The short version:
 
 ## 7.0 Which setup fits which store?
 
+> **Prefer pictures?** [Chapter 16: The four ways to run Josbin POS](/docs/16-deployment-options)
+> shows every setup as a diagram — Windows/Android × local/cloud — written
+> for non-technical readers.
+
 Same product, three ways to run it. Pick per store — you can move up later
 (moving is a planned data migration, see the install guide).
 

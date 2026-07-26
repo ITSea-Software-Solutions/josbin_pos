@@ -18,6 +18,10 @@ De korte versie:
 
 ## 7.0 Welke opzet past bij welke winkel?
 
+> **Liever plaatjes?** [Hoofdstuk 16: De vier manieren om Josbin POS te draaien](/nl/docs/16-deployment-options)
+> toont elke opzet als diagram — Windows/Android × lokaal/cloud — geschreven
+> voor niet-technische lezers.
+
 Zelfde product, drie manieren om het te draaien. Kies per winkel — later
 opschalen kan (verhuizen is een geplande datamigratie, zie de
 installatiegids).

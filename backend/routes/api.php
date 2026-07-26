@@ -382,6 +382,13 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::get('export',                  [\App\Http\Controllers\Api\BtwSubmissionController::class, 'export'])->name('export');
         Route::get('/',                       [\App\Http\Controllers\Api\BtwSubmissionController::class, 'index'])->name('index');
         Route::post('/',                      [\App\Http\Controllers\Api\BtwSubmissionController::class, 'store'])->name('store');
+
+        // BTW late-filing oversight (tax_inspector / SA). Static paths, before {btwSubmission}.
+        Route::get('overdue',                   [\App\Http\Controllers\Api\BtwOverdueController::class, 'index'])->name('overdue');
+        Route::patch('overdue/{store}/period',  [\App\Http\Controllers\Api\BtwOverdueController::class, 'setPeriod'])->name('overdue.period');
+        Route::post('overdue/{store}/remind',   [\App\Http\Controllers\Api\BtwOverdueController::class, 'remind'])->middleware('throttle:60,1')->name('overdue.remind');
+        Route::post('overdue/{store}/escalate', [\App\Http\Controllers\Api\BtwOverdueController::class, 'escalate'])->name('overdue.escalate');
+
         Route::get('{btwSubmission}/detail',  [\App\Http\Controllers\Api\BtwSubmissionController::class, 'detail'])->name('detail');
         Route::get('{btwSubmission}',         [\App\Http\Controllers\Api\BtwSubmissionController::class, 'show'])->name('show');
         Route::post('{btwSubmission}/accept', [\App\Http\Controllers\Api\BtwSubmissionController::class, 'accept'])->name('accept');

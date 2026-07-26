@@ -239,3 +239,48 @@ export async function listBtwSubmissionsFiltered(filters: BtwSubmissionFilters):
   const res = await apiClient.get('/btw-submissions', { params: filters })
   return res.data
 }
+
+// ─── BTW-FILING-16 — late-filing oversight (overdue / remind / escalate) ─────
+
+export interface OverdueFilingRow {
+  store_id: string
+  store_name: string
+  organisation_id: string | null
+  organisation_name: string | null
+  period_days: number
+  last_filing_period_end: string | null
+  days_since_last_filing: number
+  days_overdue: number
+  reminder_count: number
+  can_escalate: boolean
+  open_case_id: string | null
+}
+
+export interface OverdueFilings {
+  data: OverdueFilingRow[]
+  escalation_threshold: number
+}
+
+/** Stores overdue on their BTW filing (tax_inspector / SA). */
+export async function getOverdueFilings(): Promise<OverdueFilings> {
+  const res = await apiClient.get<OverdueFilings>('/btw-submissions/overdue')
+  return res.data
+}
+
+/** Set a store's BTW filing cadence (days) — the inspector owns this deadline. */
+export async function setStoreFilingPeriod(storeId: string, days: number): Promise<{ store_id: string; btw_filing_period_days: number }> {
+  const res = await apiClient.patch(`/btw-submissions/overdue/${storeId}/period`, { btw_filing_period_days: days })
+  return res.data
+}
+
+/** Send the store a reminder that its BTW filing is overdue (logged). */
+export async function remindOverdueStore(storeId: string, note?: string): Promise<{ store_id: string; reminder_count: number; can_escalate: boolean }> {
+  const res = await apiClient.post(`/btw-submissions/overdue/${storeId}/remind`, { note })
+  return res.data
+}
+
+/** Open a physical-inspection case (requires >= threshold reminders). */
+export async function escalateOverdueStore(storeId: string, reason?: string): Promise<{ data: unknown }> {
+  const res = await apiClient.post(`/btw-submissions/overdue/${storeId}/escalate`, { reason })
+  return res.data
+}

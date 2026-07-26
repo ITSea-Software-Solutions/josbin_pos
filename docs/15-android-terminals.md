@@ -12,6 +12,9 @@ skip it entirely.
 > hardware, plan a short test day: sell, print, open the drawer, scan —
 > with your supplier present.
 
+> **Zooming out first?** [Chapter 16](/docs/16-deployment-options) compares all
+> four setups (Windows/Android × local/cloud server) with diagrams.
+
 ## 15.1 The one mental model to keep
 
 **On Android, the terminal touches nothing but the scanner. Everything else

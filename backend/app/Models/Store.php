@@ -16,16 +16,18 @@ class Store extends Model implements Auditable
 
     protected $fillable = [
         'organisation_id', 'name', 'address', 'city',
-        'default_btw_rate', 'receipt_header', 'receipt_footer',
+        'default_btw_rate', 'btw_filing_period_days',
+        'receipt_header', 'receipt_footer',
         'receipt_logo_path', 'is_active', 'pos_type', 'settings',
         'last_activity_at',
     ];
 
     protected $casts = [
-        'is_active'        => 'boolean',
-        'default_btw_rate' => 'decimal:2',
-        'settings'         => 'array',
-        'last_activity_at' => 'datetime',
+        'is_active'              => 'boolean',
+        'default_btw_rate'       => 'decimal:2',
+        'btw_filing_period_days' => 'integer',
+        'settings'               => 'array',
+        'last_activity_at'       => 'datetime',
     ];
 
     public function organisation(): BelongsTo
@@ -56,5 +58,15 @@ class Store extends Model implements Auditable
     public function registers(): HasMany
     {
         return $this->hasMany(Register::class);
+    }
+
+    public function btwFilingReminders(): HasMany
+    {
+        return $this->hasMany(BtwFilingReminder::class);
+    }
+
+    public function btwInspectionCases(): HasMany
+    {
+        return $this->hasMany(BtwInspectionCase::class);
     }
 }

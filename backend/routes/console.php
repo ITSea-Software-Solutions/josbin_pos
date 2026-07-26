@@ -28,6 +28,9 @@ Schedule::command('rates:lock')
 Schedule::command('registers:closing-reminder')->everyFifteenMinutes();
 Schedule::command('registers:auto-close')->everyFifteenMinutes();
 
+// BTW late-filing nudge — one reminder a day to stores overdue on their filing (AST).
+Schedule::command('btw:overdue-check')->dailyAt('07:00');
+
 Schedule::command('rates:ensure-today')
     ->everyThirtyMinutes()
     ->timezone('America/Paramaribo')

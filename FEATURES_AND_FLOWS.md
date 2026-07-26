@@ -96,7 +96,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 | BTW-FILING-22 | Org filter populated for cross-org roles (was empty for inspector) | ✅ | tax_inspector, SA | `OrganisationController::index` `?all=true` slim list + `getAllOrganisations()` | bugfix (inspector `organisation_id` is null) |
 | BTW-FILING-23 | **Store Manager filing is store-scoped** — SM files / previews / lists / supersedes / views ONLY their own store (forced server-side); OA files the org-wide consolidated return. Store-aware partial unique index lets org-wide + per-store filings coexist per period. Submit modal shows the scope (🏪 store vs 🏢 org). | ✅ | store_manager (scoped), OA (org-wide) | `BtwSubmissionController` (`validatePayload` force + `index`/dashboard scope), `BtwSubmissionPolicy` (view/supersede), `User::isStoreBound`, `btw_subs_store_aware_unique` migration, `SubmitBtwModal` | +BtwStoreScopeTest (8) |
 | BTW-FILING-15 | Belastingdienst PDF export of accepted filings | 🔲 | tax_inspector | — | future |
-| BTW-FILING-16 | Late-filing alerts (overdue monthly) | 🔲 | OA + SA | — | future |
+| BTW-FILING-16 | Late-filing oversight — per-store filing cadence (7/30d, inspector-set), daily overdue nudge to the store (bell+mail), inspector overdue list with **Remind**, and escalation to an in-system **inspection case** after ≥3 reminders (notifies the inspectors' queue; nothing dispatched externally) | ✅ | tax_inspector, SA | `BtwOverdueController` + `BtwOverdueService` + `btw:overdue-check` command + `BtwFilingOverdue`/`BtwInspectionCaseOpened` + `TaxInspectorDashboard` overdue panel | +BtwOverdueTest (4); `btw_filing_period_days` on stores + `btw_filing_reminders` + `btw_inspection_cases` |
 
 ### 1.3 Licence management
 
@@ -661,6 +661,8 @@ Anything 🟡 in the inventory above is a candidate for a future task — explic
 ---
 
 ## §11 Changelog — every edit, dated
+
+- **2026-07-26 (chapter 16: the four setups, diagram-first)** — User asked for a dedicated architecture-solutions section a non-technical client can follow. New **docs/16-deployment-options.md** (EN+NL, sidebar-registered): the 2×2 matrix (Windows/Android till × local/cloud server) as four named setups (A classic store / B Windows+cloud / C modern counter / D lightest start), each with an inline SVG diagram in brand colors, the internet-down verdict color-coded per setup (green "selling continues" vs red "no selling"), a three-question chooser, the invariant rules (scanner→till, drawer→printer, dashboard needs no machine), the mixed-fleet fact (Windows + Android tills on one server) and the migration caveat. §7.0, ch15 intro cross-link to it.
 
 - **2026-07-25 (dedicated Android chapter)** — User request: treat Android as its own special topic. New **docs/15-android-terminals.md** (EN+NL, in the sidebar): the one mental model (terminal touches only the scanner; everything else is network), ASCII topology, wiring table, install/update, the four in-app connection checks, a Windows-vs-Android capability table (USB printing ❌, Find-my-server ❌, camera scanner ❌-for-now, 4 MB vs 108 MB), field checklist (static IPs, UPS, backups, 72h licence tolerance) and a symptom→fix troubleshooting table. §E5 and dashboard-manual §16.5.4 now carry pointers instead of duplicating the story.
 
