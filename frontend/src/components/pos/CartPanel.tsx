@@ -4,6 +4,7 @@ import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useLowStockSet } from '@/hooks/useLowStockSet'
 import DiscountModal from './DiscountModal'
+import BtwExemptModal from './BtwExemptModal'
 import LineItemEditModal from './LineItemEditModal'
 import BlindReturnModal from './BlindReturnModal'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
@@ -29,11 +30,16 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
   const updateQuantity = useCartStore((s) => s.updateQuantity)
   const removeItem = useCartStore((s) => s.removeItem)
   const clearCart = useCartStore((s) => s.clearCart)
+  const btwExempt = useCartStore((s) => s.btwExempt)
+  const btwExemptReason = useCartStore((s) => s.btwExemptReason)
+  const setBtwExemption = useCartStore((s) => s.setBtwExemption)
+  const clearBtwExemption = useCartStore((s) => s.clearBtwExemption)
 
   const role = useAuthStore((s) => s.user?.role)
   const isManagerPlus = ['store_manager', 'organisation_admin', 'super_admin'].includes(role ?? '')
 
   const [saleDiscountOpen, setSaleDiscountOpen] = useState(false)
+  const [btwExemptOpen, setBtwExemptOpen] = useState(false)
   const [editItem, setEditItem] = useState<CartItem | null>(null)
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false)
   const [blindReturnOpen, setBlindReturnOpen] = useState(false)
@@ -153,10 +159,40 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
           {/* BTW */}
           <TotalsRow
             label={t('pos.cart.btw')}
-            value={`SRD ${totals.btwTotal}`}
+            value={btwExempt ? t('pos.btwExempt.badge') : `SRD ${totals.btwTotal}`}
             muted
             color="var(--color-btw)"
           />
+
+          {/* Sale-level BTW exemption (vrijstelling — govt buyers etc.) */}
+          <div
+            onClick={() => { if (!btwExempt) setBtwExemptOpen(true) }}
+            data-testid="btw-exempt-row"
+            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: btwExempt ? 'default' : 'pointer' }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', fontSize: 'var(--font-size-sm)', color: 'var(--color-btw)', minWidth: 0 }}>
+              🏛 {t('pos.btwExempt.rowLabel')}
+              {btwExempt && btwExemptReason && (
+                <>
+                  <span style={{ marginLeft: 6, fontSize: 11, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 150 }}>
+                    ({btwExemptReason})
+                  </span>
+                  <span
+                    role="button"
+                    title={isNl ? 'Verwijderen' : 'Remove'}
+                    onClick={(e) => { e.stopPropagation(); clearBtwExemption() }}
+                    data-testid="btw-exempt-clear"
+                    style={{ marginLeft: 6, width: 18, height: 18, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}
+                  >×</span>
+                </>
+              )}
+            </span>
+            {!btwExempt && (
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-btw)' }}>
+                {t('pos.btwExempt.add')}
+              </span>
+            )}
+          </div>
 
           {/* Divider */}
           <div style={{ borderTop: '1px solid var(--border-color)', margin: '4px 0' }} />
@@ -227,6 +263,12 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
       )}
 
       {/* Modals */}
+      <BtwExemptModal
+        isOpen={btwExemptOpen}
+        onClose={() => setBtwExemptOpen(false)}
+        onApply={(reason) => setBtwExemption(reason)}
+      />
+
       <DiscountModal
         isOpen={saleDiscountOpen}
         onClose={() => setSaleDiscountOpen(false)}

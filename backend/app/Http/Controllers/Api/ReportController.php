@@ -352,6 +352,76 @@ class ReportController extends Controller
         return response()->json($payload);
     }
 
+    /**
+     * GET /api/reports/btw-exemptions — every BTW-exempt sale in the range,
+     * with WHO, WHY and what the state would have received. This is the
+     * report a manager hands Belastingdienst when asked "why did these
+     * sales carry no BTW?" — the reason is stored per sale at the till,
+     * so the answer is a filter, not an investigation.
+     *
+     * store_id optional: omitted = all stores the caller's org owns
+     * (Organisation Admin view); given = that store only.
+     */
+    public function btwExemptions(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('reports.btw'), 403);
+
+        $request->validate([
+            'store_id'  => ['sometimes', 'nullable', 'uuid', new \App\Rules\StoreBelongsToOrg],
+            'date_from' => ['required', 'date_format:Y-m-d'],
+            'date_to'   => ['required', 'date_format:Y-m-d'],
+        ]);
+
+        $storeId  = $request->input('store_id') ?: null;
+        $dateFrom = $request->input('date_from');
+        $dateTo   = $request->input('date_to');
+        $orgId    = $request->user()->organisation_id;
+
+        $payload = ReportCache::remember(
+            $request->user(), 'reports.btw-exemptions',
+            ['store_id' => $storeId ?? 'org', 'from' => $dateFrom, 'to' => $dateTo], $dateTo,
+            function () use ($storeId, $orgId, $dateFrom, $dateTo) {
+                $sales = \App\Models\Sale::query()
+                    ->with(['store:id,name', 'cashier:id,name', 'customer'])
+                    ->where('btw_exempt', true)
+                    ->whereHas('store', fn ($q) => $q->where('organisation_id', $orgId))
+                    ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
+                    ->where('occurred_at', '>=', AstDates::dayStart($dateFrom))
+                    ->where('occurred_at', '<', AstDates::dayAfter($dateTo))
+                    ->orderByDesc('occurred_at')
+                    ->limit(1000)
+                    ->get();
+
+                $rows = $sales->map(fn ($s) => [
+                    'sale_id'      => $s->id,
+                    'sale_number'  => $s->sale_number,
+                    'occurred_at'  => $s->occurred_at?->toIso8601String(),
+                    'store'        => $s->store?->name,
+                    'cashier'      => $s->cashier?->name,
+                    'customer'     => $s->customer?->name,
+                    'reason'       => $s->btw_exempt_reason,
+                    'total_srd'    => (string) $s->total_srd,
+                    'btw_forgone_srd' => $s->btw_exempt_forgone_srd !== null ? (string) $s->btw_exempt_forgone_srd : null,
+                    'status'       => $s->status,
+                ]);
+
+                return [
+                    'date_from' => $dateFrom,
+                    'date_to'   => $dateTo,
+                    'store_id'  => $storeId,
+                    'rows'      => $rows,
+                    'summary'   => [
+                        'count'              => $sales->count(),
+                        'exempt_turnover_srd'=> number_format($sales->sum(fn ($s) => (float) $s->total_srd), 2, '.', ''),
+                        'btw_forgone_srd'    => number_format($sales->sum(fn ($s) => (float) ($s->btw_exempt_forgone_srd ?? 0)), 2, '.', ''),
+                    ],
+                ];
+            },
+        );
+
+        return response()->json($payload);
+    }
+
     // ─── PDF export ───────────────────────────────────────────────────────
 
     /** GET /api/reports/export */

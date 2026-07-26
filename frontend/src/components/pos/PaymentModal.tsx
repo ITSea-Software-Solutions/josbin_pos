@@ -29,6 +29,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const saleDiscount = useCartStore((s) => s.saleDiscount)
   const customer = useCartStore((s) => s.customer)
   const clearCart = useCartStore((s) => s.clearCart)
+  const btwExempt = useCartStore((s) => s.btwExempt)
+  const btwExemptReason = useCartStore((s) => s.btwExemptReason)
   const qc = useQueryClient()
 
   const printer = useSettingsStore((s) => s.printer)
@@ -229,12 +231,17 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       // cashier attests receipt the backend stamps the confirmation instead
       // of parking the sale in the OA pending queue.
       payment_confirmed:   isQr ? walletConfirmed : undefined,
+      // Sale-level BTW exemption: send the flag + reason and the RAW unit
+      // prices — the backend strips the BTW component itself (it is the
+      // money authority; sending stripped prices would strip twice).
+      btw_exempt: btwExempt || undefined,
+      btw_exempt_reason: btwExempt ? (btwExemptReason ?? undefined) : undefined,
       sale_discount_srd: saleDiscount.type === 'fixed' && saleDiscount.value > 0 ? saleDiscount.value : undefined,
       sale_discount_pct: saleDiscount.type === 'percent' && saleDiscount.value > 0 ? saleDiscount.value : undefined,
       items: items.map((i) => ({
         product_id: i.product.id,
         product_name: i.product.name_nl,
-        unit_price: parseFloat(i.computed.unitPrice),
+        unit_price: parseFloat(i.unitPriceOverride ?? i.product.price),
         quantity: i.quantity,
         btw_rate: parseFloat(i.btwRateOverride ?? i.product.btw_rate),
         btw_exempt: i.product.btw_exempt,

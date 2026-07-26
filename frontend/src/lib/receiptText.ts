@@ -22,6 +22,7 @@ export interface TextReceiptInput {
   subtotalSrd: string
   discountSrd: string
   btwSrd: string
+  btwExemptReason?: string | null
   totalSrd: string
   paymentMethod: string
   paymentProvider?: string
@@ -32,7 +33,7 @@ export interface TextReceiptInput {
 
 const L = {
   nl: {
-    receipt: 'Kassabon', subtotal: 'Subtotaal', discount: 'Korting', btw: 'BTW',
+    receipt: 'Kassabon', subtotal: 'Subtotaal', discount: 'Korting', btw: 'BTW', btwExempt: 'BTW vrijgesteld',
     total: 'TOTAAL', paid: 'Betaald', change: 'Wisselgeld', more: 'meer artikelen',
     thanks: 'Bedankt voor uw aankoop!',
     methods: {
@@ -41,7 +42,7 @@ const L = {
     } as Record<string, string>,
   },
   en: {
-    receipt: 'Receipt', subtotal: 'Subtotal', discount: 'Discount', btw: 'BTW',
+    receipt: 'Receipt', subtotal: 'Subtotal', discount: 'Discount', btw: 'BTW', btwExempt: 'BTW exempt',
     total: 'TOTAL', paid: 'Paid', change: 'Change', more: 'more items',
     thanks: 'Thank you for your purchase!',
     methods: {
@@ -50,7 +51,7 @@ const L = {
     } as Record<string, string>,
   },
   srn: {
-    receipt: 'Bon', subtotal: 'Subtotaal', discount: 'Korting', btw: 'BTW',
+    receipt: 'Bon', subtotal: 'Subtotaal', discount: 'Korting', btw: 'BTW', btwExempt: 'BTW fri',
     total: 'ALA SANI', paid: 'Pai', change: 'Kenki-moni', more: 'moro sani',
     thanks: 'Tangi fu yu bai!',
     methods: {
@@ -94,6 +95,9 @@ export function buildReceiptText(input: TextReceiptInput): string {
     lines.push(`${t.discount}: -SRD ${input.discountSrd}`)
   }
   lines.push(`${t.btw}: SRD ${input.btwSrd}`)
+  if (input.btwExemptReason) {
+    lines.push(`${t.btwExempt}: ${input.btwExemptReason}`)
+  }
   lines.push(`${t.total}: SRD ${input.totalSrd}`)
 
   const method = t.methods[input.paymentMethod] ?? input.paymentMethod

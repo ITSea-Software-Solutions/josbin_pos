@@ -88,6 +88,7 @@ class ReceiptService
                 'subtotal'       => number_format((float) $sale->subtotal_srd, 2, '.', ','),
                 'sale_discount'  => (float) $sale->discount_srd,
                 'btw_total'      => number_format((float) $sale->btw_srd, 2, '.', ','),
+                'btw_exempt_reason' => $sale->btw_exempt ? $sale->btw_exempt_reason : null,
                 'total'          => number_format((float) $sale->total_srd, 2, '.', ','),
                 'total_usd'      => $totalUsd,     // null if no rate on record
                 'exchange_rate'  => $exchangeRate > 0 ? number_format($exchangeRate, 4, '.', '') : null,
@@ -213,6 +214,7 @@ class ReceiptService
             'paid_in_foreign' => 'Betaald in',
             'rate_used'       => 'Koers',
             'btw_breakdown'   => 'BTW-specificatie',
+            'btw_exempt'      => 'BTW vrijgesteld',
             'btw_number'      => 'BTW-nummer',
             'base'            => 'Grondslag',
             'btw'             => 'BTW',
@@ -249,6 +251,7 @@ class ReceiptService
             'paid_in_foreign' => 'Paid',
             'rate_used'       => 'Rate',
             'btw_breakdown'   => 'VAT breakdown',
+            'btw_exempt'      => 'BTW exempt',
             'btw_number'      => 'VAT number',
             'base'            => 'Base',
             'btw'             => 'VAT',

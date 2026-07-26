@@ -214,6 +214,45 @@ euro's. De kassa rekent om tegen de **vergrendelde dagkoers** (Hoofdstuk 2)
 
 ---
 
+## 5.4c BTW-vrijstelling — overheid & vrijgestelde kopers
+
+Sommige kopers betalen geen BTW — meestal een **overheidsafdeling of
+ambtenaar die voor de dienst inkoopt** (ook diplomatieke aankopen en
+export). Voor die verkopen haalt de kassa de BTW uit de prijzen: een
+artikel van SRD 11,00 wordt SRD 10,00 en de bon toont BTW 0,00.
+
+**Zo past u het toe:**
+
+1. Sla de artikelen normaal aan.
+2. Tik in het winkelmandje op **🏛 BTW-vrijstelling → + toevoegen**
+   (onder de BTW-regel).
+3. Kies een snelkeuze (Overheidsafdeling / Diplomatiek / Export) en
+   **maak de reden af** — bijv. *"Ministerie van Onderwijs — inkooporder
+   PO-2026-114"*. De reden is **verplicht** (minimaal 5 tekens): hij komt
+   op de bon en in de Belastingdienst-rapporten, dus "test" of "n.v.t."
+   volstaat niet.
+4. **Vrijstelling toepassen.** Elke prijs in het mandje zakt naar het
+   bedrag exclusief BTW; de BTW-regel toont *vrijgesteld*. Tik op de
+   **×** naast de reden om het ongedaan te maken.
+5. Reken af zoals gebruikelijk (elke betaalwijze kan).
+
+**Wat er daarna gebeurt** — bewust volledig traceerbaar:
+
+- De **bon** print "BTW vrijgesteld:" met de reden.
+- De verkoop verschijnt in **Dashboard → Rapporten → BTW-vrijstellingen**
+  met datum, caissière, klant, reden en het BTW-bedrag dat de staat niet
+  ontving.
+- De **BTW-aangifte** voor de Belastingdienst toont de vrijgestelde
+  omzet, en de belastinginspecteur ziet dezelfde vrijstellingenlijst met
+  redenen in het aangiftedetail.
+- Een retour van een vrijgestelde verkoop is zelf ook vrijgesteld — de
+  bedragen blijven symmetrisch.
+
+> **Wanneer NIET gebruiken:** producten die altijd BTW-vrij zijn (brood,
+> medicijnen — gemarkeerd *BTW-vrij* op de producttegel) hebben niets
+> nodig: hun prijs bevat al geen BTW. De vrijstelling is voor **kopers**
+> die vrijgesteld zijn, niet voor producten.
+
 ## 5.5 Kassalade
 
 De kassalade gaat **automatisch** open na elke contante of gemengde betaling, mits:

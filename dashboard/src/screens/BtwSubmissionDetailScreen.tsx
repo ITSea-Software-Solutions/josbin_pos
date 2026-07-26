@@ -249,6 +249,43 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
         </div>
       </div>
 
+      {/* Sale-level exemptions inside this filing period */}
+      {data.exemptions && data.exemptions.count > 0 && (
+        <div style={{ ...TILE, marginBottom: 22 }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 4 }}>
+            🏛 {isNl ? 'BTW-vrijstellingen in deze periode' : 'BTW exemptions in this period'}
+          </div>
+          <p style={{ fontSize: 12, color: '#7e88a0', margin: '0 0 12px' }}>
+            {isNl
+              ? `${data.exemptions.count} vrijgestelde verkopen · omzet SRD ${fmtSrd(data.exemptions.exempt_turnover_srd)} · gederfde BTW SRD ${fmtSrd(data.exemptions.btw_forgone_srd)} — reden per verkoop vastgelegd op de kassa.`
+              : `${data.exemptions.count} exempt sales · turnover SRD ${fmtSrd(data.exemptions.exempt_turnover_srd)} · BTW forgone SRD ${fmtSrd(data.exemptions.btw_forgone_srd)} — reason captured per sale at the till.`}
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
+              <thead>
+                <tr style={{ color: '#7e88a0', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.4px' }}>
+                  {[isNl ? 'Datum' : 'Date', isNl ? 'Bonnr.' : 'Sale #', isNl ? 'Vestiging' : 'Store', isNl ? 'Reden' : 'Reason', isNl ? 'Totaal' : 'Total', isNl ? 'Gederfde BTW' : 'BTW forgone'].map((h, i) => (
+                    <th key={h} style={{ textAlign: i >= 4 ? 'right' : 'left', padding: '6px 10px', fontWeight: 700 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.exemptions.rows.map((r) => (
+                  <tr key={`${r.sale_number}-${r.occurred_at}`} style={{ borderTop: '1px solid #eef2f9' }}>
+                    <td style={{ padding: '7px 10px', whiteSpace: 'nowrap' }}>{r.occurred_at ? new Date(r.occurred_at).toLocaleString(isNl ? 'nl' : 'en') : '—'}</td>
+                    <td style={{ padding: '7px 10px', fontFamily: 'ui-monospace, monospace' }}>{r.sale_number}</td>
+                    <td style={{ padding: '7px 10px' }}>{r.store ?? '—'}</td>
+                    <td style={{ padding: '7px 10px', maxWidth: 340 }}>{r.reason ?? '—'}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: 700 }}>SRD {fmtSrd(r.total_srd)}</td>
+                    <td style={{ padding: '7px 10px', textAlign: 'right', color: '#dc2626' }}>{r.btw_forgone_srd ? `SRD ${fmtSrd(r.btw_forgone_srd)}` : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Timeline */}
       <div style={{ ...TILE, marginBottom: 22 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 12 }}>

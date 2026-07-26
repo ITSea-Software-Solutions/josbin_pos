@@ -153,6 +153,22 @@ export async function getInspectorDashboard(): Promise<InspectorDashboardData> {
   return res.data.data
 }
 
+export interface FilingExemptionRow {
+  sale_number: string
+  occurred_at: string | null
+  store: string | null
+  reason: string | null
+  total_srd: string
+  btw_forgone_srd: string | null
+}
+
+export interface FilingExemptions {
+  count: number
+  exempt_turnover_srd: string
+  btw_forgone_srd: string
+  rows: FilingExemptionRow[]
+}
+
 export interface BtwSubmissionDetail {
   submission: BtwSubmission & {
     organisation?: { id: string; name: string; btw_number?: string }
@@ -175,6 +191,7 @@ export interface BtwSubmissionDetail {
     new_values: Record<string, unknown> | null;
     created_at: string
   }>
+  exemptions?: FilingExemptions
 }
 
 export async function getBtwSubmissionDetail(id: string): Promise<BtwSubmissionDetail> {

@@ -83,6 +83,11 @@ class SaleController extends Controller
             'source'              => ['sometimes', Rule::in(['pos', 'api', 'import'])],
             'external_sale_ref'   => ['nullable', 'string', 'max:100'],
             'occurred_at'         => ['nullable', 'date'],
+            // Sale-level BTW exemption (vrijstelling) — e.g. a government
+            // department that does not pay the tax. The reason is mandatory:
+            // it goes on the sale, the receipt and the audit trail.
+            'btw_exempt'          => ['sometimes', 'boolean'],
+            'btw_exempt_reason'   => ['required_if:btw_exempt,true', 'nullable', 'string', 'min:5', 'max:500'],
             'items'               => ['required', 'array', 'min:1'],
             'items.*.product_id'  => ['nullable', 'uuid', 'exists:products,id'],
             // Variant chosen at the till (e.g. "Bruine Bonen — 1kg"). Optional
@@ -208,6 +213,24 @@ class SaleController extends Controller
         $manualCartDiscountPct = (string) ($data['sale_discount_pct'] ?? '0');
         $combinedCartDiscountSrd = bcadd($manualCartDiscountSrd, $ruleResult['cart_discount_srd'], 2);
 
+        // Exempt sale: charge net prices (BTW component stripped) and mark
+        // every line exempt — reports and the Belastingdienst filing then
+        // bucket this turnover as vrijgesteld with zero BTW.
+        $saleBtwExempt   = (bool) ($data['btw_exempt'] ?? false);
+        $btwForgone      = null;
+        if ($saleBtwExempt) {
+            // What WOULD the state have received? Price the original cart
+            // once before stripping — the exemptions report and the
+            // Belastingdienst filing state this amount per sale.
+            $originalCart = $this->btw->calculateCart(
+                $cartItems,
+                saleDiscountSrd: $combinedCartDiscountSrd,
+                saleDiscountPct: $manualCartDiscountPct,
+            );
+            $btwForgone = $originalCart['btw_total'];
+            $cartItems  = $this->btw->stripBtwForExemptSale($cartItems);
+        }
+
         $cart = $this->btw->calculateCart(
             $cartItems,
             saleDiscountSrd: $combinedCartDiscountSrd,
@@ -236,7 +259,7 @@ class SaleController extends Controller
             ->where('id', $request->user()->organisation_id)
             ->value('block_oversell');
 
-        $sale = DB::transaction(function () use ($data, $cart, $rate, $request, $blockOversell) {
+        $sale = DB::transaction(function () use ($data, $cart, $cartItems, $rate, $request, $blockOversell, $saleBtwExempt, $btwForgone) {
             // Payment amounts — cash tendered, card paid, and change due.
             $cashTendered = isset($data['cash_tendered']) ? (string) $data['cash_tendered'] : null;
             $cardAmount   = isset($data['card_amount'])   ? (string) $data['card_amount']   : null;
@@ -262,6 +285,9 @@ class SaleController extends Controller
                 'subtotal_srd'        => $cart['subtotal'],
                 'discount_srd'        => $cart['sale_discount'],
                 'btw_srd'             => $cart['btw_total'],
+                'btw_exempt'          => $saleBtwExempt,
+                'btw_exempt_reason'   => $saleBtwExempt ? trim((string) $data['btw_exempt_reason']) : null,
+                'btw_exempt_forgone_srd' => $btwForgone,
                 'total_srd'           => $cart['total'],
                 'payment_method'      => $data['payment_method'],
                 'cash_received_srd'   => $cashTendered,
@@ -362,14 +388,17 @@ class SaleController extends Controller
                     'variant_id'            => $item['variant_id'] ?? null,
                     'variant_name_snapshot' => $item['variant_name'] ?? null,
                     'product_name_snapshot' => $item['product_name'],
-                    'unit_price_srd'        => $item['unit_price'],
+                    // Exempt sale: snapshot the STRIPPED net price and the
+                    // zero-rate exempt shape, not the raw request values —
+                    // the receipt and every report read these snapshots.
+                    'unit_price_srd'        => $saleBtwExempt ? $cartItems[$i]['unit_price'] : $item['unit_price'],
                     'quantity'              => $item['quantity'],
                     'discount_srd'          => $calc['line_gross'] !== $calc['line_net']
                         ? bcsub($calc['line_gross'], $calc['line_net'], 2)
                         : '0.00',
                     'discount_pct'          => '0.00',
-                    'btw_rate'              => $item['btw_rate'],
-                    'btw_exempt'            => $item['btw_exempt'] ?? false,
+                    'btw_rate'              => $saleBtwExempt ? '0.00' : $item['btw_rate'],
+                    'btw_exempt'            => $saleBtwExempt ? true : (bool) ($item['btw_exempt'] ?? false),
                     'btw_srd'               => $calc['btw_amount'],
                     'line_total_srd'        => $calc['line_total'],
                     'cost_snapshot_srd'     => $costSnap,
@@ -681,6 +710,10 @@ class SaleController extends Controller
                 'subtotal_srd'       => '-' . bcadd($refundTotal, $saleShare, 2),
                 'discount_srd'       => bccomp($saleShare, '0', 2) > 0 ? '-' . $saleShare : '0.00',
                 'btw_srd'            => '-' . $refundBtw,
+                // A refund of an exempt sale is itself exempt turnover —
+                // keep the flag + reason so the report buckets stay symmetric.
+                'btw_exempt'         => (bool) $sale->btw_exempt,
+                'btw_exempt_reason'  => $sale->btw_exempt ? $sale->btw_exempt_reason : null,
                 'total_srd'          => '-' . $refundTotal,
                 'payment_method'     => $sale->payment_method,
                 // Carry the provider so per-wallet/bank reconciliation nets

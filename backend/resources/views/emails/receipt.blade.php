@@ -125,7 +125,10 @@
     </div>
 
     {{-- BTW breakdown --}}
-    @if($btw_items)
+    @if(!empty($sale['btw_exempt_reason']))
+  <p style="font-weight:bold; font-size:12px">{{ $t['btw_exempt'] ?? 'BTW vrijgesteld' }}: {{ $sale['btw_exempt_reason'] }}</p>
+@endif
+@if($btw_items)
     <div class="btw-box">
       <h4>{{ $t['btw_breakdown'] }}</h4>
       <table>

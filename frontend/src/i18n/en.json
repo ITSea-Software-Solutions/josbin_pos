@@ -277,6 +277,21 @@
       "noPrintersFound": "No printers found — check the printer connection in Windows",
       "printerHint": "Available printers appear in the print dialog. Test the receipt printer under Settings → Printer & Cash Drawer.",
       "printFailed": "Printing failed: {{error}}"
+    },
+    "btwExempt": {
+      "rowLabel": "BTW exemption",
+      "add": "+ add",
+      "badge": "exempt",
+      "title": "BTW exemption (vrijstelling)",
+      "explain": "The buyer does not pay BTW — prices drop to the amount excluding BTW. The reason is mandatory and appears on the receipt and in the Belastingdienst reports.",
+      "reasonLabel": "Reason for exemption",
+      "reasonPlaceholder": "e.g. Ministry of Finance — purchase order 2026-...",
+      "reasonTooShort": "Give at least 5 characters — this goes to the tax office.",
+      "reasonGovernment": "Government department",
+      "reasonDiplomatic": "Diplomatic exemption",
+      "reasonExport": "Export",
+      "apply": "Apply exemption",
+      "receiptLine": "BTW exempt"
     }
   },
   "reports": {

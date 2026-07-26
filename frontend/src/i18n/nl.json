@@ -277,6 +277,21 @@
       "noPrintersFound": "Geen printers gevonden — controleer de printeraansluiting in Windows",
       "printerHint": "Beschikbare printers verschijnen in het afdrukvenster. Test de bonprinter via Instellingen → Printer & Kassalade.",
       "printFailed": "Afdrukken mislukt: {{error}}"
+    },
+    "btwExempt": {
+      "rowLabel": "BTW-vrijstelling",
+      "add": "+ toevoegen",
+      "badge": "vrijgesteld",
+      "title": "BTW-vrijstelling",
+      "explain": "De koper betaalt geen BTW — prijzen zakken naar het bedrag exclusief BTW. De reden is verplicht en komt op de bon en in de Belastingdienst-rapporten.",
+      "reasonLabel": "Reden van vrijstelling",
+      "reasonPlaceholder": "bijv. Ministerie van Financiën — inkooporder 2026-...",
+      "reasonTooShort": "Minimaal 5 tekens — dit gaat naar de Belastingdienst.",
+      "reasonGovernment": "Overheidsafdeling",
+      "reasonDiplomatic": "Diplomatieke vrijstelling",
+      "reasonExport": "Export",
+      "apply": "Vrijstelling toepassen",
+      "receiptLine": "BTW vrijgesteld"
     }
   },
   "reports": {

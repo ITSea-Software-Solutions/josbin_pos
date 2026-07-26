@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getConsolidatedReport, getConsolidatedBtwReport, getProfitReport, exportReport } from '@/api/dashboard'
+import { getConsolidatedReport, getConsolidatedBtwReport, getBtwExemptionsReport, getProfitReport, exportReport } from '@/api/dashboard'
 import { getStores } from '@/api/stores'
 import { useTableSort } from '@/lib/useTableSort'
 import { formatSRD } from '@/utils/currency'
@@ -9,7 +9,7 @@ import { format, subDays, startOfMonth } from 'date-fns'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useDashboardAuthStore } from '@/store/authStore'
 
-type ReportTab = 'consolidated' | 'btw' | 'profit'
+type ReportTab = 'consolidated' | 'btw' | 'exemptions' | 'profit'
 
 function today() { return format(new Date(), 'yyyy-MM-dd') }
 function monthStart() { return format(startOfMonth(new Date()), 'yyyy-MM-dd') }
@@ -85,6 +85,20 @@ export default function ReportsScreen() {
     enabled: tab === 'btw',
   })
 
+  const {
+    data: exemptions,
+    isLoading: eLoading,
+    isFetching: eFetching,
+    refetch: eRefetch,
+  } = useQuery({
+    queryKey: ['btw-exemptions-report', dateFrom, dateTo, storeId],
+    queryFn: () => getBtwExemptionsReport({
+      date_from: dateFrom, date_to: dateTo,
+      ...(storeId ? { store_id: storeId } : {}),
+    }),
+    enabled: tab === 'exemptions',
+  })
+
   // Profit report — same date range + store filter as the other two tabs.
   // Requires products.view_cost on the backend (OA + SA + SM). Auditor /
   // cashier hit 403; the tab is hidden from them via the canSeeProfit gate.
@@ -102,9 +116,9 @@ export default function ReportsScreen() {
     enabled: tab === 'profit',
   })
 
-  const isLoading  = tab === 'consolidated' ? cLoading  : tab === 'btw' ? bLoading  : pLoading
-  const isFetching = tab === 'consolidated' ? cFetching : tab === 'btw' ? bFetching : pFetching
-  const refetch    = tab === 'consolidated' ? cRefetch  : tab === 'btw' ? bRefetch  : pRefetch
+  const isLoading  = tab === 'consolidated' ? cLoading  : tab === 'btw' ? bLoading  : tab === 'exemptions' ? eLoading  : pLoading
+  const isFetching = tab === 'consolidated' ? cFetching : tab === 'btw' ? bFetching : tab === 'exemptions' ? eFetching : pFetching
+  const refetch    = tab === 'consolidated' ? cRefetch  : tab === 'btw' ? bRefetch  : tab === 'exemptions' ? eRefetch  : pRefetch
 
   // Profit tab gated to roles with catalogue ownership (matches
   // products.view_cost perm seeded for SM, OA, SA).
@@ -170,6 +184,7 @@ export default function ReportsScreen() {
   const tabs = [
     { id: 'consolidated' as const, nl: 'Geconsolideerd', en: 'Consolidated' },
     { id: 'btw'          as const, nl: 'BTW-overzicht',  en: 'BTW Report'   },
+    { id: 'exemptions'   as const, nl: 'BTW-vrijstellingen', en: 'BTW exemptions' },
     ...(canSeeProfit
       ? [{ id: 'profit' as const, nl: 'Winst & marge', en: 'Profit & margin' }]
       : []),
@@ -573,6 +588,72 @@ export default function ReportsScreen() {
       )}
 
       {/* ── Profit & Margin Report ─────────────────────────────────────── */}
+      {/* ── BTW exemptions (vrijstellingen) — who, why, and the forgone BTW ── */}
+      {tab === 'exemptions' && (
+        <>
+          {!eLoading && exemptions && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
+              {[
+                { label: isNl ? 'Vrijgestelde verkopen' : 'Exempt sales',        value: String(exemptions.summary.count),                        sub: `${dateFrom} → ${dateTo}`, color: '#293371' },
+                { label: isNl ? 'Vrijgestelde omzet'    : 'Exempt turnover',     value: formatSRD(exemptions.summary.exempt_turnover_srd),       sub: isNl ? 'excl. BTW (netto geprijsd)' : 'excl. BTW (net priced)', color: '#293371' },
+                { label: isNl ? 'Gederfde BTW'          : 'BTW forgone',         value: formatSRD(exemptions.summary.btw_forgone_srd),           sub: isNl ? 'wat de staat zou hebben ontvangen' : 'what the state would have received', color: '#dc2626' },
+              ].map((c) => (
+                <div key={c.label} style={{
+                  background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
+                  padding: '22px 24px', boxShadow: '0 1px 4px rgba(0,0,0,.04)',
+                }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 8 }}>{c.label}</div>
+                  <div style={{ fontSize: 30, fontWeight: 900, color: c.color, letterSpacing: '-1px' }}>{c.value}</div>
+                  <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 6 }}>{c.sub}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5', overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,.05)' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #e9eef9' }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>
+                {isNl ? 'Vrijgestelde verkopen met reden' : 'Exempt sales with reason'}
+              </span>
+              <span style={{ fontSize: 12, color: '#7e88a0', marginLeft: 10 }}>
+                {isNl ? 'De reden is verplicht vastgelegd op de kassa' : 'The reason is captured at the till, mandatorily'}
+              </span>
+            </div>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafd', color: '#7e88a0', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                    {[isNl ? 'Datum' : 'Date', isNl ? 'Bonnr.' : 'Sale #', isNl ? 'Vestiging' : 'Store', isNl ? 'Caissière' : 'Cashier', isNl ? 'Klant' : 'Customer', isNl ? 'Reden' : 'Reason', isNl ? 'Totaal' : 'Total', isNl ? 'Gederfde BTW' : 'BTW forgone'].map((h, i) => (
+                      <th key={h} style={{ textAlign: i >= 6 ? 'right' : 'left', padding: '10px 14px', fontWeight: 700 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {eLoading && Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} cols={8} />)}
+                  {!eLoading && (exemptions?.rows ?? []).map((r) => (
+                    <tr key={r.sale_id} style={{ borderTop: '1px solid #eef2f9' }}>
+                      <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>{r.occurred_at ? format(new Date(r.occurred_at), 'dd-MM-yyyy HH:mm') : '—'}</td>
+                      <td style={{ padding: '10px 14px', fontFamily: 'ui-monospace, monospace' }}>{r.sale_number}</td>
+                      <td style={{ padding: '10px 14px' }}>{r.store ?? '—'}</td>
+                      <td style={{ padding: '10px 14px' }}>{r.cashier ?? '—'}</td>
+                      <td style={{ padding: '10px 14px' }}>{r.customer ?? '—'}</td>
+                      <td style={{ padding: '10px 14px', maxWidth: 320 }}>{r.reason ?? '—'}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right', fontWeight: 700 }}>{formatSRD(r.total_srd)}</td>
+                      <td style={{ padding: '10px 14px', textAlign: 'right', color: '#dc2626' }}>{r.btw_forgone_srd ? formatSRD(r.btw_forgone_srd) : '—'}</td>
+                    </tr>
+                  ))}
+                  {!eLoading && (exemptions?.rows ?? []).length === 0 && (
+                    <tr><td colSpan={8} style={{ padding: '28px 14px', textAlign: 'center', color: '#7e88a0' }}>
+                      {isNl ? 'Geen vrijgestelde verkopen in deze periode.' : 'No exempt sales in this period.'}
+                    </td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
       {tab === 'profit' && (
         <>
           {/* Top-line KPI cards */}

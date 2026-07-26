@@ -647,4 +647,80 @@ class BtwCalculationServiceTest extends TestCase
 
         $this->assertSame('0.00', $result['items'][1]['btw_amount']);
     }
+
+    // ════════════════════════════════════════════════════════════════
+    // SECTION — Sale-level BTW exemption (vrijstelling, e.g. government)
+    // ════════════════════════════════════════════════════════════════
+
+    /** @test */
+    public function test_exempt_sale_strips_btw_component_from_price(): void
+    {
+        // 11.00 at 10% inclusive → buyer pays the 10.00 net; zero BTW.
+        $items = $this->btw->stripBtwForExemptSale([
+            ['unit_price' => '11.00', 'quantity' => '1', 'btw_rate' => '10.00', 'btw_exempt' => false],
+        ]);
+
+        $this->assertSame('10.00', $items[0]['unit_price']);
+        $this->assertSame('0.00', $items[0]['btw_rate']);
+        $this->assertTrue($items[0]['btw_exempt']);
+
+        $cart = $this->btw->calculateCart($items);
+        $this->assertSame('10.00', $cart['total']);
+        $this->assertSame('0.00', $cart['btw_total']);
+    }
+
+    /** @test */
+    public function test_exempt_sale_leaves_already_exempt_items_untouched(): void
+    {
+        // An exempt product's price contains no BTW — nothing to strip.
+        $items = $this->btw->stripBtwForExemptSale([
+            ['unit_price' => '7.50', 'quantity' => '1', 'btw_rate' => '0.00', 'btw_exempt' => true],
+            ['unit_price' => '5.00', 'quantity' => '1', 'btw_rate' => '0.00', 'btw_exempt' => false],
+        ]);
+
+        $this->assertSame('7.50', $items[0]['unit_price']);
+        $this->assertSame('5.00', $items[1]['unit_price']);
+        $this->assertTrue($items[1]['btw_exempt']);
+    }
+
+    /** @test */
+    public function test_exempt_sale_mixed_cart_totals_to_the_cent(): void
+    {
+        // 2 × 11.00 @10% → 2 × 10.00; 5.50 @10% → 5.00; exempt 3.25 stays.
+        $items = $this->btw->stripBtwForExemptSale([
+            ['unit_price' => '11.00', 'quantity' => '2', 'btw_rate' => '10.00', 'btw_exempt' => false],
+            ['unit_price' => '5.50',  'quantity' => '1', 'btw_rate' => '10.00', 'btw_exempt' => false],
+            ['unit_price' => '3.25',  'quantity' => '1', 'btw_rate' => '0.00',  'btw_exempt' => true],
+        ]);
+        $cart = $this->btw->calculateCart($items);
+
+        $this->assertSame('28.25', $cart['total']);
+        $this->assertSame('0.00', $cart['btw_total']);
+        foreach ($cart['items'] as $line) {
+            $this->assertSame('0.00', $line['btw_amount']);
+        }
+    }
+
+    /** @test */
+    public function test_exempt_sale_rounds_half_up_on_stripped_price(): void
+    {
+        // 9.99 / 1.10 = 9.0818… → 9.08
+        $items = $this->btw->stripBtwForExemptSale([
+            ['unit_price' => '9.99', 'quantity' => '1', 'btw_rate' => '10.00', 'btw_exempt' => false],
+        ]);
+        $this->assertSame('9.08', $items[0]['unit_price']);
+    }
+
+    /** @test */
+    public function test_exempt_sale_discounts_apply_to_net_prices(): void
+    {
+        // Stripped 11.00→10.00, then a 10% sale discount → 9.00, still no BTW.
+        $items = $this->btw->stripBtwForExemptSale([
+            ['unit_price' => '11.00', 'quantity' => '1', 'btw_rate' => '10.00', 'btw_exempt' => false],
+        ]);
+        $cart = $this->btw->calculateCart($items, saleDiscountPct: '10.00');
+
+        $this->assertSame('9.00', $cart['total']);
+        $this->assertSame('0.00', $cart['btw_total']);
+    }
 }

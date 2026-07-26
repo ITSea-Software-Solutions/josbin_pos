@@ -17,6 +17,7 @@ class Sale extends Model implements Auditable
     protected $fillable = [
         'store_id', 'cashier_id', 'register_session_id', 'customer_id', 'sale_number',
         'subtotal_srd', 'discount_srd', 'btw_srd', 'total_srd',
+        'btw_exempt', 'btw_exempt_reason', 'btw_exempt_forgone_srd',
         'payment_method', 'cash_received_srd', 'change_srd', 'card_amount_srd',
         // Optional card reconciliation fields — captured from the bank's PIN
         // terminal slip so the OA can match daily card sales to the bank
@@ -40,6 +41,8 @@ class Sale extends Model implements Auditable
         'subtotal_srd'       => 'decimal:2',
         'discount_srd'       => 'decimal:2',
         'btw_srd'            => 'decimal:2',
+        'btw_exempt'         => 'boolean',
+        'btw_exempt_forgone_srd' => 'decimal:2',
         'total_srd'          => 'decimal:2',
         'cash_received_srd'  => 'decimal:2',
         'change_srd'         => 'decimal:2',

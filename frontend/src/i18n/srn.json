@@ -277,6 +277,21 @@
       "noPrintersFound": "No wan printer feni — luku a printer-verbinding ini Windows",
       "printerHint": "Den printer di de e sori ini a print-venster. Test a bonprinter ini Seti → Printer & Kassalade.",
       "printFailed": "A printi no wroko: {{error}}"
+    },
+    "btwExempt": {
+      "rowLabel": "BTW-fri",
+      "add": "+ poti",
+      "badge": "fri",
+      "title": "BTW-fri (vrijstelling)",
+      "explain": "A bayman no e pai BTW — a prijs e saka go na a moni sondro BTW. Yu musu skrifi fu san ede; a e kon na tapu a bon nanga den Belastingdienst-rapport.",
+      "reasonLabel": "Fu san ede a fri",
+      "reasonPlaceholder": "eks. Ministerie fu Moni — order 2026-...",
+      "reasonTooShort": "Skrifi pikinmoro 5 letter — disi e go na a Belastingdienst.",
+      "reasonGovernment": "Lantiwroko-afdeling",
+      "reasonDiplomatic": "Diplomatiki fri",
+      "reasonExport": "Export",
+      "apply": "Poti a fri",
+      "receiptLine": "BTW fri"
     }
   },
   "reports": {

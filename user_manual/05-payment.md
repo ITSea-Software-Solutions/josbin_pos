@@ -206,6 +206,44 @@ by hand.
 
 ---
 
+## 5.4c BTW exemption (vrijstelling) — government & exempt buyers
+
+Some buyers do not pay BTW — most commonly a **government department or
+employee buying for the department** (also diplomatic purchases and exports).
+For those sales the till removes the BTW from the prices: an item of
+SRD 11.00 becomes SRD 10.00, and the receipt shows BTW 0.00.
+
+**How to apply it:**
+
+1. Ring up the items as normal.
+2. In the cart, tap **🏛 BTW exemption → + add** (below the VAT line).
+3. Pick a quick reason (Government department / Diplomatic / Export) and
+   **complete it** — e.g. *"Ministerie van Onderwijs — inkooporder
+   PO-2026-114"*. The reason is **mandatory** (minimum 5 characters):
+   it is printed on the receipt and reported to the Belastingdienst, so
+   "test" or "n.v.t." is not acceptable.
+4. **Apply exemption.** Every price in the cart drops to its amount
+   excluding BTW; the VAT line shows *exempt*. Tap the **×** next to the
+   reason to undo.
+5. Take payment as normal (any payment method).
+
+**What happens afterwards** — this is fully traceable, on purpose:
+
+- The **receipt** prints "BTW vrijgesteld:" with the reason.
+- The sale appears in **Dashboard → Reports → BTW exemptions** with the
+  date, cashier, customer, reason and the BTW amount the state did not
+  receive.
+- The Belastingdienst **BTW filing** shows the exempt turnover, and the
+  tax inspector sees the same exemption list with reasons in the filing
+  detail.
+- A refund of an exempt sale is itself exempt — the amounts stay
+  symmetric.
+
+> **When NOT to use this:** products that are always BTW-free (bread,
+> medicine — marked *BTW-vrij* on the product tile) need nothing: their
+> price already contains no BTW. The exemption is for **buyers** who are
+> exempt, not products.
+
 ## 5.5 Cash drawer
 
 The cash drawer opens **automatically** after every cash or mixed payment, provided:

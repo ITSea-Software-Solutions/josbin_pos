@@ -88,6 +88,50 @@ class BtwCalculationService
         ];
     }
 
+    // ─── Sale-level BTW exemption (vrijstelling) ──────────────────────────
+
+    /**
+     * Transform cart items for a BTW-EXEMPT SALE (e.g. a government
+     * department that does not pay the tax).
+     *
+     * Prices in Josbin POS are BTW-inclusive, so "the buyer does not pay
+     * BTW" means the charged price DROPS to its net component:
+     * an 11.00 SRD item at 10% becomes 10.00 SRD. Each stripped line is
+     * snapshotted as a zero-rate exempt line — the same shape as an
+     * exempt product — so receipts, Z-reports, the exempt split and the
+     * Belastingdienst filing all bucket it correctly with no special
+     * cases downstream. Items that are already exempt (btw_exempt or
+     * rate 0) pass through unchanged: their price contains no BTW to
+     * strip.
+     *
+     * Run the result through calculateCart() as usual; discounts then
+     * apply to the net prices.
+     *
+     * @param  array $items Same shape calculateCart() takes.
+     * @return array Same shape, with unit prices stripped to net.
+     */
+    public function stripBtwForExemptSale(array $items): array
+    {
+        $scale = self::SCALE;
+
+        return array_map(function (array $item) use ($scale): array {
+            $rate   = (string) ($item['btw_rate'] ?? '10');
+            $exempt = (bool)   ($item['btw_exempt'] ?? false);
+
+            if (! $exempt && bccomp($rate, '0', $scale) > 0) {
+                $divisor            = bcadd('1', bcdiv($rate, '100', $scale), $scale);
+                $item['unit_price'] = $this->round2(
+                    bcdiv((string) ($item['unit_price'] ?? '0'), $divisor, $scale)
+                );
+            }
+
+            $item['btw_rate']   = '0.00';
+            $item['btw_exempt'] = true;
+
+            return $item;
+        }, $items);
+    }
+
     // ─── Cart-level calculation ───────────────────────────────────────────
 
     /**

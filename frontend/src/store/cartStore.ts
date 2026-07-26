@@ -14,8 +14,16 @@ function fmt(n: number): string {
   return n.toFixed(2)
 }
 
-function computeItem(item: Omit<CartItem, 'computed'>): CartItem['computed'] {
-  const unitPrice = toDecimal(item.unitPriceOverride ?? item.product.price)
+function computeItem(item: Omit<CartItem, 'computed'>, saleExempt = false): CartItem['computed'] {
+  let unitPrice = toDecimal(item.unitPriceOverride ?? item.product.price)
+  const rateForStrip = toDecimal(item.btwRateOverride ?? item.product.btw_rate)
+  // Sale-level BTW exemption (vrijstelling): the buyer pays the price
+  // WITHOUT the BTW component, so strip it from the unit price. Rounded to
+  // the cent per unit — the exact rule the backend applies, so the cart
+  // shows the same figures the server will persist.
+  if (saleExempt && !item.product.btw_exempt && rateForStrip > 0) {
+    unitPrice = Math.round((unitPrice / (1 + rateForStrip / 100)) * 100) / 100
+  }
   const qty = item.quantity
   const subtotal = unitPrice * qty
 
@@ -32,7 +40,7 @@ function computeItem(item: Omit<CartItem, 'computed'>): CartItem['computed'] {
 
   // BTW extracted from taxable base (inclusive method — correct for SRD/BTW)
   const btwRateDecimal = toDecimal(item.btwRateOverride ?? item.product.btw_rate) / 100
-  const btwAmount = item.product.btw_exempt
+  const btwAmount = item.product.btw_exempt || saleExempt
     ? 0
     : taxableBase - taxableBase / (1 + btwRateDecimal)
 
@@ -85,7 +93,7 @@ function normalizeHeldItem(raw: unknown): Omit<CartItem, 'computed'> {
   }
 }
 
-function computeTotals(items: CartItem[], saleDiscount: CartDiscount): CartTotals {
+function computeTotals(items: CartItem[], saleDiscount: CartDiscount, saleExempt = false): CartTotals {
   const subtotal = items.reduce((sum, i) => sum + toDecimal(i.computed.taxableBase), 0)
 
   let saleDiscountAmount = 0
@@ -100,7 +108,7 @@ function computeTotals(items: CartItem[], saleDiscount: CartDiscount): CartTotal
   const postSaleDiscountTotal = subtotal - saleDiscountAmount
   const ratio = subtotal > 0 ? postSaleDiscountTotal / subtotal : 1
 
-  const btwTotal = items.reduce((sum, i) => {
+  const btwTotal = saleExempt ? 0 : items.reduce((sum, i) => {
     if (i.product.btw_exempt) return sum
     const adjustedBase = toDecimal(i.computed.taxableBase) * ratio
     const btwRate = toDecimal(i.btwRateOverride ?? i.product.btw_rate) / 100
@@ -122,6 +130,10 @@ interface CartState {
   items: CartItem[]
   customer: Customer | null
   saleDiscount: CartDiscount
+  // Sale-level BTW exemption (vrijstelling) — reason is mandatory and
+  // travels to the backend, the receipt and the audit trail.
+  btwExempt: boolean
+  btwExemptReason: string | null
   totals: CartTotals
 
   // Actions
@@ -136,6 +148,8 @@ interface CartState {
   setSaleDiscount: (discount: CartDiscount) => void
   clearSaleDiscount: () => void
   setCustomer: (customer: Customer | null) => void
+  setBtwExemption: (reason: string) => void
+  clearBtwExemption: () => void
   clearCart: () => void
   // items is loosely typed: held-bill cart_data may be full CartItems (real
   // holds) or a thin seeded/legacy shape — normalizeHeldItem handles both.
@@ -151,9 +165,14 @@ const EMPTY_TOTALS: CartTotals = {
   total: '0.00',
 }
 
-function rebuildTotals(items: CartItem[], saleDiscount: CartDiscount): CartTotals {
+function rebuildTotals(items: CartItem[], saleDiscount: CartDiscount, saleExempt = false): CartTotals {
   if (items.length === 0) return EMPTY_TOTALS
-  return computeTotals(items, saleDiscount)
+  return computeTotals(items, saleDiscount, saleExempt)
+}
+
+/** Recompute every line under the given exemption state (prices restrip/restore). */
+function recomputeItems(items: CartItem[], saleExempt: boolean): CartItem[] {
+  return items.map((i) => ({ ...i, computed: computeItem(i, saleExempt) }))
 }
 
 export const useCartStore = create<CartState>()(
@@ -162,10 +181,12 @@ export const useCartStore = create<CartState>()(
       items: [],
       customer: null,
       saleDiscount: EMPTY_DISCOUNT,
+      btwExempt: false,
+      btwExemptReason: null,
       totals: EMPTY_TOTALS,
 
       addProduct: (product) => {
-        const { items, saleDiscount } = get()
+        const { items, saleDiscount, btwExempt } = get()
         const existing = items.find((i) => i.product.id === product.id)
 
         let updatedItems: CartItem[]
@@ -175,7 +196,7 @@ export const useCartStore = create<CartState>()(
           updatedItems = items.map((i) => {
             if (i.product.id !== product.id) return i
             const updated = { ...i, quantity: i.quantity + 1 }
-            return { ...updated, computed: computeItem(updated) }
+            return { ...updated, computed: computeItem(updated, btwExempt) }
           })
         } else {
           const newItem: Omit<CartItem, 'computed'> = {
@@ -185,19 +206,19 @@ export const useCartStore = create<CartState>()(
             btwRateOverride: null,
             discount: null,
           }
-          updatedItems = [...items, { ...newItem, computed: computeItem(newItem) }]
+          updatedItems = [...items, { ...newItem, computed: computeItem(newItem, btwExempt) }]
         }
 
         set({
           items: updatedItems,
-          totals: rebuildTotals(updatedItems, saleDiscount),
+          totals: rebuildTotals(updatedItems, saleDiscount, btwExempt),
         })
       },
 
       removeItem: (productId) => {
-        const { items, saleDiscount } = get()
+        const { items, saleDiscount, btwExempt } = get()
         const updatedItems = items.filter((i) => i.product.id !== productId)
-        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount) })
+        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount, btwExempt) })
       },
 
       updateQuantity: (productId, quantity) => {
@@ -205,43 +226,65 @@ export const useCartStore = create<CartState>()(
           get().removeItem(productId)
           return
         }
-        const { items, saleDiscount } = get()
+        const { items, saleDiscount, btwExempt } = get()
         const updatedItems = items.map((i) => {
           if (i.product.id !== productId) return i
           const updated = { ...i, quantity }
-          return { ...updated, computed: computeItem(updated) }
+          return { ...updated, computed: computeItem(updated, btwExempt) }
         })
-        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount) })
+        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount, btwExempt) })
       },
 
       updateItemDiscount: (productId, discount) => {
-        const { items, saleDiscount } = get()
+        const { items, saleDiscount, btwExempt } = get()
         const updatedItems = items.map((i) => {
           if (i.product.id !== productId) return i
           const updated = { ...i, discount }
-          return { ...updated, computed: computeItem(updated) }
+          return { ...updated, computed: computeItem(updated, btwExempt) }
         })
-        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount) })
+        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount, btwExempt) })
       },
 
       updateItemOverrides: (productId, overrides) => {
-        const { items, saleDiscount } = get()
+        const { items, saleDiscount, btwExempt } = get()
         const updatedItems = items.map((i) => {
           if (i.product.id !== productId) return i
           const updated = { ...i, ...overrides }
-          return { ...updated, computed: computeItem(updated) }
+          return { ...updated, computed: computeItem(updated, btwExempt) }
         })
-        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount) })
+        set({ items: updatedItems, totals: rebuildTotals(updatedItems, saleDiscount, btwExempt) })
       },
 
       setSaleDiscount: (saleDiscount) => {
-        const { items } = get()
-        set({ saleDiscount, totals: rebuildTotals(items, saleDiscount) })
+        const { items, btwExempt } = get()
+        set({ saleDiscount, totals: rebuildTotals(items, saleDiscount, btwExempt) })
       },
 
       clearSaleDiscount: () => {
-        const { items } = get()
-        set({ saleDiscount: EMPTY_DISCOUNT, totals: rebuildTotals(items, EMPTY_DISCOUNT) })
+        const { items, btwExempt } = get()
+        set({ saleDiscount: EMPTY_DISCOUNT, totals: rebuildTotals(items, EMPTY_DISCOUNT, btwExempt) })
+      },
+
+      setBtwExemption: (reason) => {
+        const { items, saleDiscount } = get()
+        const recomputed = recomputeItems(items, true)
+        set({
+          btwExempt: true,
+          btwExemptReason: reason,
+          items: recomputed,
+          totals: rebuildTotals(recomputed, saleDiscount, true),
+        })
+      },
+
+      clearBtwExemption: () => {
+        const { items, saleDiscount } = get()
+        const recomputed = recomputeItems(items, false)
+        set({
+          btwExempt: false,
+          btwExemptReason: null,
+          items: recomputed,
+          totals: rebuildTotals(recomputed, saleDiscount, false),
+        })
       },
 
       setCustomer: (customer) => set({ customer }),
@@ -251,6 +294,8 @@ export const useCartStore = create<CartState>()(
           items: [],
           customer: null,
           saleDiscount: EMPTY_DISCOUNT,
+          btwExempt: false,
+          btwExemptReason: null,
           totals: EMPTY_TOTALS,
         }),
 
@@ -266,6 +311,9 @@ export const useCartStore = create<CartState>()(
         set({
           items: recomputed,
           customer: customer ?? null,
+          // Held bills predate any exemption toggle — always restore clean.
+          btwExempt: false,
+          btwExemptReason: null,
           saleDiscount: discount,
           totals: rebuildTotals(recomputed, discount),
         })

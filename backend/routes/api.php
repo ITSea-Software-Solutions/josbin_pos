@@ -357,6 +357,7 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
         Route::get('monthly',       [ReportController::class, 'monthly'])->name('monthly');
         Route::get('custom',        [ReportController::class, 'custom'])->name('custom');
         Route::get('top-products',  [ReportController::class, 'topProducts'])->name('top-products');
+        Route::get('btw-exemptions', [ReportController::class, 'btwExemptions'])->name('btw-exemptions');
         Route::get('x-report',      [ReportController::class, 'xReport'])->name('x-report');
         Route::post('z-report',     [ReportController::class, 'zReport'])->name('z-report');
         Route::get('z-report/history', [ReportController::class, 'zReportHistory'])->name('z-report.history');

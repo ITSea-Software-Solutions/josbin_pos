@@ -386,6 +386,34 @@ class BtwSubmissionController extends Controller
             ])
             ->toArray();
 
+        // Sale-level exemptions inside this filing period — the inspector's
+        // answer to "why is there vrijgestelde omzet, and who granted it?".
+        // Reason + forgone BTW are stamped on each sale at the till.
+        $exemptSales = \App\Models\Sale::query()
+            ->with(['store:id,name'])
+            ->where('btw_exempt', true)
+            ->whereHas('store', fn ($q) => $q->where('organisation_id', $btwSubmission->organisation_id))
+            ->when($btwSubmission->store_id, fn ($q) => $q->where('store_id', $btwSubmission->store_id))
+            ->where('occurred_at', '>=', \App\Support\AstDates::dayStart($btwSubmission->period_start->toDateString()))
+            ->where('occurred_at', '<',  \App\Support\AstDates::dayAfter($btwSubmission->period_end->toDateString()))
+            ->orderByDesc('occurred_at')
+            ->limit(500)
+            ->get();
+
+        $exemptions = [
+            'count'               => $exemptSales->count(),
+            'exempt_turnover_srd' => number_format($exemptSales->sum(fn ($s) => (float) $s->total_srd), 2, '.', ''),
+            'btw_forgone_srd'     => number_format($exemptSales->sum(fn ($s) => (float) ($s->btw_exempt_forgone_srd ?? 0)), 2, '.', ''),
+            'rows'                => $exemptSales->map(fn ($s) => [
+                'sale_number'     => $s->sale_number,
+                'occurred_at'     => $s->occurred_at?->toIso8601String(),
+                'store'           => $s->store?->name,
+                'reason'          => $s->btw_exempt_reason,
+                'total_srd'       => (string) $s->total_srd,
+                'btw_forgone_srd' => $s->btw_exempt_forgone_srd !== null ? (string) $s->btw_exempt_forgone_srd : null,
+            ]),
+        ];
+
         // Timeline of audit-log events touching this submission
         $timeline = \DB::table('audit_logs')
             ->where('auditable_type', 'btw_submission')
@@ -414,6 +442,7 @@ class BtwSubmissionController extends Controller
                     'per_payment_method' => $perPaymentMethod,
                     'per_btw_rate'       => $perRate,
                 ],
+                'exemptions' => $exemptions,
                 'timeline'  => $timeline,
             ],
         ]);

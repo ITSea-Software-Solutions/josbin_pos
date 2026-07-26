@@ -213,6 +213,11 @@
   <div class="label" style="margin-top:3px">{{ $t['btw_number'] }}: {{ $store['btw_number'] }}</div>
   @endif
 </div>
+@endif
+@if(!empty($sale['btw_exempt_reason']))
+<div style="font-size:10px; margin-top:3px" class="bold">
+  {{ $t['btw_exempt'] }}: {{ $sale['btw_exempt_reason'] }}
+</div>
 <div class="hr"></div>
 @endif
 

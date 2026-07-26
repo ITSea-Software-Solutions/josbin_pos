@@ -399,4 +399,95 @@ class SaleStoreTest extends TestCase
             'qty_change' => '-2.000',
         ]);
     }
+
+    // ─── Sale-level BTW exemption (vrijstelling) ─────────────────────────────
+
+    private function exemptPayload(array $overrides = []): array
+    {
+        return array_merge([
+            'store_id'          => $this->store->id,
+            'payment_method'    => 'cash',
+            'cash_tendered'     => 50.00,
+            'btw_exempt'        => true,
+            'btw_exempt_reason' => 'Ministerie van Financiën — vrijstelling overheidsinkoop',
+            'items'             => [[
+                'product_id'   => $this->cola->id,
+                'product_name' => $this->cola->name_nl,
+                'unit_price'   => '11.00',
+                'quantity'     => 2,
+                'btw_rate'     => '10',
+                'btw_exempt'   => false,
+            ]],
+        ], $overrides);
+    }
+
+    public function test_exempt_sale_charges_net_price_and_zero_btw(): void
+    {
+        $response = $this->actingAs($this->cashier, 'sanctum')
+            ->postJson('/api/sales', $this->exemptPayload());
+
+        // 2 × 11.00 inclusive @10% → 2 × 10.00 net. The buyer does not pay the tax.
+        $response->assertStatus(201)
+            ->assertJsonPath('data.total_srd', '20.00')
+            ->assertJsonPath('data.btw_srd', '0.00')
+            ->assertJsonPath('data.btw_exempt', true);
+
+        $sale = Sale::first();
+        $this->assertTrue((bool) $sale->btw_exempt);
+        $this->assertSame('Ministerie van Financiën — vrijstelling overheidsinkoop', $sale->btw_exempt_reason);
+        // The state would have received 2.00 on 22.00 inclusive at 10% —
+        // stored at sale time so the exemptions report survives price changes.
+        $this->assertSame('2.00', (string) $sale->btw_exempt_forgone_srd);
+
+        // Line snapshots are zero-rate exempt — the shape reports already bucket.
+        $item = $sale->items()->first();
+        $this->assertTrue((bool) $item->btw_exempt);
+        $this->assertSame('0.00', (string) $item->btw_rate);
+        $this->assertSame('0.00', (string) $item->btw_srd);
+        $this->assertSame('10.00', (string) $item->unit_price_srd);
+    }
+
+    public function test_exempt_sale_without_reason_is_rejected(): void
+    {
+        $this->actingAs($this->cashier, 'sanctum')
+            ->postJson('/api/sales', $this->exemptPayload(['btw_exempt_reason' => null]))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['btw_exempt_reason']);
+
+        $this->actingAs($this->cashier, 'sanctum')
+            ->postJson('/api/sales', $this->exemptPayload(['btw_exempt_reason' => 'kort']))
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['btw_exempt_reason']);
+
+        $this->assertDatabaseCount('sales', 0);
+    }
+
+    public function test_exempt_sale_works_without_org_btw_number(): void
+    {
+        // C6 blocks BTW-charging sales when the org has no registration
+        // number — a fully exempt sale charges no BTW, so it must pass.
+        $this->org->forceFill(['btw_number' => null])->save();
+
+        $this->actingAs($this->cashier, 'sanctum')
+            ->postJson('/api/sales', $this->exemptPayload())
+            ->assertStatus(201)
+            ->assertJsonPath('data.btw_srd', '0.00');
+    }
+
+    public function test_non_exempt_sale_ignores_stray_reason(): void
+    {
+        $payload = $this->exemptPayload([
+            'btw_exempt'        => false,
+            'btw_exempt_reason' => 'should not be stored',
+        ]);
+
+        $this->actingAs($this->cashier, 'sanctum')
+            ->postJson('/api/sales', $payload)
+            ->assertStatus(201)
+            ->assertJsonPath('data.btw_exempt', false)
+            ->assertJsonPath('data.total_srd', '22.00')
+            ->assertJsonPath('data.btw_srd', '2.00');
+
+        $this->assertNull(Sale::first()->btw_exempt_reason);
+    }
 }

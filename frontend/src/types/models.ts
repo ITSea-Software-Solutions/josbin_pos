@@ -120,6 +120,8 @@ export interface Sale {
   subtotal_srd: string
   discount_srd: string
   btw_srd: string
+  btw_exempt?: boolean
+  btw_exempt_reason?: string | null
   total_srd: string
   payment_method: PaymentMethod
   // Phase 2/3 detail — wallet/bank name + transaction reference (null on

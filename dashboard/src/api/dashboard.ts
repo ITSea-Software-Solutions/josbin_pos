@@ -150,6 +150,37 @@ export async function getConsolidatedReport(params: {
   return res.data
 }
 
+export interface BtwExemptionRow {
+  sale_id: string
+  sale_number: string
+  occurred_at: string | null
+  store: string | null
+  cashier: string | null
+  customer: string | null
+  reason: string | null
+  total_srd: string
+  btw_forgone_srd: string | null
+  status: string
+}
+
+export interface BtwExemptionsReport {
+  date_from: string
+  date_to: string
+  store_id: string | null
+  rows: BtwExemptionRow[]
+  summary: { count: number; exempt_turnover_srd: string; btw_forgone_srd: string }
+}
+
+/** Every BTW-exempt sale in the range: who, why, and the BTW forgone. */
+export async function getBtwExemptionsReport(params: {
+  date_from: string
+  date_to: string
+  store_id?: string
+}): Promise<BtwExemptionsReport> {
+  const { data } = await apiClient.get<BtwExemptionsReport>('/reports/btw-exemptions', { params })
+  return data
+}
+
 export async function getConsolidatedBtwReport(params: {
   date_from: string
   date_to: string

@@ -158,6 +158,7 @@ export interface EscPosReceiptOptions {
     discount_srd: string
     total_srd: string
     btw_srd: string
+    btw_exempt_reason?: string | null
     cash_tendered?: string
     change?: string
     exchange_rate_used?: string
@@ -200,6 +201,7 @@ const TRANSLATIONS = {
     base:           'Basis',
     btw:            'BTW',
     total_btw:      'Totaal BTW',
+    btw_exempt:     'BTW vrijgesteld',
     btw_number:     'BTW-nr.',
     payment:        'Betaalmethode',
     cash:           'Contant',
@@ -233,6 +235,7 @@ const TRANSLATIONS = {
     base:           'Base',
     btw:            'VAT',
     total_btw:      'Total VAT',
+    btw_exempt:     'BTW exempt',
     btw_number:     'VAT no.',
     payment:        'Payment',
     cash:           'Cash',
@@ -337,6 +340,7 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
     b.cmd(CMD.BOLD_ON).line(t.btw_breakdown).cmd(CMD.BOLD_OFF)
     b.twoCol(rateLabel, `SRD ${sale.btw_srd}`)
     b.twoCol(t.total_btw, `SRD ${sale.btw_srd}`)
+    if (sale.btw_exempt_reason) b.line(`${t.btw_exempt}: ${sale.btw_exempt_reason}`)
     if (store.btw_number) b.line(`${t.btw_number}: ${store.btw_number}`)
     b.dashes()
   }
