@@ -11,7 +11,18 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.4.4 — 27 juli 2026 *(actueel)*
+## 1.4.5 — 27 juli 2026 *(actueel)*
+
+- **De automatische bon mislukt niet meer bij de eerste poging.** De kassa
+  stuurde het geldladesignaal en de bon op hetzelfde moment naar de printer;
+  die kon er maar één aan, waardoor de bon een fout meldde en de lade dicht
+  bleef — en handmatig op Printen tikken wél werkte. Het ladesignaal gaat nu
+  *na* de bon, nooit tegelijk, en een bon die alsnog mislukt probeert het
+  zelf één keer opnieuw.
+- **De lade gaat ook open als de bon niet print.** De klant geeft hoe dan
+  ook contant geld.
+
+## 1.4.4 — 27 juli 2026
 
 - **De geldlade gaat weer open bij contante verkopen.** Doordat bonnen
   vanaf 1.4.2 automatisch printen, stuurde de kassa het ladesignaal en de

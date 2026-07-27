@@ -6,7 +6,7 @@ import HelpButton from '@/components/shared/HelpButton'
 import { getSale, sendReceiptEmail } from '@/api/sales'
 import { buildReceiptBytes } from '@/lib/escpos'
 import { buildReceiptText, buildWhatsAppLink } from '@/lib/receiptText'
-import { printEscPos } from '@/lib/hardware'
+import { printEscPos, openCashDrawer } from '@/lib/hardware'
 import { useSettingsStore } from '@/store/settingsStore'
 import { formatDateTime } from '@/utils/date'
 import apiClient from '@/api/client'
@@ -124,19 +124,33 @@ export default function ReceiptModal({
         },
         locale,
         paperWidth: printer.paperWidth ?? 80,
-        // Ride the drawer pulse along with the receipt instead of sending it
-        // as a competing job — but only on the FIRST print of a cash sale.
-        // A reprint an hour later must not pop the drawer again.
-        openDrawer: drawerDoneFor.current !== saleId && (sale.payment_method === 'cash' || sale.payment_method === 'mixed')
-          ? (printer.drawerPin ?? 1)
-          : undefined,
       })
-      drawerDoneFor.current = saleId
 
       const result = await printEscPos(bytes, printer)
       setPrintStatus(result.success ? 'ok' : 'error')
+
+      // Kick the drawer as its own job, AFTER the receipt has been handed to
+      // the printer — never at the same time.
+      //
+      // Embedding the pulse in the receipt stream is the textbook ESC/POS
+      // answer and it did not open this shop's drawer, so we use the pulse
+      // that demonstrably works on the hardware and simply stop racing it.
+      // Two jobs sent at the same instant is what broke both: the drawer
+      // stayed shut AND the receipt job itself reported an error, which is
+      // why a manual re-print then succeeded.
+      //
+      // Fired even when the print failed: the customer is handing over cash
+      // either way, and the cashier needs the drawer more than the paper.
+      // Once per sale — a reprint an hour later must not pop it again.
+      const wantsDrawer = sale.payment_method === 'cash' || sale.payment_method === 'mixed'
+      if (wantsDrawer && drawerDoneFor.current !== saleId) {
+        drawerDoneFor.current = saleId
+        await openCashDrawer(printer).catch(() => {})
+      }
+      return result.success
     } catch {
       setPrintStatus('error')
+      return false
     }
   }, [sale, store, printer, cashTendered, change, i18n.language])
 
@@ -199,7 +213,13 @@ export default function ReceiptModal({
     if (hasThermal) {
       if (sale && store) {
         autoPrintedFor.current = saleId
-        handleEscPosPrint()
+        // One automatic retry. A till's first job of the day can be refused
+        // while the spooler or the socket is still coming up, and the cashier
+        // should not have to notice that — before this, the first attempt
+        // showed an error and only a manual tap on Print produced paper.
+        handleEscPosPrint().then((ok) => {
+          if (!ok) setTimeout(() => { void handleEscPosPrint() }, 900)
+        })
       }
     } else {
       autoPrintedFor.current = saleId

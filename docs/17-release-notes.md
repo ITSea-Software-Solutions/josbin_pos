@@ -11,7 +11,18 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.4.4 — 27 July 2026 *(current)*
+## 1.4.5 — 27 July 2026 *(current)*
+
+- **The automatic receipt no longer fails on the first try.** The till was
+  sending the cash-drawer signal and the receipt to the printer at the same
+  instant; the printer could only take one, so the receipt reported an error
+  and the drawer stayed shut — and tapping Print by hand then worked. The
+  drawer signal is now sent *after* the receipt has gone, never alongside
+  it, and a receipt that still fails retries itself once.
+- **The drawer opens even if the receipt fails to print.** The customer is
+  handing over cash either way.
+
+## 1.4.4 — 27 July 2026
 
 - **The cash drawer opens again on cash sales.** Making receipts print
   automatically (1.4.2) meant the till sent the drawer pulse and the receipt
