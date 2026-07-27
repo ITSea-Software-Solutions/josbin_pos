@@ -344,6 +344,11 @@ class CustomerController extends Controller
         if ($from > $to) {
             abort(422, 'from must be before or equal to to');
         }
+        // A statement is a period document — cap it so one request can never
+        // pull a customer's entire multi-year history into a single PDF.
+        if (\Carbon\Carbon::parse($from)->diffInDays(\Carbon\Carbon::parse($to)) > 366) {
+            abort(422, __('errors.export_range_too_large'));
+        }
 
         $format = $request->input('format', 'pdf');
         $locale = $request->input('locale', 'nl');

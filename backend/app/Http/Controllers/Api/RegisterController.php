@@ -363,7 +363,7 @@ class RegisterController extends Controller
             ->where('status', 'open')
             ->where('opened_at', '<', today())
             ->orderBy('opened_at')
-            ->get()
+            ->limit(50)->get()
             ->map(fn ($s) => [
                 'id'            => $s->id,
                 'register_name' => $s->register?->name,
@@ -380,7 +380,7 @@ class RegisterController extends Controller
             ->where('system_closed', true)
             ->whereNull('reconciled_at')
             ->orderBy('closed_at')
-            ->get()
+            ->limit(50)->get()
             ->map(fn ($s) => [
                 'id'            => $s->id,
                 'register_name' => $s->register?->name,

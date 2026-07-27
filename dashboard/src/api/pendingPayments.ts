@@ -26,9 +26,12 @@ export interface PendingPaymentsPage {
   current_page: number
   last_page: number
   total: number
+  /** Queue-wide figures appended by the backend — NOT page-scoped. Optional so
+   *  the tiles can fall back to page-derived numbers on older backends. */
+  meta_totals?: { pending_total_srd: string; older_than_7d: number }
 }
 
-export async function listPendingPayments(params: { store_id?: string; per_page?: number } = {}): Promise<PendingPaymentsPage> {
+export async function listPendingPayments(params: { store_id?: string; per_page?: number; page?: number } = {}): Promise<PendingPaymentsPage> {
   const res = await apiClient.get<PendingPaymentsPage>('/sales/pending-payments', { params })
   return res.data
 }

@@ -51,4 +51,6 @@ return [
 
     // POS installer download
     'installer_not_deployed'        => 'No installer has been deployed on this server yet. Ask your Josbin POS contact.',
+    'export_range_too_large' => 'The export range is too large — maximum 366 days per export. Split the period and export twice.',
+    'export_too_many_rows' => 'This export would contain :count transactions — too many for one document (maximum 20,000). Narrow the date range or export per store.',
 ];

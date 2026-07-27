@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useTableSort } from '@/lib/useTableSort'
@@ -847,7 +847,19 @@ export default function UsersScreen() {
   const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null)
   const toast = useToast()
 
-  const { data: users, isLoading } = useQuery({ queryKey: ['users'], queryFn: getUsers })
+  // Server-side pagination (backend paginates at 25 by default and was
+  // silently truncating this table to page 1).
+  const [page, setPage] = useState(1)
+  const { data: usersPage, isLoading } = useQuery({
+    queryKey: ['users', page],
+    queryFn: () => getUsers({ page, per_page: 25 }),
+    placeholderData: (prev) => prev,
+  })
+  const users = usersPage?.data
+  // Selection is page-scoped: flipping pages drops it so a bulk action never
+  // silently targets rows that are no longer on screen.
+  useEffect(() => { setSelectedIds(new Set()) }, [page])
+
   const { data: orgs = [] } = useQuery({ queryKey: ['organisations'], queryFn: getOrganisations })
 
   // Build a map of org id → org name for display in the table
@@ -861,9 +873,11 @@ export default function UsersScreen() {
   })
   const storeMap = Object.fromEntries((allStores as Array<{ id: string; name: string }>).map((s) => [s.id, s.name]))
 
-  const active  = users?.filter((u) => u.is_active).length ?? 0
-  const with2fa = users?.filter((u) => u.two_factor_enabled).length ?? 0
-  const total   = users?.length ?? 0
+  // KPI tiles use the backend's whole-result-set counters (meta_counts);
+  // fall back to page-derived figures when the field is absent.
+  const active  = usersPage?.meta_counts?.active ?? users?.filter((u) => u.is_active).length ?? 0
+  const with2fa = usersPage?.meta_counts?.with_two_factor ?? users?.filter((u) => u.two_factor_enabled).length ?? 0
+  const total   = usersPage?.meta_counts?.total ?? usersPage?.total ?? users?.length ?? 0
 
   const toggleStatus = useMutation({
     mutationFn: ({ id, active }: { id: string; active: boolean }) => updateUser(id, { is_active: active }),
@@ -1044,7 +1058,7 @@ export default function UsersScreen() {
                 {canManageUsers && (
                   <th style={{ padding: '12px 8px 12px 20px', width: 38 }}>
                     <input type="checkbox" checked={allSelected} disabled={selectableIds.length === 0}
-                      onChange={toggleAll} title={isNl ? 'Alles selecteren' : 'Select all'}
+                      onChange={toggleAll} title={isNl ? 'Alles selecteren (deze pagina)' : 'Select all (this page)'}
                       style={{ width: 16, height: 16, cursor: selectableIds.length ? 'pointer' : 'not-allowed', accentColor: '#293371' }} />
                   </th>
                 )}
@@ -1250,12 +1264,29 @@ export default function UsersScreen() {
           </table>
         )}
 
-        {/* Footer */}
+        {/* Footer — total count + server-side pager */}
         {!isLoading && total > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {total} {isNl ? 'gebruikers in totaal' : 'users total'}
             </span>
+            {(usersPage?.last_page ?? 1) > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page <= 1 ? 0.4 : 1 }}
+                >← {isNl ? 'Vorige' : 'Prev'}</button>
+                <span style={{ height: 32, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: '#5f6a84' }}>
+                  {page} / {usersPage?.last_page ?? 1}
+                </span>
+                <button
+                  disabled={page >= (usersPage?.last_page ?? 1)}
+                  onClick={() => setPage((p) => p + 1)}
+                  style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page >= (usersPage?.last_page ?? 1) ? 0.4 : 1 }}
+                >{isNl ? 'Volgende' : 'Next'} →</button>
+              </div>
+            )}
           </div>
         )}
       </div>

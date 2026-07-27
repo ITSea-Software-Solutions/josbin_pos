@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useTableSort } from '@/lib/useTableSort'
@@ -170,17 +170,23 @@ export default function ZReportScreen() {
   const [dateFrom, setDateFrom]     = useState(format(subDays(new Date(), 7), 'yyyy-MM-dd'))
   const [dateTo, setDateTo]         = useState(today())
   const [syncFilter, setSyncFilter] = useState('')
+  const [page, setPage]             = useState(1)
 
   const { data, isLoading, isFetching, refetch } = useQuery({
-    queryKey: ['dashboard-z-reports', dateFrom, dateTo, syncFilter],
+    queryKey: ['dashboard-z-reports', dateFrom, dateTo, syncFilter, page],
     queryFn: () => getDashboardZReports({
       date_from: dateFrom,
       date_to: dateTo,
       sync_status: syncFilter || undefined,
       per_page: 50,
+      page,
     }),
     refetchInterval: 60_000,
+    placeholderData: (prev) => prev,
   })
+  // Filters changed → back to page 1 (a page number from the old result set
+  // would silently show the wrong slice).
+  useEffect(() => { setPage(1) }, [dateFrom, dateTo, syncFilter])
 
   const reports: ZReportSummary[] = data?.data ?? []
 
@@ -204,9 +210,11 @@ export default function ZReportScreen() {
     never:   isNl ? 'Nooit'       : 'Never',
   }
 
-  const syncedCount  = reports.filter((r) => r.sync_status === 'synced').length
-  const pendingCount = reports.filter((r) => r.sync_status === 'pending').length
-  const failedCount  = reports.filter((r) => r.sync_status === 'failed').length
+  // Status chips use the backend's whole-filtered-set counters (meta_counts);
+  // fall back to page-derived figures when the field is absent.
+  const syncedCount  = data?.meta_counts?.synced  ?? reports.filter((r) => r.sync_status === 'synced').length
+  const pendingCount = data?.meta_counts?.pending ?? reports.filter((r) => r.sync_status === 'pending').length
+  const failedCount  = data?.meta_counts?.failed  ?? reports.filter((r) => r.sync_status === 'failed').length
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
@@ -441,12 +449,29 @@ export default function ZReportScreen() {
           </table>
         )}
 
-        {/* Footer */}
-        {!isLoading && reports.length > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+        {/* Footer — total count + server-side pager */}
+        {!isLoading && (reports.length > 0 || (data?.last_page ?? 1) > 1) && (
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {data?.total} {isNl ? 'rapporten in totaal' : 'reports total'}
             </span>
+            {(data?.last_page ?? 1) > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page <= 1 ? 0.4 : 1 }}
+                >← {isNl ? 'Vorige' : 'Prev'}</button>
+                <span style={{ height: 32, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: '#5f6a84' }}>
+                  {page} / {data?.last_page ?? 1}
+                </span>
+                <button
+                  disabled={page >= (data?.last_page ?? 1)}
+                  onClick={() => setPage((p) => p + 1)}
+                  style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page >= (data?.last_page ?? 1) ? 0.4 : 1 }}
+                >{isNl ? 'Volgende' : 'Next'} →</button>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getConsolidatedReport, getConsolidatedBtwReport, getBtwExemptionsReport, getProfitReport, exportReport } from '@/api/dashboard'
@@ -85,19 +85,24 @@ export default function ReportsScreen() {
     enabled: tab === 'btw',
   })
 
+  const [exemptPage, setExemptPage] = useState(1)
   const {
     data: exemptions,
     isLoading: eLoading,
     isFetching: eFetching,
     refetch: eRefetch,
   } = useQuery({
-    queryKey: ['btw-exemptions-report', dateFrom, dateTo, storeId],
+    queryKey: ['btw-exemptions-report', dateFrom, dateTo, storeId, exemptPage],
     queryFn: () => getBtwExemptionsReport({
-      date_from: dateFrom, date_to: dateTo,
+      date_from: dateFrom, date_to: dateTo, page: exemptPage, per_page: 50,
       ...(storeId ? { store_id: storeId } : {}),
     }),
     enabled: tab === 'exemptions',
+    placeholderData: (prev) => prev,
   })
+  // Filters changed → back to page 1 (a page number from the old result
+  // set would silently show the wrong slice).
+  useEffect(() => { setExemptPage(1) }, [dateFrom, dateTo, storeId])
 
   // Profit report — same date range + store filter as the other two tabs.
   // Requires products.view_cost on the backend (OA + SA + SM). Auditor /
@@ -650,6 +655,31 @@ export default function ReportsScreen() {
                 </tbody>
               </table>
             </div>
+            {exemptions && exemptions.pagination.last_page > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid #e9eef9' }}>
+                <span style={{ fontSize: 12, color: '#7e88a0' }}>
+                  {isNl
+                    ? `${exemptions.pagination.total} verkopen · pagina ${exemptions.pagination.page} van ${exemptions.pagination.last_page}`
+                    : `${exemptions.pagination.total} sales · page ${exemptions.pagination.page} of ${exemptions.pagination.last_page}`}
+                </span>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    onClick={() => setExemptPage((p) => Math.max(1, p - 1))}
+                    disabled={exemptions.pagination.page <= 1 || eFetching}
+                    style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, border: '1px solid #e6ecf5', background: '#fff', color: exemptions.pagination.page <= 1 ? '#c3cad9' : '#16203a', cursor: exemptions.pagination.page <= 1 ? 'not-allowed' : 'pointer' }}
+                  >
+                    ← {isNl ? 'Vorige' : 'Previous'}
+                  </button>
+                  <button
+                    onClick={() => setExemptPage((p) => Math.min(exemptions.pagination.last_page, p + 1))}
+                    disabled={exemptions.pagination.page >= exemptions.pagination.last_page || eFetching}
+                    style={{ padding: '7px 14px', borderRadius: 8, fontSize: 12.5, fontWeight: 700, border: '1px solid #e6ecf5', background: '#fff', color: exemptions.pagination.page >= exemptions.pagination.last_page ? '#c3cad9' : '#16203a', cursor: exemptions.pagination.page >= exemptions.pagination.last_page ? 'not-allowed' : 'pointer' }}
+                  >
+                    {isNl ? 'Volgende' : 'Next'} →
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </>
       )}

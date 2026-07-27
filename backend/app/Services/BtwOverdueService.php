@@ -24,10 +24,17 @@ class BtwOverdueService
      */
     public function overdueStores(?string $organisationId = null): Collection
     {
+        // NOTE: per-store follow-up queries below make this O(stores).
+        // Fine at the current platform size; the limit is a guard so a
+        // platform with thousands of stores degrades to "first 500 by
+        // name" instead of timing out. Single-query rewrite tracked in
+        // FEATURES_AND_FLOWS changelog.
         return Store::query()
             ->where('is_active', true)
             ->when($organisationId, fn ($q) => $q->where('organisation_id', $organisationId))
             ->with('organisation:id,name')
+            ->orderBy('name')
+            ->limit(500)
             ->get()
             ->map(function (Store $store) {
                 $period     = $store->btw_filing_period_days ?: 30;

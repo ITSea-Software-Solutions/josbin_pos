@@ -162,10 +162,15 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
 
 // ─── Movement history panel ────────────────────────────────────────────────────
 function MovementHistory({ product, isNl, onClose }: { product: Product; isNl: boolean; onClose: () => void }) {
+  // Movements grow forever — page through them instead of showing only the
+  // latest 50 as if that were everything.
+  const [histPage, setHistPage] = useState(1)
   const { data, isLoading } = useQuery({
-    queryKey: ['stock-history', product.id],
-    queryFn: () => getStockMovements(product.id, { per_page: 50 }),
+    queryKey: ['stock-history', product.id, histPage],
+    queryFn: () => getStockMovements(product.id, { per_page: 50, page: histPage }),
+    placeholderData: (prev) => prev,
   })
+  const histLastPage = data?.last_page ?? 1
 
   const reasonLabel = (r: string) => ({
     sale: isNl ? 'Verkoop' : 'Sale',
@@ -221,6 +226,19 @@ function MovementHistory({ product, isNl, onClose }: { product: Product; isNl: b
             </table>
           )}
         </div>
+
+        {/* Pager — small prev/next, only when the history spans pages */}
+        {histLastPage > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, paddingTop: 12, borderTop: '1px solid #f1f4fb', marginTop: 8 }}>
+            <button onClick={() => setHistPage(p => Math.max(1, p - 1))} disabled={histPage === 1}
+              style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: histPage === 1 ? 'not-allowed' : 'pointer', opacity: histPage === 1 ? 0.4 : 1, fontSize: 13 }}>‹</button>
+            <span style={{ fontSize: 12.5, color: '#6b7280' }}>
+              {histPage} / {histLastPage} · {data?.total ?? 0} {isNl ? 'bewegingen' : 'movements'}
+            </span>
+            <button onClick={() => setHistPage(p => Math.min(histLastPage, p + 1))} disabled={histPage === histLastPage}
+              style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #e5e7eb', background: '#fff', cursor: histPage === histLastPage ? 'not-allowed' : 'pointer', opacity: histPage === histLastPage ? 0.4 : 1, fontSize: 13 }}>›</button>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -263,13 +281,14 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
     enabled: activeTab === 'all',
   })
 
-  const { data: lowStockData = [], isLoading: lowLoading } = useQuery({
+  const { data: lowStockPage, isLoading: lowLoading } = useQuery({
     queryKey: ['low-stock', filterStoreId],
     queryFn: () => getLowStockProducts(filterStoreId ? { store_id: filterStoreId } : undefined),
     // Always fetch — we need the count for the alert banner shown on the
     // "all" tab too. The payload is small (capped at 50 by default).
     enabled: true,
   })
+  const lowStockData = lowStockPage?.data ?? []
 
   const products = activeTab === 'all' ? (allData?.data ?? []) : (lowStockData as Product[])
   const lastPage = activeTab === 'all' ? (allData?.last_page ?? 1) : 1
@@ -286,6 +305,8 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
   // Split low-stock list into "out" vs "low but in stock" for the banner copy.
   const outCount = (lowStockData as LowStockProduct[]).filter(p => parseFloat(p.stock_qty) <= 0).length
   const lowCount = lowStockData.length - outCount
+  // Whole-result-set count from the paginator — the fetched page caps at 50.
+  const lowTotal = lowStockPage?.total ?? lowStockData.length
 
   return (
     <div style={{ padding: '32px 36px', maxWidth: '100%' }}>
@@ -311,8 +332,8 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
         }}>
           <span style={{ fontSize: 20, lineHeight: 1 }} aria-hidden>⚠️</span>
           <span style={{ flex: 1, fontSize: 13.5, fontWeight: 600, color: '#92400e' }}>
-            {t(lowStockData.length === 1 ? 'stock.alerts.bannerOne' : 'stock.alerts.bannerMany',
-              { count: lowStockData.length })}
+            {t(lowTotal === 1 ? 'stock.alerts.bannerOne' : 'stock.alerts.bannerMany',
+              { count: lowTotal })}
             {outCount > 0 && (
               <span style={{ marginLeft: 8, fontSize: 12, fontWeight: 700, color: '#b91c1c' }}>
                 ({outCount} {t('stock.alerts.outBadge')})
@@ -336,7 +357,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '2px solid #e6ecf5' }}>
         {([
           { key: 'all', nl: 'Alle producten', en: 'All products' },
-          { key: 'low', nl: `Lage voorraad${lowStockData.length > 0 ? ` (${lowStockData.length})` : ''}`, en: `Low stock${lowStockData.length > 0 ? ` (${lowStockData.length})` : ''}` },
+          { key: 'low', nl: `Lage voorraad${(lowStockPage?.total ?? 0) > 0 ? ` (${lowStockPage?.total})` : ''}`, en: `Low stock${(lowStockPage?.total ?? 0) > 0 ? ` (${lowStockPage?.total})` : ''}` },
         ] as const).map(tab => (
           <button key={tab.key} onClick={() => setActiveTab(tab.key)}
             style={{
@@ -371,6 +392,16 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
             {t('stock.alerts.showAll')}
           </button>
         </div>
+      )}
+
+      {/* The low-stock list is capped at one page of 50 — say so when there
+          is more, instead of presenting the page as the whole list. */}
+      {activeTab === 'low' && (lowStockPage?.last_page ?? 1) > 1 && (
+        <p style={{ fontSize: 12, color: '#92400e', margin: '0 0 14px' }}>
+          {isNl
+            ? `Toont eerste 50 van ${lowStockPage?.total} producten — verfijn op vestiging`
+            : `Showing first 50 of ${lowStockPage?.total} products — refine by store`}
+        </p>
       )}
 
       {/* Store filter + search */}

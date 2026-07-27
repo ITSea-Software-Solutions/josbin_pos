@@ -23,7 +23,7 @@ class DiscountRuleController extends Controller
             ->when($request->filled('store_id'), fn ($q) => $q->where('store_id', $request->input('store_id')))
             ->when($request->boolean('active_only'), fn ($q) => $q->active())
             ->orderByDesc('created_at')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(min($request->integer('per_page', 50), 200));
 
         return response()->json($rules);
     }

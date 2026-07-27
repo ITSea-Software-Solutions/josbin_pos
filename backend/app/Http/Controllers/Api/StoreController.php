@@ -13,7 +13,7 @@ class StoreController extends Controller
 {
     /**
      * Return stores accessible to the authenticated user.
-     * Super admin sees all stores (paginated).
+     * Super admin sees all stores (unpaginated — bounded by licence max_stores per org).
      * Other roles see stores in their organisation only.
      */
     public function index(Request $request): JsonResponse

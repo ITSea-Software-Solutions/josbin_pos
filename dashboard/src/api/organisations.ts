@@ -76,6 +76,30 @@ export async function getOrganisations(): Promise<Organisation[]> {
   return res.data.data
 }
 
+export interface OrganisationsPage {
+  data: Organisation[]
+  current_page: number
+  last_page: number
+  total: number
+}
+
+/**
+ * Paginated org list for the Organisations screen. The backend paginates for
+ * cross-org roles (SA / inspector) but has NO server-side search — the screen
+ * fetches a large page and keeps filtering client-side. Own-org roles get a
+ * plain { data: [org] } body; normalise so callers always see paginator fields.
+ */
+export async function getOrganisationsPage(params: { page?: number; per_page?: number } = {}): Promise<OrganisationsPage> {
+  const res = await apiClient.get<Partial<OrganisationsPage> & { data: Organisation[] }>('/organisations', { params })
+  const d = res.data
+  return {
+    data: d.data ?? [],
+    current_page: d.current_page ?? 1,
+    last_page: d.last_page ?? 1,
+    total: d.total ?? d.data?.length ?? 0,
+  }
+}
+
 /**
  * Full slim org list (id + name) for filter dropdowns — bypasses pagination so
  * a cross-org user (Super Admin, tax inspector) sees EVERY organisation, not

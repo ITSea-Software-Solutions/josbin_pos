@@ -25,16 +25,18 @@ function OnboardingCard({ isNl, onNavigate }: { isNl: boolean; onNavigate?: (s: 
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(ONBOARDING_DISMISS_KEY) === '1')
 
   const { data: stores } = useQuery({ queryKey: ['onb-stores'], queryFn: () => getStores(), staleTime: 60_000 })
-  const { data: users } = useQuery({ queryKey: ['onb-users'], queryFn: () => getUsers(), staleTime: 60_000 })
-  const { data: products } = useQuery({ queryKey: ['onb-products'], queryFn: () => getProducts(), staleTime: 60_000 })
+  // Paginated endpoints: only the authoritative `total` matters here, so ask
+  // for the smallest possible page.
+  const { data: users } = useQuery({ queryKey: ['onb-users'], queryFn: () => getUsers({ per_page: 1 }), staleTime: 60_000 })
+  const { data: products } = useQuery({ queryKey: ['onb-products'], queryFn: () => getProducts({ per_page: 1 }), staleTime: 60_000 })
 
   if (dismissed) return null
   // Wait for all three before deciding, to avoid a flash / premature hide.
   if (!stores || !users || !products) return null
 
   const hasStores = stores.length > 0
-  const hasUsers = users.length > 1          // the admin themselves always exists
-  const hasProducts = products.length > 0
+  const hasUsers = users.total > 1          // the admin themselves always exists
+  const hasProducts = products.total > 0
 
   // Once the org is genuinely set up, retire the card automatically.
   if (hasStores && hasUsers && hasProducts) return null

@@ -164,6 +164,7 @@ export interface FilingExemptionRow {
 
 export interface FilingExemptions {
   count: number
+  rows_capped?: boolean
   exempt_turnover_srd: string
   btw_forgone_srd: string
   rows: FilingExemptionRow[]

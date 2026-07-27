@@ -965,7 +965,20 @@ class SaleController extends Controller
             $query->where('store_id', $request->input('store_id'));
         }
 
-        return response()->json($query->paginate($request->integer('per_page', 50)));
+        // Queue-wide figures for the header (the page alone would understate
+        // both once the queue exceeds one page).
+        $totals = (clone $query)->reorder()->selectRaw(
+            'coalesce(sum(total_srd), 0) as pending_total,
+             count(*) filter (where occurred_at < ?) as older_than_7d',
+            [now()->subDays(7)]
+        )->first();
+
+        return response()->json(collect($query->paginate(min($request->integer('per_page', 50), 200))->toArray())->merge([
+            'meta_totals' => [
+                'pending_total_srd' => number_format((float) $totals->pending_total, 2, '.', ''),
+                'older_than_7d'     => (int) $totals->older_than_7d,
+            ],
+        ]));
     }
 
     /**
@@ -1034,6 +1047,10 @@ class SaleController extends Controller
             'date_from' => ['nullable', 'date'],
             'date_to'   => ['nullable', 'date'],
             'status'    => ['nullable', Rule::in(['completed', 'voided', 'held'])],
+            // POS history screen filters: one AST day + sale-number search.
+            // These arrived from the UI for months and were silently dropped.
+            'date'      => ['nullable', 'date_format:Y-m-d'],
+            'search'    => ['nullable', 'string', 'max:60'],
             'per_page'  => ['nullable', 'integer', 'min:1', 'max:200'],
         ]);
 
@@ -1042,9 +1059,13 @@ class SaleController extends Controller
             ->when($request->filled('date_from'), fn ($q) => $q->where('occurred_at', '>=', $request->input('date_from')))
             ->when($request->filled('date_to'),   fn ($q) => $q->where('occurred_at', '<=', $request->input('date_to') . ' 23:59:59'))
             ->when($request->filled('status'),    fn ($q) => $q->where('status', $request->input('status')))
+            ->when($request->filled('date'), fn ($q) => $q
+                ->where('occurred_at', '>=', \App\Support\AstDates::dayStart($request->input('date')))
+                ->where('occurred_at', '<',  \App\Support\AstDates::dayAfter($request->input('date'))))
+            ->when($request->filled('search'), fn ($q) => $q->where('sale_number', 'ilike', '%'.$request->input('search').'%'))
             ->with('cashier:id,name')
             ->orderByDesc('occurred_at')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(min($request->integer('per_page', 50), 200));
 
         return response()->json($sales);
     }

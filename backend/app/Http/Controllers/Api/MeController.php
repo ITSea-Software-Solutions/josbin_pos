@@ -201,7 +201,7 @@ class MeController extends Controller
                   });
             })
             ->orderByDesc('created_at')
-            ->limit($request->integer('limit', 50))
+            ->limit(min($request->integer('limit', 50), 200))
             ->get([
                 'id', 'event', 'auditable_type', 'auditable_id',
                 'old_values', 'new_values', 'ip_address', 'created_at',

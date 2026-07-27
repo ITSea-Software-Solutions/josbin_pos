@@ -73,6 +73,18 @@ class RekenkamerController extends Controller
             $saleQuery->where('store_id', $storeId);
         }
 
+        // Guardrails BEFORE hydrating anything: a Court-of-Audit export is a
+        // formal period document, not a data dump. An unbounded range over
+        // years of sales would exhaust memory building the PDF — refuse
+        // clearly and ask for a split instead of dying halfway.
+        abort_if(
+            \Carbon\Carbon::parse($from)->diffInDays(\Carbon\Carbon::parse($to)) > 366,
+            422,
+            __('errors.export_range_too_large')
+        );
+        $rowCount = (clone $saleQuery)->reorder()->count();
+        abort_if($rowCount > 20000, 422, __('errors.export_too_many_rows', ['count' => $rowCount]));
+
         $sales = $saleQuery->get();
 
         $completedSales = $sales->where('status', 'completed');

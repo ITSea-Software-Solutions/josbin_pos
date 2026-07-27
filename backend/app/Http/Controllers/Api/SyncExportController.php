@@ -56,6 +56,16 @@ class SyncExportController extends Controller
         $store = Store::findOrFail($storeId);
         $this->authorize('view', $store);
 
+        // USB/WhatsApp export covers offline DAYS, not archives: cap the
+        // range so a mistyped year can't build a multi-hundred-MB payload
+        // in memory. A store offline longer than this exports in parts —
+        // the import side is idempotent, so parts are safe.
+        abort_if(
+            \Carbon\Carbon::parse($fromDate)->diffInDays(\Carbon\Carbon::parse($toDate)) > 92,
+            422,
+            __('errors.export_range_too_large')
+        );
+
         // Load sales with items
         $sales = Sale::query()
             ->with(['items', 'cashier:id,name,email', 'customer:id,name'])

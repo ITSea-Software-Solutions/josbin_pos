@@ -70,13 +70,17 @@ class DashboardController extends Controller
             ->get()
             ->keyBy('store_id');
 
-        // Latest Z-Report per store
+        // Latest Z-Report per store. DISTINCT ON does the newest-per-store
+        // work in Postgres — the previous ->get()->unique() pulled EVERY
+        // Z-report row ever written (one per store per day, forever) into
+        // PHP on every dashboard load.
         $latestZReports = ZReport::query()
             ->whereIn('store_id', $orgs->flatMap(fn ($o) => $o->stores->pluck('id')))
             ->select('store_id', 'sync_status', 'synced_at', 'report_date')
+            ->orderBy('store_id')
             ->orderByDesc('report_date')
+            ->distinct('store_id')
             ->get()
-            ->unique('store_id')
             ->keyBy('store_id');
 
         // Store online detection: last API call within 5 minutes
@@ -401,9 +405,22 @@ class DashboardController extends Controller
             $query->where('sync_status', $request->input('sync_status'));
         }
 
-        $reports = $query->paginate($request->integer('per_page', 30));
+        // Status chips must reflect the whole filtered set, not the page.
+        $counts = (clone $query)->selectRaw(
+            "count(*) filter (where sync_status = 'synced')  as synced,
+             count(*) filter (where sync_status = 'pending') as pending,
+             count(*) filter (where sync_status = 'failed')  as failed"
+        )->first();
 
-        return response()->json($reports);
+        $reports = $query->paginate(min($request->integer('per_page', 30), 200));
+
+        return response()->json(collect($reports->toArray())->merge([
+            'meta_counts' => [
+                'synced'  => (int) $counts->synced,
+                'pending' => (int) $counts->pending,
+                'failed'  => (int) $counts->failed,
+            ],
+        ]));
     }
 
     /**

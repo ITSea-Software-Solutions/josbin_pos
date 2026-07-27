@@ -7,7 +7,7 @@ import { useDashboardAuthStore } from '@/store/authStore'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import { useToast } from '@/components/shared/Toast'
 import {
-  getOrganisations, getOrganisation, createOrganisation, updateOrganisation,
+  getOrganisationsPage, getOrganisation, createOrganisation, updateOrganisation,
   getOrgStores, createStore,
   type Organisation, type Store, type CreateOrgPayload, type CreateStorePayload,
 } from '@/api/organisations'
@@ -924,7 +924,16 @@ export default function OrganisationsScreen() {
   const [editTarget, setEditTarget] = useState<Organisation | null>(null)
   const [search, setSearch] = useState('')
 
-  const { data: orgs, isLoading } = useQuery({ queryKey: ['organisations'], queryFn: getOrganisations })
+  // Server-paginated fetch. The backend has no server-side search on this
+  // endpoint, so we pull a large page (200) and keep the client-side filter —
+  // with a pager + notice for the rare >200-orgs platform.
+  const [page, setPage] = useState(1)
+  const { data: orgPage, isLoading } = useQuery({
+    queryKey: ['organisations', 'paged', page],
+    queryFn: () => getOrganisationsPage({ page, per_page: 200 }),
+    placeholderData: (prev) => prev,
+  })
+  const orgs = orgPage?.data
 
   // For non-Super-Admin, the API only returns the user's own org. If that
   // single org has zero stores, the next step is "+ Add store" on the
@@ -946,7 +955,9 @@ export default function OrganisationsScreen() {
     tier:   (o) => (o.subscription_tier ?? '').toLowerCase(),
   })
 
-  const total    = orgs?.length ?? 0
+  // Platform-wide total from the paginator; active/gov derive from the loaded
+  // page (exact while everything fits in one 200-row page).
+  const total    = orgPage?.total ?? orgs?.length ?? 0
   const active   = orgs?.filter((o) => o.is_active).length ?? 0
   const govCount = orgs?.filter((o) => o.is_government).length ?? 0
 
@@ -1007,6 +1018,16 @@ export default function OrganisationsScreen() {
           style={{ flex: 1, border: 'none', outline: 'none', fontSize: 14, color: '#16203a', background: 'transparent', fontFamily: 'inherit' }} />
         {search && <button onClick={() => setSearch('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7e88a0', fontSize: 16, lineHeight: 1 }}>×</button>}
       </div>
+
+      {/* More orgs exist than the loaded page — the client-side search above
+          only covers what's loaded, so say so. */}
+      {orgPage && orgPage.last_page > 1 && (
+        <p style={{ fontSize: 12, color: '#7e88a0', margin: '-12px 4px 20px' }}>
+          {isNl
+            ? `Toont ${orgs?.length ?? 0} van ${total} organisaties — zoeken filtert alleen deze pagina`
+            : `Showing ${orgs?.length ?? 0} of ${total} organisations — search filters this page only`}
+        </p>
+      )}
 
       {/* Empty-store hint for OA: their single org has zero stores yet. */}
       {singleOrg && singleOrg.store_count === 0 && (
@@ -1083,11 +1104,28 @@ export default function OrganisationsScreen() {
             </tbody>
           </table>
         )}
-        {!isLoading && (filtered ?? []).length > 0 && (
-          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
+        {!isLoading && ((filtered ?? []).length > 0 || (orgPage?.last_page ?? 1) > 1) && (
+          <div style={{ padding: '12px 24px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12, color: '#7e88a0' }}>
               {filtered?.length} {isNl ? 'van' : 'of'} {total} {isNl ? 'organisaties' : 'organisations'}
             </span>
+            {(orgPage?.last_page ?? 1) > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page <= 1 ? 0.4 : 1 }}
+                >← {isNl ? 'Vorige' : 'Prev'}</button>
+                <span style={{ height: 32, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: '#5f6a84' }}>
+                  {page} / {orgPage?.last_page ?? 1}
+                </span>
+                <button
+                  disabled={page >= (orgPage?.last_page ?? 1)}
+                  onClick={() => setPage((p) => p + 1)}
+                  style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page >= (orgPage?.last_page ?? 1) ? 0.4 : 1 }}
+                >{isNl ? 'Volgende' : 'Next'} →</button>
+              </div>
+            )}
           </div>
         )}
       </div>

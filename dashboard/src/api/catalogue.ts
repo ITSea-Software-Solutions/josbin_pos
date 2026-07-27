@@ -160,9 +160,22 @@ export async function updateCategory(id: string, payload: Partial<CreateCategory
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 
-export async function getProducts(params?: { organisation_id?: string; category_id?: string; search?: string }): Promise<Product[]> {
-  const res = await apiClient.get<{ data: Product[] }>('/products', { params })
-  return res.data.data
+export interface ProductsPage {
+  data: Product[]
+  current_page: number
+  last_page: number
+  total: number
+}
+
+export async function getProducts(params?: { organisation_id?: string; category_id?: string; search?: string; page?: number; per_page?: number }): Promise<ProductsPage> {
+  const res = await apiClient.get<Partial<ProductsPage> & { data: Product[] }>('/products', { params })
+  const d = res.data
+  return {
+    data: d.data ?? [],
+    current_page: d.current_page ?? 1,
+    last_page: d.last_page ?? 1,
+    total: d.total ?? d.data?.length ?? 0,
+  }
 }
 
 export async function createProduct(payload: CreateProductPayload): Promise<Product> {

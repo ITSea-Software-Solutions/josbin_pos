@@ -260,6 +260,13 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
               ? `${data.exemptions.count} vrijgestelde verkopen · omzet SRD ${fmtSrd(data.exemptions.exempt_turnover_srd)} · gederfde BTW SRD ${fmtSrd(data.exemptions.btw_forgone_srd)} — reden per verkoop vastgelegd op de kassa.`
               : `${data.exemptions.count} exempt sales · turnover SRD ${fmtSrd(data.exemptions.exempt_turnover_srd)} · BTW forgone SRD ${fmtSrd(data.exemptions.btw_forgone_srd)} — reason captured per sale at the till.`}
           </p>
+          {data.exemptions.rows_capped && (
+            <p style={{ fontSize: 11.5, color: '#b3261e', margin: '0 0 8px' }}>
+              {isNl
+                ? `Toont de ${data.exemptions.rows.length} recentste van ${data.exemptions.count} vrijstellingen — totalen hierboven dekken de volledige periode.`
+                : `Showing the ${data.exemptions.rows.length} most recent of ${data.exemptions.count} exemptions — the totals above cover the full period.`}
+            </p>
+          )}
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12.5 }}>
               <thead>

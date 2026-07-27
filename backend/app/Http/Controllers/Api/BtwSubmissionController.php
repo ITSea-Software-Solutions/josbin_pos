@@ -40,7 +40,7 @@ class BtwSubmissionController extends Controller
         $this->applyListFilters($query, $request);
         $this->applyListSort($query, $request);
 
-        return response()->json($query->paginate($request->integer('per_page', 25)));
+        return response()->json($query->paginate(min($request->integer('per_page', 25), 200)));
     }
 
     /**
@@ -389,21 +389,32 @@ class BtwSubmissionController extends Controller
         // Sale-level exemptions inside this filing period — the inspector's
         // answer to "why is there vrijgestelde omzet, and who granted it?".
         // Reason + forgone BTW are stamped on each sale at the till.
-        $exemptSales = \App\Models\Sale::query()
-            ->with(['store:id,name'])
+        $exemptBase = \App\Models\Sale::query()
             ->where('btw_exempt', true)
             ->whereHas('store', fn ($q) => $q->where('organisation_id', $btwSubmission->organisation_id))
             ->when($btwSubmission->store_id, fn ($q) => $q->where('store_id', $btwSubmission->store_id))
             ->where('occurred_at', '>=', \App\Support\AstDates::dayStart($btwSubmission->period_start->toDateString()))
-            ->where('occurred_at', '<',  \App\Support\AstDates::dayAfter($btwSubmission->period_end->toDateString()))
+            ->where('occurred_at', '<',  \App\Support\AstDates::dayAfter($btwSubmission->period_end->toDateString()));
+
+        // Totals via SQL over the WHOLE period; the row list stays capped for
+        // the screen, and rows_capped tells the UI when it is showing a subset.
+        $exemptTotals = (clone $exemptBase)->selectRaw(
+            'count(*) as cnt,
+             coalesce(sum(total_srd), 0) as turnover,
+             coalesce(sum(btw_exempt_forgone_srd), 0) as forgone'
+        )->first();
+
+        $exemptSales = (clone $exemptBase)
+            ->with(['store:id,name'])
             ->orderByDesc('occurred_at')
             ->limit(500)
             ->get();
 
         $exemptions = [
-            'count'               => $exemptSales->count(),
-            'exempt_turnover_srd' => number_format($exemptSales->sum(fn ($s) => (float) $s->total_srd), 2, '.', ''),
-            'btw_forgone_srd'     => number_format($exemptSales->sum(fn ($s) => (float) ($s->btw_exempt_forgone_srd ?? 0)), 2, '.', ''),
+            'count'               => (int) $exemptTotals->cnt,
+            'rows_capped'         => (int) $exemptTotals->cnt > $exemptSales->count(),
+            'exempt_turnover_srd' => number_format((float) $exemptTotals->turnover, 2, '.', ''),
+            'btw_forgone_srd'     => number_format((float) $exemptTotals->forgone, 2, '.', ''),
             'rows'                => $exemptSales->map(fn ($s) => [
                 'sale_number'     => $s->sale_number,
                 'occurred_at'     => $s->occurred_at?->toIso8601String(),

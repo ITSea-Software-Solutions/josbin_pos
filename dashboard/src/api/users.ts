@@ -46,9 +46,21 @@ export interface CreateUserPayload {
   store_id?: string | null
 }
 
-export async function getUsers(): Promise<User[]> {
-  const res = await apiClient.get<{ data: User[] }>('/users')
-  return res.data.data
+export interface UsersPage {
+  data: User[]
+  current_page: number
+  last_page: number
+  total: number
+  per_page: number
+  /** Whole-result-set KPI figures appended by GET /api/users — NOT page-scoped.
+   *  Optional so the UI can fall back to page-derived numbers while older
+   *  backends (without the field) are still deployed. */
+  meta_counts?: { total: number; active: number; with_two_factor: number }
+}
+
+export async function getUsers(params: { page?: number; per_page?: number } = {}): Promise<UsersPage> {
+  const res = await apiClient.get<UsersPage>('/users', { params })
+  return res.data
 }
 
 export async function createUser(payload: CreateUserPayload): Promise<User> {

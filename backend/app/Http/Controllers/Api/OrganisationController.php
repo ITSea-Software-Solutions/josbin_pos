@@ -43,7 +43,7 @@ class OrganisationController extends Controller
             }
             return response()->json(
                 Organisation::query()->withCount(['stores', 'users'])->orderBy('name')
-                    ->paginate($request->integer('per_page', 25))
+                    ->paginate(min($request->integer('per_page', 25), 200))
             );
         }
 

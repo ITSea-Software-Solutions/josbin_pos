@@ -168,6 +168,7 @@ export interface BtwExemptionsReport {
   date_to: string
   store_id: string | null
   rows: BtwExemptionRow[]
+  pagination: { page: number; per_page: number; total: number; last_page: number }
   summary: { count: number; exempt_turnover_srd: string; btw_forgone_srd: string }
 }
 
@@ -176,6 +177,8 @@ export async function getBtwExemptionsReport(params: {
   date_from: string
   date_to: string
   store_id?: string
+  page?: number
+  per_page?: number
 }): Promise<BtwExemptionsReport> {
   const { data } = await apiClient.get<BtwExemptionsReport>('/reports/btw-exemptions', { params })
   return data
@@ -197,7 +200,16 @@ export async function getDashboardZReports(params: {
   sync_status?: string
   per_page?: number
   page?: number
-}): Promise<{ data: ZReportSummary[]; total: number; per_page: number; current_page: number }> {
+}): Promise<{
+  data: ZReportSummary[]
+  total: number
+  per_page: number
+  current_page: number
+  last_page: number
+  /** Whole-filtered-set sync counters appended by the backend — NOT
+   *  page-scoped. Optional: fall back to page-derived counts if absent. */
+  meta_counts?: { synced: number; pending: number; failed: number }
+}> {
   const res = await apiClient.get('/dashboard/z-reports', { params })
   return res.data
 }

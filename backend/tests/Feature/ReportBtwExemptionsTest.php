@@ -77,6 +77,47 @@ class ReportBtwExemptionsTest extends TestCase
         $this->assertNotNull($res->json('rows.0.cashier'));
     }
 
+    public function test_report_is_paginated_and_summary_covers_the_whole_range(): void
+    {
+        // Two more exempt sales → 3 total; page size 2 → 2 pages. The summary
+        // must count ALL 3 even when the page shows only 2.
+        $product = \App\Models\Product::where('organisation_id', $this->store->organisation_id)
+            ->where('btw_exempt', false)->orderBy('name_nl')->firstOrFail();
+        foreach ([1, 2] as $i) {
+            $this->actingAs($this->cashier, 'sanctum')->postJson('/api/sales', [
+                'store_id'          => $this->store->id,
+                'payment_method'    => 'cash',
+                'cash_tendered'     => 50.00,
+                'btw_exempt'        => true,
+                'btw_exempt_reason' => "Ministerie van Onderwijs — vervolgorder {$i}",
+                'items'             => [[
+                    'product_id' => $product->id, 'product_name' => $product->name_nl,
+                    'unit_price' => '11.00', 'quantity' => 1, 'btw_rate' => '10', 'btw_exempt' => false,
+                ]],
+            ])->assertStatus(201);
+        }
+
+        $res = $this->actingAs($this->manager, 'sanctum')->getJson(
+            '/api/reports/btw-exemptions?per_page=2&page=1'
+            .'&date_from='.today()->toDateString().'&date_to='.today()->toDateString()
+        );
+
+        $res->assertOk()
+            ->assertJsonPath('pagination.total', 3)
+            ->assertJsonPath('pagination.last_page', 2)
+            ->assertJsonCount(2, 'rows')
+            // Whole-range aggregates, not page-of-2 sums:
+            ->assertJsonPath('summary.count', 3)
+            ->assertJsonPath('summary.exempt_turnover_srd', '30.00')
+            ->assertJsonPath('summary.btw_forgone_srd', '3.00');
+
+        $page2 = $this->actingAs($this->manager, 'sanctum')->getJson(
+            '/api/reports/btw-exemptions?per_page=2&page=2'
+            .'&date_from='.today()->toDateString().'&date_to='.today()->toDateString()
+        );
+        $page2->assertOk()->assertJsonCount(1, 'rows');
+    }
+
     public function test_cashier_cannot_open_the_exemptions_report(): void
     {
         $this->actingAs($this->cashier, 'sanctum')->getJson(

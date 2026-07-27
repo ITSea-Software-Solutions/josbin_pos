@@ -39,8 +39,14 @@ export interface LowStockProduct {
   category?: { name_nl: string; name_en: string } | null
 }
 
-export async function getLowStockProducts(params?: { per_page?: number; store_id?: string }): Promise<LowStockProduct[]> {
-  const res = await apiClient.get<{ data: LowStockProduct[] }>('/products', {
+export interface LowStockPage {
+  data: LowStockProduct[]
+  total: number
+  last_page: number
+}
+
+export async function getLowStockProducts(params?: { per_page?: number; store_id?: string }): Promise<LowStockPage> {
+  const res = await apiClient.get<{ data: LowStockProduct[]; total?: number; last_page?: number }>('/products', {
     params: {
       low_stock: true,
       per_page: params?.per_page ?? 50,
@@ -48,7 +54,12 @@ export async function getLowStockProducts(params?: { per_page?: number; store_id
       ...(params?.store_id ? { store_id: params.store_id } : {}),
     },
   })
-  return res.data.data ?? []
+  const rows = res.data.data ?? []
+  return {
+    data: rows,
+    total: res.data.total ?? rows.length,
+    last_page: res.data.last_page ?? 1,
+  }
 }
 
 /**

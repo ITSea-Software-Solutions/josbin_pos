@@ -370,29 +370,42 @@ class ReportController extends Controller
             'store_id'  => ['sometimes', 'nullable', 'uuid', new \App\Rules\StoreBelongsToOrg],
             'date_from' => ['required', 'date_format:Y-m-d'],
             'date_to'   => ['required', 'date_format:Y-m-d'],
+            'page'      => ['sometimes', 'integer', 'min:1'],
+            'per_page'  => ['sometimes', 'integer', 'min:1', 'max:200'],
         ]);
 
         $storeId  = $request->input('store_id') ?: null;
         $dateFrom = $request->input('date_from');
         $dateTo   = $request->input('date_to');
         $orgId    = $request->user()->organisation_id;
+        $page     = $request->integer('page', 1);
+        $perPage  = min($request->integer('per_page', 50), 200);
 
         $payload = ReportCache::remember(
             $request->user(), 'reports.btw-exemptions',
-            ['store_id' => $storeId ?? 'org', 'from' => $dateFrom, 'to' => $dateTo], $dateTo,
-            function () use ($storeId, $orgId, $dateFrom, $dateTo) {
-                $sales = \App\Models\Sale::query()
-                    ->with(['store:id,name', 'cashier:id,name', 'customer'])
+            ['store_id' => $storeId ?? 'org', 'from' => $dateFrom, 'to' => $dateTo, 'page' => $page, 'pp' => $perPage], $dateTo,
+            function () use ($storeId, $orgId, $dateFrom, $dateTo, $page, $perPage) {
+                $base = \App\Models\Sale::query()
                     ->where('btw_exempt', true)
                     ->whereHas('store', fn ($q) => $q->where('organisation_id', $orgId))
                     ->when($storeId, fn ($q) => $q->where('store_id', $storeId))
                     ->where('occurred_at', '>=', AstDates::dayStart($dateFrom))
-                    ->where('occurred_at', '<', AstDates::dayAfter($dateTo))
-                    ->orderByDesc('occurred_at')
-                    ->limit(1000)
-                    ->get();
+                    ->where('occurred_at', '<', AstDates::dayAfter($dateTo));
 
-                $rows = $sales->map(fn ($s) => [
+                // Summary = SQL aggregates over the WHOLE range — never from
+                // the page in hand, so the totals stay true at any size.
+                $totals = (clone $base)->selectRaw(
+                    'count(*) as cnt,
+                     coalesce(sum(total_srd), 0) as turnover,
+                     coalesce(sum(btw_exempt_forgone_srd), 0) as forgone'
+                )->first();
+
+                $sales = (clone $base)
+                    ->with(['store:id,name', 'cashier:id,name', 'customer'])
+                    ->orderByDesc('occurred_at')
+                    ->paginate($perPage, ['*'], 'page', $page);
+
+                $rows = collect($sales->items())->map(fn ($s) => [
                     'sale_id'      => $s->id,
                     'sale_number'  => $s->sale_number,
                     'occurred_at'  => $s->occurred_at?->toIso8601String(),
@@ -410,10 +423,16 @@ class ReportController extends Controller
                     'date_to'   => $dateTo,
                     'store_id'  => $storeId,
                     'rows'      => $rows,
+                    'pagination' => [
+                        'page'      => $sales->currentPage(),
+                        'per_page'  => $sales->perPage(),
+                        'total'     => $sales->total(),
+                        'last_page' => $sales->lastPage(),
+                    ],
                     'summary'   => [
-                        'count'              => $sales->count(),
-                        'exempt_turnover_srd'=> number_format($sales->sum(fn ($s) => (float) $s->total_srd), 2, '.', ''),
-                        'btw_forgone_srd'    => number_format($sales->sum(fn ($s) => (float) ($s->btw_exempt_forgone_srd ?? 0)), 2, '.', ''),
+                        'count'              => (int) $totals->cnt,
+                        'exempt_turnover_srd'=> number_format((float) $totals->turnover, 2, '.', ''),
+                        'btw_forgone_srd'    => number_format((float) $totals->forgone, 2, '.', ''),
                     ],
                 ];
             },

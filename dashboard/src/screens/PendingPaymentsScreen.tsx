@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTableSort } from '@/lib/useTableSort'
@@ -78,17 +78,34 @@ export default function PendingPaymentsScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const [target, setTarget] = useState<PendingPaymentSale | null>(null)
+  const [page, setPage] = useState(1)
 
-  const { data: page, isLoading } = useQuery({
-    queryKey: ['pending-payments'],
-    queryFn:  () => listPendingPayments({ per_page: 50 }),
+  const { data: queue, isLoading } = useQuery({
+    queryKey: ['pending-payments', page],
+    queryFn:  () => listPendingPayments({ per_page: 50, page }),
     // Refresh every 30s — bank statements arrive periodically and we want
     // the queue to drain visibly as the OA confirms each one.
     refetchInterval: 30_000,
+    placeholderData: (prev) => prev,
   })
 
-  const rows = page?.data ?? []
-  const totalPending = rows.reduce((a, s) => a + Number(s.total_srd), 0)
+  const rows = queue?.data ?? []
+  const lastPage = queue?.last_page ?? 1
+  // Queue-wide figures from the backend (meta_totals); fall back to
+  // page-derived numbers when the field is absent.
+  const pendingCount = queue?.total ?? rows.length
+  const totalPending = queue?.meta_totals
+    ? Number(queue.meta_totals.pending_total_srd)
+    : rows.reduce((a, s) => a + Number(s.total_srd), 0)
+  const olderThan7d = queue?.meta_totals?.older_than_7d
+    ?? rows.filter((s) => daysAgo(s.occurred_at) > 7).length
+
+  // Confirmations drain the queue — if the current page empties out (e.g. the
+  // OA confirmed everything on page 2), step back so the user is never
+  // stranded on an empty page with no pager.
+  useEffect(() => {
+    if (!isLoading && rows.length === 0 && page > 1) setPage((p) => Math.max(1, p - 1))
+  }, [isLoading, rows.length, page])
 
   // Column sort (shared hook → identical behaviour across all dashboard tables).
   const { sorted, sort, toggle, indicator } = useTableSort(rows, {
@@ -117,7 +134,7 @@ export default function PendingPaymentsScreen() {
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24, maxWidth: 600 }}>
         <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#293371' }}>{rows.length}</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#293371' }}>{pendingCount}</div>
           <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'In afwachting' : 'Pending'}</div>
         </div>
         <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
@@ -125,8 +142,8 @@ export default function PendingPaymentsScreen() {
           <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'Totaal openstaand' : 'Total pending'}</div>
         </div>
         <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: rows.some((s) => daysAgo(s.occurred_at) > 7) ? '#dc2626' : '#16a34a' }}>
-            {rows.filter((s) => daysAgo(s.occurred_at) > 7).length}
+          <div style={{ fontSize: 28, fontWeight: 900, color: olderThan7d > 0 ? '#dc2626' : '#16a34a' }}>
+            {olderThan7d}
           </div>
           <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'Ouder dan 7 dagen' : 'Older than 7 days'}</div>
         </div>
@@ -192,6 +209,30 @@ export default function PendingPaymentsScreen() {
               })}
             </tbody>
           </table>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && lastPage > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa' }}>
+            <span style={{ fontSize: 12, color: '#7e88a0' }}>
+              {pendingCount} {isNl ? 'openstaand in totaal' : 'pending in total'}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page <= 1 ? 0.4 : 1 }}
+              >← {isNl ? 'Vorige' : 'Prev'}</button>
+              <span style={{ height: 32, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: '#5f6a84' }}>
+                {page} / {lastPage}
+              </span>
+              <button
+                disabled={page >= lastPage}
+                onClick={() => setPage((p) => p + 1)}
+                style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: page >= lastPage ? 0.4 : 1 }}
+              >{isNl ? 'Volgende' : 'Next'} →</button>
+            </div>
+          </div>
         )}
       </div>
 

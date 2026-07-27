@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useDashboardAuthStore } from '@/store/authStore'
@@ -394,8 +394,10 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
     return s.status === 'filed' || s.status === 'disputed'
   }
 
+  // Server-side pagination — the list is capped at 50/page by the backend.
+  const [listPage, setListPage] = useState(1)
   const { data: page, isLoading } = useQuery({
-    queryKey: ['btw-submissions', { statusFilter, periodFilter, orgFilter, sourceFilter, yearFilter, minAmount, sortBy, searchInput }],
+    queryKey: ['btw-submissions', { statusFilter, periodFilter, orgFilter, sourceFilter, yearFilter, minAmount, sortBy, searchInput, listPage }],
     queryFn: () => listBtwSubmissions({
       status: statusFilter || undefined,
       period_type: periodFilter || undefined,
@@ -406,8 +408,13 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
       sort: sortBy,
       search: searchInput.trim() || undefined,
       per_page: 50,
+      page: listPage,
     } as Record<string, unknown>),
+    placeholderData: (prev) => prev,
   })
+  // Filters changed → back to page 1 (a page number from the old result set
+  // would silently show the wrong slice).
+  useEffect(() => { setListPage(1) }, [statusFilter, periodFilter, orgFilter, sourceFilter, yearFilter, minAmount, sortBy, searchInput])
 
   // Selection helpers — only FILED rows can be bulk-accepted.
   const rows = page?.data ?? []
@@ -605,7 +612,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                 {canReview && (
                   <th style={{ padding: '12px 8px 12px 16px', width: 38 }}>
                     <input type="checkbox" checked={allFiledSelected} disabled={filedIds.length === 0}
-                      onChange={toggleAllFiled} title={isNl ? 'Selecteer alle ingediende' : 'Select all filed'}
+                      onChange={toggleAllFiled} title={isNl ? 'Selecteer alle ingediende (deze pagina)' : 'Select all filed (this page)'}
                       style={{ width: 16, height: 16, cursor: filedIds.length ? 'pointer' : 'not-allowed', accentColor: BD.green }} />
                   </th>
                 )}
@@ -700,6 +707,30 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
               })}
             </tbody>
           </table>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && page && page.last_page > 1 && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa' }}>
+            <p style={{ fontSize: 13, color: '#7e88a0', margin: 0 }}>
+              {page.total} {isNl ? 'aangiftes' : 'submissions'}
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button
+                disabled={listPage <= 1}
+                onClick={() => setListPage((p) => Math.max(1, p - 1))}
+                style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: listPage <= 1 ? 0.4 : 1 }}
+              >← {isNl ? 'Vorige' : 'Prev'}</button>
+              <span style={{ height: 32, display: 'flex', alignItems: 'center', padding: '0 10px', fontSize: 13, color: '#5f6a84' }}>
+                {listPage} / {page.last_page}
+              </span>
+              <button
+                disabled={listPage >= page.last_page}
+                onClick={() => setListPage((p) => p + 1)}
+                style={{ height: 32, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 13, cursor: 'pointer', opacity: listPage >= page.last_page ? 0.4 : 1 }}
+              >{isNl ? 'Volgende' : 'Next'} →</button>
+            </div>
+          </div>
         )}
       </div>
 

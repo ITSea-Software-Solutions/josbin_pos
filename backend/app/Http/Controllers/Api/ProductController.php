@@ -49,7 +49,7 @@ class ProductController extends Controller
                 }
             })
             ->orderBy('name_nl')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(min($request->integer('per_page', 50), 200));
 
         // Apply per-actor formatting (cost-strip, image_url, category_name)
         // to every row, preserving the paginator envelope.
@@ -213,11 +213,12 @@ class ProductController extends Controller
         $products = Product::query()
             ->where('organisation_id', $request->user()->organisation_id)
             ->with('category:id,name_nl,name_en')
-            ->orderBy('name_nl')
-            ->get();
+            ->orderBy('name_nl');
 
         $filename = 'josbin-products-' . now()->format('Y-m-d') . '.csv';
 
+        // Chunked inside the stream: peak memory = 500 rows, whatever the
+        // catalogue size (same pattern as the BTW submissions export).
         return response()->streamDownload(function () use ($products) {
             $out = fopen('php://output', 'w');
             // UTF-8 BOM so Excel opens accents correctly
@@ -226,19 +227,21 @@ class ProductController extends Controller
                 'name_nl', 'name_en', 'barcode', 'price', 'btw_rate',
                 'btw_exempt', 'category_name_nl', 'stock_qty', 'is_active',
             ]);
-            foreach ($products as $p) {
-                fputcsv($out, [
-                    $p->name_nl,
-                    $p->name_en,
-                    $p->barcode ?? '',
-                    $p->price,
-                    $p->btw_rate,
-                    $p->btw_exempt ? '1' : '0',
-                    $p->category->name_nl ?? '',
-                    $p->stock_qty,
-                    $p->is_active ? '1' : '0',
-                ]);
-            }
+            $products->chunk(500, function ($chunk) use ($out) {
+                foreach ($chunk as $p) {
+                    fputcsv($out, [
+                        $p->name_nl,
+                        $p->name_en,
+                        $p->barcode ?? '',
+                        $p->price,
+                        $p->btw_rate,
+                        $p->btw_exempt ? '1' : '0',
+                        $p->category->name_nl ?? '',
+                        $p->stock_qty,
+                        $p->is_active ? '1' : '0',
+                    ]);
+                }
+            });
             fclose($out);
         }, $filename, [
             'Content-Type'        => 'text/csv; charset=UTF-8',
@@ -498,7 +501,7 @@ class ProductController extends Controller
         $movements = StockMovement::where('product_id', $product->id)
             ->with('user:id,name', 'sale:id,sale_number,occurred_at')
             ->orderByDesc('id')
-            ->paginate($request->integer('per_page', 50));
+            ->paginate(min($request->integer('per_page', 50), 200));
 
         return response()->json($movements);
     }

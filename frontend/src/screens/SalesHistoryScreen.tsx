@@ -157,7 +157,7 @@ export default function SalesHistoryScreen({ storeId }: Props) {
           type="text"
           value={search}
           onChange={e => { setSearch(e.target.value); setPage(1) }}
-          placeholder={isNl ? 'Zoek op bonnummer of klant…' : 'Search by receipt # or customer…'}
+          placeholder={isNl ? 'Zoek op bonnummer…' : 'Search by receipt #…'}
           style={{ flex: 1, minWidth: 200, height: 36, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', fontSize: 13 }}
         />
       </div>

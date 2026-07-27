@@ -705,15 +705,27 @@ export default function CatalogueScreen() {
     enabled: !!effectiveOrgId || !isSuperAdmin,
   })
 
-  const { data: products = [], isLoading: prodLoading } = useQuery({
-    queryKey: ['products', effectiveOrgId, selectedCatId, search],
+  // Server-side pagination (backend paginates at 50 and used to silently
+  // truncate the table to page 1). Search/category stay server-side params.
+  const [prodPage, setProdPage] = useState(1)
+  const { data: productsPage, isLoading: prodLoading } = useQuery({
+    queryKey: ['products', effectiveOrgId, selectedCatId, search, prodPage],
     queryFn: () => getProducts({
       organisation_id: effectiveOrgId ?? undefined,
       category_id: selectedCatId || undefined,
       search: search || undefined,
+      page: prodPage,
+      per_page: 50,
     }),
     enabled: tab === 'products' && (!!effectiveOrgId || !isSuperAdmin),
+    placeholderData: (prev) => prev,
   })
+  const products = productsPage?.data ?? []
+  const prodLastPage = productsPage?.last_page ?? 1
+  const prodTotal = productsPage?.total ?? products.length
+  // Filters changed → back to page 1 (a page number from the old result set
+  // would silently show the wrong slice).
+  useEffect(() => { setProdPage(1) }, [effectiveOrgId, selectedCatId, search])
 
   // Column sort (shared hook → identical behaviour across all dashboard tables).
   const { sorted: sortedProducts, sort, toggle: toggleSort, indicator } = useTableSort(products, {
@@ -819,7 +831,7 @@ export default function CatalogueScreen() {
           } as React.CSSProperties}>
             {isNl ? t.nl : t.en}
             <span style={{ marginLeft: 7, padding: '1px 7px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: tab === t.id ? 'rgba(255,255,255,.2)' : '#eef2fb', color: tab === t.id ? '#fff' : '#293371' }}>
-              {t.id === 'products' ? products.length : categories.length}
+              {t.id === 'products' ? prodTotal : categories.length}
             </span>
           </button>
         ))}
@@ -1011,9 +1023,26 @@ export default function CatalogueScreen() {
                 </tbody>
               </table>
             )}
-            {products.length > 0 && (
-              <div style={{ padding: '11px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: 12, color: '#7e88a0' }}>{products.length} {isNl ? 'producten' : 'products'}</span>
+            {(products.length > 0 || prodLastPage > 1) && (
+              <div style={{ padding: '11px 20px', borderTop: '1px solid #f1f4fb', background: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: '#7e88a0' }}>{prodTotal} {isNl ? 'producten' : 'products'}</span>
+                {prodLastPage > 1 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <button
+                      disabled={prodPage <= 1}
+                      onClick={() => setProdPage((p) => Math.max(1, p - 1))}
+                      style={{ height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12.5, cursor: 'pointer', opacity: prodPage <= 1 ? 0.4 : 1 }}
+                    >← {isNl ? 'Vorige' : 'Prev'}</button>
+                    <span style={{ height: 30, display: 'flex', alignItems: 'center', padding: '0 8px', fontSize: 12.5, color: '#5f6a84' }}>
+                      {prodPage} / {prodLastPage}
+                    </span>
+                    <button
+                      disabled={prodPage >= prodLastPage}
+                      onClick={() => setProdPage((p) => p + 1)}
+                      style={{ height: 30, padding: '0 12px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 12.5, cursor: 'pointer', opacity: prodPage >= prodLastPage ? 0.4 : 1 }}
+                    >{isNl ? 'Volgende' : 'Next'} →</button>
+                  </div>
+                )}
               </div>
             )}
           </div>

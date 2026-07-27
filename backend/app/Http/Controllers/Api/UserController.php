@@ -59,11 +59,19 @@ class UserController extends Controller
             $query->where(fn ($q) => $q->where('name', 'ilike', $term)->orWhere('email', 'ilike', $term));
         }
 
+        // KPI tiles need whole-set numbers, not page-of-25 numbers — one
+        // aggregate over the same scoped query the page comes from.
+        $counts = (clone $query)->selectRaw(
+            'count(*) as total,
+             count(*) filter (where is_active) as active,
+             count(*) filter (where two_factor_confirmed_at is not null) as with_two_factor'
+        )->first();
+
         $users = $query
             ->select(['id', 'name', 'email', 'role', 'locale', 'organisation_id', 'store_id',
                 'two_factor_confirmed_at', 'is_active', 'last_login_at', 'created_at'])
             ->with('organisation:id,name', 'store:id,name')
-            ->paginate($request->integer('per_page', 25));
+            ->paginate(min($request->integer('per_page', 25), 200));
 
         // Build a one-shot map of organisation_id → active license so the
         // table can render licence type / start / expiry per row without a
@@ -98,7 +106,7 @@ class UserController extends Controller
             return $u;
         });
 
-        return response()->json($users);
+        return response()->json(collect($users->toArray())->merge(['meta_counts' => ['total' => (int) $counts->total, 'active' => (int) $counts->active, 'with_two_factor' => (int) $counts->with_two_factor]]));
     }
 
     /** POST /api/users */

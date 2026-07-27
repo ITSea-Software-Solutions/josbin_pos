@@ -60,4 +60,6 @@ return [
 
     // POS installer download
     'installer_not_deployed'        => 'Op deze server staat nog geen installer. Vraag uw Josbin POS-contactpersoon.',
+    'export_range_too_large' => 'De exportperiode is te groot — maximaal 366 dagen per export. Splits de periode en exporteer in delen.',
+    'export_too_many_rows' => 'Deze export zou :count transacties bevatten — te veel voor één document (maximaal 20.000). Verklein de periode of exporteer per vestiging.',
 ];
