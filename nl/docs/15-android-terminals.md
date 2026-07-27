@@ -144,6 +144,7 @@ Z-rapporten, rapporten, talen — is identiek op beide platforms.
 |---|---|---|
 | App toont een leeg/wit scherm | De Android WebView van de terminal is sterk verouderd | Open `http://<server>:8091` in Chrome op de terminal — rendert dat, dan rendert de app ook; werk "Android System WebView" bij via de Play Store indien aanwezig |
 | ⚙ Server-test faalt, maar de browser op de terminal bereikt hetzelfde adres wél | Verkeerd adresformaat | Vul alleen `IP:poort` in (bijv. `192.168.0.250:8080`) — de app vult de rest zelf aan |
+| Achterkant printer toont alleen **voeding + USB + DK** | De USB-interfacekaart is gemonteerd — geen netwerkmogelijkheid. DK is de **lade**-poort (RJ11), geen netwerkpoort; steek er nooit een LAN-kabel in | Bestel de **LAN/Ethernet-interfacekaart voor de PP-9000 (Aura)-serie** bij de hardwareleverancier — twee schroeven, wisselen, klaar. Let op: een USB-naar-Ethernet-*adapter* werkt NIET (die geeft een computer een netwerkpoort, hij maakt een printer niet netwerkgeschikt) |
 | Printertest rood, printer staat aan | Printer niet op het netwerk, of verkeerd IP in Instellingen | Print de zelftestpagina voor het echte IP; controleer de LAN-kabel en de IP-reservering in de router |
 | Lade opent niet maar bonnen printen wel | Ladekabel | Steek de RJ11 opnieuw in de ladepoort van de printer (niet de telefoonlijnpoort) |
 | "Installatie geblokkeerd" bij het openen van de APK | Toestemming onbekende bronnen | Sta *Onbekende apps installeren* toe voor Chrome zodra Android het vraagt |

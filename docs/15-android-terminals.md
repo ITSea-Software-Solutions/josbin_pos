@@ -141,6 +141,7 @@ is identical on both platforms.
 |---|---|---|
 | App shows a blank/white screen | The terminal's Android WebView is very outdated | Open `http://<server>:8091` in the terminal's Chrome — if that renders, the app will too; update "Android System WebView" via the Play Store if present |
 | ⚙ Server Test fails, but the terminal's browser can reach the same address | Wrong address format | Enter `IP:port` only (e.g. `192.168.0.250:8080`) — the app adds the rest itself |
+| Printer back panel shows only **power + USB + DK** | The USB interface board is fitted — no network capability. DK is the **drawer** port (RJ11), not a network port; never plug a LAN cable into it | Order the **LAN/Ethernet interface card for the PP-9000 (Aura) series** from the hardware supplier — a two-screw swap. Note: a USB-to-Ethernet *adapter* does NOT work (those give computers a network port, they don't make a printer networked) |
 | Printer test red, printer powered on | Printer not on the network, or wrong IP in Settings | Print the printer's self-test page for its real IP; check the LAN cable and the reserved-IP setting in the router |
 | Drawer doesn't open but receipts print | Drawer cable | Reseat the RJ11 in the printer's drawer port (not the phone-line port) |
 | "Install blocked" when opening the APK | Unknown-sources permission | Allow *Install unknown apps* for Chrome when Android asks |

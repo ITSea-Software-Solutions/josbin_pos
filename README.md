@@ -995,3 +995,7 @@ docker compose up -d
 cd frontend && npm run dev          # POS :5173
 cd dashboard && npm run dev          # dashboard :5174
 cd docs-site && npm run dev          # docs :5180
+
+URL	http://142.93.88.143:8090/belastingdienst
+Email	belastingdienst@gov.sr
+Password	Inspector@2026
