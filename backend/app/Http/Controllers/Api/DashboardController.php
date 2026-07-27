@@ -406,7 +406,7 @@ class DashboardController extends Controller
         }
 
         // Status chips must reflect the whole filtered set, not the page.
-        $counts = (clone $query)->selectRaw(
+        $counts = (clone $query)->reorder()->selectRaw(
             "count(*) filter (where sync_status = 'synced')  as synced,
              count(*) filter (where sync_status = 'pending') as pending,
              count(*) filter (where sync_status = 'failed')  as failed"

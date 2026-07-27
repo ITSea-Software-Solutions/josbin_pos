@@ -61,7 +61,7 @@ class UserController extends Controller
 
         // KPI tiles need whole-set numbers, not page-of-25 numbers — one
         // aggregate over the same scoped query the page comes from.
-        $counts = (clone $query)->selectRaw(
+        $counts = (clone $query)->reorder()->selectRaw(
             'count(*) as total,
              count(*) filter (where is_active) as active,
              count(*) filter (where two_factor_confirmed_at is not null) as with_two_factor'
