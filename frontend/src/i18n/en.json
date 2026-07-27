@@ -63,7 +63,7 @@
       "discount": "Discount",
       "subtotal": "Subtotal",
       "saleDiscount": "Sale discount",
-      "btw": "VAT",
+      "btw": "BTW",
       "total": "Total",
       "removeItem": "Remove item",
       "editItem": "Edit item",
@@ -320,7 +320,7 @@
       "items": "Items",
       "subtotal": "Subtotal",
       "discount": "Discount",
-      "btw": "VAT",
+      "btw": "BTW",
       "total": "Total",
       "paymentMethod": "Payment",
       "product": "Product",
@@ -331,7 +331,7 @@
       "totalSales": "Total Sales",
       "transactionCount": "Transactions",
       "avgBasket": "Avg. Basket",
-      "totalBtw": "Total VAT",
+      "totalBtw": "Total BTW",
       "cashTotal": "Cash",
       "cardTotal": "Card / PIN",
       "bankTransferTotal": "Bank transfer",
@@ -391,7 +391,7 @@
       "photo": "Photo only",
       "both": "Name and photo"
     },
-    "defaultBtw": "Default VAT rate (%)",
+    "defaultBtw": "Default BTW rate (%)",
     "siteName": "Store name",
     "receiptHeader": "Receipt header",
     "receiptFooter": "Receipt footer",
@@ -496,11 +496,11 @@
     "format": "SRD {{amount}}"
   },
   "btw": {
-    "label": "VAT (BTW)",
+    "label": "BTW",
     "rate": "{{rate}}%",
-    "exempt": "VAT exempt",
-    "included": "incl. VAT",
-    "breakdown": "VAT breakdown"
+    "exempt": "BTW exempt",
+    "included": "incl. BTW",
+    "breakdown": "BTW breakdown"
   },
   "errors": {
     "networkError": "Network error. Check your connection.",

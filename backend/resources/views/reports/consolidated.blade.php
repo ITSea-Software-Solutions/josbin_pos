@@ -47,7 +47,7 @@
     <td class="right">SRD {{ $data['total_discounts'] }}</td>
   </tr>
   <tr>
-    <td>@if($locale === 'nl')Totaal BTW @else Total VAT (BTW) @endif</td>
+    <td>@if($locale === 'nl')Totaal BTW @else Total BTW @endif</td>
     <td class="right">SRD {{ $data['total_btw'] }}</td>
   </tr>
   <tr class="total">
@@ -111,7 +111,7 @@
     <th>@if($locale === 'nl')Vestiging @else Store @endif</th>
     <th>@if($locale === 'nl')Stad @else City @endif</th>
     <th class="right">@if($locale === 'nl')Transacties @else Transactions @endif</th>
-    <th class="right">@if($locale === 'nl')BTW @else VAT @endif</th>
+    <th class="right">@if($locale === 'nl')BTW @else BTW @endif</th>
     <th class="right">@if($locale === 'nl')Omzet @else Revenue @endif</th>
   </tr>
   @foreach($data['per_store'] as $store)

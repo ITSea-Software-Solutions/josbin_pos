@@ -48,6 +48,22 @@ export interface PrinterConfig {
   usbProductId?: number
 }
 
+/**
+ * Should a saved printer type be forced back to 'network' on this platform?
+ *
+ * ONLY a browser tab, which has no way to reach a USB printer at all. Both
+ * native shells can: Windows through the print spooler, Android through the
+ * USB Host API. This used to read `platform !== 'electron'`, which quietly
+ * undid an Android till's USB pairing every time Settings was opened — the
+ * cashier paired a printer, walked away, came back and found it set to
+ * "network" again. Kept here as a named rule with tests precisely because a
+ * self-healing default that overwrites a valid configuration destroys the
+ * operator's work while looking like helpfulness.
+ */
+export function needsPrinterTypeHeal(platform: Platform, type: PrinterConfig['type']): boolean {
+  return platform === 'web' && type === 'usb'
+}
+
 export interface PrinterInfo {
   name: string
   description: string

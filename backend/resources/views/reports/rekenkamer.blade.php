@@ -91,14 +91,14 @@
 </div>
 
 {{-- ═══ BTW BREAKDOWN ════════════════════════════════════════════════════════ --}}
-<h2>@if($locale === 'nl')BTW-uitsplitsing @else VAT (BTW) Breakdown @endif</h2>
+<h2>@if($locale === 'nl')BTW-uitsplitsing @else BTW Breakdown @endif</h2>
 <table class="btw-table">
   <thead>
     <tr>
-      <th>@if($locale === 'nl')BTW-tarief @else VAT Rate @endif</th>
+      <th>@if($locale === 'nl')BTW-tarief @else BTW Rate @endif</th>
       <th>@if($locale === 'nl')Vrijgesteld @else Exempt @endif</th>
       <th class="num">@if($locale === 'nl')Nettobasis @else Net Base @endif</th>
-      <th class="num">@if($locale === 'nl')BTW-bedrag @else VAT Amount @endif</th>
+      <th class="num">@if($locale === 'nl')BTW-bedrag @else BTW Amount @endif</th>
     </tr>
   </thead>
   <tbody>

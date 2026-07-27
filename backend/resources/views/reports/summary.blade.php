@@ -46,7 +46,7 @@
     <td class="right">SRD {{ $data['total_discount_srd'] }}</td>
   </tr>
   <tr>
-    <td>@if($locale === 'nl')Totaal BTW @else Total VAT @endif</td>
+    <td>@if($locale === 'nl')Totaal BTW @else Total BTW @endif</td>
     <td class="right">SRD {{ $data['total_btw_srd'] }}</td>
   </tr>
   <tr class="total">

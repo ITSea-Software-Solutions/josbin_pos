@@ -41,3 +41,9 @@ interface Window {
     setAutoLaunch: (enabled: boolean) => Promise<boolean>
   }
 }
+
+/**
+ * App version, injected at build time from package.json by both Vite configs.
+ * Shown in Settings so a terminal in the field can always be identified.
+ */
+declare const __APP_VERSION__: string

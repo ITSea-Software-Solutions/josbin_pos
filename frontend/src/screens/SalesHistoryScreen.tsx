@@ -174,7 +174,7 @@ export default function SalesHistoryScreen({ storeId }: Props) {
                   isNl ? 'Klant' : 'Customer',
                   isNl ? 'Betaalwijze' : 'Payment',
                   isNl ? 'Totaal' : 'Total',
-                  isNl ? 'BTW' : 'VAT',
+                  'BTW', // the Suriname tax term in both languages
                   isNl ? 'Status' : 'Status',
                   '',
                 ].map((h, i) => (

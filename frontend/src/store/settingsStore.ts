@@ -68,7 +68,11 @@ export const useSettingsStore = create<SettingsState>()(
         paperWidth: 80,
       },
       printerShareEnabled: false,
-      autoPrintReceipt: false,
+      // A shop expects the receipt to come out when the sale is paid, the
+      // same way the drawer opens by itself. Making the cashier tap Print on
+      // every sale is a queue tax. Still switchable off in Settings for
+      // tills that deliberately print on request only.
+      autoPrintReceipt: true,
       embeddedBarcode: DEFAULT_EMBEDDED_BARCODE,
       cardTerminal: { mode: 'manual', defaultBank: 'DSB' },
 
@@ -83,6 +87,21 @@ export const useSettingsStore = create<SettingsState>()(
       setEmbeddedBarcode: (config) => set((s) => ({ embeddedBarcode: { ...s.embeddedBarcode, ...config } })),
       setCardTerminal: (config) => set((s) => ({ cardTerminal: { ...s.cardTerminal, ...config } })),
     }),
-    { name: 'josbin_pos-settings' }
+    {
+      name: 'josbin_pos-settings',
+      // Bumping the version re-applies changed defaults to tills that already
+      // have settings saved — otherwise a new default only ever reaches a
+      // fresh install, and every till in the field keeps the old behaviour.
+      version: 1,
+      migrate: (persisted, from) => {
+        const s = persisted as Partial<SettingsState>
+        // v0 → v1: auto-print became the default. Only tills still carrying
+        // the old default are switched; anyone who deliberately turned it on
+        // is already there, and a deliberate "off" is indistinguishable from
+        // the old default, so this is a one-time nudge, not a lock.
+        if (from < 1 && s.autoPrintReceipt === false) s.autoPrintReceipt = true
+        return s as SettingsState
+      },
+    }
   )
 )

@@ -11,7 +11,27 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.4.1 — 27 juli 2026 *(actueel)*
+## 1.4.2 — 27 juli 2026 *(actueel)*
+
+- **De USB-printerinstelling blijft nu staan op Android-terminals.** Een
+  overgebleven regel uit de tijd dat USB-printen alleen op Windows werkte,
+  zette de printer bij elk bezoek aan Instellingen stilletjes terug op
+  "netwerk", waardoor de zojuist gemaakte koppeling verdween. Wie op 1.4.1
+  een printer koppelde en hem daarna kwijt was, liep hiertegenaan.
+- **De appversie staat nu onderaan Instellingen** (bijv. *v1.4.2 ·
+  android*), zodat altijd vaststaat welke versie op een terminal draait.
+- **Bonnen en rapporten zeggen BTW, nooit "VAT".** BTW is de naam van de
+  belasting in Suriname, dus ook de Engelstalige bon, de Engelstalige
+  rapporten, het Belastingdienst-overzicht en de Rekenkamer-export
+  gebruiken die term nu — gelijk aan de Nederlandse kant en aan wat de
+  Belastingdienst verwacht te lezen.
+- **De bon wordt nu vanzelf geprint zodra de verkoop betaald is**, net
+  zoals de geldlade al vanzelf opengaat — geen Print meer aantikken bij
+  elke verkoop. Kassa's die nog op de oude standaard stonden worden
+  automatisch omgezet; uitzetten kan nog steeds via Instellingen →
+  Printer.
+
+## 1.4.1 — 27 juli 2026
 
 - **USB-printers verschijnen nu daadwerkelijk op Android-terminals.** De
   app kreeg van Android nooit toegang tot USB, waardoor Instellingen →

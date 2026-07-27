@@ -130,7 +130,7 @@ class RekenkamerController extends Controller
 
         $summaryRows = [
             [$nl ? 'Totale omzet (SRD)'      : 'Total Revenue (SRD)',       'SRD ' . number_format((float) $grandTotal, 2, '.', ',')],
-            [$nl ? 'Totale BTW (SRD)'         : 'Total VAT/BTW (SRD)',       'SRD ' . number_format((float) $totalBtw, 2, '.', ',')],
+            [$nl ? 'Totale BTW (SRD)'         : 'Total BTW (SRD)',           'SRD ' . number_format((float) $totalBtw, 2, '.', ',')],
             [$nl ? 'Totale nettobasis (SRD)'  : 'Total Net Base (SRD)',       'SRD ' . number_format((float) $totalNetBase, 2, '.', ',')],
             [$nl ? 'Transacties voltooid'      : 'Completed Transactions',    (string) $completedSales->count()],
             [$nl ? 'Geannuleerde transacties'  : 'Voided Transactions',       (string) $voidedSales->count()],

@@ -11,7 +11,26 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.4.1 — 27 July 2026 *(current)*
+## 1.4.2 — 27 July 2026 *(current)*
+
+- **The USB printer setting now stays selected on Android terminals.** A
+  leftover rule from when USB printing was Windows-only quietly switched
+  the printer back to "network" every time Settings was opened, undoing
+  the pairing that had just been made. Anyone who paired a printer on
+  1.4.1 and found it gone again was hitting this.
+- **The app version is now shown at the bottom of Settings** (e.g.
+  *v1.4.2 · android*), so a terminal can always be identified without
+  guesswork about which update it received.
+- **Receipts and reports say BTW, never "VAT".** BTW is the tax's name in
+  Suriname, so the English receipt, the English reports, the Belastingdienst
+  summary and the Rekenkamer export now all use it — matching the Dutch
+  side and what the tax authority expects to read.
+- **The receipt now prints by itself when the sale is paid**, the same way
+  the cash drawer already opens by itself — no tapping Print on every
+  sale. Tills that were already on the old default get switched over
+  automatically; it can still be turned off under Settings → Printer.
+
+## 1.4.1 — 27 July 2026
 
 - **USB printers now actually appear on Android terminals.** The app was
   never granted USB access by Android, so Settings → Hardware → Connect

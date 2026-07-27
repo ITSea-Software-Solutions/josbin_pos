@@ -107,7 +107,7 @@ export const DASH_HELP: Record<string, HelpTopic> = {
 
   'btw-submissions': {
     guide: 'dashboard_manual/20-btw-submissions-belastingdienst',
-    en: { title: 'BTW filings (Belastingdienst)', intro: 'Generate and submit your VAT filing.', steps: [
+    en: { title: 'BTW filings (Belastingdienst)', intro: 'Generate and submit your BTW filing.', steps: [
       'New filing: pick a period (daily/monthly/custom). The system totals taxable vs exempt and BTW due.',
       'Each filing is hash-chained to your previous one — tamper-evident for the Belastingdienst.',
       'Review the figures (Belastingdienst format), export the PDF, then Submit.',

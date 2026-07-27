@@ -15,6 +15,14 @@ export default defineConfig({
     },
   },
 
+  // The running version, shown in Settings. Without it nobody — cashier,
+  // manager or support — can tell which build a terminal in the field is
+  // actually on, which turns every "it still doesn't work" into guesswork.
+  // Mirrors the same define in electron.vite.config.ts.
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? 'dev'),
+  },
+
   // ── Dev-only API proxy ──────────────────────────────────────────────────
   // Lets `npm run dev` talk to a remote backend (e.g. the demo droplet)
   // without CORS / sandbox issues: the browser stays same-origin and the

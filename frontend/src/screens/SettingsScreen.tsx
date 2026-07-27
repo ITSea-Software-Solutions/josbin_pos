@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
 import { getStore } from '@/api/stores'
-import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform } from '@/lib/hardware'
+import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform, needsPrinterTypeHeal } from '@/lib/hardware'
 import { probeUsbPrinters, UsbPrinter, type UsbDeviceInfo, type UsbProbe } from '@/lib/usbPrinter'
 import { buildReceiptBytes } from '@/lib/escpos'
 import { LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML } from '@/lib/labelSheet'
@@ -44,11 +44,11 @@ export default function SettingsScreen() {
   const platform = detectPlatform()
   const [saved, setSaved] = useState(false)
 
-  // Heal a saved 'usb' printer config on platforms that can't drive USB
-  // (e.g. an Android till configured before that option stopped being
-  // offered there) — otherwise the hidden setting keeps failing tests.
+  // Heal a saved 'usb' printer config only where USB genuinely cannot work.
+  // The rule lives in hardware.ts with tests — it used to reset an Android
+  // till's USB printer back to 'network' on every visit to this screen.
   useEffect(() => {
-    if (platform !== 'electron' && printer.type === 'usb') {
+    if (needsPrinterTypeHeal(platform, printer.type)) {
       updatePrinter({ type: 'network' })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -812,6 +812,24 @@ export default function SettingsScreen() {
 
         {/* System actions (Manager+ on Electron only — hidden otherwise) */}
         <SystemActions />
+
+        {/* Build identity — on EVERY platform, deliberately. Without it
+            nobody can tell which build a terminal in the shop is running,
+            and "it still doesn't work" cannot be told apart from "that
+            terminal never got the update". */}
+        <div
+          data-testid="app-version"
+          style={{
+            marginTop: 24, paddingTop: 14, borderTop: '1px solid var(--border-color)',
+            display: 'flex', justifyContent: 'space-between',
+            fontSize: 11.5, color: 'var(--text-muted)',
+          }}
+        >
+          <span>Josbin POS</span>
+          <span style={{ fontVariantNumeric: 'tabular-nums' }}>
+            v{__APP_VERSION__} · {platform}
+          </span>
+        </div>
 
       </div>
     </div>
