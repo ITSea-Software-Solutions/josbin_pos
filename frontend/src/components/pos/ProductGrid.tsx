@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '@/store/cartStore'
@@ -44,6 +44,16 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     queryFn: () => getPosProducts(storeId),
     staleTime: 1000 * 60 * 5,
   })
+  // The scanner types like a keyboard, so focus must live in the search box
+  // at all times. After a tap on a product tile the browser leaves focus on
+  // that BUTTON — the next scan then ends with Enter, which re-fires the
+  // focused button and bumps that product's quantity instead of adding the
+  // scanned one. Every add path returns focus here.
+  const searchRef = useRef<HTMLInputElement>(null)
+  const focusSearch = useCallback(() => {
+    // rAF: let React finish the cart re-render before we move focus back.
+    requestAnimationFrame(() => searchRef.current?.focus())
+  }, [])
 
   const { data: lowStockIds } = useLowStockSet(storeId)
 
@@ -59,7 +69,8 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     } else if (lowStockIds?.has(product.id)) {
       toast.info(Number.isFinite(qty) && qty > 0 ? t('pos.stockWarning.lowMany', { count: qty }) : t('pos.stockWarning.lowOne'))
     }
-  }, [addProduct, storeId, lowStockIds, toast, t])
+    focusSearch()
+  }, [addProduct, storeId, lowStockIds, toast, t, focusSearch])
 
   const handleToggleFavorite = useCallback((productId: string) => {
     setFavIds(toggleFavorite(storeId, productId))
@@ -158,6 +169,9 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
       <div style={{ padding: '0 16px', flexShrink: 0 }}>
         <div style={{ display: 'flex', gap: 8 }}>
           <input
+            ref={searchRef}
+            autoFocus
+            data-testid="pos-search"
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setBarcodeError(null) }}

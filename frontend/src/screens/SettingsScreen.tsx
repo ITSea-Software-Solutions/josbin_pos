@@ -60,6 +60,7 @@ export default function SettingsScreen() {
   const setPrinterShareEnabled = useSettingsStore((s) => s.setPrinterShareEnabled)
   const [shareIps, setShareIps] = useState<string[]>([])
   const [shareError, setShareError] = useState<string | null>(null)
+  const [hwError, setHwError] = useState<string | null>(null)
 
   function handleSave() {
     setSaved(true)
@@ -72,9 +73,10 @@ export default function SettingsScreen() {
   }
 
   async function testDrawer() {
-    setDrawerTestStatus('testing')
+    setDrawerTestStatus('testing'); setHwError(null)
     const result = await openCashDrawer(printer)
     setDrawerTestStatus(result.success ? 'ok' : 'error')
+    if (!result.success) setHwError(result.error ?? null)
     setTimeout(() => setDrawerTestStatus('idle'), 3000)
   }
 
@@ -82,7 +84,7 @@ export default function SettingsScreen() {
   // takes (CP858 encoding, paper width, platform routing) — so a green test
   // here means sales will print.
   async function testReceiptPrint() {
-    setReceiptTestStatus('testing')
+    setReceiptTestStatus('testing'); setHwError(null)
     try {
       const locale = i18n.language === 'nl' ? 'nl' : 'en'
       const bytes = buildReceiptBytes({
@@ -116,8 +118,10 @@ export default function SettingsScreen() {
       })
       const result = await printEscPos(bytes, printer)
       setReceiptTestStatus(result.success ? 'ok' : 'error')
-    } catch {
+      if (!result.success) setHwError(result.error ?? null)
+    } catch (e) {
       setReceiptTestStatus('error')
+      setHwError(String(e))
     }
     setTimeout(() => setReceiptTestStatus('idle'), 3000)
   }
@@ -560,6 +564,14 @@ export default function SettingsScreen() {
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
                 {t('settings.printer.pinHelp')}
               </div>
+            </div>
+          )}
+
+          {/* Why a test failed — the exact spooler/socket message, so a
+              field engineer can act instead of guessing. */}
+          {hwError && (
+            <div style={{ padding: '10px 12px', borderRadius: 'var(--border-radius)', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.3)', color: 'var(--color-error)', fontSize: 12, lineHeight: 1.5, wordBreak: 'break-word' }}>
+              {hwError}
             </div>
           )}
 

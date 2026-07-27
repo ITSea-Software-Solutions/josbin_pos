@@ -106,32 +106,110 @@ function tcpPrint(ip: string, port: number, data: Buffer): Promise<void> {
 // Uses the Windows spooler via a temp RAW file passed to `print` command.
 // This works for any ESC/POS-compatible printer installed in Windows.
 
+/**
+ * Send RAW bytes to a Windows printer by name.
+ *
+ * NOT the `print /D:` command — that is a legacy TEXT-file utility; it does
+ * not send raw data, so ESC/POS control bytes never arrive intact and most
+ * receipt printers either eject a blank page or ignore the job entirely.
+ *
+ * The supported route is the spooler API with datatype "RAW"
+ * (OpenPrinter → StartDocPrinter → WritePrinter), reached through a
+ * PowerShell P/Invoke so no native module is needed. The script is passed
+ * as -EncodedCommand: no temp .ps1 (so ExecutionPolicy cannot block it)
+ * and no quoting problems with printer names containing spaces.
+ */
 function usbPrint(printerName: string, data: Buffer): Promise<void> {
   return new Promise((resolve, reject) => {
     if (process.platform !== 'win32') {
-      return reject(new Error('USB printing via spooler is Windows-only'))
+      return reject(new Error('USB printing via the Windows spooler is Windows-only'))
+    }
+    if (!printerName) {
+      return reject(new Error('No Windows printer selected (Settings → Hardware)'))
     }
 
     const tmpPath = join(app.getPath('temp'), `josbin_pos_print_${Date.now()}.bin`)
-
     try {
       fs.writeFileSync(tmpPath, data)
     } catch (err) {
       return reject(new Error(`Failed to write temp print file: ${err}`))
     }
 
-    const { exec } = require('child_process')
-    // /D:<printer> sends the file directly as RAW job (bypasses GDI rendering)
-    const cmd = `print /D:"${printerName}" "${tmpPath}"`
+    const ps = `
+$ErrorActionPreference = 'Stop'
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public class JosbinRawPrinter {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  public class DOCINFOW {
+    [MarshalAs(UnmanagedType.LPWStr)] public string pDocName;
+    [MarshalAs(UnmanagedType.LPWStr)] public string pOutputFile;
+    [MarshalAs(UnmanagedType.LPWStr)] public string pDataType;
+  }
+  [DllImport("winspool.Drv", EntryPoint="OpenPrinterW", SetLastError=true, CharSet=CharSet.Unicode)]
+  public static extern bool OpenPrinter(string src, out IntPtr hPrinter, IntPtr pd);
+  [DllImport("winspool.Drv", EntryPoint="ClosePrinter", SetLastError=true)]
+  public static extern bool ClosePrinter(IntPtr hPrinter);
+  [DllImport("winspool.Drv", EntryPoint="StartDocPrinterW", SetLastError=true, CharSet=CharSet.Unicode)]
+  public static extern bool StartDocPrinter(IntPtr hPrinter, int level, [In, MarshalAs(UnmanagedType.LPStruct)] DOCINFOW di);
+  [DllImport("winspool.Drv", EntryPoint="EndDocPrinter", SetLastError=true)]
+  public static extern bool EndDocPrinter(IntPtr hPrinter);
+  [DllImport("winspool.Drv", EntryPoint="StartPagePrinter", SetLastError=true)]
+  public static extern bool StartPagePrinter(IntPtr hPrinter);
+  [DllImport("winspool.Drv", EntryPoint="EndPagePrinter", SetLastError=true)]
+  public static extern bool EndPagePrinter(IntPtr hPrinter);
+  [DllImport("winspool.Drv", EntryPoint="WritePrinter", SetLastError=true)]
+  public static extern bool WritePrinter(IntPtr hPrinter, IntPtr pBytes, int dwCount, out int dwWritten);
 
-    exec(cmd, (error: Error | null) => {
-      fs.unlink(tmpPath, () => {}) // cleanup regardless
-      if (error) {
-        reject(new Error(`Windows print command failed: ${error.message}`))
-      } else {
-        resolve()
-      }
-    })
+  public static void Send(string printerName, byte[] bytes) {
+    IntPtr h; int written = 0;
+    if (!OpenPrinter(printerName, out h, IntPtr.Zero))
+      throw new Exception("OpenPrinter failed for '" + printerName + "' (error " + Marshal.GetLastWin32Error() + ")");
+    try {
+      DOCINFOW di = new DOCINFOW();
+      di.pDocName = "Josbin POS";
+      di.pDataType = "RAW";
+      if (!StartDocPrinter(h, 1, di))
+        throw new Exception("StartDocPrinter failed (error " + Marshal.GetLastWin32Error() + ")");
+      try {
+        if (!StartPagePrinter(h))
+          throw new Exception("StartPagePrinter failed (error " + Marshal.GetLastWin32Error() + ")");
+        IntPtr p = Marshal.AllocCoTaskMem(bytes.Length);
+        try {
+          Marshal.Copy(bytes, 0, p, bytes.Length);
+          if (!WritePrinter(h, p, bytes.Length, out written))
+            throw new Exception("WritePrinter failed (error " + Marshal.GetLastWin32Error() + ")");
+        } finally { Marshal.FreeCoTaskMem(p); }
+        EndPagePrinter(h);
+      } finally { EndDocPrinter(h); }
+    } finally { ClosePrinter(h); }
+    if (written == 0) throw new Exception("Printer accepted 0 bytes");
+  }
+}
+"@
+[JosbinRawPrinter]::Send(${JSON.stringify(printerName)}, [System.IO.File]::ReadAllBytes(${JSON.stringify(tmpPath)}))
+`
+
+    const { execFile } = require('child_process')
+    const encoded = Buffer.from(ps, 'utf16le').toString('base64')
+
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
+      { windowsHide: true, timeout: 20000 },
+      (error: Error | null, _stdout: string, stderr: string) => {
+        fs.unlink(tmpPath, () => {})
+        if (error) {
+          // Surface the real spooler message — "check connection" tells a
+          // field engineer nothing; "OpenPrinter failed (error 1801)" does.
+          const detail = (stderr || '').trim().split('\n')[0] || error.message
+          reject(new Error(`Windows raw print failed: ${detail}`))
+        } else {
+          resolve()
+        }
+      },
+    )
   })
 }
 

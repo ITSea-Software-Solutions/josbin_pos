@@ -11,7 +11,33 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.3.0 — 27 juli 2026 *(actueel)*
+## 1.3.2 — 27 juli 2026 *(actueel)*
+
+- **Bonprinten en de geldlade werken nu op Windows.** Er waren twee
+  losse fouten: de app gebruikte een oud tekst-printcommando dat de
+  stuurcodes van de printer nooit doorgaf, én de bongegevens zaten in een
+  vorm die de app helemaal niet aan de printdienst kon doorgeven. Beide
+  paden — bonnen en de ladepuls — lopen nu via de raw-printdienst van
+  Windows. (De testpagina van Windows zelf werkte altijd al, daardoor
+  leek de printer in orde.)
+- **Scannen direct na het aantikken van een product.** De cursor springt
+  na elke tik op een product terug naar het zoek-/scanveld, zodat de
+  volgende scan dát product toevoegt in plaats van het aantal te verhogen
+  van het product dat u aantikte.
+- **Hardwaretests tonen nu de oorzaak** — een mislukte test bij
+  Instellingen → Hardware toont het echte bericht van Windows of het
+  netwerk in plaats van alleen rood te kleuren.
+
+- **Bonprinten op Windows hersteld.** Bonnen en de ladepuls gaan nu via
+  de raw-printdienst van Windows. De vorige versie gebruikte een oud
+  tekst-printcommando dat de stuurcodes van de printer nooit doorgaf — de
+  printer bleef stil of gaf een blanco vel, terwijl de testpagina van
+  Windows zelf wél werkte.
+- **Hardwaretests tonen nu de oorzaak.** Een mislukte test bij
+  Instellingen → Hardware toont het echte bericht van Windows (of van het
+  netwerk) in plaats van alleen rood te kleuren.
+
+## 1.3.0 — 27 juli 2026
 
 Eerste gesynchroniseerde release: Windows-exe en Android-APK uit dezelfde
 code. Alles hieronder geldt voor beide platforms tenzij anders vermeld.

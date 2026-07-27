@@ -11,7 +11,32 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.3.0 — 27 July 2026 *(current)*
+## 1.3.2 — 27 July 2026 *(current)*
+
+- **Receipt printing and the cash drawer now work on Windows.** Two
+  separate faults were fixed: the app used a legacy text-printing command
+  that never delivered the printer's control codes, and the receipt data
+  was packaged in a form the app could not pass to the printing service at
+  all. Both paths — receipts and the drawer pulse — go through Windows'
+  raw printing service now. (Windows' own test page always worked, which
+  is why the printer looked fine.)
+- **Scanning right after tapping a product.** The cursor now returns to
+  the search/scan box after every product you tap, so the next scan adds
+  that product instead of increasing the quantity of the one you tapped.
+- **Hardware tests now say what went wrong** — a failed test in
+  Settings → Hardware shows the actual message from Windows or the
+  network, instead of only turning red.
+
+- **Receipt printing on Windows fixed.** Receipts and the cash-drawer
+  pulse are now sent through Windows' raw printing service. The previous
+  build used a legacy text-printing command that never delivered the
+  printer's control codes — the printer stayed silent or ejected a blank
+  page even though Windows' own test page worked.
+- **Hardware tests now say what went wrong.** A failed test in
+  Settings → Hardware shows the actual message from Windows (or the
+  network), instead of only turning red.
+
+## 1.3.0 — 27 July 2026
 
 First synchronized release: Windows exe and Android APK cut from the same
 code. Everything below is on both platforms unless marked.

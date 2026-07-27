@@ -68,7 +68,12 @@ export async function printEscPos(
       return api.printNetwork({ ip: config.ip, port: config.port ?? 9100, data: Array.from(bytes) })
     }
     if (config.type === 'usb') {
-      return api.printReceipt(config.printerName ?? '', Buffer.from(bytes))
+      // Plain number[] — NOT Buffer. The renderer is sandboxed
+      // (contextIsolation + nodeIntegration:false), so `Buffer` is undefined
+      // there and this line used to throw before any printing was attempted.
+      // The main process turns it back into a Buffer. Same shape the network
+      // branch above has always used.
+      return api.printReceipt(config.printerName ?? '', Array.from(bytes))
     }
     return { success: false, error: 'No printer configured' }
   }
