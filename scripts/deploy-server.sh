@@ -61,6 +61,7 @@ cp marketing/josbin-pos-promo.html  docs-site/.vitepress/dist/promo.html  || fai
 cp marketing/josbin-pos-platform-tour.html docs-site/.vitepress/dist/tour.html || fail "tour copy failed"
 cp marketing/josbin-pos-teaser.html docs-site/.vitepress/dist/teaser.html || fail "teaser copy failed"
 cp marketing/videos.html            docs-site/.vitepress/dist/videos.html || fail "videos copy failed"
+cp marketing/downloads.html         docs-site/.vitepress/dist/downloads.html || fail "downloads page copy failed"
 
 # ── 2. Push code: backend via git pull on the server, dist via rsync ──────────
 log "Pulling backend code on server (branch: $GIT_BRANCH)"

@@ -3,7 +3,7 @@
 Both till apps are released **together with the same version number** — a
 store never has to wonder whether its Windows tills and Android terminals
 are on matching software. Every file on the
-[download page](http://142.93.88.143:8095/downloads/) ships with a
+[download page](http://142.93.88.143:8095/downloads.html) ships with a
 `.sha256` file to verify the download (see the
 [install guide](/docs/00-installation-and-setup) for how).
 

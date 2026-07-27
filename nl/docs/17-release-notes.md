@@ -3,7 +3,7 @@
 Beide kassa-apps verschijnen **samen met hetzelfde versienummer** — een
 winkel hoeft zich nooit af te vragen of de Windows-kassa's en de
 Android-terminals op gelijke software draaien. Elk bestand op de
-[downloadpagina](http://142.93.88.143:8095/downloads/) heeft een
+[downloadpagina](http://142.93.88.143:8095/downloads.html) heeft een
 `.sha256`-bestand om de download te controleren (zie de
 [installatiegids](/nl/docs/00-installation-and-setup) voor hoe).
 

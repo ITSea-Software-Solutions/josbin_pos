@@ -1,0 +1,148 @@
+#!/usr/bin/env node
+/**
+ * Generates marketing/downloads.html from the ACTUAL files in downloads/.
+ *
+ * Versions, sizes and checksums are read off disk rather than typed, so the
+ * page can never claim a version the folder doesn't hold. Run it as part of
+ * every release (see the release procedure in CLAUDE_WORKING_GUIDE.md),
+ * then deploy — scripts/deploy-server.sh copies it to /downloads.html.
+ */
+import { readdirSync, statSync, readFileSync, writeFileSync, existsSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const dir = join(root, 'downloads')
+
+function newest(ext) {
+  if (!existsSync(dir)) return null
+  const files = readdirSync(dir)
+    .filter((f) => f.toLowerCase().endsWith(ext))
+    .map((f) => ({ name: f, mtime: statSync(join(dir, f)).mtimeMs, size: statSync(join(dir, f)).size }))
+    .sort((a, b) => b.mtime - a.mtime)
+  if (!files.length) return null
+  const f = files[0]
+  const shaPath = join(dir, `${f.name}.sha256`)
+  return {
+    ...f,
+    mb: (f.size / 1048576).toFixed(f.size > 50 * 1048576 ? 0 : 1),
+    version: (f.name.match(/(\d+\.\d+\.\d+)/) || [, '—'])[1],
+    sha256: existsSync(shaPath) ? readFileSync(shaPath, 'utf8').trim() : null,
+  }
+}
+
+const win = newest('.exe')
+const apk = newest('.apk')
+const version = win?.version ?? apk?.version ?? '—'
+const synced = win && apk && win.version === apk.version
+
+const card = (p, kind) => {
+  if (!p) return ''
+  const isWin = kind === 'windows'
+  return `
+    <article class="card">
+      <div class="platform">${isWin ? '🪟' : '🤖'}</div>
+      <h2>${isWin ? 'Windows' : 'Android'}</h2>
+      <p class="for">${isWin
+        ? 'Windows tills and PCs<br><span>Windows-kassa&#39;s en pc&#39;s</span>'
+        : 'Android terminals (Posiflex RT etc.)<br><span>Android-kassaterminals</span>'}</p>
+      <a class="dl" href="/downloads/${encodeURIComponent(p.name)}">⬇ Download ${isWin ? '.exe' : '.apk'}</a>
+      <dl class="meta">
+        <div><dt>Version</dt><dd>${p.version}</dd></div>
+        <div><dt>Size</dt><dd>${p.mb} MB</dd></div>
+      </dl>
+      ${p.sha256 ? `<details><summary>SHA-256 checksum</summary><code>${p.sha256}</code>
+        <p class="verify">${isWin
+          ? 'Verify: <code>certutil -hashfile "&lt;file&gt;" SHA256</code>'
+          : 'Compare after downloading if the install fails.'}</p></details>` : ''}
+    </article>`
+}
+
+const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Downloads — Josbin POS</title>
+<style>
+  :root { --navy:#293371; --orange:#EF6C00; --ink:#16203a; --muted:#6b7280; --line:#e6ecf5; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Inter','Segoe UI',system-ui,sans-serif; background:#f4f6fc; color:var(--ink); }
+  header { background:linear-gradient(135deg,var(--navy),#1f2a63); color:#fff; padding:34px 24px 30px; text-align:center; }
+  header h1 { margin:0 0 6px; font-size:26px; font-weight:800; letter-spacing:-.4px; }
+  header p { margin:0; opacity:.8; font-size:14px; }
+  .badge { display:inline-block; margin-top:14px; padding:6px 14px; border-radius:999px; background:rgba(255,255,255,.14);
+           border:1px solid rgba(255,255,255,.25); font-size:13px; font-weight:700; }
+  main { max-width:940px; margin:0 auto; padding:26px 20px 60px; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:24px; box-shadow:0 2px 10px rgba(0,0,0,.04); }
+  .platform { font-size:34px; line-height:1; }
+  .card h2 { margin:10px 0 4px; font-size:19px; font-weight:800; }
+  .for { margin:0 0 16px; font-size:13.5px; color:var(--muted); line-height:1.5; }
+  .for span { color:#9aa3b8; font-size:12.5px; }
+  .dl { display:block; text-align:center; padding:13px 0; border-radius:12px; text-decoration:none; font-weight:800; font-size:15px;
+        background:linear-gradient(135deg,var(--navy),#1f2a63); color:#fff; box-shadow:0 4px 14px rgba(41,51,113,.25); }
+  .dl:hover { filter:brightness(1.08); }
+  .meta { display:flex; gap:26px; margin:16px 0 0; }
+  .meta dt { font-size:10.5px; text-transform:uppercase; letter-spacing:.6px; color:#9aa3b8; font-weight:700; }
+  .meta dd { margin:2px 0 0; font-size:14px; font-weight:700; }
+  details { margin-top:14px; }
+  summary { cursor:pointer; font-size:12.5px; color:var(--muted); font-weight:600; }
+  details code { display:block; margin-top:8px; font-size:11px; word-break:break-all; color:var(--ink); background:#f4f6fc;
+                 padding:8px 10px; border-radius:8px; }
+  .verify { font-size:11.5px; color:var(--muted); margin:8px 0 0; }
+  .verify code { display:inline; background:#f4f6fc; padding:1px 5px; border-radius:4px; }
+  .note { margin-top:22px; background:#fff8ec; border:1px solid #f6d9a8; border-radius:14px; padding:16px 20px; font-size:13.5px; line-height:1.6; }
+  .note b { color:#8a5a00; }
+  .steps { margin-top:18px; background:#fff; border:1px solid var(--line); border-radius:14px; padding:20px 24px; }
+  .steps h3 { margin:0 0 10px; font-size:15px; font-weight:800; }
+  .steps ol { margin:0; padding-left:20px; font-size:13.5px; line-height:1.85; color:#374151; }
+  .links { margin-top:22px; display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .links a { font-size:13px; color:var(--navy); text-decoration:none; font-weight:700; border:1px solid var(--line);
+             background:#fff; padding:9px 16px; border-radius:10px; }
+  footer { text-align:center; font-size:12px; color:#9aa3b8; padding:0 20px 40px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Josbin POS — app downloads</h1>
+  <p>Install the till app on a Windows PC or an Android terminal · Kassa-app voor Windows of Android</p>
+  ${version !== '—' ? `<div class="badge">Version ${version}${synced ? ' · Windows &amp; Android in sync' : ''}</div>` : ''}
+</header>
+<main>
+  <div class="cards">
+    ${card(win, 'windows')}
+    ${card(apk, 'android')}
+  </div>
+
+  <div class="note">
+    <b>Upgrading? Never uninstall first.</b> Close the app (⏻ Exit on the login screen), then run the newer
+    installer / install the newer APK over the old one — your server address, settings and login are kept.<br>
+    <b>Bijwerken? Nooit eerst de-installeren.</b> Sluit de app (⏻ Afsluiten), installeer de nieuwe versie over de oude heen.
+  </div>
+
+  <div class="steps">
+    <h3>After installing</h3>
+    <ol>
+      <li>Open <b>Josbin POS</b> and tap <b>⚙ Server</b> on the login screen.</li>
+      <li>Enter your store's server address (e.g. <code>192.168.0.250:8080</code>) → <b>Test</b> → <b>Save</b>.</li>
+      <li>Log in with the account your manager created. Hardware setup lives under <b>Settings → Hardware</b>.</li>
+    </ol>
+  </div>
+
+  <div class="links">
+    <a href="/docs/17-release-notes">📋 What's new (release notes)</a>
+    <a href="/docs/00-installation-and-setup">🛠 Installation guide</a>
+    <a href="/docs/15-android-terminals">🤖 Android terminals</a>
+    <a href="/docs/16-deployment-options">🗺 Which setup fits my store?</a>
+    <a href="/user_manual/">📘 User manual</a>
+  </div>
+</main>
+<footer>Josbin POS · these files are licensed software — installing does not grant a licence to operate.</footer>
+</body>
+</html>
+`
+
+writeFileSync(join(root, 'marketing', 'downloads.html'), html)
+console.log(`downloads page built: exe ${win?.version ?? '—'}, apk ${apk?.version ?? '—'}${synced ? ' (in sync)' : win && apk ? ' (VERSIONS DIFFER!)' : ''}`)
