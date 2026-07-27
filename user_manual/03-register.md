@@ -233,3 +233,10 @@ still openable: select it, enter **your own** float, and start your shift
 manager* instead, your store uses the strict model and the manager starts
 the next shift.
 :::
+
+::: tip Blocked screen? Two exits always work
+If the register screen is blocked (yesterday not closed, or your register
+is in use), you always have: **→ Continue on another register** (when any
+other register is free — one stuck drawer never stops the whole store)
+and **⎋ Log out** (top right), for switching users or walking away.
+:::

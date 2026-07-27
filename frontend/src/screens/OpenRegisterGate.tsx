@@ -55,6 +55,7 @@ export default function OpenRegisterGate() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const user    = useAuthStore(s => s.user)
+  const logout  = useAuthStore(s => s.logout)
   const storeId = useSettingsStore(s => s.storeId)
   const setStoreId = useSettingsStore(s => s.setStoreId)
   const setSession = useRegisterStore(s => s.setSession)
@@ -213,6 +214,14 @@ export default function OpenRegisterGate() {
     }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } } @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }`}</style>
 
+      <button
+        onClick={() => logout()}
+        data-testid="gate-logout"
+        style={{ position: 'absolute', top: 18, right: 20, padding: '8px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.65)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+      >
+        ⎋ {isNl ? 'Uitloggen' : 'Log out'}
+      </button>
+
       {/* Card */}
       <div style={{
         background: 'rgba(255,255,255,.045)', backdropFilter: 'blur(24px)',
@@ -352,6 +361,15 @@ export default function OpenRegisterGate() {
                     style={{ marginTop: 16, padding: '10px 22px', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.7)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
                     {isNl ? 'Manager klaar? Vernieuwen' : 'Manager done? Refresh'}
                   </button>
+                  {/* A stale drawer on ONE register must not wall off the
+                      whole store — any other openable register stays usable. */}
+                  {registers.some(r => r.status === 'available' || (r.status === 'closed_today' && selfHandover)) && (
+                    <button onClick={() => setStep('pick')}
+                      data-testid="gate-other-register"
+                      style={{ marginTop: 10, padding: '12px 22px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                      {isNl ? '→ Doorgaan op een andere kassa' : '→ Continue on another register'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

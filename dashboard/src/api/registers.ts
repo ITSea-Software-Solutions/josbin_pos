@@ -75,6 +75,17 @@ export async function clearClosedToday(
   return res.data.data
 }
 
+/** Manager force-close of a live session — same endpoint the till uses;
+ *  the backend stamps who closed it into the note when it isn't the
+ *  session's own cashier. */
+export async function closeSession(sessionId: string, countedCash: number, note?: string): Promise<RegisterSession> {
+  const res = await apiClient.post<{ data: RegisterSession }>(`/registers/sessions/${sessionId}/close`, {
+    closing_cash_counted: countedCash,
+    closing_note: note || undefined,
+  })
+  return res.data.data
+}
+
 export async function getStoreSessions(storeId: string, date?: string): Promise<RegisterSession[]> {
   const res = await apiClient.get<{ data: RegisterSession[] }>('/registers/sessions', {
     params: { store_id: storeId, date },

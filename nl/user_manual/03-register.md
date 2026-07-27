@@ -235,3 +235,11 @@ begin uw dienst — de telling van de vorige caissière blijft verzegeld.
 Staat er *vraag beheerder*, dan gebruikt uw winkel het strikte model en
 start de beheerder de volgende ploeg.
 :::
+
+::: tip Geblokkeerd scherm? Twee uitgangen werken altijd
+Is het kassascherm geblokkeerd (gisteren niet afgesloten, of uw kassa is
+in gebruik), dan heeft u altijd: **→ Doorgaan op een andere kassa** (als
+er een andere kassa vrij is — één vastzittende la legt nooit de hele
+winkel stil) en **⎋ Uitloggen** (rechtsboven), om te wisselen van
+gebruiker of weg te lopen.
+:::

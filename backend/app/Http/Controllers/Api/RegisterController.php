@@ -272,13 +272,23 @@ class RegisterController extends Controller
             2
         );
 
+        // Accountability: when someone OTHER than the session's cashier
+        // closes the drawer (manager force-close from the dashboard), the
+        // note must say so — the count is now the closer's statement, and
+        // the shift report reader should never have to guess.
+        $note = $request->input('closing_note');
+        if ($session->cashier_id !== $user->id) {
+            $suffix = "[gesloten door {$user->name} / closed by {$user->name}]";
+            $note = trim(($note ? $note.' ' : '').$suffix);
+        }
+
         $session->update([
             'status'               => 'closed',
             'closing_cash_counted' => $request->closing_cash_counted,
             'expected_cash'        => $expectedCash,
             'discrepancy'          => $discrepancy,
             'closed_at'            => now(),
-            'closing_note'         => $request->closing_note,
+            'closing_note'         => $note,
         ]);
 
         $this->logRegisterActivity($user, $session, 'register.closed', [

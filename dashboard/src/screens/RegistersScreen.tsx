@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { useTableSort } from '@/lib/useTableSort'
 import { useDashboardAuthStore } from '@/store/authStore'
 import {
-  getStoreSessions, approveReopen, getRegisters, createRegister, updateRegister, deleteRegister, clearClosedToday,
+  getStoreSessions, approveReopen, getRegisters, createRegister, updateRegister, deleteRegister, clearClosedToday, closeSession,
   type RegisterSession, type Register,
 } from '@/api/registers'
 import type { Organisation } from '@/api/organisations'
@@ -41,6 +41,77 @@ function fmtTime(iso: string | null, isNl: boolean) {
 }
 
 // ─── Approve/Deny modal ───────────────────────────────────────────────────────
+function CloseSessionModal({ register, isNl, onClose }: { register: Register; isNl: boolean; onClose: () => void }) {
+  const qc = useQueryClient()
+  const [counted, setCounted] = useState('')
+  const [note, setNote] = useState('')
+  const [err, setErr] = useState('')
+  const session = register.session
+
+  const mut = useMutation({
+    mutationFn: () => closeSession(session!.id, parseFloat(counted), note.trim() || undefined),
+    onSuccess: (closed) => {
+      qc.invalidateQueries({ queryKey: ['registers'] })
+      qc.invalidateQueries({ queryKey: ['sessions'] })
+      const d = parseFloat(String((closed as { discrepancy?: string }).discrepancy ?? '0'))
+      if (d !== 0) {
+        alert(isNl
+          ? `Sessie gesloten. Kasverschil: SRD ${d.toFixed(2)} — vastgelegd in het schichtrapport.`
+          : `Session closed. Cash difference: SRD ${d.toFixed(2)} — recorded on the shift report.`)
+      }
+      onClose()
+    },
+    onError: (e: unknown) => setErr((e as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error'),
+  })
+
+  const valid = counted.trim() !== '' && !isNaN(parseFloat(counted)) && parseFloat(counted) >= 0
+
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(10,10,30,.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 70, padding: 16 }}
+      onClick={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div style={{ background: '#fff', borderRadius: 16, padding: '26px 28px', width: 420, maxWidth: '94vw', boxShadow: '0 24px 64px rgba(0,0,0,.3)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: '#16203a', margin: 0 }}>
+            {isNl ? `Sessie sluiten — ${register.name}` : `Close session — ${register.name}`}
+          </h3>
+          <button onClick={onClose} style={{ background: '#f2f5fb', border: 'none', borderRadius: 8, width: 30, height: 30, cursor: 'pointer', color: '#6b7280', fontSize: 16 }}>×</button>
+        </div>
+        <p style={{ fontSize: 12.5, color: '#7e88a0', margin: '0 0 14px', lineHeight: 1.5 }}>
+          {isNl
+            ? `Open sinds ${session?.opened_at?.slice(11, 16) ?? '—'} door ${session?.cashier_name ?? '—'}. Tel de la en leg het bedrag vast — uw naam wordt bij de sluiting genoteerd.`
+            : `Open since ${session?.opened_at?.slice(11, 16) ?? '—'} by ${session?.cashier_name ?? '—'}. Count the drawer and record the amount — your name is recorded on the close.`}
+        </p>
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', marginBottom: 5 }}>
+          {isNl ? 'Geteld in de la (SRD)' : 'Counted in the drawer (SRD)'} *
+        </label>
+        <input
+          type="number" min="0" step="0.01" value={counted} autoFocus
+          onChange={e => setCounted(e.target.value)}
+          data-testid="close-session-counted"
+          style={{ width: '100%', height: 42, borderRadius: 10, border: '1.5px solid #d9e1f1', padding: '0 12px', fontSize: 15, fontFamily: 'ui-monospace, monospace', boxSizing: 'border-box' }}
+        />
+        <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#374151', margin: '12px 0 5px' }}>
+          {isNl ? 'Toelichting (aanbevolen bij verschil)' : 'Note (recommended on a difference)'}
+        </label>
+        <input
+          type="text" value={note} onChange={e => setNote(e.target.value)}
+          placeholder={isNl ? 'bijv. caissière ziek naar huis, la geteld door manager' : 'e.g. cashier went home sick, drawer counted by manager'}
+          style={{ width: '100%', height: 40, borderRadius: 10, border: '1px solid #e5e7eb', padding: '0 12px', fontSize: 13, boxSizing: 'border-box' }}
+        />
+        {err && <p style={{ color: '#dc2626', fontSize: 12, margin: '10px 0 0' }}>{err}</p>}
+        <button
+          onClick={() => mut.mutate()}
+          disabled={!valid || mut.isPending}
+          data-testid="close-session-submit"
+          style={{ marginTop: 16, width: '100%', height: 44, borderRadius: 12, border: 'none', background: valid ? 'linear-gradient(135deg,#293371,#1f2a63)' : '#e5e7eb', color: valid ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 800, cursor: valid && !mut.isPending ? 'pointer' : 'not-allowed' }}
+        >
+          {mut.isPending ? '…' : (isNl ? 'Sessie sluiten & telling vastleggen' : 'Close session & record count')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSession; isNl: boolean; onClose: () => void }) {
   const qc = useQueryClient()
   const [denialReason, setDenialReason] = useState('')
@@ -281,6 +352,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
   const [editName, setEditName] = useState('')
   const [error, setError] = useState('')
   const [reopenTarget, setReopenTarget] = useState<Register | null>(null)
+  const [closeTarget, setCloseTarget] = useState<Register | null>(null)
   const [createNoteOpen, setCreateNoteOpen] = useState(false)
   const [deactivateTarget, setDeactivateTarget] = useState<Register | null>(null)
 
@@ -399,6 +471,16 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                   </div>
                 ) : (
                   <div style={{ display: 'flex', gap: 6 }}>
+                    {r.status === 'open' && r.session && (
+                      <button
+                        onClick={() => setCloseTarget(r)}
+                        data-testid="btn-close-session"
+                        title={isNl ? 'Sessie sluiten (la tellen)' : 'Close session (count drawer)'}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      >
+                        {isNl ? 'Sluiten' : 'Close'}
+                      </button>
+                    )}
                     {r.status === 'closed_today' && (
                       <button
                         onClick={() => setReopenTarget(r)}
@@ -432,6 +514,9 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
       )}
 
       {/* Modals */}
+      {closeTarget && (
+        <CloseSessionModal register={closeTarget} isNl={isNl} onClose={() => setCloseTarget(null)} />
+      )}
       {reopenTarget && (
         <ReopenRegisterModal register={reopenTarget} storeId={storeId} isNl={isNl} onClose={() => setReopenTarget(null)} />
       )}

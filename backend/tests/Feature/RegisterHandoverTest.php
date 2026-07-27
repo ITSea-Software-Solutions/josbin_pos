@@ -146,4 +146,33 @@ class RegisterHandoverTest extends TestCase
             ->assertOk()
             ->assertJsonPath('self_service_handover', true);
     }
+
+    public function test_manager_can_force_close_anothers_open_session_with_attribution(): void
+    {
+        // Cashier B opens a live session…
+        $this->org->update(['settings' => array_merge($this->org->settings ?? [], [
+            'register_policy' => ['self_service_handover' => true],
+        ])]);
+        $this->openAs($this->cashierB)->assertStatus(201);
+        $session = RegisterSession::where('register_id', $this->register->id)
+            ->where('status', 'open')->firstOrFail();
+
+        // …and the manager closes it from the dashboard with a count.
+        $manager = User::where('email', 'manager@dehoop.sr')->firstOrFail();
+        $manager->forceFill(['store_id' => $this->register->store_id])->save();
+
+        $this->actingAs($manager, 'sanctum')
+            ->postJson("/api/registers/sessions/{$session->id}/close", [
+                'closing_cash_counted' => 150.00,
+                'closing_note'         => 'cashier went home sick',
+            ])
+            ->assertOk();
+
+        $session->refresh();
+        $this->assertSame('closed', $session->status);
+        // The note names the closer — the count is the manager's statement.
+        $this->assertStringContainsString('closed by', $session->closing_note);
+        $this->assertStringContainsString($manager->name, $session->closing_note);
+        $this->assertStringContainsString('cashier went home sick', $session->closing_note);
+    }
 }

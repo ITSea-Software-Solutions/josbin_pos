@@ -291,3 +291,13 @@ beleid versoepelt *wie de volgende ploeg mag starten* — nooit het tellen.
 
 **Aanbevolen:** aan voor supermarkten met ploegen; uit voor
 éénploegswinkels en overheidslocaties die de vier-ogen-overdracht willen.
+
+## 19.y Een live sessie geforceerd sluiten (caissière niet beschikbaar)
+
+Een caissière is ziek naar huis, weggelopen, of de kassa hangt — de kassa
+toont **In gebruik** en niemand kan erop verkopen. Als manager:
+**Kassa's → de open kassa → Sluiten**. Tel de la, vul het bedrag in
+(toelichting aanbevolen, bijv. *"caissière ziek naar huis"*), bevestig. De
+sessie sluit met de normale verschilcontrole, en **uw naam wordt bij de
+sluiting genoteerd** — het schichtrapport toont altijd wie er telde.
+Daarna kan de kassa gewoon voor de volgende ploeg worden geopend.

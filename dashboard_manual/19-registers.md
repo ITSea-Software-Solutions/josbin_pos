@@ -291,3 +291,13 @@ next shift* — never the counting.
 
 **Recommended:** on for supermarkets with shifts; off for single-shift
 shops and government sites that want the four-eyes handover.
+
+## 19.y Force-closing a live session (cashier unavailable)
+
+A cashier went home sick, walked off, or the till froze — their register
+shows **In use** and nobody can sell on it. As manager: **Registers → the
+open register → Close**. Count the drawer, enter the amount (note
+recommended, e.g. *"cashier went home sick"*), confirm. The session closes
+with the normal discrepancy check, and **your name is stamped on the
+close** — the shift report always shows who counted. The register can then
+be opened for the next shift as usual.

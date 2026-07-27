@@ -999,3 +999,5 @@ cd docs-site && npm run dev          # docs :5180
 URL	http://142.93.88.143:8090/belastingdienst
 Email	belastingdienst@gov.sr
 Password	Inspector@2026
+
+bdw what about the solution or app where we can support this setup as well ? those connected to each other you mentioned they have their own SDK, why cant we ? 
