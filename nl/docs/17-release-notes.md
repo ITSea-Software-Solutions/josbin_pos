@@ -11,7 +11,15 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.3.3 — 27 juli 2026 *(actueel)*
+## 1.4.0 — 27 juli 2026 *(actueel)*
+
+- **USB-bonprinters werken nu rechtstreeks op Android-terminals.** Sluit
+  de printer op de terminal aan, koppel hem eenmalig via Instellingen →
+  Hardware → USB → USB-printer verbinden, en bonnen én de geldlade
+  werken — zonder netwerkkaart in de printer en zonder Windows-PC er
+  tussen. Zie het Android-hoofdstuk §15.9.
+
+## 1.3.3 — 27 juli 2026
 
 - **Bijwerken loopt niet meer vast.** De installer sluit een draaiende
   Josbin POS nu zelf af. Oudere versies vroegen u de app handmatig te

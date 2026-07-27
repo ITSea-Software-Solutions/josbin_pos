@@ -435,7 +435,13 @@
       "share": "Prati a printer disi na tapu a netwerk",
       "shareShareHelp": "Android-kasa e print pasa a pc disi. Poti a adres disi na ibri kasa (Instellingen → Hardware → Netwerk):",
       "shareShareNote": "A pc disi musu tan na tapu so den tra kasa man print. Soso Windows-app.",
-      "shareShareFailed": "A prati no man bigin — luku efu no wan tra programa e gebroiki poort 9100."
+      "shareShareFailed": "A prati no man bigin — luku efu no wan tra programa e gebroiki poort 9100.",
+      "usbDevice": "USB-printer",
+      "usbScan": "Tai a USB-printer",
+      "usbHelp": "Poti a printer na a terminal, dan fasi na ondro èn teki en. Android e aksi wan leisi fu primisi.",
+      "usbNone": "No wan USB-sani feni. Luku a kabel èn efu a printer de na tapu.",
+      "usbNotPrinter": "no wan printer",
+      "usbDenied": "A USB-primisi weigri — fasi baka tapu Tai èn gi primisi."
     },
     "system": {
       "title": "Systeem",

@@ -108,7 +108,7 @@ ingedrukt houden bij inschakelen — om het IP te zien).
 
 | Mogelijkheid | Windows-app | Android-app |
 |---|---|---|
-| Bonprinter via USB | ✅ | ❌ — alleen netwerkprinter |
+| Bonprinter via USB | ✅ | ✅ vanaf 1.4.0 — op de terminal aansluiten, eenmalig koppelen bij Instellingen → Hardware |
 | Bonprinter via netwerk (poort 9100) | ✅ | ✅ |
 | Geldlade (via printer) | ✅ | ✅ |
 | USB/Bluetooth-barcodescanner | ✅ | ✅ |
@@ -196,6 +196,38 @@ Android-kassa ──wifi──▶ Windows-PC (Josbin POS-app, ── USB ──�
   architectuur.
 - De deel-schakelaar overleeft herstarts — de app zet de brug zelf weer aan
   wanneer de pc opstart.
+
+
+## 15.9 USB-printer rechtstreeks op de terminal *(vanaf 1.4.0)*
+
+Een bonprinter met alleen een USB-kabel heeft geen LAN-kaart of Windows-PC
+er tussenin meer nodig: sluit hem op de Android-terminal aan en koppel hem
+eenmalig.
+
+1. USB-kabel van de printer → de terminal. Printer aan, lade-RJ11 in de
+   **DK**-poort van de printer.
+2. In Josbin POS: **Instellingen → Hardware → type USB → 🔌 USB-printer
+   verbinden**.
+3. Kies uw printer uit de lijst. Android vraagt eenmalig of Josbin POS hem
+   mag gebruiken — sta dat toe (vink "altijd" aan als dat wordt
+   aangeboden).
+4. **Test bonprint** en **Test geldlade**. Groen = klaar.
+
+De koppeling blijft behouden als de kabel opnieuw wordt ingestoken en als
+de terminal herstart (de printer wordt onthouden op merk/model, niet op de
+poort die hij toevallig kreeg).
+
+**Welke route kiezen**
+
+| Situatie | Beste route |
+|---|---|
+| Eén terminal, één printer, zelfde toonbank | **USB rechtstreeks** — het eenvoudigst, geen netwerk nodig |
+| Meerdere kassa's delen één printer | **Netwerkprinter** (LAN-kaart) — een USB-printer hoort bij één apparaat |
+| Printer ver van de kassa | Netwerk |
+
+Staat het apparaat grijs in de lijst als *geen printer*, dan heeft dat
+USB-apparaat geen datakanaal — controleer of u de printer koos en niet een
+hub of de scanner.
 
 **Waar de rest staat:** korte installatiestappen in de
 [installatiegids §E5](/nl/docs/00-installation-and-setup), welke

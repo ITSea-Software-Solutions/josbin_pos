@@ -435,7 +435,13 @@
       "share": "Deze printer delen op het netwerk",
       "shareShareHelp": "Android-kassa’s printen via deze pc. Vul dit adres in op elke kassa (Instellingen → Hardware → Netwerk):",
       "shareShareNote": "Deze pc moet aan blijven zodat de andere kassa’s kunnen printen. Alleen Windows-app.",
-      "shareShareFailed": "Delen kon niet starten — controleer of geen ander programma poort 9100 gebruikt."
+      "shareShareFailed": "Delen kon niet starten — controleer of geen ander programma poort 9100 gebruikt.",
+      "usbDevice": "USB-printer",
+      "usbScan": "USB-printer verbinden",
+      "usbHelp": "Sluit de printer op de terminal aan, tik hieronder en kies hem. Android vraagt eenmalig toestemming.",
+      "usbNone": "Geen USB-apparaten gevonden. Controleer de kabel en of de printer aanstaat.",
+      "usbNotPrinter": "geen printer",
+      "usbDenied": "USB-toestemming geweigerd — tik opnieuw op Verbinden en sta het toe."
     },
     "system": {
       "title": "Systeem",

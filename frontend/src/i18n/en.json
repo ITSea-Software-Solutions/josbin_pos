@@ -435,7 +435,13 @@
       "share": "Share this printer on the network",
       "shareShareHelp": "Android tills print through this PC. Enter this address on each till (Settings → Hardware → Network):",
       "shareShareNote": "This PC must stay on for the other tills to print. Windows app only.",
-      "shareShareFailed": "Could not start sharing — check that no other program uses port 9100."
+      "shareShareFailed": "Could not start sharing — check that no other program uses port 9100.",
+      "usbDevice": "USB printer",
+      "usbScan": "Connect USB printer",
+      "usbHelp": "Plug the printer into the terminal, then tap below and pick it. Android asks for permission once.",
+      "usbNone": "No USB devices found. Check the cable and that the printer is switched on.",
+      "usbNotPrinter": "not a printer",
+      "usbDenied": "USB permission was refused — tap Connect again and allow it."
     },
     "system": {
       "title": "System",

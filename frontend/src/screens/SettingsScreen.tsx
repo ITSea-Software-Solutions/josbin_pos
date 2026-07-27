@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
 import { getStore } from '@/api/stores'
 import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform } from '@/lib/hardware'
+import { listUsbPrinters, UsbPrinter, type UsbDeviceInfo } from '@/lib/usbPrinter'
 import { buildReceiptBytes } from '@/lib/escpos'
 import { LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML } from '@/lib/labelSheet'
 import type { ProductDisplay } from '@/store/settingsStore'
@@ -61,6 +62,8 @@ export default function SettingsScreen() {
   const [shareIps, setShareIps] = useState<string[]>([])
   const [shareError, setShareError] = useState<string | null>(null)
   const [hwError, setHwError] = useState<string | null>(null)
+  const [usbDevices, setUsbDevices] = useState<UsbDeviceInfo[] | null>(null)
+  const [usbBusy, setUsbBusy] = useState(false)
 
   function handleSave() {
     setSaved(true)
@@ -187,6 +190,31 @@ export default function SettingsScreen() {
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Android USB: list attached devices, then claim one (the OS shows its own
+  // permission dialog). Vendor+product are stored, not Android's deviceId —
+  // that changes on every replug.
+  async function scanUsbPrinters() {
+    setUsbBusy(true); setHwError(null)
+    setUsbDevices(await listUsbPrinters())
+    setUsbBusy(false)
+  }
+
+  async function connectUsbPrinter(d: UsbDeviceInfo) {
+    setUsbBusy(true); setHwError(null)
+    try {
+      const res = await UsbPrinter.requestPermission({ vendorId: d.vendorId, productId: d.productId })
+      if (res.granted) {
+        updatePrinter({ usbVendorId: d.vendorId, usbProductId: d.productId, printerName: d.name })
+        setUsbDevices(await listUsbPrinters())
+      } else {
+        setHwError(t('settings.printer.usbDenied'))
+      }
+    } catch (e) {
+      setHwError(String(e))
+    }
+    setUsbBusy(false)
+  }
 
   function updatePrinter(patch: Partial<PrinterConfig>) {
     setPrinter({ ...printer, ...patch })
@@ -360,7 +388,7 @@ export default function SettingsScreen() {
           <div>
             <label style={labelSt}>{t('settings.printer.type')}</label>
             <div style={{ display: 'flex', gap: 8 }}>
-              {(platform === 'electron' ? (['none', 'network', 'usb'] as const) : (['none', 'network'] as const)).map((type) => (
+              {(platform === 'web' ? (['none', 'network'] as const) : (['none', 'network', 'usb'] as const)).map((type) => (
                 <button
                   key={type}
                   onClick={() => updatePrinter({ type })}
@@ -379,7 +407,7 @@ export default function SettingsScreen() {
                 </button>
               ))}
             </div>
-            {platform !== 'electron' && (
+            {platform === 'web' && (
               <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
                 {t('settings.printer.networkOnlyHint')}
               </div>
@@ -447,6 +475,57 @@ export default function SettingsScreen() {
                   }}
                 />
               </div>
+            </div>
+          )}
+
+          {/* Android USB: pick the physical printer once */}
+          {printer.type === 'usb' && platform === 'android' && (
+            <div>
+              <label style={labelSt}>{t('settings.printer.usbDevice')}</label>
+              {printer.usbVendorId ? (
+                <div style={{ padding: '10px 12px', borderRadius: 'var(--border-radius)', background: 'rgba(34,197,94,.08)', border: '1px solid rgba(34,197,94,.3)', fontSize: 12.5, color: 'var(--text-primary)' }}>
+                  ✓ {printer.printerName || `${printer.usbVendorId}:${printer.usbProductId}`}
+                </div>
+              ) : (
+                <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginBottom: 6 }}>
+                  {t('settings.printer.usbHelp')}
+                </div>
+              )}
+              <button
+                onClick={scanUsbPrinters}
+                disabled={usbBusy}
+                data-testid="btn-usb-scan"
+                style={{ marginTop: 8, height: 44, width: '100%', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-primary)', cursor: usbBusy ? 'wait' : 'pointer', fontWeight: 600, fontSize: 'var(--font-size-sm)' }}
+              >
+                {usbBusy ? '…' : `🔌 ${t('settings.printer.usbScan')}`}
+              </button>
+              {usbDevices && usbDevices.length === 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-error)' }}>{t('settings.printer.usbNone')}</div>
+              )}
+              {usbDevices && usbDevices.length > 0 && (
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {usbDevices.map((d) => (
+                    <button
+                      key={`${d.vendorId}:${d.productId}`}
+                      onClick={() => connectUsbPrinter(d)}
+                      disabled={!d.printable || usbBusy}
+                      style={{
+                        textAlign: 'left', padding: '10px 12px', borderRadius: 'var(--border-radius)',
+                        border: `1px solid ${printer.usbVendorId === d.vendorId && printer.usbProductId === d.productId ? 'var(--color-primary)' : 'var(--border-color)'}`,
+                        background: 'var(--bg-input)', color: d.printable ? 'var(--text-primary)' : 'var(--text-muted)',
+                        cursor: d.printable ? 'pointer' : 'not-allowed', fontSize: 'var(--font-size-sm)',
+                      }}
+                    >
+                      <div style={{ fontWeight: 600 }}>{d.name}</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                        {d.manufacturer ? `${d.manufacturer} · ` : ''}{d.vendorId}:{d.productId}
+                        {d.hasPermission ? ' · ✓' : ''}
+                        {!d.printable ? ` · ${t('settings.printer.usbNotPrinter')}` : ''}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

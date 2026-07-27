@@ -41,6 +41,11 @@ export interface PrinterConfig {
   drawerPin?: 1 | 2
   /** Paper roll width: 80 mm (42 chars, countertop) or 58 mm (32 chars, compact). */
   paperWidth?: 58 | 80
+  /** Android USB printing: which physical device. Vendor+product survive a
+   *  replug; Android's own deviceId does not, and a till must keep its
+   *  printer across a cable wiggle. */
+  usbVendorId?: number
+  usbProductId?: number
 }
 
 export interface PrinterInfo {
@@ -81,9 +86,23 @@ export async function printEscPos(
   // ── Android (Capacitor) ───────────────────────────────────────────────────
   if (platform === 'android') {
     if (config.type === 'usb') {
-      // Android has no print-spooler path for raw ESC/POS — only the network
-      // socket works. Name the real cause instead of a generic failure.
-      return { success: false, error: 'USB printing is not supported on Android — use a network printer' }
+      // Direct USB via the Android USB Host API — no spooler, no LAN card,
+      // no bridge PC. The printer must have been picked (and permission
+      // granted) once in Settings → Hardware.
+      if (!config.usbVendorId || !config.usbProductId) {
+        return { success: false, error: 'No USB printer selected — Settings → Hardware → Connect USB printer' }
+      }
+      try {
+        const { UsbPrinter } = await import('./usbPrinter')
+        await UsbPrinter.print({
+          vendorId: config.usbVendorId,
+          productId: config.usbProductId,
+          data: Array.from(bytes),
+        })
+        return { success: true }
+      } catch (err: any) {
+        return { success: false, error: String(err?.message ?? err) }
+      }
     }
     try {
       const { CapacitorPrinter } = await import('./capacitor-printer')

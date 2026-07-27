@@ -11,7 +11,15 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.3.3 — 27 July 2026 *(current)*
+## 1.4.0 — 27 July 2026 *(current)*
+
+- **USB receipt printers now work directly on Android terminals.** Plug
+  the printer into the terminal, pair it once under Settings → Hardware
+  → USB → Connect USB printer, and receipts plus the cash drawer work —
+  no network card in the printer, no Windows PC in between. See the
+  Android chapter §15.9.
+
+## 1.3.3 — 27 July 2026
 
 - **Updating no longer gets stuck.** The installer now closes a running
   Josbin POS by itself. Older versions asked you to close it manually —

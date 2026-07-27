@@ -106,7 +106,7 @@ feed button on power-on — to see its IP).
 
 | Capability | Windows app | Android app |
 |---|---|---|
-| Receipt printer via USB | ✅ | ❌ — network printer only |
+| Receipt printer via USB | ✅ | ✅ since 1.4.0 — plug into the terminal, pair once in Settings → Hardware |
 | Receipt printer via network (port 9100) | ✅ | ✅ |
 | Cash drawer (via printer) | ✅ | ✅ |
 | USB/Bluetooth barcode scanner | ✅ | ✅ |
@@ -190,6 +190,36 @@ Android till ──wi-fi──▶ Windows PC (Josbin POS app, ── USB ──�
   bridge is a stopgap and a single point of failure, not the architecture.
 - The share toggle survives restarts — the app brings the bridge back up
   by itself when the PC boots.
+
+
+## 15.9 USB printer straight into the terminal *(since 1.4.0)*
+
+A receipt printer with only a USB cable no longer needs a LAN card or a
+Windows PC in between: plug it into the Android terminal and pair it once.
+
+1. Printer USB cable → the terminal. Printer switched on, drawer RJ11 in
+   the printer's **DK** port.
+2. In Josbin POS: **Settings → Hardware → type USB → 🔌 Connect USB
+   printer**.
+3. Pick your printer from the list. Android asks once whether Josbin POS
+   may use it — allow it (tick "always" if offered).
+4. **Test receipt print** and **Test cash drawer**. Green = done.
+
+The pairing survives replugging the cable and restarting the terminal
+(the printer is remembered by its make/model identity, not by the port it
+happened to get).
+
+**Which route to choose**
+
+| Situation | Best route |
+|---|---|
+| One terminal, one printer, at the same counter | **USB straight in** — simplest, no network involved |
+| Several tills sharing one printer | **Network printer** (LAN card) — a USB printer belongs to one device only |
+| Printer far from the till | Network |
+
+If the list shows the device but greyed out as *not a printer*, that USB
+device has no data-in channel — check you selected the printer and not a
+hub or the scanner.
 
 **Where the rest lives:** quick install steps in the
 [install guide §E5](/docs/00-installation-and-setup#e5-android-terminals-posiflex-rt-series-tablets),
