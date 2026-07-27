@@ -305,3 +305,14 @@ Kruisverwijzingen: [Hoofdstuk 1](01-roles-and-permissions.md) voor wie het audit
 ---
 
 → Volgende: Hoofdstuk 14 — AI-inzichten *(binnenkort beschikbaar)*
+
+::: info Wat de belastinginspecteur hier ziet
+Het Belastingdienst-account heeft dit scherm ook, met een bewust smaller
+venster: **de levensloop van elke BTW-aangifte van alle organisaties**
+(aangemaakt, ingediend, geaccepteerd, betwist, vervangen) plus de eigen
+acties van de inspecteur — en verder niets. Operationele gebeurtenissen
+van een organisatie (producten, gebruikers, verkoopwijzigingen) verschijnen
+nooit bij de inspecteur; dat is het terrein van de interne auditor. Oogt
+de lijst van de inspecteur kort, dan is dat de scope die zijn werk doet,
+geen ontbrekende data — een aangifte genereert maar een handvol events.
+:::

@@ -25,6 +25,7 @@ class AuditLogController extends Controller
             User::ROLE_SUPER_ADMIN,
             User::ROLE_ORGANISATION_ADMIN,
             User::ROLE_AUDITOR,
+            User::ROLE_TAX_INSPECTOR,
         ], true)) {
             return response()->json(['message' => 'Forbidden.'], 403);
         }
@@ -44,7 +45,15 @@ class AuditLogController extends Controller
         //      SA, not an org user, but organisation_id is the org) — now visible.
         // The OR keeps everything the old filter showed (e.g. Product edits,
         // which carry the org user's id but no organisation_id of their own).
-        if (! $actor->isSuperAdmin()) {
+        if ($actor->role === User::ROLE_TAX_INSPECTOR) {
+            // Belastingdienst mandate: the life of every BTW filing, all
+            // organisations — plus the inspector's own actions. Never the
+            // org's operational logs (products, users, sales edits).
+            $query->where(function ($q) use ($actor) {
+                $q->where('auditable_type', 'btw_submission')
+                  ->orWhere('user_id', (string) $actor->id);
+            });
+        } elseif (! $actor->isSuperAdmin()) {
             $orgUserIds = User::where('organisation_id', $actor->organisation_id)
                 ->pluck('id')
                 ->map(fn ($id) => (string) $id);
@@ -127,7 +136,12 @@ class AuditLogController extends Controller
 
         $query = Audit::query()->where('created_at', '>=', now()->subDays(30));
 
-        if (! $actor->isSuperAdmin()) {
+        if ($actor->role === User::ROLE_TAX_INSPECTOR) {
+            $query->where(function ($q) use ($actor) {
+                $q->where('auditable_type', 'btw_submission')
+                  ->orWhere('user_id', (string) $actor->id);
+            });
+        } elseif (! $actor->isSuperAdmin()) {
             $orgUserIds = User::where('organisation_id', $actor->organisation_id)
                 ->pluck('id')
                 ->map(fn ($id) => (string) $id);

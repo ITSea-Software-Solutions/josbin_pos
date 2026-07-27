@@ -305,3 +305,14 @@ Cross-references: [Chapter 1](01-roles-and-permissions.md) for who can read the 
 ---
 
 → Next: Chapter 14 — AI insights *(coming soon)*
+
+::: info What the tax inspector sees here
+The Belastingdienst account also has this screen, with a deliberately
+narrower window: **the life of every BTW filing across all organisations**
+(created, submitted, accepted, disputed, superseded) plus the inspector's
+own actions — and nothing else. An organisation's operational events
+(products, users, sales edits) never appear for the inspector; that is the
+internal auditor's surface. If the inspector's list looks short, that is
+the scope working, not data missing — filings only generate a handful of
+events each.
+:::
