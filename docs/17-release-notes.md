@@ -11,7 +11,28 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.4.0 — 27 July 2026 *(current)*
+## 1.4.1 — 27 July 2026 *(current)*
+
+- **USB printers now actually appear on Android terminals.** The app was
+  never granted USB access by Android, so Settings → Hardware → Connect
+  USB printer found nothing however the printer was plugged in. It now
+  finds the printer, and plugging one in offers to connect it
+  automatically.
+- **Scanning after tapping a product works first time.** The scanner is
+  now read no matter what was last touched on screen. Before, a tap left
+  the keyboard "pointing at" the tapped product, so the next scan either
+  did nothing or increased the tapped product's quantity, and the code had
+  to be scanned twice.
+- **The till feels quicker on Android.** Tapping a product no longer opens
+  and closes the on-screen keyboard each time.
+- **A printer that cannot be found now explains why** — no USB port on the
+  terminal, nothing plugged in, or a device that is not a printer — and
+  lists what it did find.
+- **Updating an Android terminal is reliable.** Every APK until now
+  carried the same internal build number, which could make Android treat a
+  newer version as a duplicate and refuse the update.
+
+## 1.4.0 — 27 July 2026
 
 - **USB receipt printers now work directly on Android terminals.** Plug
   the printer into the terminal, pair it once under Settings → Hardware

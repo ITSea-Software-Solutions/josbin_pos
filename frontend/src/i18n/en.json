@@ -439,6 +439,8 @@
       "usbDevice": "USB printer",
       "usbScan": "Connect USB printer",
       "usbHelp": "Plug the printer into the terminal, then tap below and pick it. Android asks for permission once.",
+      "usbNoHost": "This terminal has no USB host port — it cannot drive a printer directly. Use a network printer, or the printer bridge on a Windows till.",
+      "usbUnavailable": "USB printing needs the Android app (version 1.4.1 or newer). Reinstall the latest APK from the download page.",
       "usbNone": "No USB devices found. Check the cable and that the printer is switched on.",
       "usbNotPrinter": "not a printer",
       "usbDenied": "USB permission was refused — tap Connect again and allow it."

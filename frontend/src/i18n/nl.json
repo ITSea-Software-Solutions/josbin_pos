@@ -439,6 +439,8 @@
       "usbDevice": "USB-printer",
       "usbScan": "USB-printer verbinden",
       "usbHelp": "Sluit de printer op de terminal aan, tik hieronder en kies hem. Android vraagt eenmalig toestemming.",
+      "usbNoHost": "Deze terminal heeft geen USB-hostpoort — hij kan een printer niet rechtstreeks aansturen. Gebruik een netwerkprinter, of de printerbrug op een Windows-kassa.",
+      "usbUnavailable": "USB-printen vereist de Android-app (versie 1.4.1 of nieuwer). Installeer de nieuwste APK opnieuw via de downloadpagina.",
       "usbNone": "Geen USB-apparaten gevonden. Controleer de kabel en of de printer aanstaat.",
       "usbNotPrinter": "geen printer",
       "usbDenied": "USB-toestemming geweigerd — tik opnieuw op Verbinden en sta het toe."

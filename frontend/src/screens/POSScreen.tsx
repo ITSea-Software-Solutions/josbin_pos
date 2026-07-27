@@ -153,7 +153,12 @@ export default function POSScreen() {
         }}>
           {/* Left: product grid */}
           <div style={{ flex: 1, overflow: 'hidden', paddingTop: 10 }}>
-            <ProductGrid storeId={storeId} />
+            <ProductGrid
+              storeId={storeId}
+              // A scan must not add a product behind an open dialog — the
+              // cashier is counting cash or naming a held bill, not selling.
+              scanEnabled={!paymentOpen && !holdModalOpen && !completedSale}
+            />
           </div>
 
           {/* Right: cart */}

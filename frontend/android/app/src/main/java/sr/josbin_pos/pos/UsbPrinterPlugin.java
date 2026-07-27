@@ -84,12 +84,30 @@ public class UsbPrinterPlugin extends Plugin {
         return null;
     }
 
+    /** Human-readable USB class, so a support call can name what is plugged in. */
+    private String className(int usbClass) {
+        switch (usbClass) {
+            case UsbConstants.USB_CLASS_PER_INTERFACE: return "per-interface";
+            case UsbConstants.USB_CLASS_AUDIO:         return "audio";
+            case UsbConstants.USB_CLASS_COMM:          return "serial/CDC";
+            case UsbConstants.USB_CLASS_HID:           return "keyboard/HID (scanner)";
+            case UsbConstants.USB_CLASS_PRINTER:       return "printer";
+            case UsbConstants.USB_CLASS_MASS_STORAGE:  return "storage";
+            case UsbConstants.USB_CLASS_HUB:           return "hub";
+            case UsbConstants.USB_CLASS_CDC_DATA:      return "serial data";
+            case UsbConstants.USB_CLASS_VENDOR_SPEC:   return "vendor-specific";
+            default: return "class " + usbClass;
+        }
+    }
+
     @PluginMethod
     public void listDevices(PluginCall call) {
         JSArray out = new JSArray();
         UsbManager mgr = usbManager();
         for (UsbDevice d : mgr.getDeviceList().values()) {
             UsbInterface intf = printerInterface(d);
+            boolean printable = intf != null && bulkOut(intf) != null;
+
             JSObject o = new JSObject();
             o.put("name", d.getProductName() != null ? d.getProductName() : d.getDeviceName());
             o.put("manufacturer", d.getManufacturerName());
@@ -97,12 +115,43 @@ public class UsbPrinterPlugin extends Plugin {
             o.put("productId", d.getProductId());
             // A device with no bulk OUT endpoint can never take print data —
             // tell the UI so it can grey it out instead of failing later.
-            o.put("printable", intf != null && bulkOut(intf) != null);
+            o.put("printable", printable);
             o.put("hasPermission", mgr.hasPermission(d));
+
+            // Diagnostics. When a printer is plugged in but refuses to appear
+            // as printable, these are the only facts that explain why, and a
+            // cashier cannot be asked to read a USB descriptor off a datasheet.
+            o.put("deviceClass", d.getDeviceClass());
+            o.put("deviceClassName", className(d.getDeviceClass()));
+            o.put("interfaceCount", d.getInterfaceCount());
+            JSArray ifaces = new JSArray();
+            for (int i = 0; i < d.getInterfaceCount(); i++) {
+                UsbInterface u = d.getInterface(i);
+                JSObject io = new JSObject();
+                io.put("class", u.getInterfaceClass());
+                io.put("className", className(u.getInterfaceClass()));
+                io.put("subclass", u.getInterfaceSubclass());
+                io.put("protocol", u.getInterfaceProtocol());
+                io.put("endpoints", u.getEndpointCount());
+                ifaces.put(io);
+            }
+            o.put("interfaces", ifaces);
+            if (!printable) {
+                o.put("reason", d.getInterfaceCount() == 0
+                        ? "device reports no USB interfaces"
+                        : "no bulk OUT endpoint on any interface — this is not a printer");
+            }
             out.put(o);
         }
+
         JSObject ret = new JSObject();
         ret.put("devices", out);
+        ret.put("count", out.length());
+        // Distinguishes "nothing plugged in" from "this terminal cannot host
+        // USB devices at all" — two identical-looking empty lists with very
+        // different answers.
+        ret.put("hostSupport", getContext().getPackageManager()
+                .hasSystemFeature(android.content.pm.PackageManager.FEATURE_USB_HOST));
         call.resolve(ret);
     }
 

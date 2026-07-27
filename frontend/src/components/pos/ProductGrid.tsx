@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useCartStore } from '@/store/cartStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useLowStockSet } from '@/hooks/useLowStockSet'
+import { useBarcodeScanner } from '@/hooks/useBarcodeScanner'
+import { detectPlatform } from '@/lib/hardware'
 import { useToast } from '@/components/shared/Toast'
 import { getPosProducts, getCategories, getProductByBarcode } from '@/api/products'
 import { parseEmbeddedBarcode } from '@/lib/embeddedBarcode'
@@ -18,9 +20,19 @@ const QUICK_ROW_MAX = 8
 
 interface ProductGridProps {
   storeId: string
+  /** False while a modal owns the screen, so a scan can't add products behind it. */
+  scanEnabled?: boolean
 }
 
-export default function ProductGrid({ storeId }: ProductGridProps) {
+/**
+ * A touchscreen till has an on-screen keyboard that opens whenever a text
+ * input takes focus. Grabbing focus after every tap would make it flap open
+ * and shut all day, which is both ugly and slow. The scanner no longer needs
+ * that focus (see useBarcodeScanner), so we only steer focus on desktop.
+ */
+const isTouchTerminal = detectPlatform() === 'android'
+
+export default function ProductGrid({ storeId, scanEnabled = true }: ProductGridProps) {
   const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
   const addProduct = useCartStore((s) => s.addProduct)
@@ -44,13 +56,15 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     queryFn: () => getPosProducts(storeId),
     staleTime: 1000 * 60 * 5,
   })
-  // The scanner types like a keyboard, so focus must live in the search box
-  // at all times. After a tap on a product tile the browser leaves focus on
-  // that BUTTON — the next scan then ends with Enter, which re-fires the
-  // focused button and bumps that product's quantity instead of adding the
-  // scanned one. Every add path returns focus here.
+  // Scans are captured document-wide by useBarcodeScanner below, so the
+  // search box no longer has to hold focus for the scanner to work. On
+  // desktop we still park the cursor here after an add, because a keyboard
+  // user expects to keep typing. On a touch terminal we deliberately do not:
+  // focusing an input there opens the on-screen keyboard, and doing that
+  // after every tapped product is what made the till feel sluggish.
   const searchRef = useRef<HTMLInputElement>(null)
   const focusSearch = useCallback(() => {
+    if (isTouchTerminal) return
     // rAF: let React finish the cart re-render before we move focus back.
     requestAnimationFrame(() => searchRef.current?.focus())
   }, [])
@@ -120,6 +134,20 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
     }
   }, [storeId, handleAdd, updateQuantity, updateItemOverrides, embeddedBarcode, t])
 
+  // Hardware scanner, captured wherever the cashier last tapped. The camera
+  // scanner has its own modal, so it is excluded to avoid a double read.
+  useBarcodeScanner(
+    useCallback((code: string) => {
+      const val = stripAimPrefix(code.trim())
+      if (!looksLikeScannedCode(val)) return
+      // Characters typed by the scanner may have landed in the search box on
+      // their way past; clear it so the box never shows a half-eaten code.
+      setSearch('')
+      handleBarcodeSearch(val)
+    }, [handleBarcodeSearch]),
+    { enabled: scanEnabled && !camScanOpen },
+  )
+
   function handleSearchKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       // Scanners may prepend an AIM symbology id (e.g. "]E0"); drop it first.
@@ -170,7 +198,9 @@ export default function ProductGrid({ storeId }: ProductGridProps) {
         <div style={{ display: 'flex', gap: 8 }}>
           <input
             ref={searchRef}
-            autoFocus
+            // Not on a touch terminal: this would open the on-screen keyboard
+            // over the product grid the moment the till reaches the POS screen.
+            autoFocus={!isTouchTerminal}
             data-testid="pos-search"
             type="text"
             value={search}

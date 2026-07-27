@@ -198,11 +198,17 @@ Android-kassa ──wifi──▶ Windows-PC (Josbin POS-app, ── USB ──�
   wanneer de pc opstart.
 
 
-## 15.9 USB-printer rechtstreeks op de terminal *(vanaf 1.4.0)*
+## 15.9 USB-printer rechtstreeks op de terminal *(vanaf 1.4.1)*
 
 Een bonprinter met alleen een USB-kabel heeft geen LAN-kaart of Windows-PC
 er tussenin meer nodig: sluit hem op de Android-terminal aan en koppel hem
 eenmalig.
+
+::: warning Gebruik 1.4.1 of nieuwer
+Op 1.4.0 bleef de printerlijst altijd leeg — de app had van Android geen
+USB-toegang gekregen. Vindt **USB-printer verbinden** niets, controleer
+dan eerst de versie: **Instellingen → Systeem**.
+:::
 
 1. USB-kabel van de printer → de terminal. Printer aan, lade-RJ11 in de
    **DK**-poort van de printer.
@@ -225,9 +231,25 @@ poort die hij toevallig kreeg).
 | Meerdere kassa's delen één printer | **Netwerkprinter** (LAN-kaart) — een USB-printer hoort bij één apparaat |
 | Printer ver van de kassa | Netwerk |
 
-Staat het apparaat grijs in de lijst als *geen printer*, dan heeft dat
-USB-apparaat geen datakanaal — controleer of u de printer koos en niet een
-hub of de scanner.
+**Als de printer niet verschijnt**
+
+De app vertelt welke van de drie oorzaken het is:
+
+| Wat het scherm zegt | Wat het betekent | Wat te doen |
+|---|---|---|
+| *Geen USB-apparaten gevonden* | USB werkt, er is niets aangesloten | Controleer of de kabel in een USB-poort van de terminal zit (niet een poort die alleen laadt) en of de printer aanstaat |
+| *Deze terminal heeft geen USB-hostpoort* | De terminal kan helemaal geen USB-apparaten aansturen | Gebruik een netwerkprinter, of de printerbrug op een Windows-kassa (§15.6) |
+| *USB-printen vereist de Android-app 1.4.1 of nieuwer* | Oudere APK | Installeer de actuele APK via de downloadpagina |
+| Apparaat staat er grijs bij als *geen printer* | Het ís geen printer — de regel eronder noemt wat het wél is (toetsenbord/HID = uw scanner, hub, opslag) | Kies de printer; staat de printer zélf grijs, stuur ons die regel dan door |
+
+Vanaf 1.4.1 biedt de terminal ook zelf aan de printer te verbinden zodra u
+hem voor het eerst aansluit.
+
+**Scanner en printer op dezelfde terminal** — beide gaan tegelijk in de
+USB-poorten van de terminal; ze zitten elkaar niet in de weg. De scanner
+hoeft helemaal niet gekoppeld te worden: hij gedraagt zich als een
+toetsenbord en wordt overal op het verkoopscherm gelezen, ook direct na het
+aantikken van een product in het raster.
 
 **Waar de rest staat:** korte installatiestappen in de
 [installatiegids §E5](/nl/docs/00-installation-and-setup), welke

@@ -7,8 +7,11 @@ android {
         applicationId "sr.josbin_pos.pos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.4.0"
+        // Derived from versionName as MAJOR*10000 + MINOR*100 + PATCH. Android
+        // refuses to install a build whose versionCode is not higher than the
+        // installed one, so this must never be hand-set to a constant.
+        versionCode 10401
+        versionName "1.4.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

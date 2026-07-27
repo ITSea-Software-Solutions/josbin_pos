@@ -23,6 +23,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
+            <!--
+                Plugging a receipt printer into the terminal wakes the till app
+                and grants it permission for that printer without a dialog.
+                device_filter.xml matches USB printer-class devices only, so a
+                scanner (HID) or a USB stick never triggers this.
+            -->
+            <intent-filter>
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+
         </activity>
 
         <provider
@@ -39,4 +52,19 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+        USB host mode — required to drive a receipt printer plugged straight
+        into the terminal. Android only activates the USB host APIs for apps
+        that declare this; without it UsbManager.getDeviceList() returns an
+        EMPTY map even with the printer connected and powered, so the printer
+        picker in Settings → Hardware stays blank. See the Android USB host
+        guide: the <uses-feature> declaration is mandatory, not advisory.
+
+        required="false" so the APK still installs on tablets and phones that
+        have no host port — those simply print over the network instead.
+    -->
+    <uses-feature
+        android:name="android.hardware.usb.host"
+        android:required="false" />
 </manifest>

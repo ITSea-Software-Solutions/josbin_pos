@@ -192,10 +192,16 @@ Android till ──wi-fi──▶ Windows PC (Josbin POS app, ── USB ──�
   by itself when the PC boots.
 
 
-## 15.9 USB printer straight into the terminal *(since 1.4.0)*
+## 15.9 USB printer straight into the terminal *(since 1.4.1)*
 
 A receipt printer with only a USB cable no longer needs a LAN card or a
 Windows PC in between: plug it into the Android terminal and pair it once.
+
+::: warning Use 1.4.1 or newer
+On 1.4.0 the printer list was always empty — the app had not been granted
+USB access by Android. If **Connect USB printer** finds nothing, check the
+version first: **Settings → System**.
+:::
 
 1. Printer USB cable → the terminal. Printer switched on, drawer RJ11 in
    the printer's **DK** port.
@@ -217,9 +223,25 @@ happened to get).
 | Several tills sharing one printer | **Network printer** (LAN card) — a USB printer belongs to one device only |
 | Printer far from the till | Network |
 
-If the list shows the device but greyed out as *not a printer*, that USB
-device has no data-in channel — check you selected the printer and not a
-hub or the scanner.
+**When the printer does not appear**
+
+The app tells you which of the three causes it is:
+
+| What the screen says | What it means | What to do |
+|---|---|---|
+| *No USB devices found* | USB works, nothing is connected | Check the cable is in a USB port on the terminal (not a charge-only port), and that the printer is switched on |
+| *This terminal has no USB host port* | The terminal cannot drive USB devices at all | Use a network printer, or the printer bridge on a Windows till (§15.6) |
+| *USB printing needs the Android app 1.4.1 or newer* | Older APK | Install the current APK from the download page |
+| Device listed but greyed out as *not a printer* | It is not a printer — the line underneath names what it is (keyboard/HID = your scanner, hub, storage) | Pick the printer; if the printer itself is greyed out, send us that line and we will tell you what it needs |
+
+Since 1.4.1 the terminal also offers to connect the printer by itself the
+first time you plug it in.
+
+**Scanner and printer on the same terminal** — both plug into the
+terminal's USB ports at the same time; they do not conflict. The scanner
+needs no pairing at all: it behaves as a keyboard and is read wherever you
+are on the sales screen, including straight after tapping a product on the
+grid.
 
 **Where the rest lives:** quick install steps in the
 [install guide §E5](/docs/00-installation-and-setup#e5-android-terminals-posiflex-rt-series-tablets),

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Which USB devices may wake the till app when plugged in.
+
+    Class 7 is the USB printer class. Matching on the class rather than on a
+    vendor id means any standards-compliant receipt printer is covered — we
+    do not have to ship a list of model numbers and re-release every time a
+    store buys a different printer.
+
+    Printers that enumerate as vendor-specific (class 255) are deliberately
+    NOT matched: that class is a catch-all used by countless unrelated
+    gadgets, and claiming it would make the till app pop up when someone
+    plugs in a phone charger cable. Those printers still work — they are
+    paired by hand once via Settings → Hardware → Connect USB printer.
+-->
+<resources>
+    <usb-device class="7" />
+</resources>

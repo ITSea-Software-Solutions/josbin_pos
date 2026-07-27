@@ -7,6 +7,14 @@
  */
 import { registerPlugin } from '@capacitor/core'
 
+export interface UsbInterfaceInfo {
+  class: number
+  className: string
+  subclass: number
+  protocol: number
+  endpoints: number
+}
+
 export interface UsbDeviceInfo {
   name: string
   manufacturer: string | null
@@ -15,22 +23,45 @@ export interface UsbDeviceInfo {
   /** false when the device has no bulk OUT endpoint — it can never print. */
   printable: boolean
   hasPermission: boolean
+  deviceClass: number
+  deviceClassName: string
+  interfaceCount: number
+  interfaces: UsbInterfaceInfo[]
+  /** Present only when printable is false: why this device can't take print data. */
+  reason?: string
+}
+
+export interface UsbProbe {
+  devices: UsbDeviceInfo[]
+  count: number
+  /**
+   * False when the terminal has no USB host support at all. Without this an
+   * empty list is ambiguous — nothing plugged in, or a terminal that can
+   * never drive a printer, look identical and need opposite advice.
+   */
+  hostSupport: boolean
+  /** Set when the plugin itself is unreachable (browser, Windows build, older APK). */
+  unavailable?: boolean
 }
 
 interface UsbPrinterPlugin {
-  listDevices(): Promise<{ devices: UsbDeviceInfo[] }>
+  listDevices(): Promise<UsbProbe>
   requestPermission(options: { vendorId: number; productId: number }): Promise<{ granted: boolean }>
   print(options: { vendorId: number; productId: number; data: number[] }): Promise<{ success: boolean; bytes: number }>
 }
 
 export const UsbPrinter = registerPlugin<UsbPrinterPlugin>('UsbPrinter')
 
-/** Safe wrapper for the UI: returns [] anywhere the plugin isn't present. */
-export async function listUsbPrinters(): Promise<UsbDeviceInfo[]> {
+/** Safe wrapper for the UI: never throws, and says so when it can't look. */
+export async function probeUsbPrinters(): Promise<UsbProbe> {
   try {
     const res = await UsbPrinter.listDevices()
-    return res.devices ?? []
+    return {
+      devices: res.devices ?? [],
+      count: res.count ?? res.devices?.length ?? 0,
+      hostSupport: res.hostSupport ?? false,
+    }
   } catch {
-    return []
+    return { devices: [], count: 0, hostSupport: false, unavailable: true }
   }
 }

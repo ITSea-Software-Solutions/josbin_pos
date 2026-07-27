@@ -11,7 +11,28 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.4.0 — 27 juli 2026 *(actueel)*
+## 1.4.1 — 27 juli 2026 *(actueel)*
+
+- **USB-printers verschijnen nu daadwerkelijk op Android-terminals.** De
+  app kreeg van Android nooit toegang tot USB, waardoor Instellingen →
+  Hardware → USB-printer verbinden niets vond, hoe de printer ook was
+  aangesloten. Hij vindt de printer nu wél, en bij het aansluiten wordt
+  automatisch aangeboden hem te verbinden.
+- **Scannen na het aantikken van een product lukt direct.** De scanner
+  wordt nu gelezen ongeacht wat er als laatste is aangeraakt. Voorheen
+  bleef het toetsenbord "gericht" op het aangetikte product, waardoor de
+  volgende scan niets deed of het aantal van het aangetikte product
+  verhoogde, en de code twee keer gescand moest worden.
+- **De kassa voelt sneller op Android.** Bij het aantikken van een product
+  klapt het schermtoetsenbord niet meer telkens open en dicht.
+- **Een printer die niet gevonden wordt, legt nu uit waarom** — geen
+  USB-poort op de terminal, niets aangesloten, of een apparaat dat geen
+  printer is — en toont wat er wél gevonden is.
+- **Bijwerken van een Android-terminal is betrouwbaar.** Elke APK tot nu
+  toe had hetzelfde interne buildnummer, waardoor Android een nieuwere
+  versie als duplicaat kon zien en de update kon weigeren.
+
+## 1.4.0 — 27 juli 2026
 
 - **USB-bonprinters werken nu rechtstreeks op Android-terminals.** Sluit
   de printer op de terminal aan, koppel hem eenmalig via Instellingen →

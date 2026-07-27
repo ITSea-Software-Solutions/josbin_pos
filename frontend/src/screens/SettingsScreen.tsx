@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
 import { getStore } from '@/api/stores'
 import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform } from '@/lib/hardware'
-import { listUsbPrinters, UsbPrinter, type UsbDeviceInfo } from '@/lib/usbPrinter'
+import { probeUsbPrinters, UsbPrinter, type UsbDeviceInfo, type UsbProbe } from '@/lib/usbPrinter'
 import { buildReceiptBytes } from '@/lib/escpos'
 import { LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML } from '@/lib/labelSheet'
 import type { ProductDisplay } from '@/store/settingsStore'
@@ -62,7 +62,7 @@ export default function SettingsScreen() {
   const [shareIps, setShareIps] = useState<string[]>([])
   const [shareError, setShareError] = useState<string | null>(null)
   const [hwError, setHwError] = useState<string | null>(null)
-  const [usbDevices, setUsbDevices] = useState<UsbDeviceInfo[] | null>(null)
+  const [usbProbe, setUsbProbe] = useState<UsbProbe | null>(null)
   const [usbBusy, setUsbBusy] = useState(false)
 
   function handleSave() {
@@ -196,7 +196,7 @@ export default function SettingsScreen() {
   // that changes on every replug.
   async function scanUsbPrinters() {
     setUsbBusy(true); setHwError(null)
-    setUsbDevices(await listUsbPrinters())
+    setUsbProbe(await probeUsbPrinters())
     setUsbBusy(false)
   }
 
@@ -206,7 +206,7 @@ export default function SettingsScreen() {
       const res = await UsbPrinter.requestPermission({ vendorId: d.vendorId, productId: d.productId })
       if (res.granted) {
         updatePrinter({ usbVendorId: d.vendorId, usbProductId: d.productId, printerName: d.name })
-        setUsbDevices(await listUsbPrinters())
+        setUsbProbe(await probeUsbPrinters())
       } else {
         setHwError(t('settings.printer.usbDenied'))
       }
@@ -499,12 +499,20 @@ export default function SettingsScreen() {
               >
                 {usbBusy ? '…' : `🔌 ${t('settings.printer.usbScan')}`}
               </button>
-              {usbDevices && usbDevices.length === 0 && (
-                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-error)' }}>{t('settings.printer.usbNone')}</div>
+              {/* An empty list has three different causes and three different
+                  fixes — say which one this is instead of one vague error. */}
+              {usbProbe && usbProbe.devices.length === 0 && (
+                <div style={{ marginTop: 8, fontSize: 12, color: 'var(--color-error)' }}>
+                  {usbProbe.unavailable
+                    ? t('settings.printer.usbUnavailable')
+                    : !usbProbe.hostSupport
+                      ? t('settings.printer.usbNoHost')
+                      : t('settings.printer.usbNone')}
+                </div>
               )}
-              {usbDevices && usbDevices.length > 0 && (
+              {usbProbe && usbProbe.devices.length > 0 && (
                 <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {usbDevices.map((d) => (
+                  {usbProbe.devices.map((d) => (
                     <button
                       key={`${d.vendorId}:${d.productId}`}
                       onClick={() => connectUsbPrinter(d)}
@@ -519,9 +527,18 @@ export default function SettingsScreen() {
                       <div style={{ fontWeight: 600 }}>{d.name}</div>
                       <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
                         {d.manufacturer ? `${d.manufacturer} · ` : ''}{d.vendorId}:{d.productId}
+                        {d.deviceClassName ? ` · ${d.deviceClassName}` : ''}
                         {d.hasPermission ? ' · ✓' : ''}
                         {!d.printable ? ` · ${t('settings.printer.usbNotPrinter')}` : ''}
                       </div>
+                      {/* The exact descriptor, so an unrecognised printer can be
+                          diagnosed from a photo of this screen. */}
+                      {!d.printable && d.reason && (
+                        <div style={{ fontSize: 10.5, color: 'var(--text-muted)', marginTop: 3, opacity: .8 }}>
+                          {d.reason}
+                          {d.interfaces?.length ? ` · ${d.interfaces.map((i) => `${i.className} (${i.endpoints} ep)`).join(', ')}` : ''}
+                        </div>
+                      )}
                     </button>
                   ))}
                 </div>
