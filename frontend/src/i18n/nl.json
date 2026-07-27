@@ -431,7 +431,11 @@
       "printError": "Fout — controleer verbinding",
       "testLabel": "Testetiket afdrukken",
       "labelOk": "Testetiket verzonden!",
-      "labelError": "Fout — afdrukken mislukt"
+      "labelError": "Fout — afdrukken mislukt",
+      "share": "Deze printer delen op het netwerk",
+      "shareShareHelp": "Android-kassa’s printen via deze pc. Vul dit adres in op elke kassa (Instellingen → Hardware → Netwerk):",
+      "shareShareNote": "Deze pc moet aan blijven zodat de andere kassa’s kunnen printen. Alleen Windows-app.",
+      "shareShareFailed": "Delen kon niet starten — controleer of geen ander programma poort 9100 gebruikt."
     },
     "system": {
       "title": "Systeem",

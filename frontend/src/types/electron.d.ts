@@ -19,6 +19,9 @@ interface Window {
     // LAN sweep for the store server — see src/lib/lan.ts. Always resolves
     // (empty array when nothing is found), never rejects on a wedged socket.
     discoverServers: () => Promise<{
+    printerShareStart: (printerName: string) => Promise<{ success: boolean; ips?: string[]; error?: string }>
+    printerShareStop: () => Promise<{ success: boolean }>
+    printerShareStatus: () => Promise<{ running: boolean; printerName: string; ips: string[] }>
       url: string
       ip: string
       port: number

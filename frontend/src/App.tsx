@@ -50,7 +50,25 @@ function Loading() {
   )
 }
 
+/**
+ * Windows only: if the operator enabled printer sharing, bring the bridge
+ * back up on every app start — the toggle is a standing decision, not a
+ * per-session one. Silently no-ops everywhere else.
+ */
+function usePrinterShareAutostart() {
+  const enabled = useSettingsStore((s) => s.printerShareEnabled)
+  const printer = useSettingsStore((s) => s.printer)
+  useEffect(() => {
+    const api = (window as any).josbin_pos
+    if (!enabled || !api?.printerShareStart) return
+    if (printer.type !== 'usb' || !printer.printerName) return
+    api.printerShareStart(printer.printerName).catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enabled, printer.type, printer.printerName])
+}
+
 export default function App() {
+  usePrinterShareAutostart()
   const token     = useAuthStore((s) => s.token)
   const expiresAt = useAuthStore((s) => s.expiresAt)
   const storeId   = useSettingsStore((s) => s.storeId)

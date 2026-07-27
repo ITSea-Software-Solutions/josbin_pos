@@ -431,7 +431,11 @@
       "printError": "Error — check connection",
       "testLabel": "Print test label",
       "labelOk": "Test label sent!",
-      "labelError": "Error — printing failed"
+      "labelError": "Error — printing failed",
+      "share": "Share this printer on the network",
+      "shareShareHelp": "Android tills print through this PC. Enter this address on each till (Settings → Hardware → Network):",
+      "shareShareNote": "This PC must stay on for the other tills to print. Windows app only.",
+      "shareShareFailed": "Could not start sharing — check that no other program uses port 9100."
     },
     "system": {
       "title": "System",

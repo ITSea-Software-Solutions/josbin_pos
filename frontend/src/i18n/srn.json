@@ -431,7 +431,11 @@
       "printError": "Fowtu — luku a verbinding",
       "testLabel": "Printi wan test-etiket",
       "labelOk": "Test-etiket seni!",
-      "labelError": "Fowtu — a printi no wroko"
+      "labelError": "Fowtu — a printi no wroko",
+      "share": "Prati a printer disi na tapu a netwerk",
+      "shareShareHelp": "Android-kasa e print pasa a pc disi. Poti a adres disi na ibri kasa (Instellingen → Hardware → Netwerk):",
+      "shareShareNote": "A pc disi musu tan na tapu so den tra kasa man print. Soso Windows-app.",
+      "shareShareFailed": "A prati no man bigin — luku efu no wan tra programa e gebroiki poort 9100."
     },
     "system": {
       "title": "Systeem",

@@ -28,6 +28,9 @@ contextBridge.exposeInMainWorld('josbin_pos', {
   // Sweeps the till's own /24 for a Josbin server so a field install with a
   // wrong baked IP is fixable without anyone hunting for the address.
   discoverServers: () => ipcRenderer.invoke('network:discoverServers'),
+  printerShareStart: (printerName: string) => ipcRenderer.invoke('printerShare:start', { printerName }),
+  printerShareStop: () => ipcRenderer.invoke('printerShare:stop'),
+  printerShareStatus: () => ipcRenderer.invoke('printerShare:status'),
 
   // ── License ───────────────────────────────────────────────────────────────────
   getHardwareFingerprint: () => ipcRenderer.invoke('license:fingerprint'),

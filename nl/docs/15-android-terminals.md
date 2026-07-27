@@ -144,12 +144,58 @@ Z-rapporten, rapporten, talen — is identiek op beide platforms.
 |---|---|---|
 | App toont een leeg/wit scherm | De Android WebView van de terminal is sterk verouderd | Open `http://<server>:8091` in Chrome op de terminal — rendert dat, dan rendert de app ook; werk "Android System WebView" bij via de Play Store indien aanwezig |
 | ⚙ Server-test faalt, maar de browser op de terminal bereikt hetzelfde adres wél | Verkeerd adresformaat | Vul alleen `IP:poort` in (bijv. `192.168.0.250:8080`) — de app vult de rest zelf aan |
-| Achterkant printer toont alleen **voeding + USB + DK** | De USB-interfacekaart is gemonteerd — geen netwerkmogelijkheid. DK is de **lade**-poort (RJ11), geen netwerkpoort; steek er nooit een LAN-kabel in | Bestel de **LAN/Ethernet-interfacekaart voor de PP-9000 (Aura)-serie** bij de hardwareleverancier — twee schroeven, wisselen, klaar. Let op: een USB-naar-Ethernet-*adapter* werkt NIET (die geeft een computer een netwerkpoort, hij maakt een printer niet netwerkgeschikt) |
+| Achterkant printer toont alleen **voeding + USB + DK** | De USB-interfacekaart is gemonteerd — geen netwerkmogelijkheid. DK is de **lade**-poort (RJ11), geen netwerkpoort; steek er nooit een LAN-kabel in | Bestel de **LAN/Ethernet-interfacekaart voor de PP-9000 (Aura)-serie** bij de hardwareleverancier — twee schroeven, wisselen, klaar. Let op: een USB-naar-Ethernet-*adapter* werkt NIET (die geeft een computer een netwerkpoort, hij maakt een printer niet netwerkgeschikt). Tijdelijk met een Windows-PC: de printerbrug, §15.8 |
 | Printertest rood, printer staat aan | Printer niet op het netwerk, of verkeerd IP in Instellingen | Print de zelftestpagina voor het echte IP; controleer de LAN-kabel en de IP-reservering in de router |
 | Lade opent niet maar bonnen printen wel | Ladekabel | Steek de RJ11 opnieuw in de ladepoort van de printer (niet de telefoonlijnpoort) |
 | "Installatie geblokkeerd" bij het openen van de APK | Toestemming onbekende bronnen | Sta *Onbekende apps installeren* toe voor Chrome zodra Android het vraagt |
 | Labeltest opent een dialoog zonder printers | Android toont alleen kantoor-achtige netwerkprinters | Print labels vanaf de PC van de manager — labels zijn een backoffice-taak; bonnen op de kassa werken gewoon |
 | Verkopen falen met een serverfout nadat de wifi veranderde | Router heeft nieuwe adressen uitgedeeld | Loop §15.6 na: statisch IP voor de server, gereserveerd IP voor de printer |
+
+
+## 15.8 Printer met alleen USB + één Windows-PC — de printerbrug
+
+**De situatie:** de winkel heeft een bonprinter met alleen USB (achterop
+alleen voeding + USB + DK), de kassa's zijn Android, en er is één
+Windows-PC in de zaak. In plaats van te wachten op de LAN-interfacekaart
+van de printer kan de Windows-app zich gedragen als de netwerkkaart van de
+printer:
+
+```
+Android-kassa ──wifi──▶ Windows-PC (Josbin POS-app, ── USB ──▶ printer ──RJ11──▶ lade
+                        "Printer delen" AAN, poort 9100)
+```
+
+**Instellen (eenmalig, ±10 minuten):**
+
+1. Installeer de Josbin POS Windows-app op de Windows-PC en sluit de
+   printer aan via USB.
+2. Zorg dat Windows de printer kent: *Instellingen → Bluetooth en
+   apparaten → Printers*. Geen Posiflex-driver bij de hand? Voeg hem
+   handmatig toe met de driver **"Generic / Text Only"** op de USB-poort —
+   voor rauwe bonprints is meer niet nodig.
+3. In de Josbin POS-app: **Instellingen → Hardware → type USB → kies de
+   printer → Test bonprint** (en Test geldlade). Beide moeten groen zijn
+   voordat u verdergaat.
+4. Zet **📡 Deze printer delen op het netwerk** aan. De app toont het adres
+   van deze pc, bijv. `192.168.0.17:9100`.
+5. Op elke Android-kassa: **Instellingen → Hardware → type Netwerk → vul
+   dat adres in → Test**. Groen = klaar; bonnen en de lade werken nu vanaf
+   elke kassa.
+
+**De spelregels:**
+
+- De Windows-PC moet **aan** staan zodat de andere kassa's kunnen printen —
+  beschouw hem als onderdeel van de printer. (Het mag de server-PC van de
+  winkel zijn; die staat toch aan.)
+- Opdrachten van meerdere kassa's worden automatisch **na elkaar in de rij**
+  gezet — twee kassa's die in dezelfde seconde printen krijgen allebei hun
+  bon.
+- Dit is het antwoord voor **kleine winkels en dag één**. Voor winkels met
+  meerdere toonbanken: monteer de LAN-interfacekaart in de printer van elke
+  toonbank — de brug is een overbrugging en één storingspunt, niet de
+  architectuur.
+- De deel-schakelaar overleeft herstarts — de app zet de brug zelf weer aan
+  wanneer de pc opstart.
 
 **Waar de rest staat:** korte installatiestappen in de
 [installatiegids §E5](/nl/docs/00-installation-and-setup), welke

@@ -56,6 +56,10 @@ export default function SettingsScreen() {
   const [drawerTestStatus, setDrawerTestStatus] = useState<HardwareTestStatus>('idle')
   const [receiptTestStatus, setReceiptTestStatus] = useState<HardwareTestStatus>('idle')
   const [labelTestStatus, setLabelTestStatus] = useState<HardwareTestStatus>('idle')
+  const printerShareEnabled = useSettingsStore((s) => s.printerShareEnabled)
+  const setPrinterShareEnabled = useSettingsStore((s) => s.setPrinterShareEnabled)
+  const [shareIps, setShareIps] = useState<string[]>([])
+  const [shareError, setShareError] = useState<string | null>(null)
 
   function handleSave() {
     setSaved(true)
@@ -149,6 +153,36 @@ export default function SettingsScreen() {
     }
     setTimeout(() => setLabelTestStatus('idle'), 3000)
   }
+
+  async function togglePrinterShare() {
+    setShareError(null)
+    const api = (window as any).josbin_pos
+    if (printerShareEnabled) {
+      await api?.printerShareStop?.()
+      setPrinterShareEnabled(false)
+      setShareIps([])
+      handleSave()
+      return
+    }
+    const res = await api?.printerShareStart?.(printer.printerName ?? '')
+    if (res?.success) {
+      setPrinterShareEnabled(true)
+      setShareIps(res.ips ?? [])
+      handleSave()
+    } else {
+      setShareError(res?.error ?? t('settings.printer.shareFailed'))
+    }
+  }
+
+  // Reflect an already-running share (auto-started on boot) in the UI.
+  useEffect(() => {
+    if (platform !== 'electron') return
+    ;(window as any).josbin_pos?.printerShareStatus?.().then(
+      (st: { running: boolean; ips: string[] }) => { if (st?.running) setShareIps(st.ips ?? []) },
+      () => {},
+    )
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   function updatePrinter(patch: Partial<PrinterConfig>) {
     setPrinter({ ...printer, ...patch })
@@ -437,6 +471,40 @@ export default function SettingsScreen() {
                 >
                   {t('settings.printer.refresh')}
                 </button>
+              </div>
+
+              {/* Printer bridge: make this USB printer a network printer.
+                  The software equivalent of the printer's LAN card — Android
+                  tills print to this PC's address on port 9100. */}
+              <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: printerShareEnabled ? 'rgba(41,51,113,.12)' : 'var(--bg-input)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+                  <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', fontWeight: 600 }}>
+                    📡 {t('settings.printer.share')}
+                  </span>
+                  <button
+                    onClick={togglePrinterShare}
+                    disabled={!printer.printerName}
+                    data-testid="toggle-printer-share"
+                    style={{
+                      width: 52, height: 28, borderRadius: 14, flexShrink: 0,
+                      background: printerShareEnabled ? 'var(--color-primary)' : 'var(--bg-elevated)',
+                      border: '1px solid var(--border-color)',
+                      cursor: printer.printerName ? 'pointer' : 'not-allowed', position: 'relative', transition: 'background 0.2s',
+                    }}
+                  >
+                    <div style={{ position: 'absolute', top: 3, left: printerShareEnabled ? 25 : 3, width: 20, height: 20, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+                  </button>
+                </div>
+                {printerShareEnabled && shareIps.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.printer.shareHelp')}</div>
+                    {shareIps.map((ip) => (
+                      <div key={ip} style={{ fontFamily: 'monospace', fontSize: 13, color: 'var(--text-primary)', marginTop: 4 }}>{ip}:9100</div>
+                    ))}
+                  </div>
+                )}
+                {shareError && <div style={{ marginTop: 6, fontSize: 11, color: 'var(--color-error)' }}>{shareError}</div>}
+                <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-muted)' }}>{t('settings.printer.shareNote')}</div>
               </div>
             </div>
           )}

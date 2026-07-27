@@ -12,6 +12,9 @@ interface SettingsState {
   onScreenKeyboard: boolean
   defaultBtwRate: string
   printer: PrinterConfig
+  /** Windows only: expose the USB printer on TCP 9100 so Android tills can
+   *  print through this PC (the software LAN card). */
+  printerShareEnabled: boolean
   /** Fire the print path automatically when the receipt modal opens after a
    *  sale (industry-standard POS behaviour). Thermal prints silently; the
    *  browser fallback opens the print dialog. */
@@ -36,6 +39,7 @@ interface SettingsState {
   setOnScreenKeyboard: (enabled: boolean) => void
   setDefaultBtwRate: (rate: string) => void
   setPrinter: (config: PrinterConfig) => void
+  setPrinterShareEnabled: (v: boolean) => void
   setAutoPrintReceipt: (enabled: boolean) => void
   setEmbeddedBarcode: (config: Partial<EmbeddedBarcodeConfig>) => void
   setCardTerminal: (config: Partial<CardTerminalConfig>) => void
@@ -63,6 +67,7 @@ export const useSettingsStore = create<SettingsState>()(
         drawerPin: 1,
         paperWidth: 80,
       },
+      printerShareEnabled: false,
       autoPrintReceipt: false,
       embeddedBarcode: DEFAULT_EMBEDDED_BARCODE,
       cardTerminal: { mode: 'manual', defaultBank: 'DSB' },
@@ -73,6 +78,7 @@ export const useSettingsStore = create<SettingsState>()(
       setOnScreenKeyboard: (onScreenKeyboard) => set({ onScreenKeyboard }),
       setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),
       setPrinter: (printer) => set({ printer }),
+      setPrinterShareEnabled: (printerShareEnabled) => set({ printerShareEnabled }),
       setAutoPrintReceipt: (autoPrintReceipt) => set({ autoPrintReceipt }),
       setEmbeddedBarcode: (config) => set((s) => ({ embeddedBarcode: { ...s.embeddedBarcode, ...config } })),
       setCardTerminal: (config) => set((s) => ({ cardTerminal: { ...s.cardTerminal, ...config } })),

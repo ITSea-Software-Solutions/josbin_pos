@@ -188,6 +188,100 @@ ipcMain.handle('print:cashDrawer', async (_event, data: {
   }
 })
 
+
+// ─── Printer bridge: share this PC's USB printer on TCP 9100 ─────────────────
+// A USB receipt printer is the private property of one Windows machine; real
+// stores with Android tills need it on the NETWORK. This bridge makes the
+// Windows till behave like a printer's own LAN card: listen on 9100, take
+// each connection's bytes as one job, forward RAW to the local spooler.
+// Jobs are serialized — two tills printing in the same second queue up
+// instead of interleaving bytes on the printer.
+
+let shareServer: net.Server | null = null
+let sharePrinterName = ''
+let shareQueue: Promise<void> = Promise.resolve()
+
+function lanAddresses(): string[] {
+  const os = require('os')
+  const out: string[] = []
+  const ifs = os.networkInterfaces()
+  for (const name of Object.keys(ifs)) {
+    for (const addr of ifs[name] ?? []) {
+      if (addr.family === 'IPv4' && !addr.internal) out.push(addr.address)
+    }
+  }
+  return out
+}
+
+function startPrinterShare(printerName: string): Promise<{ success: boolean; ips?: string[]; error?: string }> {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32') {
+      return resolve({ success: false, error: 'Printer sharing runs on the Windows app only' })
+    }
+    sharePrinterName = printerName
+    if (shareServer) {
+      // Already listening — just retarget the printer name.
+      return resolve({ success: true, ips: lanAddresses() })
+    }
+
+    const server = net.createServer((socket) => {
+      const chunks: Buffer[] = []
+      // A till's print job is one short-lived connection (connect → write →
+      // end). Guard with an idle timeout so a wedged client can't hold a job
+      // slot open forever.
+      socket.setTimeout(5000, () => socket.destroy())
+      socket.on('data', (c) => { chunks.push(c) })
+      socket.on('error', () => { /* client vanished — drop the partial job */ })
+      socket.on('end', () => {
+        const job = Buffer.concat(chunks)
+        if (job.length === 0) return
+        shareQueue = shareQueue
+          .then(() => usbPrint(sharePrinterName, job))
+          .catch((err) => console.error('[printer-share] job failed:', err))
+      })
+    })
+
+    server.on('error', (err) => {
+      console.error('[printer-share] listener error:', err)
+      shareServer = null
+      resolve({ success: false, error: String(err) })
+    })
+
+    server.listen(9100, '0.0.0.0', () => {
+      shareServer = server
+      console.log('[printer-share] listening on 9100 →', printerName)
+      resolve({ success: true, ips: lanAddresses() })
+    })
+  })
+}
+
+function stopPrinterShare(): void {
+  if (shareServer) {
+    shareServer.close()
+    shareServer = null
+    console.log('[printer-share] stopped')
+  }
+}
+
+ipcMain.handle('printerShare:start', async (_event, data: { printerName: string }) => {
+  return startPrinterShare(data.printerName)
+})
+
+ipcMain.handle('printerShare:stop', async () => {
+  stopPrinterShare()
+  return { success: true }
+})
+
+ipcMain.handle('printerShare:status', async () => {
+  return {
+    running: shareServer !== null,
+    printerName: sharePrinterName,
+    ips: lanAddresses(),
+  }
+})
+
+app.on('before-quit', () => stopPrinterShare())
+
 // ─── IPC: List printers ────────────────────────────────────────────────────────
 
 ipcMain.handle('printers:list', async () => {
