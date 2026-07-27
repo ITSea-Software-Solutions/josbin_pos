@@ -345,6 +345,25 @@ Per USB aangeleverd of download van je distributieserver. Bestand: `Josbin POS-1
 
 > **Verkeerd serveradres na installatie?** Geen nieuwe build nodig: tik op het inlogscherm op **⚙ Server**, voer het adres van de winkelserver in (bijv. `192.168.0.250:8080` — `http://` en `/api` worden automatisch toegevoegd), druk op **Testen** tot er *Verbonden* staat en dan **Opslaan & herstarten**. Managers vinden dezelfde optie onder Instellingen → Systeem.
 
+
+::: tip Download kapot aangekomen? ("integriteitscontrole mislukt")
+Grote installers over een trage lijn komen soms onvolledig aan — de
+installer (of later de uninstaller) meldt dan een mislukte
+integriteitscontrole. Elk bestand op de downloadpagina heeft een
+bijbehorend `.sha256`-bestand. Controleer op Windows met:
+
+```
+certutil -hashfile "Josbin-POS-Setup.exe" SHA256
+```
+
+De uitvoer moet gelijk zijn aan de inhoud van het `.sha256`-bestand —
+zo niet, download opnieuw. En bij een upgrade: **nooit eerst
+de-installeren** — de nieuwere installer vervangt de oude versie
+vanzelf. Blokkeert een kapotte oude installatie de upgrade, verwijder
+dan de map `%LOCALAPPDATA%\Programs\Josbin POS` en start de nieuwe
+installer opnieuw.
+:::
+
 ### E2. Installeer op de terminal
 
 Windows: dubbelklik op `.exe`. De wizard installeert naar `C:\Program Files\Josbin POS\`. Maakt een desktop-shortcut.

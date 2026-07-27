@@ -344,6 +344,24 @@ Two things to expect on a demo build:
 > press **Test** until it shows *Connected*, then **Save & restart**.
 > Managers find the same control under Settings → System.
 
+
+::: tip Download arrived broken? ("integrity check failed")
+Large installers over a slow line sometimes arrive incomplete — the
+installer (or later its uninstaller) then reports a failed integrity
+check. Every file on the download page has a matching `.sha256` file.
+Verify on Windows with:
+
+```
+certutil -hashfile "Josbin-POS-Setup.exe" SHA256
+```
+
+The output must equal the contents of the `.sha256` file — if not,
+download again. And when upgrading: **never uninstall first** — running
+the newer installer replaces the old version in place. If a corrupted
+old install blocks the upgrade, delete the folder
+`%LOCALAPPDATA%\Programs\Josbin POS` and run the new installer again.
+:::
+
 ### E2. Install on the terminal
 
 Windows: double-click `.exe`. Wizard installs to `C:\Program Files\Josbin POS\`. Creates a desktop shortcut.
