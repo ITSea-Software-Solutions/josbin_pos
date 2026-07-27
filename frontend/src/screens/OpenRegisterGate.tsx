@@ -214,13 +214,24 @@ export default function OpenRegisterGate() {
     }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg) } } @keyframes fadeUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:translateY(0) } }`}</style>
 
-      <button
-        onClick={() => logout()}
-        data-testid="gate-logout"
-        style={{ position: 'absolute', top: 18, right: 20, padding: '8px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.65)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-      >
-        ⎋ {isNl ? 'Uitloggen' : 'Log out'}
-      </button>
+      <div style={{ position: 'absolute', top: 18, right: 20, display: 'flex', gap: 8 }}>
+        <button
+          onClick={() => logout()}
+          data-testid="gate-logout"
+          style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.65)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+        >
+          ⎋ {isNl ? 'Uitloggen' : 'Log out'}
+        </button>
+        {Boolean((window as any).josbin_pos?.quit) && (
+          <button
+            onClick={() => (window as any).josbin_pos.quit()}
+            data-testid="gate-exit-app"
+            style={{ padding: '8px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,.14)', background: 'rgba(255,255,255,.05)', color: 'rgba(255,255,255,.65)', fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            ⏻ {isNl ? 'Afsluiten' : 'Exit'}
+          </button>
+        )}
+      </div>
 
       {/* Card */}
       <div style={{

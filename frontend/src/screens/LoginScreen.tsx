@@ -605,6 +605,20 @@ export default function LoginScreen() {
               }}>
               ⚙ Server
             </button>
+            {/* Production runs fullscreen + frameless — without this there
+                is NO way to exit the app on a till (installer upgrades
+                block on the running process). Electron only. */}
+            {Boolean((window as any).josbin_pos?.quit) && (
+              <button
+                onClick={() => (window as any).josbin_pos.quit()}
+                data-testid="btn-exit-app"
+                style={{
+                  fontSize: 11.5, color: 'rgba(148,163,184,0.75)', fontWeight: 600,
+                  background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                }}>
+                ⏻ {isNl ? 'Afsluiten' : 'Exit'}
+              </button>
+            )}
           </div>
           <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.3)', letterSpacing: '0.3px' }}>
             Josbin POS v1.0 &nbsp;·&nbsp; © 2026

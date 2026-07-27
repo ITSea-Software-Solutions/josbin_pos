@@ -359,7 +359,9 @@ certutil -hashfile "Josbin-POS-Setup.exe" SHA256
 De uitvoer moet gelijk zijn aan de inhoud van het `.sha256`-bestand —
 zo niet, download opnieuw. En bij een upgrade: **nooit eerst
 de-installeren** — de nieuwere installer vervangt de oude versie
-vanzelf. Blokkeert een kapotte oude installatie de upgrade, verwijder
+vanzelf. Sluit eerst de app (⏻ Afsluiten op het inlogscherm; of
+Taakbeheer → "Josbin POS" beëindigen als een oude versie nog geen
+Afsluiten-knop heeft). Blokkeert een kapotte oude installatie de upgrade, verwijder
 dan de map `%LOCALAPPDATA%\Programs\Josbin POS` en start de nieuwe
 installer opnieuw.
 :::

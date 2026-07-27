@@ -357,7 +357,9 @@ certutil -hashfile "Josbin-POS-Setup.exe" SHA256
 
 The output must equal the contents of the `.sha256` file — if not,
 download again. And when upgrading: **never uninstall first** — running
-the newer installer replaces the old version in place. If a corrupted
+the newer installer replaces the old version in place. Close the app
+first (⏻ Exit on the login screen; or Task Manager → end "Josbin POS"
+if an old version has no Exit button). If a corrupted
 old install blocks the upgrade, delete the folder
 `%LOCALAPPDATA%\Programs\Josbin POS` and run the new installer again.
 :::
