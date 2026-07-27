@@ -370,6 +370,15 @@ Windows: double-click `.exe`. Wizard installs to `C:\Program Files\Josbin POS\`.
 
 Android: enable "Install from unknown sources" for the file manager once, then tap the `.apk`.
 
+
+::: warning Windows tills: tame Windows Update (do this on every till)
+Windows will happily reboot a till mid-business-day for updates. On every
+Windows till, once: **Settings → Windows Update → Active hours** → set to
+the store's opening hours (e.g. 07:00–22:00). Updates then install
+outside those hours. For 24-hour operations, pick the quietest window and
+brief the night shift that the till may restart then.
+:::
+
 ### E3. Point the till at its server
 
 **One installer works for every store.** The address baked into the build is

@@ -372,6 +372,16 @@ Windows: dubbelklik op `.exe`. De wizard installeert naar `C:\Program Files\Josb
 
 Android: zet "Installeren uit onbekende bronnen" eenmalig aan voor de bestandsbeheerder, tik dan op de `.apk`.
 
+
+::: warning Windows-kassa's: tem Windows Update (op elke kassa doen)
+Windows herstart een kassa gerust midden op de werkdag voor updates. Op
+elke Windows-kassa, eenmalig: **Instellingen → Windows Update →
+Gebruikstijden** → zet op de openingstijden van de winkel (bijv.
+07:00–22:00). Updates installeren dan buiten die uren. Draait de zaak
+24 uur, kies het rustigste venster en licht de nachtploeg in dat de
+kassa dan kan herstarten.
+:::
+
 ### E3. De kassa naar zijn server wijzen
 
 **Eén installer werkt voor elke winkel.** Het adres dat in de build zit is
