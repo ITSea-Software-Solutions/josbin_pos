@@ -212,3 +212,38 @@ describe('escpos — BTW rate label from items', () => {
     expect(text).not.toContain('10.00%')
   })
 })
+
+describe('escpos — cash drawer rides the receipt', () => {
+  // The drawer hangs off the printer, so a pulse is a print job. Sent as a
+  // SECOND job next to the receipt it races it and the printer drops one —
+  // which is exactly what happened when receipts started printing
+  // automatically: paper came out, drawer stayed shut. One job, ordered by
+  // the printer itself, is the only arrangement that cannot race.
+  const PULSE_PIN1 = [0x1b, 0x70, 0x00, 0x19, 0xfa]
+  const PULSE_PIN2 = [0x1b, 0x70, 0x01, 0x19, 0xfa]
+
+  const contains = (hay: Uint8Array, needle: number[]) => {
+    outer: for (let i = 0; i <= hay.length - needle.length; i++) {
+      for (let j = 0; j < needle.length; j++) if (hay[i + j] !== needle[j]) continue outer
+      return i
+    }
+    return -1
+  }
+
+  it('emits no drawer pulse unless asked', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    expect(contains(bytes, PULSE_PIN1)).toBe(-1)
+    expect(contains(bytes, PULSE_PIN2)).toBe(-1)
+  })
+
+  it('emits the pulse for the configured pin', () => {
+    expect(contains(buildReceiptBytes({ ...makeReceiptOptions(), openDrawer: 1 }), PULSE_PIN1)).toBeGreaterThan(-1)
+    expect(contains(buildReceiptBytes({ ...makeReceiptOptions(), openDrawer: 2 }), PULSE_PIN2)).toBeGreaterThan(-1)
+  })
+
+  it('puts the pulse near the front so the drawer springs as printing starts', () => {
+    const bytes = buildReceiptBytes({ ...makeReceiptOptions(), openDrawer: 1 })
+    // Right after INIT — well before the store name, let alone the total.
+    expect(contains(bytes, PULSE_PIN1)).toBeLessThan(12)
+  })
+})

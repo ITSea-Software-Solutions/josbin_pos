@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 240" width="300" height="240" role="img" aria-label="Josbin">
+  <title>Josbin</title>
+  <!--
+    Josbin mark — a dot, a tall stem, and three bowls on a common baseline,
+    each bowl with a counter punched through it.
+
+    Flat vector so it stays crisp from a 48px launcher icon up to print.
+    Counters are cut with a mask rather than painted white, so the mark sits
+    correctly on any background — dark launcher, white receipt, navy header.
+  -->
+  <defs>
+    <mask id="josbin-counters">
+      <rect width="300" height="240" fill="#fff"/>
+      <ellipse cx="49"  cy="162" rx="16" ry="23" fill="#000"/>
+      <ellipse cx="167" cy="164" rx="16" ry="22" fill="#000"/>
+      <ellipse cx="247" cy="162" rx="19" ry="24" fill="#000"/>
+    </mask>
+  </defs>
+
+  <g fill="#EF6C00" mask="url(#josbin-counters)">
+    <!-- dot over the first bowl -->
+    <ellipse cx="49" cy="42" rx="27" ry="30"/>
+    <rect x="21" y="92" width="56" height="128" rx="26"/>
+
+    <!-- the tall stem -->
+    <rect x="97" y="12" width="44" height="208" rx="5"/>
+
+    <!-- bowl hanging off the stem -->
+    <rect x="139" y="100" width="56" height="120" rx="26"/>
+
+    <!-- closing bowl -->
+    <rect x="217" y="92" width="60" height="128" rx="28"/>
+  </g>
+</svg>

@@ -34,6 +34,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const qc = useQueryClient()
 
   const printer = useSettingsStore((s) => s.printer)
+  const autoPrintReceipt = useSettingsStore((s) => s.autoPrintReceipt)
   const cardTerminal = useSettingsStore((s) => s.cardTerminal)
 
   const [step, setStep] = useState<Step>('method')
@@ -121,6 +122,18 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
     }
     if (!isOpen) {
       saleRefRef.current = ''
+      // Back to the method chooser, with the money fields empty.
+      //
+      // These two go together: the amount was only cleared by the Cash and
+      // Mixed buttons on the chooser, and `step` was never reset — so after
+      // a cash sale the modal reopened straight into the cash step, skipped
+      // the chooser, and presented the PREVIOUS customer's tendered amount
+      // already typed in. One tap on Complete then paid out change computed
+      // from someone else's banknote.
+      setStep('method')
+      setCashInput('')
+      setCardAmount('')
+      setRetrying(false)
       // Wipe recon scratch so the next sale doesn't inherit yesterday's bank.
       setCardBank(''); setCardBankCustom(''); setCardApproval(''); setCardTerminalRef(''); setCardLastFour('')
       setTerminalStatus('idle')
@@ -180,8 +193,12 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       const tendered = step === 'cash' ? cashTendered : step === 'mixed' ? mixedCashAmt : 0
       const chg = step === 'cash' ? change : step === 'mixed' ? Math.max(0, mixedCashAmt - cardAmt) : 0
 
-      // Auto-open cash drawer on cash or mixed payment
-      if ((step === 'cash' || step === 'mixed') && printer.type !== 'none') {
+      // Open the cash drawer on cash or mixed — but ONLY when no receipt is
+      // about to print. When auto-print is on, the receipt carries the drawer
+      // pulse in its own byte stream (see EscPosReceiptOptions.openDrawer);
+      // sending a second job here races the receipt and the printer drops one
+      // of them, which left the drawer shut while the paper came out fine.
+      if ((step === 'cash' || step === 'mixed') && printer.type !== 'none' && !autoPrintReceipt) {
         openCashDrawer(printer).catch(() => {
           // Drawer failure is non-fatal — sale is already recorded
         })

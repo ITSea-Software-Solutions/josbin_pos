@@ -76,6 +76,9 @@ export default function ReceiptModal({
     onError:   () => setEmailStatus('error'),
   })
 
+  // Which sale has already had its drawer kicked, so a reprint doesn't.
+  const drawerDoneFor = useRef<string | null>(null)
+
   const handleEscPosPrint = useCallback(async () => {
     if (!sale || !store) return
     setPrintStatus('printing')
@@ -121,7 +124,14 @@ export default function ReceiptModal({
         },
         locale,
         paperWidth: printer.paperWidth ?? 80,
+        // Ride the drawer pulse along with the receipt instead of sending it
+        // as a competing job — but only on the FIRST print of a cash sale.
+        // A reprint an hour later must not pop the drawer again.
+        openDrawer: drawerDoneFor.current !== saleId && (sale.payment_method === 'cash' || sale.payment_method === 'mixed')
+          ? (printer.drawerPin ?? 1)
+          : undefined,
       })
+      drawerDoneFor.current = saleId
 
       const result = await printEscPos(bytes, printer)
       setPrintStatus(result.success ? 'ok' : 'error')

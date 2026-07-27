@@ -43,11 +43,14 @@ via het netwerk.**
 
 Drie gevolgen van dit plaatje:
 
-1. **De bonprinter moet op het netwerk zitten.** USB-printen bestaat niet op
-   Android — de app biedt het bewust niet aan. Printers zoals de Posiflex
-   PP-9000 hebben een verwisselbare LAN-interfacemodule; daarmee (of met
-   elke Ethernet/wifi-ESC/POS-printer) werken bonnen en de geldlade precies
-   zoals op Windows.
+1. **De bonprinter gaat op het netwerk — of rechtstreeks in de terminal.**
+   Vanaf 1.4.1 kan een USB-printer direct op de terminal worden aangesloten
+   en eenmalig gekoppeld (§15.9), wat past bij een winkel met één kassa.
+   Delen **meerdere kassa's één printer**, dan moet die op het netwerk:
+   printers zoals de Posiflex PP-9000 hebben een verwisselbare
+   LAN-interfacemodule; daarmee (of met elke Ethernet/wifi-ESC/POS-printer)
+   werken bonnen en de geldlade precies zoals op Windows. Een USB-printer
+   hoort bij één apparaat.
 2. **De geldlade zit nooit aan de terminal.** De RJ11-kabel gaat in de
    **printer**; de app opent de lade met een puls *via* de printer. Geen
    werkende printer → geen lade, op elk platform.
@@ -250,6 +253,10 @@ USB-poorten van de terminal; ze zitten elkaar niet in de weg. De scanner
 hoeft helemaal niet gekoppeld te worden: hij gedraagt zich als een
 toetsenbord en wordt overal op het verkoopscherm gelezen, ook direct na het
 aantikken van een product in het raster.
+
+**Zelf de APK bouwen** — gereedschap, stap-voor-stap commando's, hoe u
+controleert of een build uw wijziging écht bevat, en een release
+publiceren: [hoofdstuk 13](/nl/docs/13-dev-workflow).
 
 **Waar de rest staat:** korte installatiestappen in de
 [installatiegids §E5](/nl/docs/00-installation-and-setup), welke

@@ -1,7 +1,7 @@
 {
   "name": "josbin_pos-frontend",
-  "version": "1.4.3",
-  "description": "Josbin POS \u2014 Electron POS & Admin Dashboard",
+  "version": "1.4.4",
+  "description": "Josbin POS — Electron POS & Admin Dashboard",
   "main": "dist-electron/main.js",
   "author": "Josbin POS Development Team",
   "license": "UNLICENSED",
@@ -73,7 +73,7 @@
   "build": {
     "appId": "sr.josbin_pos.pos",
     "productName": "Josbin POS",
-    "copyright": "Copyright \u00a9 2025 Josbin POS",
+    "copyright": "Copyright © 2025 Josbin POS",
     "win": {
       "target": "nsis",
       "icon": "build/icon.png"

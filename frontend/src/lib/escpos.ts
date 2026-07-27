@@ -240,6 +240,18 @@ export interface EscPosReceiptOptions {
   locale: 'nl' | 'en'
   /** 58 = 32 chars/line (compact printers), 80 = 42 chars/line. Default 80. */
   paperWidth?: PaperWidth
+  /**
+   * Kick the cash drawer as part of THIS receipt, on the given pin.
+   *
+   * The drawer hangs off the printer, so a drawer pulse is a print job. Sent
+   * as a second, separate job alongside the receipt it races it — the printer
+   * gets two jobs milliseconds apart and one of them is dropped. That is
+   * exactly what happened when receipts began printing automatically: the
+   * paper came out and the drawer stayed shut. Emitting the pulse at the head
+   * of the receipt stream makes it one job the printer sequences itself, so
+   * the drawer opens as the receipt starts printing.
+   */
+  openDrawer?: 1 | 2
 }
 
 const TRANSLATIONS = {
@@ -331,6 +343,12 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   const b   = new EscPosBuilder(CHARS_PER_LINE[opts.paperWidth ?? 80])
 
   b.cmd(CMD.INIT)
+
+  // Drawer first: it should spring the moment the cashier takes the money,
+  // not after the paper has finished feeding.
+  if (opts.openDrawer) {
+    b.cmd(opts.openDrawer === 2 ? CMD.CASH_DRAWER_2 : CMD.CASH_DRAWER_1)
+  }
 
   // ── Header ─────────────────────────────────────────────────────────────────
   b.cmd(CMD.ALIGN_CENTER).cmd(CMD.BOLD_ON).cmd(CMD.FONT_LARGE)

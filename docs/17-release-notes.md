@@ -11,7 +11,21 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.4.3 — 27 July 2026 *(current)*
+## 1.4.4 — 27 July 2026 *(current)*
+
+- **The cash drawer opens again on cash sales.** Making receipts print
+  automatically (1.4.2) meant the till sent the drawer pulse and the receipt
+  to the printer at almost the same moment, and the printer dropped one of
+  them — paper came out, drawer stayed shut. The drawer signal now travels
+  inside the receipt itself, so the printer handles them in order and the
+  drawer springs as printing starts. A later reprint no longer re-opens it.
+- **The payment screen starts clean on every sale.** The amount received
+  from the previous customer stayed on screen, because the payment window
+  reopened on the cash step instead of the method list. One tap on Complete
+  could pay out change calculated from someone else's banknote.
+- **The Josbin mark is now the app icon** on Windows and Android.
+
+## 1.4.3 — 27 July 2026
 
 Printed-receipt fixes, from a real roll of paper.
 

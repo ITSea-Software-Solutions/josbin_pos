@@ -43,11 +43,14 @@ happens over the network.**
 
 Three consequences follow from this picture:
 
-1. **The receipt printer must be network-attached.** USB printing does not
-   exist on Android — the app deliberately doesn't offer it. Printers like
-   the Posiflex PP-9000 take a swap-in LAN interface module; with that
-   fitted (or any Ethernet/Wi-Fi ESC/POS printer), receipts and the cash
-   drawer behave exactly as on Windows.
+1. **The receipt printer goes on the network — or straight into the
+   terminal.** Since 1.4.1 a USB printer can plug directly into the
+   terminal and be paired once (§15.9), which suits a single-till shop.
+   For **several tills sharing one printer** it must be network-attached:
+   printers like the Posiflex PP-9000 take a swap-in LAN interface module,
+   and with that fitted (or any Ethernet/Wi-Fi ESC/POS printer) receipts
+   and the cash drawer behave exactly as on Windows. A USB printer belongs
+   to one device only.
 2. **The cash drawer never connects to the terminal.** Its RJ11 cable goes
    into the **printer**; the app opens it by sending a pulse *through* the
    printer. No working printer → no drawer, on every platform.
@@ -242,6 +245,10 @@ terminal's USB ports at the same time; they do not conflict. The scanner
 needs no pairing at all: it behaves as a keyboard and is read wherever you
 are on the sales screen, including straight after tapping a product on the
 grid.
+
+**Building the APK yourself** — toolchain, step-by-step commands, how to
+verify a build really contains your change, and publishing a release:
+[chapter 13](/docs/13-dev-workflow).
 
 **Where the rest lives:** quick install steps in the
 [install guide §E5](/docs/00-installation-and-setup#e5-android-terminals-posiflex-rt-series-tablets),

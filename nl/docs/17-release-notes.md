@@ -11,7 +11,21 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.4.3 — 27 juli 2026 *(actueel)*
+## 1.4.4 — 27 juli 2026 *(actueel)*
+
+- **De geldlade gaat weer open bij contante verkopen.** Doordat bonnen
+  vanaf 1.4.2 automatisch printen, stuurde de kassa het ladesignaal en de
+  bon vrijwel gelijktijdig naar de printer, waarna de printer er één liet
+  vallen — de bon kwam eruit, de lade bleef dicht. Het ladesignaal reist nu
+  mee ín de bon, dus de printer handelt ze op volgorde af en de lade springt
+  open zodra het printen begint. Een latere herdruk opent de lade niet meer.
+- **Het betaalscherm begint schoon bij elke verkoop.** Het ontvangen bedrag
+  van de vorige klant bleef staan, omdat het betaalvenster opnieuw opende op
+  de contant-stap in plaats van de methodelijst. Eén tik op Voltooien kon
+  wisselgeld uitbetalen dat op andermans biljet was berekend.
+- **Het Josbin-beeldmerk is nu het app-icoon** op Windows en Android.
+
+## 1.4.3 — 27 juli 2026
 
 Verbeteringen aan de geprinte bon, getest op echt bonpapier.
 
