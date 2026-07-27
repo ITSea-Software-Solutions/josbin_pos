@@ -8,6 +8,7 @@ import { buildReceiptBytes } from '@/lib/escpos'
 import { buildReceiptText, buildWhatsAppLink } from '@/lib/receiptText'
 import { printEscPos } from '@/lib/hardware'
 import { useSettingsStore } from '@/store/settingsStore'
+import { formatDateTime } from '@/utils/date'
 import apiClient from '@/api/client'
 import type { Store } from '@/types/models'
 
@@ -28,6 +29,7 @@ export default function ReceiptModal({
   const printer       = useSettingsStore((s) => s.printer)
   const storeId       = useSettingsStore((s) => s.storeId)
   const autoPrint     = useSettingsStore((s) => s.autoPrintReceipt)
+  const dateFormat    = useSettingsStore((s) => s.dateFormat)
   // Thermal (ESC/POS) configured → print silently through it. Otherwise the
   // Print button falls back to the OS print dialog (receipt PDF in a hidden
   // iframe) — works with any printer installed on the machine.
@@ -82,8 +84,12 @@ export default function ReceiptModal({
       const bytes = buildReceiptBytes({
         sale: {
           sale_number:       sale.sale_number,
-          occurred_at:       sale.occurred_at,
-          cashier_name:      sale.cashier_id, // name resolved server-side, fallback to id
+          // A raw ISO timestamp is not something to hand a customer, and
+          // Suriname reads dates day-first. GET /sales/{id} loads the cashier
+          // relation — the previous build printed the raw cashier UUID here
+          // under a comment claiming the name was resolved server-side.
+          occurred_at:       formatDateTime(sale.occurred_at, dateFormat, locale),
+          cashier_name:      sale.cashier?.name ?? '—',
           customer_name:     sale.customer?.name,
           payment_method:    sale.payment_method,
           payment_provider:  sale.payment_provider ?? undefined,

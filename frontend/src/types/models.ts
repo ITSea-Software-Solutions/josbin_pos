@@ -114,6 +114,8 @@ export interface Sale {
   id: string
   store_id: string
   cashier_id: string
+  /** Loaded by GET /sales/{id}. The receipt prints this name — never the id. */
+  cashier?: { id: string; name: string }
   customer_id: string | null
   customer?: Customer
   sale_number: string

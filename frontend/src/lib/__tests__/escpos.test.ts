@@ -179,14 +179,36 @@ describe('escpos — BTW rate label from items', () => {
     expect(text).toContain('BTW 10%')
   })
 
-  it('mixed rates fall back to a plain BTW label (no wrong percentage)', () => {
+  it('mixed rates are itemised per rate, each with its own amount', () => {
+    // Previously a mixed-rate sale printed one unlabelled "BTW" line,
+    // because a single percentage would have misrepresented the basket.
+    // Showing every rate with its own amount states the truth instead of
+    // withholding it — and the customer can check the sum themselves.
     const opts = makeReceiptOptions()
     opts.sale.items = [
-      { ...opts.sale.items[0] },
-      { ...opts.sale.items[0], product_name: 'Melk', btw_rate: '5.00' },
+      { ...opts.sale.items[0], line_total_srd: '110.00', btw_rate: '10.00' },
+      { ...opts.sale.items[0], product_name: 'Melk', line_total_srd: '105.00', btw_rate: '5.00' },
     ]
     const text = bytesToLatin1(buildReceiptBytes(opts))
+
+    expect(text).toContain('BTW 5%')
+    expect(text).toContain('BTW 10%')
+    // Prices include BTW: 110 @10% → 10.00, 105 @5% → 5.00.
+    expect(text).toContain('SRD 10.00')
+    expect(text).toContain('SRD 5.00')
+  })
+
+  it('never prints a rate percentage the basket does not contain', () => {
+    const opts = makeReceiptOptions()
+    opts.sale.items = [{ ...opts.sale.items[0], btw_rate: '8.00' }]
+    const text = bytesToLatin1(buildReceiptBytes(opts))
+    expect(text).toContain('BTW 8%')
     expect(text).not.toContain('BTW 10%')
-    expect(text).not.toContain('BTW 5%')
+  })
+
+  it('drops the trailing zeros a decimal rate carries', () => {
+    // "10.00%" on paper is noise; "10%" is what a shopper reads.
+    const text = bytesToLatin1(buildReceiptBytes(makeReceiptOptions()))
+    expect(text).not.toContain('10.00%')
   })
 })

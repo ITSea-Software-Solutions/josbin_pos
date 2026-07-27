@@ -11,7 +11,29 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.4.2 — 27 July 2026 *(current)*
+## 1.4.3 — 27 July 2026 *(current)*
+
+Printed-receipt fixes, from a real roll of paper.
+
+- **The TOTAL no longer breaks across two lines.** It prints in double-width
+  type, but the app was laying it out at normal width, so the printer pushed
+  the amount onto the line below the word TOTAL. The one line a customer
+  checks is now a single clean line.
+- **The date is a Suriname date.** It printed the raw technical timestamp;
+  it now reads `27-07-2026 16:42`, in the date order the shop chose, and
+  always in Suriname time — even if the terminal's own clock is set to
+  another country.
+- **The cashier's name prints instead of an internal code.**
+- **Long product names wrap instead of being cut off**, so the customer can
+  read what they were charged for.
+- **BTW is stated once, not twice.** A single-rate sale shows one BTW line;
+  a mixed-rate basket lists each rate with its own amount.
+- **Amounts line up.** Item prices and totals both read `SRD 12.34`, right
+  aligned in one column, and rates print as `10%` rather than `10.00%`.
+- **Narrow 58 mm rolls hold their layout** — a long customer name moves to
+  its own line instead of chopping the label next to it.
+
+## 1.4.2 — 27 July 2026
 
 - **The USB printer setting now stays selected on Android terminals.** A
   leftover rule from when USB printing was Windows-only quietly switched

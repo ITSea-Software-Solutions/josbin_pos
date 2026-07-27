@@ -83,9 +83,19 @@ export const CHARS_PER_LINE: Record<PaperWidth, number> = { 58: 32, 80: 42 }
 
 class EscPosBuilder {
   private buf: number[] = []
+  /** How wide the current font is relative to the normal one. */
+  private scale = 1
   constructor(private readonly width: number = 42) {}
 
   cmd(bytes: number[]): this {
+    // Watch for font changes here rather than asking every call site to
+    // remember: the column maths silently breaks the moment a caller selects
+    // a font and the builder keeps padding to the normal width.
+    if (bytes.length === 3 && bytes[0] === ESC && bytes[1] === 0x21) {
+      if (bytes[2] === 0x30) this.scale = 2         // double width + height
+      else if (bytes[2] === 0x01) this.scale = 0.75 // font B, ~1/3 more chars
+      else this.scale = 1
+    }
     this.buf.push(...bytes)
     return this
   }
@@ -104,28 +114,76 @@ class EscPosBuilder {
     return this.cmd([LF])
   }
 
-  dashes(char = '-', width = this.width): this {
+  /**
+   * Columns available RIGHT NOW, which is not the paper's column count.
+   *
+   * Double-width characters are twice as wide, so a 42-column roll fits only
+   * 21 of them. Padding a double-width line to 42 makes the printer wrap it
+   * onto a second line — which is exactly what used to happen to the TOTAL,
+   * the one line on the receipt a customer actually checks. Font B (small)
+   * is narrower and fits about a third more.
+   */
+  private effWidth(): number {
+    return Math.floor(this.width / this.scale)
+  }
+
+  dashes(char = '-', width = this.effWidth()): this {
     return this.line(char.repeat(width))
   }
 
-  // Left text + right-aligned value in fixed width
-  twoCol(left: string, right: string, width = this.width): this {
+  /**
+   * Left label + right-aligned value.
+   *
+   * When the pair is too wide — a long customer name on a 58mm roll — the
+   * value drops to its own right-aligned line instead of the LABEL being
+   * truncated. Chopping the label produced rows like "Custome  Ministerie
+   * van Financien", which reads as a typo on a document a customer keeps.
+   */
+  twoCol(left: string, right: string, width = this.effWidth()): this {
     const pad = width - left.length - right.length
-    if (pad < 1) {
-      return this.line(left.substring(0, width - right.length - 1) + ' ' + right)
-    }
-    return this.line(left + ' '.repeat(pad) + right)
+    if (pad >= 1) return this.line(left + ' '.repeat(pad) + right)
+    this.line(left)
+    return this.line(right.substring(0, width).padStart(width))
   }
 
-  // Three column: qty | description | price
-  threeCol(qty: string, desc: string, price: string, width = this.width): this {
-    const qtyW  = 5
-    const priceW = 10
-    const descW = width - qtyW - priceW
+  /**
+   * Item row: qty | description | amount.
+   *
+   * A description too long for its column WRAPS onto indented continuation
+   * lines rather than being cut off. Chopping "Chicken Breast (1 kg) (10%)"
+   * mid-word saves a line and costs the customer the ability to check what
+   * they were charged for.
+   */
+  threeCol(qty: string, desc: string, price: string, width = this.effWidth()): this {
+    const qtyW   = 5
+    const priceW = 11
+    const descW  = width - qtyW - priceW
     const qtyStr   = qty.substring(0, qtyW).padEnd(qtyW)
     const priceStr = price.substring(0, priceW).padStart(priceW)
-    const descStr  = desc.substring(0, descW).padEnd(descW)
-    return this.line(qtyStr + descStr + priceStr)
+
+    const words = desc.split(' ')
+    const rows: string[] = []
+    let cur = ''
+    for (const w of words) {
+      // A single word longer than the column is hard-split; nothing else fits.
+      if (w.length > descW) {
+        if (cur) { rows.push(cur); cur = '' }
+        for (let i = 0; i < w.length; i += descW) rows.push(w.substring(i, i + descW))
+        continue
+      }
+      if (!cur) cur = w
+      else if (cur.length + 1 + w.length <= descW) cur += ' ' + w
+      else { rows.push(cur); cur = w }
+    }
+    if (cur) rows.push(cur)
+    if (!rows.length) rows.push('')
+
+    // The amount belongs on the first row, beside the start of the name.
+    this.line(qtyStr + rows[0].padEnd(descW) + priceStr)
+    for (const extra of rows.slice(1)) {
+      this.line(' '.repeat(qtyW) + extra.padEnd(descW) + ' '.repeat(priceW))
+    }
+    return this
   }
 
   build(): Uint8Array {
@@ -259,6 +317,14 @@ const TRANSLATIONS = {
  * Build a complete ESC/POS receipt byte array from sale data.
  * Returns Uint8Array ready to send to the printer.
  */
+/**
+ * BTW rates arrive as decimals ("10.00", "8.50") because they are money-grade
+ * numbers in the database. On paper "10.00%" is noise — print 10% and 8.5%.
+ */
+function fmtRate(rate: string): string {
+  return String(parseFloat(rate))
+}
+
 export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   const t   = TRANSLATIONS[opts.locale]
   const { sale, store } = opts
@@ -297,14 +363,16 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
     const name = item.btw_exempt
       ? `${item.product_name} (${t.exempt})`
       : parseFloat(item.btw_rate) > 0
-        ? `${item.product_name} (${item.btw_rate}%)`
+        ? `${item.product_name} (${fmtRate(item.btw_rate)}%)`
         : item.product_name
-    const price = `SRD${item.line_total_srd}`
+    // Space after SRD, matching the totals block — "SRD32.00" next to
+    // "SRD 32.00" three lines down reads as two different currencies.
+    const price = `SRD ${item.line_total_srd}`
 
     b.threeCol(qty, name, price)
 
     if (parseFloat(item.discount_srd) > 0) {
-      b.threeCol('', `  - ${t.discount}`, `-${item.discount_srd}`)
+      b.threeCol('', `  - ${t.discount}`, `-SRD ${item.discount_srd}`)
     }
   }
 
@@ -316,9 +384,13 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
     b.twoCol(t.discount, `-SRD ${sale.discount_srd}`)
   }
 
+  // The amount due gets its own band: a rule above it and air below, so the
+  // eye lands on it instead of reading it as one more line in a column.
+  b.dashes()
   b.cmd(CMD.BOLD_ON).cmd(CMD.FONT_LARGE)
   b.twoCol(t.total, `SRD ${sale.total_srd}`)
   b.cmd(CMD.FONT_NORMAL).cmd(CMD.BOLD_OFF)
+  b.emptyLine()
 
   if (sale.payment_method === 'cash' || sale.payment_method === 'mixed') {
     if (sale.cash_tendered) b.twoCol(t.cash_tendered, `SRD ${sale.cash_tendered}`)
@@ -336,10 +408,25 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
         .filter((i) => !i.btw_exempt && parseFloat(i.btw_rate) > 0)
         .map((i) => parseFloat(i.btw_rate)),
     )]
-    const rateLabel = rates.length === 1 ? `${t.btw} ${rates[0]}%` : t.btw
-    b.cmd(CMD.BOLD_ON).line(t.btw_breakdown).cmd(CMD.BOLD_OFF)
-    b.twoCol(rateLabel, `SRD ${sale.btw_srd}`)
-    b.twoCol(t.total_btw, `SRD ${sale.btw_srd}`)
+    // One rate is the normal case — printing "BTW 10%  SRD 0.68" directly
+    // above "Total BTW  SRD 0.68" states the same number twice and looks
+    // like a mistake. Only break it out when rates actually differ.
+    if (rates.length === 1) {
+      b.twoCol(`${t.btw} ${rates[0]}%`, `SRD ${sale.btw_srd}`)
+    } else {
+      b.cmd(CMD.BOLD_ON).line(t.btw_breakdown).cmd(CMD.BOLD_OFF)
+      for (const rate of rates.sort((a, z) => a - z)) {
+        // Prices are BTW-inclusive, so the tax inside a line total is
+        // total × rate / (100 + rate) — the same extraction the BTW engine
+        // performs server-side. Line totals are already net of discounts,
+        // which is the order Suriname requires.
+        const amount = sale.items
+          .filter((i) => !i.btw_exempt && parseFloat(i.btw_rate) === rate)
+          .reduce((sum, i) => sum + (parseFloat(i.line_total_srd) * rate) / (100 + rate), 0)
+        b.twoCol(`  ${t.btw} ${rate}%`, `SRD ${amount.toFixed(2)}`)
+      }
+      b.twoCol(t.total_btw, `SRD ${sale.btw_srd}`)
+    }
     if (sale.btw_exempt_reason) b.line(`${t.btw_exempt}: ${sale.btw_exempt_reason}`)
     if (store.btw_number) b.line(`${t.btw_number}: ${store.btw_number}`)
     b.dashes()

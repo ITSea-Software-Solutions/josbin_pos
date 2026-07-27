@@ -11,7 +11,30 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.4.2 — 27 juli 2026 *(actueel)*
+## 1.4.3 — 27 juli 2026 *(actueel)*
+
+Verbeteringen aan de geprinte bon, getest op echt bonpapier.
+
+- **TOTAAL valt niet meer over twee regels.** Het wordt in dubbele breedte
+  geprint, maar de app rekende met de normale breedte, waardoor het bedrag
+  onder het woord TOTAAL belandde. De regel die de klant controleert is nu
+  één nette regel.
+- **De datum is een Surinaamse datum.** Voorheen stond er de ruwe technische
+  tijdcode; nu leest u `27-07-2026 16:42`, in de datumvolgorde die de winkel
+  heeft gekozen, en altijd in Surinaamse tijd — ook als de klok van de
+  terminal op een ander land staat.
+- **De naam van de kassamedewerker staat op de bon** in plaats van een
+  interne code.
+- **Lange productnamen lopen door op een volgende regel** in plaats van
+  afgekapt te worden.
+- **BTW staat er één keer, niet twee keer.** Bij één tarief één BTW-regel;
+  bij gemengde tarieven elk tarief met het eigen bedrag.
+- **Bedragen staan recht onder elkaar.** Artikelprijzen en totalen lezen
+  allebei `SRD 12,34`, en tarieven printen als `10%` in plaats van `10.00%`.
+- **Smalle 58 mm-rollen houden hun opmaak** — een lange klantnaam gaat naar
+  een eigen regel in plaats van het label ernaast af te kappen.
+
+## 1.4.2 — 27 juli 2026
 
 - **De USB-printerinstelling blijft nu staan op Android-terminals.** Een
   overgebleven regel uit de tijd dat USB-printen alleen op Windows werkte,
