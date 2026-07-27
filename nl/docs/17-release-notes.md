@@ -11,7 +11,15 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.3.2 — 27 juli 2026 *(actueel)*
+## 1.3.3 — 27 juli 2026 *(actueel)*
+
+- **Bijwerken loopt niet meer vast.** De installer sluit een draaiende
+  Josbin POS nu zelf af. Oudere versies vroegen u de app handmatig te
+  sluiten — onmogelijk op een kassa, waar de app schermvullend draait
+  zonder zichtbare sluitknop — en de update liep vast met *"Josbin POS
+  kan niet worden gesloten"*.
+
+## 1.3.2 — 27 juli 2026
 
 - **Bonprinten en de geldlade werken nu op Windows.** Er waren twee
   losse fouten: de app gebruikte een oud tekst-printcommando dat de

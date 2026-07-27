@@ -11,7 +11,15 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.3.2 — 27 July 2026 *(current)*
+## 1.3.3 — 27 July 2026 *(current)*
+
+- **Updating no longer gets stuck.** The installer now closes a running
+  Josbin POS by itself. Older versions asked you to close it manually —
+  impossible on a till, where the app runs fullscreen with no visible
+  close button — and the update dead-ended with *"Josbin POS cannot be
+  closed"*.
+
+## 1.3.2 — 27 July 2026
 
 - **Receipt printing and the cash drawer now work on Windows.** Two
   separate faults were fixed: the app used a legacy text-printing command
