@@ -1,0 +1,95 @@
+/* ── Printing the test plan ────────────────────────────────────────────────
+   Part B of the test plan is meant to leave the screen: printed, ticked by
+   hand, signed, filed. On paper the navigation, sidebar, search box and
+   edit-links are noise, and a checklist that breaks a section across two
+   sheets is a checklist someone loses half of. */
+
+@media print {
+  .VPNav,
+  .VPSidebar,
+  .VPLocalNav,
+  .VPFooter,
+  .VPDocFooter,
+  .VPDocAsideOutline,
+  .aside,
+  .VPBackdrop,
+  .DocSearch,
+  .VPSwitchAppearance {
+    display: none !important;
+  }
+
+  .VPDoc,
+  .VPContent,
+  .VPDoc .container,
+  .VPDoc .content,
+  .vp-doc {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 10.5pt;
+  }
+
+  /* Each lettered checklist section starts on a fresh sheet, and a heading
+     never prints alone at the foot of a page. */
+  .vp-doc h3 {
+    break-before: page;
+    break-after: avoid;
+  }
+  .vp-doc h1,
+  .vp-doc h2 {
+    break-after: avoid;
+  }
+  .vp-doc h2 + table,
+  .vp-doc h3 + table {
+    break-before: avoid;
+  }
+
+  /* A row split across a page break loses its tick box. */
+  .vp-doc tr,
+  .vp-doc blockquote,
+  .vp-doc .custom-block {
+    break-inside: avoid;
+  }
+
+  .vp-doc table {
+    width: 100% !important;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+  .vp-doc th,
+  .vp-doc td {
+    border: 1px solid #999 !important;
+    padding: 5px 7px !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+  .vp-doc th {
+    background: #eee !important;
+    text-align: left;
+  }
+
+  /* Tick boxes need to be big enough to tick with a pen. */
+  .vp-doc td:nth-child(4) {
+    font-size: 14pt;
+    text-align: center;
+    min-width: 34px;
+  }
+
+  /* Screen tables scroll sideways; paper cannot. */
+  .vp-doc div[class*='language-'],
+  .vp-doc table,
+  .vp-doc .table-wrapper {
+    overflow: visible !important;
+  }
+
+  .vp-doc a {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+}
