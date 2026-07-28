@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { passkeysSupported } from '@/lib/passkeys'
 import { useDashboardAuthStore } from '@/store/authStore'
 import ProcessBar from '@/components/ProcessBar'
+import JosbinMark from '@/components/JosbinMark'
 
 const STYLES = `
   @keyframes orb-a { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(60px,-80px) scale(1.1)} 70%{transform:translate(-40px,50px) scale(0.93)} }
@@ -128,18 +129,10 @@ export default function LoginScreen() {
       }}>
         {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 56 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16, flexShrink: 0,
-            background: 'linear-gradient(135deg,#003366,#1f2a63)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 10px 30px rgba(0,51,102,.55)',
-          }}>
-            <svg viewBox="0 0 28 28" fill="none" style={{ width: 28, height: 28 }}>
-              <rect x="3" y="3" width="10" height="10" rx="3" fill="white" fillOpacity=".9" />
-              <rect x="15" y="3" width="10" height="10" rx="3" fill="white" fillOpacity=".5" />
-              <rect x="3" y="15" width="10" height="10" rx="3" fill="white" fillOpacity=".5" />
-              <rect x="15" y="15" width="10" height="10" rx="3" fill="white" fillOpacity=".9" />
-            </svg>
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            {/* Unboxed and at brand scale — inside a 56px tile the wing's tail
+                detail is smaller than a pixel and the mark reads as a smudge. */}
+            <JosbinMark size={76} color="#EF6C00" title="Josbin" />
           </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 900, color: '#f8fafc', letterSpacing: '-0.5px', lineHeight: 1.1 }}>Josbin POS</div>

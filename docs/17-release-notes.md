@@ -11,7 +11,29 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.4.5 — 27 July 2026 *(current)*
+## 1.5.0 — 28 July 2026 *(current)*
+
+**New look.** The till and the dashboard now carry Josbin's own colours,
+taken from the company's website rather than approximated: the deep teal
+ground, the orange, and the navy. The till stays dark because a shop opens
+before sunrise and a white screen at that hour is a lamp; the office
+dashboard stays light. Both are the same product at a glance.
+
+- **The Josbin wing is now the app icon** on Windows and Android, the
+  browser icon on every page, and the mark on both sign-in screens. The
+  previous build carried the wrong logo entirely.
+- **A four-colour bar sits on each sign-in card** — cyan, magenta, yellow
+  and black, the inks a press lays down.
+- **A failed receipt now says why.** Instead of a red "print error" with no
+  explanation, the screen shows the actual message from Windows or from the
+  printer connection — for example that the printer could not be reached at
+  its address. That is the difference between a shop fixing it in a minute
+  and having to call.
+- **The receipt retries by itself.** The first sale of the day used to fail
+  when the printer had slept overnight; it now tries again three times over
+  about seven seconds before reporting a problem.
+
+## 1.4.5 — 27 July 2026
 
 - **The automatic receipt no longer fails on the first try.** The till was
   sending the cash-drawer signal and the receipt to the printer at the same

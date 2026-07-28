@@ -11,7 +11,30 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.4.5 — 27 juli 2026 *(actueel)*
+## 1.5.0 — 28 juli 2026 *(actueel)*
+
+**Nieuwe uitstraling.** De kassa en het dashboard dragen nu de eigen
+kleuren van Josbin, overgenomen van de website in plaats van benaderd: het
+diepe teal, het oranje en het marineblauw. De kassa blijft donker omdat een
+winkel voor zonsopgang opengaat en een wit scherm op dat uur een lamp is;
+het dashboard op kantoor blijft licht. Allebei in één oogopslag hetzelfde
+product.
+
+- **De Josbin-vleugel is nu het app-icoon** op Windows en Android, het
+  browsericoon op elke pagina en het beeldmerk op beide inlogschermen. De
+  vorige versie droeg een volledig verkeerd logo.
+- **Op elk inlogscherm staat een vierkleurenbalk** — cyaan, magenta, geel
+  en zwart, de inkten die een pers aanbrengt.
+- **Een mislukte bon vertelt nu waarom.** In plaats van een rode
+  "printfout" zonder uitleg toont het scherm de echte melding van Windows
+  of van de printerverbinding — bijvoorbeeld dat de printer op zijn adres
+  niet bereikbaar was. Dat scheelt tussen zelf oplossen in een minuut en
+  moeten bellen.
+- **De bon probeert het zelf opnieuw.** De eerste verkoop van de dag
+  mislukte wanneer de printer 's nachts had geslapen; hij probeert het nu
+  drie keer over ongeveer zeven seconden voordat hij een probleem meldt.
+
+## 1.4.5 — 27 juli 2026
 
 - **De automatische bon mislukt niet meer bij de eerste poging.** De kassa
   stuurde het geldladesignaal en de bon op hetzelfde moment naar de printer;

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import ServerConfigModal from '@/components/shared/ServerConfigModal'
 import { useAuthStore } from '@/store/authStore'
 import ProcessBar from '@/components/shared/ProcessBar'
+import JosbinMark from '@/components/shared/JosbinMark'
 
 // ─── Keyframe & global styles injected once ──────────────────────────────────
 const STYLES = `
@@ -276,21 +277,11 @@ export default function LoginScreen() {
       }}>
         {/* Logo mark */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
-          <div style={{
-            width: 52, height: 52,
-            background: 'linear-gradient(135deg, #003366, #00405C)',
-            borderRadius: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(0,51,102,0.5)',
-            flexShrink: 0,
-          }}>
-            {/* Abstract POS icon */}
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect x="3" y="3" width="10" height="10" rx="2.5" fill="white" fillOpacity="0.9"/>
-              <rect x="15" y="3" width="10" height="10" rx="2.5" fill="white" fillOpacity="0.55"/>
-              <rect x="3" y="15" width="10" height="10" rx="2.5" fill="white" fillOpacity="0.55"/>
-              <rect x="15" y="15" width="10" height="10" rx="2.5" fill="white" fillOpacity="0.9"/>
-            </svg>
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            {/* The mark stands on its own — boxing a logo inside a tile shrinks
+                it to the point where the wing's tail detail disappears, which
+                is exactly what happened at 30px. */}
+            <JosbinMark size={72} color="#EF6C00" title="Josbin" />
           </div>
           <div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.5px', lineHeight: 1.1 }}>
