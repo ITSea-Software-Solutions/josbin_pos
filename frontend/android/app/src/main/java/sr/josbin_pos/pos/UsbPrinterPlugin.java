@@ -46,6 +46,29 @@ public class UsbPrinterPlugin extends Plugin {
         return (UsbManager) getContext().getSystemService(Context.USB_SERVICE);
     }
 
+    /**
+     * Clear a stalled bulk endpoint — USB's standard
+     * CLEAR_FEATURE(ENDPOINT_HALT) request.
+     *
+     * A halted endpoint refuses every transfer, forever, having moved zero
+     * bytes. Android's UsbDeviceConnection exposes no dedicated call for this,
+     * but the request is a plain control transfer on endpoint 0:
+     *
+     *   bmRequestType 0x02  host→device, standard, recipient = endpoint
+     *   bRequest      0x01  CLEAR_FEATURE
+     *   wValue        0x00  ENDPOINT_HALT
+     *   wIndex              the endpoint's address
+     *
+     * @return true when the device accepted the request.
+     */
+    private boolean clearHalt(UsbDeviceConnection conn, UsbEndpoint ep) {
+        try {
+            return conn.controlTransfer(0x02, 0x01, 0x00, ep.getAddress(), null, 0, 1000) >= 0;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private UsbDevice findDevice(int vendorId, int productId) {
         HashMap<String, UsbDevice> devices = usbManager().getDeviceList();
         for (UsbDevice d : devices.values()) {
@@ -267,20 +290,48 @@ public class UsbPrinterPlugin extends Plugin {
                 System.arraycopy(bytes, offset, chunk, 0, len);
                 int sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
 
-                // A negative return with nothing written usually means the
-                // endpoint was still busy with the previous job rather than
-                // that the printer is gone — which is exactly what a cash
-                // drawer pulse hits when it follows a receipt. Give it one
-                // short pause and try again before declaring failure.
-                if (sent < 0) {
-                    try { Thread.sleep(250); } catch (InterruptedException ignored) {}
+                // A transfer that returns -1 having moved ZERO bytes is not a
+                // busy printer — it is a HALTED endpoint, and no amount of
+                // waiting clears one.
+                //
+                // How we get there: every call here force-claims the interface
+                // and closes it again afterwards. When the cash-drawer pulse
+                // follows a receipt, that second force-claim lands while the
+                // printer is still physically printing, and tearing the
+                // interface down and back up mid-job stalls the bulk OUT
+                // endpoint on a lot of printer silicon. After that EVERY
+                // transfer returns 0 bytes regardless of size or timeout —
+                // which is exactly what the field reported twice: first a
+                // 5-byte pulse refused, then a 10-byte one refused
+                // identically, while full receipts kept printing fine. The
+                // size was never the variable.
+                //
+                // USB's own remedy is CLEAR_FEATURE(ENDPOINT_HALT), so send
+                // that and retry rather than sleeping and hoping.
+                if (sent == 0 || sent < 0) {
+                    boolean cleared = clearHalt(conn, ep);
+                    try { Thread.sleep(120); } catch (InterruptedException ignored) {}
                     sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
-                }
 
-                if (sent < 0) {
-                    call.reject("USB write failed after " + offset + " of " + bytes.length
-                            + " bytes — the printer refused the transfer (endpoint busy or cable interrupted)");
-                    return;
+                    // Still refused: re-seat the interface entirely, which
+                    // recovers a device whose whole configuration got wedged.
+                    if (sent < 0) {
+                        try {
+                            conn.releaseInterface(intf);
+                            conn.claimInterface(intf, true);
+                            clearHalt(conn, ep);
+                            Thread.sleep(200);
+                        } catch (Exception ignored) {}
+                        sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
+                    }
+
+                    if (sent < 0) {
+                        call.reject("USB write failed after " + offset + " of " + bytes.length
+                                + " bytes — the printer's data endpoint is stalled"
+                                + (cleared ? " (clear-halt sent, still refused)" : " (clear-halt was rejected too)")
+                                + ". Unplug the printer's USB cable, plug it back in, and try again.");
+                        return;
+                    }
                 }
                 offset += sent;
             }

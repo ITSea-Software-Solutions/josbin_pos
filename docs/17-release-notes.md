@@ -11,7 +11,38 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.4 — 28 July 2026 *(current)*
+## 1.5.5 — 28 July 2026 *(current)*
+
+**The cash drawer on Android terminals — the actual cause, found.**
+
+The drawer signal was being sent as a *second* job just after the receipt.
+Every send to a USB printer on Android takes exclusive hold of the printer and
+lets go again afterwards, so that second send was grabbing the printer back
+while it was still physically printing the receipt. Doing that mid-print jams
+the printer's data channel, and once jammed it rejects everything — which is
+why the terminal reported the same "printer refused the transfer" whether the
+signal was 5 bytes or 10, while full receipts kept printing perfectly. The
+size was never the point, and neither was the wiring.
+
+- **The drawer signal now travels inside the receipt itself** — one send, so
+  there is no second one to be rejected. The printer opens the drawer as it
+  starts printing.
+- **A jammed printer now un-jams itself.** If the data channel does stall, the
+  app issues the standard USB reset for it and retries, twice, before giving
+  up — and if it still fails it says to unplug and replug the cable, which is
+  the one thing that actually fixes it.
+- **The drawer signal is four times longer** (200 ms, was 50 ms). The old value
+  is the printer manufacturer's figure for a 12 V drawer; these tills usually
+  have 24 V drawers, which often will not throw their latch that fast.
+- **Settings → Hardware → Find my cash drawer** tries seven different drawer
+  signals in turn — both wiring pins, three pulse lengths, and the variant for
+  printers that ignore a signal with no paper attached — one every 2.5 seconds,
+  showing which is going. Tap *Use this* on the number that opens the drawer
+  and the till remembers it.
+- **The QR code and the Josbin logo are off the printed receipt.** The footer
+  image is now the shop's own upload; no upload means no image.
+
+## 1.5.4 — 28 July 2026
 
 - **The cash drawer signal is now four times longer.** It was 50 ms, which is
   the printer manufacturer's figure for a 12 V drawer; the drawers under these

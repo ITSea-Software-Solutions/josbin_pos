@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
 import HelpButton from '@/components/shared/HelpButton'
 import { getSale } from '@/api/sales'
-import { printEscPos, openCashDrawer } from '@/lib/hardware'
+import { printEscPos } from '@/lib/hardware'
 import { saleToEscPosBytes, saleToReceiptText } from '@/lib/saleReceipt'
 import { buildWhatsAppLink } from '@/lib/receiptText'
 import { getReceiptStamp } from '@/api/stores'
@@ -77,6 +77,23 @@ export default function ReceiptModal({
     if (!sale || !store) return
     setPrintStatus('printing')
     try {
+      // The drawer pulse rides INSIDE the receipt — one USB write, not two.
+      //
+      // Sending it as a second job is what has been failing all along. Every
+      // write force-claims the printer's interface and closes it again; the
+      // drawer's claim therefore lands while the printer is still physically
+      // printing the receipt, and that mid-job teardown stalls the bulk
+      // endpoint. Once stalled it refuses everything — which is why a 5-byte
+      // pulse and a 10-byte pulse failed identically while receipts printed
+      // fine. There is no second transaction here to be refused.
+      //
+      // Once per sale: a reprint an hour later must not pop the drawer again.
+      const wantsDrawer = sale.payment_method === 'cash' || sale.payment_method === 'mixed'
+      const openDrawer = wantsDrawer && drawerDoneFor.current !== saleId
+        ? (printer.drawerPin ?? 1)
+        : undefined
+      if (openDrawer) drawerDoneFor.current = saleId
+
       // One shared builder with Transactions — see lib/saleReceipt.ts. The
       // cashier NAME (not the UUID) and the AST day-first date were both
       // fixed here once and would have been reintroduced by a second copy.
@@ -84,7 +101,7 @@ export default function ReceiptModal({
         sale, store, lang: i18n.language, dateFormat, stamp,
         stampBits: stampBits ?? undefined,
         paperWidth: printer.paperWidth ?? 80,
-        cashTendered, change,
+        cashTendered, change, openDrawer,
       })
 
       const result = await printEscPos(bytes, printer)
@@ -95,37 +112,15 @@ export default function ReceiptModal({
       // the cashier actually stands in front of should too.
       setPrintError(result.success ? null : (result.error ?? null))
 
-      // Kick the drawer as its own job, AFTER the receipt has been handed to
-      // the printer — never at the same time.
-      //
-      // Embedding the pulse in the receipt stream is the textbook ESC/POS
-      // answer and it did not open this shop's drawer, so we use the pulse
-      // that demonstrably works on the hardware and simply stop racing it.
-      // Two jobs sent at the same instant is what broke both: the drawer
-      // stayed shut AND the receipt job itself reported an error, which is
-      // why a manual re-print then succeeded.
-      //
-      // Fired even when the print failed: the customer is handing over cash
-      // either way, and the cashier needs the drawer more than the paper.
-      // Once per sale — a reprint an hour later must not pop it again.
-      const wantsDrawer = sale.payment_method === 'cash' || sale.payment_method === 'mixed'
-      if (wantsDrawer && drawerDoneFor.current !== saleId) {
-        drawerDoneFor.current = saleId
-
-        // printEscPos resolving only means the SPOOLER ACCEPTED the receipt,
-        // not that the paper is out. Firing the pulse immediately still lands
-        // it while the receipt is spooling — which is the race we thought was
-        // gone. Give the receipt a moment to clear before knocking.
-        await new Promise((r) => setTimeout(r, 1200))
-
-        const drawer = await openCashDrawer(printer).catch((e) => ({
-          success: false, error: String(e),
-        }))
-        // And SAY SO when it fails. The previous build wrote
-        // `.catch(() => {})` here — three lines below the print error we had
-        // just made visible — so a drawer that never opened looked identical
-        // to one that did. Five attempts at this bug were spent blind.
-        setDrawerError(drawer.success ? null : (drawer.error ?? 'Cash drawer did not respond'))
+      // The drawer travelled with the receipt above, so there is no second
+      // send to report on. If the receipt itself failed, the drawer went with
+      // it — say that rather than leaving the cashier to guess, and un-mark
+      // the sale so the next attempt carries the pulse again.
+      if (!result.success && openDrawer) {
+        drawerDoneFor.current = null
+        setDrawerError(result.error ?? 'Cash drawer did not respond')
+      } else {
+        setDrawerError(null)
       }
       return result.success
     } catch (e) {

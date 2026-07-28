@@ -11,7 +11,39 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.4 — 28 juli 2026 *(actueel)*
+## 1.5.5 — 28 juli 2026 *(actueel)*
+
+**De geldlade op Android-terminals — de echte oorzaak, gevonden.**
+
+Het ladesignaal werd als *tweede* opdracht verstuurd, vlak na de bon. Elke
+verzending naar een USB-printer op Android neemt de printer exclusief in beslag
+en laat hem daarna weer los, dus die tweede verzending pakte de printer terug
+terwijl hij de bon nog aan het printen was. Dat midden in het printen doen loopt
+het datakanaal van de printer vast, en eenmaal vastgelopen weigert hij alles —
+daarom meldde de terminal dezelfde "printer weigerde de overdracht", of het
+signaal nu 5 of 10 bytes was, terwijl volledige bonnen prima bleven printen. De
+omvang was nooit het punt, en de bedrading evenmin.
+
+- **Het ladesignaal reist nu mee ín de bon** — één verzending, dus er is geen
+  tweede die geweigerd kan worden. De printer opent de lade zodra hij begint te
+  printen.
+- **Een vastgelopen printer maakt zichzelf nu los.** Loopt het datakanaal toch
+  vast, dan stuurt de app de standaard USB-herstelopdracht en probeert het
+  tweemaal opnieuw — en lukt het dan nog niet, dan meldt hij de USB-kabel los en
+  weer vast te maken, want dat is wat het werkelijk verhelpt.
+- **Het ladesignaal duurt vier keer zo lang** (200 ms, was 50 ms). De oude
+  waarde geldt volgens de printerfabrikant voor een 12V-lade; deze kassa's
+  hebben meestal 24V-lades, die hun grendel in die tijd vaak niet omkrijgen.
+- **Instellingen → Hardware → Geldlade zoeken** probeert zeven verschillende
+  ladesignalen achter elkaar — beide aansluitpennen, drie pulslengtes, en de
+  variant voor printers die een signaal zonder papier negeren — elke 2,5
+  seconde één, met op het scherm welke er gaat. Tik bij het nummer dat de lade
+  opent op *Gebruik deze* en de kassa onthoudt het.
+- **De QR-code en het Josbin-logo staan niet meer op de geprinte bon.** De
+  afbeelding onderaan is nu die van de winkel zelf; geen upload, geen
+  afbeelding.
+
+## 1.5.4 — 28 juli 2026
 
 - **Het signaal naar de geldlade duurt nu vier keer zo lang.** Het was 50 ms,
   de waarde die de printerfabrikant opgeeft voor een 12V-lade; de lades onder
