@@ -4,6 +4,7 @@ import {
   cashDrawerPulse,
   paperCut,
   encodeCp858Char,
+  buildVerificationPayload,
   type EscPosReceiptOptions,
 } from '@/lib/escpos'
 import { josbinStampBits, STAMP_WIDTH, STAMP_HEIGHT } from '@/lib/receiptStamp'
@@ -323,5 +324,67 @@ describe('escpos — the Josbin stamp at the foot of the receipt', () => {
     const coverage = inked / (STAMP_WIDTH * STAMP_HEIGHT)
     expect(coverage).toBeGreaterThan(0.05)
     expect(coverage).toBeLessThan(0.6)
+  })
+})
+
+describe('escpos — verification QR under the BTW block', () => {
+  // The honest answer to "make the customer trust the BTW": a figure they can
+  // have CHECKED, not an emblem asserting someone checked it. The QR carries
+  // the shop's BTW registration number plus the sale's own numbers, so the
+  // paper and the stored sale either agree or they do not.
+  const GS_PAREN_K = [0x1d, 0x28, 0x6b]
+
+  it('prints a QR when the store has a BTW registration number', () => {
+    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions()), GS_PAREN_K))
+      .toBeGreaterThan(-1)
+  })
+
+  it('prints none when there is no BTW number — nothing to verify against', () => {
+    const opts = makeReceiptOptions()
+    opts.store.btw_number = undefined
+    expect(indexOfSubsequence(buildReceiptBytes(opts), GS_PAREN_K)).toBe(-1)
+  })
+
+  it('can be switched off', () => {
+    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions({ verifyQr: false })), GS_PAREN_K))
+      .toBe(-1)
+  })
+
+  it('carries the BTW number, sale number, total and BTW amount', () => {
+    const text = bytesToLatin1(buildReceiptBytes(makeReceiptOptions()))
+    expect(text).toContain('JOSBIN1|BTW-001234|S-0001|2026-05-26 10:15|11.00|1.00')
+  })
+
+  it('declares a payload length of data + 3 header bytes', () => {
+    // Off by three here prints a truncated code that scans to nothing — which
+    // is worse than no QR, because the paper looks correct.
+    const payload = buildVerificationPayload({
+      btwNumber: 'BTW-001234', saleNumber: 'S-0001',
+      occurredAt: '2026-05-26 10:15', totalSrd: '11.00', btwSrd: '1.00',
+    })
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    const store = indexOfSubsequence(bytes, [0x1d, 0x28, 0x6b, ...[
+      (payload.length + 3) & 0xff, ((payload.length + 3) >> 8) & 0xff, 0x31, 0x50, 0x30,
+    ]])
+    expect(store).toBeGreaterThan(-1)
+  })
+
+  it('issues model, size, ECC, store and print in that order', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    const at = (fn: number[]) => indexOfSubsequence(bytes, [0x1d, 0x28, 0x6b, ...fn])
+    const model = at([0x04, 0x00, 0x31, 0x41])
+    const size  = at([0x03, 0x00, 0x31, 0x43])
+    const ecc   = at([0x03, 0x00, 0x31, 0x45])
+    const print = at([0x03, 0x00, 0x31, 0x51])
+    expect(model).toBeGreaterThan(-1)
+    expect(size).toBeGreaterThan(model)
+    expect(ecc).toBeGreaterThan(size)
+    expect(print).toBeGreaterThan(ecc)
+  })
+
+  it('sits above the stamp — verify first, branding last', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    expect(indexOfSubsequence(bytes, GS_PAREN_K))
+      .toBeLessThan(indexOfSubsequence(bytes, [0x1d, 0x76, 0x30, 0x00]))
   })
 })

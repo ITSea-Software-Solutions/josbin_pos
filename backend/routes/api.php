@@ -195,8 +195,13 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
     Route::prefix('stores')->name('stores.')->group(function () {
         Route::get('/',                   [StoreController::class, 'index'])->name('index');
         Route::get('{store}',             [StoreController::class, 'show'])->name('show');
+        // Packed 1-bit bitmap for the foot of the thermal receipt. Its own
+        // endpoint rather than a field on show(): every till fetches the store
+        // record constantly, and 5 KB of base64 on each of those is waste.
+        Route::get('{store}/receipt-stamp', [StoreController::class, 'receiptStamp'])->name('receipt-stamp');
         Route::put('{store}',             [StoreController::class, 'update'])->name('update');
         Route::post('{store}/logo',       [StoreController::class, 'uploadLogo'])->name('logo');
+        Route::post('{store}/receipt-stamp', [StoreController::class, 'uploadReceiptStamp'])->name('receipt-stamp.upload');
         Route::post('{store}/wallet-qr',   [StoreController::class, 'uploadWalletQr'])->name('wallet-qr');
         Route::delete('{store}/wallet-qr', [StoreController::class, 'deleteWalletQr'])->name('wallet-qr.delete');
         Route::delete('{store}',          [StoreController::class, 'destroy'])->name('destroy');

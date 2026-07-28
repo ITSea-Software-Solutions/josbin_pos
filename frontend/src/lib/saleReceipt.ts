@@ -45,11 +45,13 @@ interface BuildArgs {
   openDrawer?: 1 | 2
   /** Josbin mark stamped at the foot of the ticket. Defaults to on. */
   stamp?: boolean
+  /** The store's own stamp image, if one has been uploaded and fetched. */
+  stampBits?: { bits: Uint8Array; width: number; height: number }
 }
 
 /** ESC/POS options for the thermal printer. */
 export function saleToEscPosOptions({
-  sale, store, lang, dateFormat, paperWidth, cashTendered, change, openDrawer, stamp,
+  sale, store, lang, dateFormat, paperWidth, cashTendered, change, openDrawer, stamp, stampBits,
 }: BuildArgs): EscPosReceiptOptions {
   const locale = printLocale(lang)
   return {
@@ -90,6 +92,7 @@ export function saleToEscPosOptions({
     paperWidth: paperWidth ?? 80,
     ...(openDrawer ? { openDrawer } : {}),
     ...(stamp === undefined ? {} : { stamp }),
+    ...(stampBits ? { stampBits } : {}),
   }
 }
 

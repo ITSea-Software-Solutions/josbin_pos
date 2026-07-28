@@ -11,7 +11,20 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.2 — 28 July 2026 *(current)*
+## 1.5.3 — 28 July 2026 *(current)*
+
+- **A verification QR on every receipt with a BTW number.** It carries the
+  shop's BTW registration number together with the receipt number, time,
+  total and BTW amount — so the paper in a customer's hand can be checked
+  against the sale the system recorded. A receipt whose figures were altered
+  after printing stops matching. That is a claim about the tax on the bill
+  that can actually be tested, which is worth more to a customer than a badge.
+- **A store can upload its own stamp** for the foot of the receipt
+  (Settings → the store's receipt image). Shops that upload nothing get the
+  Josbin mark. A till that cannot reach its shop server still prints a stamped
+  receipt — the fallback mark is built into the app.
+
+## 1.5.2 — 28 July 2026
 
 - **Cash drawer on Android terminals.** The drawer signal was being sent as
   a bare five-byte command with no job header. Windows accepted that; the

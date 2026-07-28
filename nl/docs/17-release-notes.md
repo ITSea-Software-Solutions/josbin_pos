@@ -11,7 +11,21 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.2 — 28 juli 2026 *(actueel)*
+## 1.5.3 — 28 juli 2026 *(actueel)*
+
+- **Een controle-QR op elke bon met een BTW-nummer.** Daarin staan het
+  BTW-nummer van de winkel plus bonnummer, tijd, totaal en BTW-bedrag — zo is
+  het papier in de hand van de klant te vergelijken met de verkoop die het
+  systeem heeft vastgelegd. Een bon waarvan de bedragen na het printen zijn
+  aangepast, klopt niet meer. Dat is een uitspraak over de belasting op de bon
+  die daadwerkelijk te toetsen is, en dat is voor een klant meer waard dan een
+  logo.
+- **Een winkel kan een eigen stempel uploaden** voor onderaan de bon
+  (Instellingen → bonafbeelding van de winkel). Wie niets uploadt, krijgt het
+  Josbin-beeldmerk. Een kassa die zijn winkelserver niet kan bereiken, print
+  nog steeds een bon met stempel — het terugvalbeeldmerk zit in de app.
+
+## 1.5.2 — 28 juli 2026
 
 - **Geldlade op Android-terminals.** Het ladesignaal werd verstuurd als een
   kaal commando van vijf bytes zonder opdrachtkop. Windows accepteerde dat;

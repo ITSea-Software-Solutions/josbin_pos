@@ -221,9 +221,72 @@ class EscPosBuilder {
     return this
   }
 
+  /**
+   * Print a QR code using the printer's own QR engine — ESC/POS `GS ( k`.
+   *
+   * The printer draws it, so nothing has to rasterise a QR at the till and a
+   * 58 mm roll gets the same crisp result as an 80 mm one. Four calls, in
+   * this order, and the order is not negotiable:
+   *   fn 165  select model 2
+   *   fn 167  module size (dots per QR cell)
+   *   fn 169  error-correction level
+   *   fn 180  store the payload, then fn 181 print it
+   *
+   * `pL/pH` on the store call counts the payload PLUS the three header bytes
+   * — off-by-three here prints a truncated code that scans to nothing, which
+   * is worse than no QR at all because it looks fine on paper.
+   */
+  qr(data: string, moduleSize = 6): this {
+    const bytes: number[] = []
+    for (const ch of data) bytes.push(ch.charCodeAt(0) & 0xff)
+
+    this.cmd([GS, 0x28, 0x6b, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]) // model 2
+    this.cmd([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, moduleSize]) // module size
+    this.cmd([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x31])       // ECC level M
+
+    const len = bytes.length + 3
+    this.cmd([GS, 0x28, 0x6b, len & 0xff, (len >> 8) & 0xff, 0x31, 0x50, 0x30])
+    for (const b of bytes) this.buf.push(b)
+
+    this.cmd([GS, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30])       // print
+    return this
+  }
+
   build(): Uint8Array {
     return new Uint8Array(this.buf)
   }
+}
+
+/**
+ * The compact verification string encoded in the receipt's QR.
+ *
+ * Pipe-delimited and self-contained on purpose: no URL, because the shop's
+ * server sits on the shop's own LAN and a customer's phone is not on it. What
+ * this gives instead is a receipt whose BTW figures cannot be quietly altered
+ * after the fact — the printed paper and the stored sale either agree or they
+ * do not, and anyone with the dashboard (the shop, an auditor, a
+ * Belastingdienst inspector) can check that in seconds against the sale
+ * number.
+ *
+ * This is the honest version of "the customer can trust the tax on this
+ * receipt": a figure they can have checked, rather than an emblem that only
+ * asserts someone checked it.
+ */
+export function buildVerificationPayload(v: {
+  btwNumber?: string
+  saleNumber: string
+  occurredAt: string
+  totalSrd: string
+  btwSrd: string
+}): string {
+  return [
+    'JOSBIN1',
+    v.btwNumber ?? '-',
+    v.saleNumber,
+    v.occurredAt,
+    v.totalSrd,
+    v.btwSrd,
+  ].join('|')
 }
 
 // ── Public API ──────────────────────────────────────────────────────────────
@@ -304,6 +367,19 @@ export interface EscPosReceiptOptions {
    * a shop that wants text only. (Roughly 5 mm of extra paper per receipt.)
    */
   stamp?: boolean
+  /**
+   * The store's own stamp bitmap, packed 1-bit MSB-first, as served by
+   * GET /stores/{id}/receipt-stamp. Absent — no upload, or the shop server is
+   * unreachable — falls back to the Josbin mark compiled into the app, so a
+   * receipt always prints with a mark on it.
+   */
+  stampBits?: { bits: Uint8Array; width: number; height: number }
+  /**
+   * Print the verification QR under the BTW block. On by default whenever the
+   * store has a BTW registration number — a receipt with no BTW number has
+   * nothing to verify against.
+   */
+  verifyQr?: boolean
 }
 
 const TRANSLATIONS = {
@@ -325,6 +401,7 @@ const TRANSLATIONS = {
     total_btw:      'Totaal BTW',
     btw_exempt:     'BTW vrijgesteld',
     btw_number:     'BTW-nr.',
+    verify_hint:    'Scan om deze bon te controleren',
     payment:        'Betaalmethode',
     cash:           'Contant',
     card:           'Pin / Kaart',
@@ -359,6 +436,7 @@ const TRANSLATIONS = {
     total_btw:      'Total BTW',
     btw_exempt:     'BTW exempt',
     btw_number:     'BTW no.',
+    verify_hint:    'Scan to verify this receipt',
     payment:        'Payment',
     cash:           'Cash',
     card:           'Card / PIN',
@@ -391,7 +469,7 @@ function fmtRate(rate: string): string {
 
 export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   const t   = TRANSLATIONS[opts.locale]
-  const { sale, store, stamp } = opts
+  const { sale, store, stamp, stampBits, verifyQr } = opts
   const b   = new EscPosBuilder(CHARS_PER_LINE[opts.paperWidth ?? 80])
 
   b.cmd(CMD.INIT)
@@ -538,9 +616,31 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   // burns one line at a time with no compositing, so there is no "behind the
   // text" to print into. On the A4/PDF receipt it IS a true watermark — see
   // ReceiptService::receiptWatermarkDataUri.
+  // ── Verification QR ───────────────────────────────────────────────────────
+  //
+  // What makes a customer able to trust the BTW on a receipt is being able to
+  // have it CHECKED — not a badge saying someone checked it. This encodes the
+  // sale number, timestamp, total and BTW alongside the shop's BTW
+  // registration number, so the paper in the customer's hand can be matched
+  // against the recorded sale by the shop, an auditor or a Belastingdienst
+  // inspector. A receipt whose figures were altered after printing stops
+  // matching; an emblem would not have noticed.
+  if (verifyQr !== false && store.btw_number) {
+    b.emptyLine()
+    b.cmd(CMD.FONT_SMALL).line(t.verify_hint).cmd(CMD.FONT_NORMAL)
+    b.qr(buildVerificationPayload({
+      btwNumber:  store.btw_number,
+      saleNumber: sale.sale_number,
+      occurredAt: sale.occurred_at,
+      totalSrd:   sale.total_srd,
+      btwSrd:     sale.btw_srd,
+    }))
+  }
+
   if (stamp !== false) {
     b.emptyLine()
-    b.raster(josbinStampBits(), STAMP_WIDTH, STAMP_HEIGHT)
+    if (stampBits) b.raster(stampBits.bits, stampBits.width, stampBits.height)
+    else b.raster(josbinStampBits(), STAMP_WIDTH, STAMP_HEIGHT)
   }
 
   // Feed + cut

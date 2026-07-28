@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Store;
+use App\Services\ReceiptStampService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -123,6 +124,63 @@ class StoreController extends Controller
                 'receipt_logo_url'  => Storage::disk('public')->url($path),
             ],
         ]);
+    }
+
+    /**
+     * GET /api/stores/{store}/receipt-stamp
+     *
+     * The packed 1-bit bitmap the till stamps at the foot of a thermal
+     * receipt. 204 when the store has no stamp configured and no platform
+     * default is present — the till then falls back to the Josbin mark it
+     * carries internally, which is also what happens when this server cannot
+     * be reached at all.
+     */
+    public function receiptStamp(Request $request, Store $store, ReceiptStampService $stamps): JsonResponse
+    {
+        $this->authorize('view', $store);
+
+        $stamp = $stamps->forStore($store);
+
+        return $stamp === null
+            ? response()->json(null, 204)
+            : response()->json(['data' => $stamp]);
+    }
+
+    /**
+     * POST /api/stores/{store}/receipt-stamp
+     *
+     * Upload the image stamped at the foot of this store's printed receipts.
+     *
+     * A note for whoever maintains this: the image belongs to the SHOP —
+     * their own logo or mark. Do not use it to imply that a third party has
+     * approved, certified or verified the sale. A government emblem in
+     * particular asserts an endorsement that does not exist, which is a
+     * misrepresentation to the customer holding the receipt and a trademark
+     * problem for the agency. Genuine BTW credibility comes from the store's
+     * BTW registration number, the per-rate breakdown and the verification
+     * QR — all already on the receipt.
+     */
+    public function uploadReceiptStamp(Request $request, Store $store): JsonResponse
+    {
+        $this->authorize('update', $store);
+
+        $request->validate([
+            // SVG excluded for the same reason as the logo: inline <script>
+            // served same-origin from /storage is stored XSS.
+            'stamp' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+        ]);
+
+        $old = data_get($store->settings, 'receipt_stamp_path');
+        if ($old && Storage::disk('public')->exists($old)) {
+            Storage::disk('public')->delete($old);
+        }
+
+        $path = $request->file('stamp')->store("stamps/{$store->id}", 'public');
+        $store->update(['settings' => array_merge($store->settings ?? [], [
+            'receipt_stamp_path' => $path,
+        ])]);
+
+        return response()->json(['data' => ['receipt_stamp_path' => $path]]);
     }
 
     /**
