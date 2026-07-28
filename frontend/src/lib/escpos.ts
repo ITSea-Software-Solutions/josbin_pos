@@ -9,6 +9,8 @@
  * Reference: EPSON ESC/POS Command Reference (TM-T20 compatible)
  */
 
+import { josbinStampBits, STAMP_WIDTH, STAMP_HEIGHT } from '@/lib/receiptStamp'
+
 // ── ESC/POS byte constants ──────────────────────────────────────────────────
 
 const ESC = 0x1b
@@ -186,6 +188,39 @@ class EscPosBuilder {
     return this
   }
 
+  /**
+   * Print a packed 1-bit bitmap — ESC/POS `GS v 0`.
+   *
+   * `bits` is MSB-first, ceil(width/8) bytes per row: 1 = burn a dot. The
+   * printer takes the width in BYTES and the height in DOTS, both as
+   * little-endian 16-bit, which is the detail that silently prints garbage
+   * when you get it backwards.
+   *
+   * Centring is done by padding each row with blank bytes rather than with
+   * ESC a 1 — alignment commands apply to text, and several ESC/POS clones
+   * ignore them for raster data and left-align the image anyway.
+   */
+  raster(bits: Uint8Array, widthDots: number, heightDots: number): this {
+    const srcBytes = Math.ceil(widthDots / 8)
+    // `this.width` counts CHARACTERS, not dots — the print head is 576 dots
+    // on 80 mm paper and 384 on 58 mm, which is what the raster command
+    // addresses.
+    const headBytes = this.width >= 42 ? 72 : 48
+    const outBytes = Math.max(headBytes, srcBytes)
+    const pad = Math.max(0, Math.floor((outBytes - srcBytes) / 2))
+
+    this.cmd([GS, 0x76, 0x30, 0x00,
+      outBytes & 0xff, (outBytes >> 8) & 0xff,
+      heightDots & 0xff, (heightDots >> 8) & 0xff])
+
+    for (let y = 0; y < heightDots; y++) {
+      for (let i = 0; i < pad; i++) this.buf.push(0x00)
+      for (let i = 0; i < srcBytes; i++) this.buf.push(bits[y * srcBytes + i] ?? 0x00)
+      for (let i = pad + srcBytes; i < outBytes; i++) this.buf.push(0x00)
+    }
+    return this
+  }
+
   build(): Uint8Array {
     return new Uint8Array(this.buf)
   }
@@ -195,7 +230,18 @@ class EscPosBuilder {
 
 /** Returns the cash drawer kick command bytes (pin 2 — most common). */
 export function cashDrawerPulse(pin: 1 | 2 = 1): Uint8Array {
-  return new Uint8Array(pin === 1 ? CMD.CASH_DRAWER_1 : CMD.CASH_DRAWER_2)
+  // INIT first, then the pulse — not the bare 5-byte pulse on its own.
+  //
+  // A standalone `ESC p 0 25 250` is a naked control fragment with no job
+  // prologue. Windows' spooler tolerates it; the Android USB bulk endpoint
+  // does not — it returned "USB write failed after 0 of 5 bytes", refusing
+  // the transfer outright while the same printer accepted a full receipt
+  // moments earlier. Prefixing ESC @ makes it a well-formed minimal job.
+  //
+  // No trailing line feed on purpose: this is also what the standalone
+  // "Test cash drawer" button sends, and a LF would spit blank paper every
+  // time someone checks the drawer.
+  return new Uint8Array([...CMD.INIT, ...(pin === 1 ? CMD.CASH_DRAWER_1 : CMD.CASH_DRAWER_2)])
 }
 
 /** Returns a full-cut command. */
@@ -252,6 +298,12 @@ export interface EscPosReceiptOptions {
    * the drawer opens as the receipt starts printing.
    */
   openDrawer?: 1 | 2
+  /**
+   * Print the Josbin mark at the foot of the receipt, stamp-style. On by
+   * default; set false for printers that render raster images poorly, or for
+   * a shop that wants text only. (Roughly 5 mm of extra paper per receipt.)
+   */
+  stamp?: boolean
 }
 
 const TRANSLATIONS = {
@@ -339,7 +391,7 @@ function fmtRate(rate: string): string {
 
 export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   const t   = TRANSLATIONS[opts.locale]
-  const { sale, store } = opts
+  const { sale, store, stamp } = opts
   const b   = new EscPosBuilder(CHARS_PER_LINE[opts.paperWidth ?? 80])
 
   b.cmd(CMD.INIT)
@@ -478,6 +530,18 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   }
   b.cmd(CMD.BOLD_ON).line(t.thank_you).cmd(CMD.BOLD_OFF)
   b.cmd(CMD.FONT_SMALL).line(t.powered_by).cmd(CMD.FONT_NORMAL)
+
+  // ── Stamp ─────────────────────────────────────────────────────────────────
+  //
+  // The logo sits at the foot of the receipt, printed as an image, the way a
+  // rubber stamp lands on a docket. It cannot be a watermark: a thermal head
+  // burns one line at a time with no compositing, so there is no "behind the
+  // text" to print into. On the A4/PDF receipt it IS a true watermark — see
+  // ReceiptService::receiptWatermarkDataUri.
+  if (stamp !== false) {
+    b.emptyLine()
+    b.raster(josbinStampBits(), STAMP_WIDTH, STAMP_HEIGHT)
+  }
 
   // Feed + cut
   b.emptyLine().emptyLine().emptyLine()

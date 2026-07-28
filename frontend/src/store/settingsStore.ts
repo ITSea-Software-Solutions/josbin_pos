@@ -19,6 +19,20 @@ interface SettingsState {
    *  sale (industry-standard POS behaviour). Thermal prints silently; the
    *  browser fallback opens the print dialog. */
   autoPrintReceipt: boolean
+  /**
+   * Offer the WhatsApp receipt automatically when the customer on the sale
+   * has a phone number. Manager-level switch (Settings → Printer).
+   *
+   * "Automatically" here means the till hands WhatsApp a ready-made message
+   * addressed to that customer — the cashier still presses send in WhatsApp.
+   * A truly hands-off send is not something a shop till can do: WhatsApp only
+   * accepts machine-sent messages through Meta's Business API, which needs a
+   * business account, a paid provider, and each message body pre-approved as
+   * a template. See user manual §5.7.
+   */
+  autoWhatsAppReceipt: boolean
+  /** Print the Josbin mark at the foot of the thermal receipt, stamp-style. */
+  receiptStamp: boolean
   /** Scale-printed weighed-goods barcode layout (off by default). */
   embeddedBarcode: EmbeddedBarcodeConfig
   /**
@@ -41,6 +55,8 @@ interface SettingsState {
   setPrinter: (config: PrinterConfig) => void
   setPrinterShareEnabled: (v: boolean) => void
   setAutoPrintReceipt: (enabled: boolean) => void
+  setAutoWhatsAppReceipt: (enabled: boolean) => void
+  setReceiptStamp: (enabled: boolean) => void
   setEmbeddedBarcode: (config: Partial<EmbeddedBarcodeConfig>) => void
   setCardTerminal: (config: Partial<CardTerminalConfig>) => void
 }
@@ -73,6 +89,10 @@ export const useSettingsStore = create<SettingsState>()(
       // every sale is a queue tax. Still switchable off in Settings for
       // tills that deliberately print on request only.
       autoPrintReceipt: true,
+      // On by default: a customer who gave the shop their number expects the
+      // bon on their phone, and WhatsApp is how Suriname sends things.
+      autoWhatsAppReceipt: true,
+      receiptStamp: true,
       embeddedBarcode: DEFAULT_EMBEDDED_BARCODE,
       cardTerminal: { mode: 'manual', defaultBank: 'DSB' },
 
@@ -84,6 +104,8 @@ export const useSettingsStore = create<SettingsState>()(
       setPrinter: (printer) => set({ printer }),
       setPrinterShareEnabled: (printerShareEnabled) => set({ printerShareEnabled }),
       setAutoPrintReceipt: (autoPrintReceipt) => set({ autoPrintReceipt }),
+      setAutoWhatsAppReceipt: (autoWhatsAppReceipt) => set({ autoWhatsAppReceipt }),
+      setReceiptStamp: (receiptStamp) => set({ receiptStamp }),
       setEmbeddedBarcode: (config) => set((s) => ({ embeddedBarcode: { ...s.embeddedBarcode, ...config } })),
       setCardTerminal: (config) => set((s) => ({ cardTerminal: { ...s.cardTerminal, ...config } })),
     }),

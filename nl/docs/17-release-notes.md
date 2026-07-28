@@ -11,7 +11,38 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.1 — 28 juli 2026 *(actueel)*
+## 1.5.2 — 28 juli 2026 *(actueel)*
+
+- **Geldlade op Android-terminals.** Het ladesignaal werd verstuurd als een
+  kaal commando van vijf bytes zonder opdrachtkop. Windows accepteerde dat;
+  de Android-USB-verbinding weigerde het botweg — met "0 van 5 bytes
+  geschreven" op een printer die net een volledige bon had geprint. Het
+  signaal gaat nu als een volwaardige printopdracht, en een overdracht die
+  de printer weigert omdat hij nog bezig is, wordt één keer opnieuw
+  geprobeerd.
+- **Terugkeren naar uw eigen open kassa meldt niet meer dat de kassa in
+  gebruik is.** Sluit u de app, logt u uit, of herstart de kassa midden in
+  uw dienst, dan komt u nu gewoon weer in uw eigen dienst terecht. De open
+  lade van een andere kassamedewerker blijft beschermd.
+- **Een Vernieuwen-knop op de kassalijst**, zodat een kassa ziet dat een
+  collega zijn lade heeft gesloten zonder uit- en weer in te loggen.
+- **Transacties kan weer alles met een bon.** De 🖨-knop bij een eerdere
+  verkoop opende alleen de PDF — een klant die terugkwam voor een papieren
+  exemplaar kon er geen krijgen. Er opent nu een bonmenu: opnieuw printen op
+  de printer van de winkel, PDF, e-mail of WhatsApp.
+- **De WhatsApp-bon wordt vanzelf aangeboden** als de klant bij de verkoop een
+  telefoonnummer heeft achtergelaten: één knop op het bonscherm, al aan die
+  klant geadresseerd. Managers zetten het uit via Instellingen → Printer. Het
+  is één tik, niet volautomatisch — WhatsApp accepteert machineberichten
+  alleen via de betaalde Business API van Meta, dus de kassamedewerker drukt
+  in WhatsApp zelf op verzenden.
+- **Het Josbin-beeldmerk print nu onderaan de bon**, als een stempel op een
+  bonnetje. (Op papier kan het niet *achter* de tekst staan — een thermische
+  printer brandt regel voor regel en heeft niets om overheen te leggen. De
+  A4-/PDF-bon heeft wél een echt watermerk.) Uit te zetten via Instellingen →
+  Printer.
+
+## 1.5.1 — 28 juli 2026
 
 - **Een geldlade die niet opengaat, vertelt nu waarom.** Hij faalde in
   stilte: de kassa gooide het antwoord van de lade helemaal weg, waardoor

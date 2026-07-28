@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { getSales, voidSale, openReceiptPdf } from '@/api/sales'
+import { getSales, voidSale } from '@/api/sales'
 import { useAuthStore } from '@/store/authStore'
-import { useToast } from '@/components/shared/Toast'
 import RefundModal from '@/components/pos/RefundModal'
+import ReceiptActionsModal from '@/components/pos/ReceiptActionsModal'
 import type { Sale } from '@/types/models'
 
 function VoidModal({ sale, onClose }: { sale: Sale; onClose: () => void }) {
@@ -87,13 +87,13 @@ interface Props { storeId: string }
 export default function SalesHistoryScreen({ storeId }: Props) {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
-  const toast = useToast()
 
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState(() => new Date().toISOString().slice(0, 10))
   const [page, setPage] = useState(1)
   const [voidTarget, setVoidTarget] = useState<Sale | null>(null)
   const [refundTarget, setRefundTarget] = useState<Sale | null>(null)
+  const [receiptTarget, setReceiptTarget] = useState<Sale | null>(null)
 
   const canRefund = useAuthStore((s) => s.hasPermission('sales.refund'))
 
@@ -225,21 +225,18 @@ export default function SalesHistoryScreen({ storeId }: Props) {
                     </td>
                     <td style={{ padding: '10px 14px' }}>
                       <div style={{ display: 'flex', gap: 6 }}>
-                        {/* Reprint PDF — fetched over the authenticated XHR
-                            (Bearer header) and opened as a blob, so no token
-                            ever appears in the URL (P0-5). */}
+                        {/* Receipt actions — reprint on the thermal printer,
+                            PDF, e-mail, WhatsApp. This button used to open the
+                            PDF and nothing else, which left a shop with no way
+                            to put a second copy on paper for a customer who
+                            came back. */}
                         <button
-                          onClick={async () => {
-                            try {
-                              await openReceiptPdf(sale.id, i18n.language)
-                            } catch {
-                              toast.error(isNl ? 'Kon bon niet openen' : 'Could not open receipt')
-                            }
-                          }}
-                          title={isNl ? 'Bon afdrukken' : 'Print receipt'}
-                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 30, height: 30, borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 14 }}
+                          onClick={() => setReceiptTarget(sale)}
+                          title={isNl ? 'Bonopties' : 'Receipt options'}
+                          data-testid="btn-receipt-actions"
+                          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4, height: 30, padding: '0 9px', borderRadius: 6, border: '1px solid var(--border-color)', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 14 }}
                         >
-                          🖨
+                          🖨 <span style={{ fontSize: 11 }}>▾</span>
                         </button>
                         {/* Void — only for completed sales */}
                         {sale.status === 'completed' && (
@@ -304,6 +301,14 @@ export default function SalesHistoryScreen({ storeId }: Props) {
           isOpen={!!refundTarget}
           sale={refundTarget}
           onClose={() => setRefundTarget(null)}
+        />
+      )}
+
+      {receiptTarget && (
+        <ReceiptActionsModal
+          isOpen={!!receiptTarget}
+          sale={receiptTarget}
+          onClose={() => setReceiptTarget(null)}
         />
       )}
     </div>

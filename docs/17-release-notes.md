@@ -11,7 +11,35 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.1 — 28 July 2026 *(current)*
+## 1.5.2 — 28 July 2026 *(current)*
+
+- **Cash drawer on Android terminals.** The drawer signal was being sent as
+  a bare five-byte command with no job header. Windows accepted that; the
+  Android USB connection refused it outright — reporting "0 of 5 bytes
+  written" on a printer that had just printed a full receipt. The signal is
+  now sent as a complete print job, and a transfer the printer rejects
+  because it is still busy is retried once.
+- **Returning to your own open till no longer says the register is in use.**
+  If you close the app, log out, or the till restarts mid-shift, choosing
+  your register now puts you straight back into your own shift. Another
+  cashier's open drawer is still protected.
+- **A Refresh button on the register list**, so a till can see a colleague
+  closing their drawer without logging out and back in.
+- **Transactions can do everything with a receipt again.** The 🖨 button on a
+  past sale opened the PDF and nothing else — a customer who came back for a
+  paper copy could not be given one. It now opens receipt options: reprint on
+  the shop's own printer, PDF, e-mail, or WhatsApp.
+- **The WhatsApp receipt is offered by itself** when the customer on the sale
+  left a phone number: one button on the receipt screen, already addressed to
+  them. Managers can switch it off under Settings → Printer. It is one tap,
+  not hands-off — WhatsApp only accepts machine-sent messages through Meta's
+  paid Business API, so the cashier still presses send in WhatsApp.
+- **The Josbin mark now prints at the foot of the receipt**, like a stamp on a
+  docket. (On paper it cannot sit *behind* the text — a thermal printer burns
+  one line at a time and has nothing to composite into. The A4 / PDF receipt
+  does carry a proper watermark.) Switchable off under Settings → Printer.
+
+## 1.5.1 — 28 July 2026
 
 - **A cash drawer that does not open now says why.** It failed silently:
   the till discarded the drawer's answer entirely, so a drawer that never

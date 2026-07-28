@@ -6,6 +6,7 @@ import {
   encodeCp858Char,
   type EscPosReceiptOptions,
 } from '@/lib/escpos'
+import { josbinStampBits, STAMP_WIDTH, STAMP_HEIGHT } from '@/lib/receiptStamp'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -110,14 +111,26 @@ describe('escpos — buildReceiptBytes', () => {
 })
 
 describe('escpos — control commands', () => {
-  it('cashDrawerPulse(1) returns ESC p 0 t1 t2', () => {
-    const bytes = cashDrawerPulse(1)
-    expect(Array.from(bytes)).toEqual([0x1b, 0x70, 0x00, 0x19, 0xfa])
+  // The pulse is INIT + ESC p, not the bare ESC p. A naked 5-byte control
+  // fragment was refused outright by the Android USB bulk endpoint —
+  // "USB write failed after 0 of 5 bytes" — on a printer that had accepted a
+  // full receipt seconds before. Windows' spooler tolerated it, Android did
+  // not. Do not "simplify" this back to the bare pulse.
+  it('cashDrawerPulse(1) is a well-formed job: INIT then ESC p 0', () => {
+    expect(Array.from(cashDrawerPulse(1)))
+      .toEqual([0x1b, 0x40, 0x1b, 0x74, 19, 0x1b, 0x70, 0x00, 0x19, 0xfa])
   })
 
-  it('cashDrawerPulse(2) returns ESC p 1 t1 t2', () => {
-    const bytes = cashDrawerPulse(2)
-    expect(Array.from(bytes)).toEqual([0x1b, 0x70, 0x01, 0x19, 0xfa])
+  it('cashDrawerPulse(2) drives the second pin', () => {
+    expect(Array.from(cashDrawerPulse(2)))
+      .toEqual([0x1b, 0x40, 0x1b, 0x74, 19, 0x1b, 0x70, 0x01, 0x19, 0xfa])
+  })
+
+  it('never ends with a line feed — the drawer test must not spit paper', () => {
+    for (const pin of [1, 2] as const) {
+      const b = cashDrawerPulse(pin)
+      expect(b[b.length - 1]).not.toBe(0x0a)
+    }
   })
 
   it('paperCut() defaults to a full cut (GS V B 0x00)', () => {
@@ -245,5 +258,70 @@ describe('escpos — cash drawer rides the receipt', () => {
     const bytes = buildReceiptBytes({ ...makeReceiptOptions(), openDrawer: 1 })
     // Right after INIT — well before the store name, let alone the total.
     expect(contains(bytes, PULSE_PIN1)).toBeLessThan(12)
+  })
+})
+
+describe('escpos — the Josbin stamp at the foot of the receipt', () => {
+  // A thermal head burns one line at a time and cannot composite, so there is
+  // no "watermark behind the text" to print. The mark lands at the bottom as
+  // a raster image instead — like a rubber stamp on a docket. The A4/PDF
+  // receipt is where a real watermark lives (ReceiptService).
+  const GS_V_0 = [0x1d, 0x76, 0x30, 0x00]
+
+  it('emits a GS v 0 raster block by default', () => {
+    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions()), GS_V_0))
+      .toBeGreaterThan(-1)
+  })
+
+  it('omits it when the shop turns the stamp off', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions({ stamp: false }))
+    expect(indexOfSubsequence(bytes, GS_V_0)).toBe(-1)
+  })
+
+  it('sits after the total, near the end of the ticket', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    const at = indexOfSubsequence(bytes, GS_V_0)
+    const totalAt = bytesToLatin1(bytes).indexOf('TOTAAL')
+    expect(at).toBeGreaterThan(totalAt)
+  })
+
+  it('declares width in BYTES and height in DOTS, little-endian', () => {
+    // Getting these two backwards is the classic way to print noise: the
+    // command takes xL/xH as byte count and yL/yH as a dot count.
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    const at = indexOfSubsequence(bytes, GS_V_0)
+    const widthBytes = bytes[at + 4] | (bytes[at + 5] << 8)
+    const heightDots = bytes[at + 6] | (bytes[at + 7] << 8)
+
+    expect(widthBytes).toBe(72)              // 576-dot head on 80 mm paper
+    expect(heightDots).toBe(STAMP_HEIGHT)
+    // …and exactly that many payload bytes must follow, or the printer eats
+    // the rest of the receipt as image data.
+    expect(bytes.length - (at + 8)).toBeGreaterThanOrEqual(widthBytes * heightDots)
+  })
+
+  it('narrows to the 384-dot head on 58 mm paper', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions({ paperWidth: 58 }))
+    const at = indexOfSubsequence(bytes, GS_V_0)
+    expect(bytes[at + 4] | (bytes[at + 5] << 8)).toBe(48)
+  })
+
+  it('centres the mark by padding rows, not with an alignment command', () => {
+    // Several ESC/POS clones ignore ESC a for raster data and left-align it
+    // regardless, so the padding has to be in the bitmap itself.
+    const bytes = buildReceiptBytes(makeReceiptOptions())
+    const at = indexOfSubsequence(bytes, GS_V_0)
+    const rowStart = at + 8
+    const pad = Math.floor((72 - Math.ceil(STAMP_WIDTH / 8)) / 2)
+    expect(pad).toBeGreaterThan(0)
+    for (let i = 0; i < pad; i++) expect(bytes[rowStart + i]).toBe(0x00)
+  })
+
+  it('is a logo, not a black bar', () => {
+    const bits = josbinStampBits()
+    const inked = bits.reduce((n, b) => n + b.toString(2).replace(/0/g, '').length, 0)
+    const coverage = inked / (STAMP_WIDTH * STAMP_HEIGHT)
+    expect(coverage).toBeGreaterThan(0.05)
+    expect(coverage).toBeLessThan(0.6)
   })
 })

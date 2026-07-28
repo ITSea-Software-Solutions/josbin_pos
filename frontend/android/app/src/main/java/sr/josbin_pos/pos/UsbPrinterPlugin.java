@@ -266,8 +266,20 @@ public class UsbPrinterPlugin extends Plugin {
                 byte[] chunk = new byte[len];
                 System.arraycopy(bytes, offset, chunk, 0, len);
                 int sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
+
+                // A negative return with nothing written usually means the
+                // endpoint was still busy with the previous job rather than
+                // that the printer is gone — which is exactly what a cash
+                // drawer pulse hits when it follows a receipt. Give it one
+                // short pause and try again before declaring failure.
                 if (sent < 0) {
-                    call.reject("USB write failed after " + offset + " of " + bytes.length + " bytes");
+                    try { Thread.sleep(250); } catch (InterruptedException ignored) {}
+                    sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
+                }
+
+                if (sent < 0) {
+                    call.reject("USB write failed after " + offset + " of " + bytes.length
+                            + " bytes — the printer refused the transfer (endpoint busy or cable interrupted)");
                     return;
                 }
                 offset += sent;

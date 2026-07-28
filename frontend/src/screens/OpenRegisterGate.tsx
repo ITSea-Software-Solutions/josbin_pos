@@ -404,6 +404,24 @@ export default function OpenRegisterGate() {
                 {isNl ? 'Geen kassa\'s gevonden. Vraag de beheerder om kassa\'s aan te maken.' : 'No registers found. Ask the manager to create registers.'}
               </p>
             )}
+            {/* Register status changes on the OTHER tills — a colleague closing
+                their drawer, a manager force-closing one. Without this the
+                cashier's only way to see that was to log out and back in. */}
+            <button
+              onClick={() => setRefreshTick(t => t + 1)}
+              data-testid="btn-refresh-registers"
+              style={{
+                alignSelf: 'flex-end', marginBottom: 8,
+                background: 'rgba(255,255,255,.06)',
+                border: '1px solid rgba(255,255,255,.14)',
+                borderRadius: 9, padding: '7px 13px',
+                color: 'rgba(241,245,249,.85)', fontSize: 12.5, fontWeight: 700,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              ↻ {isNl ? 'Vernieuwen' : 'Refresh'}
+            </button>
+
             {registers.map(r => {
               const isOpen        = r.status === 'open' || r.status === 'reopen_requested'
               const isClosedToday = r.status === 'closed_today'

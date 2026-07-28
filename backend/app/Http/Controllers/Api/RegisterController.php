@@ -159,12 +159,26 @@ class RegisterController extends Controller
             'opening_float' => ['required', 'numeric', 'min:0'],
         ]);
 
-        // Block if another session is already open on this register
+        // Block if ANOTHER cashier's session is already open on this register.
         $existing = RegisterSession::where('register_id', $register->id)
             ->whereIn('status', ['open', 'reopen_requested'])
             ->first();
 
         if ($existing) {
+            // Your own open session is not a conflict — it is your shift.
+            // A cashier who closed the app, logged out, or whose till
+            // restarted mid-shift comes back to this screen and must simply
+            // resume; blocking them on their own session told them the
+            // register was "in use" by someone who was in fact themselves.
+            // It also makes the call idempotent, so a retried or duplicated
+            // open request returns the same session instead of a 409.
+            if ($existing->cashier_id === $request->user()->id) {
+                return response()->json([
+                    'data'   => $this->formatSession($existing->load('cashier:id,name')),
+                    'resumed' => true,
+                ], 200);
+            }
+
             return response()->json([
                 'message' => __('register.already_open'),
                 'code'    => 'REGISTER_ALREADY_OPEN',

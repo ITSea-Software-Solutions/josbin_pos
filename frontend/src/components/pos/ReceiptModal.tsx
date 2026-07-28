@@ -4,10 +4,10 @@ import { useQuery } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
 import HelpButton from '@/components/shared/HelpButton'
 import { getSale } from '@/api/sales'
-import { buildReceiptBytes } from '@/lib/escpos'
 import { printEscPos, openCashDrawer } from '@/lib/hardware'
+import { saleToEscPosBytes, saleToReceiptText } from '@/lib/saleReceipt'
+import { buildWhatsAppLink } from '@/lib/receiptText'
 import { useSettingsStore } from '@/store/settingsStore'
-import { formatDateTime } from '@/utils/date'
 import apiClient from '@/api/client'
 import type { Store } from '@/types/models'
 
@@ -27,7 +27,9 @@ export default function ReceiptModal({
   const printer       = useSettingsStore((s) => s.printer)
   const storeId       = useSettingsStore((s) => s.storeId)
   const autoPrint     = useSettingsStore((s) => s.autoPrintReceipt)
+  const autoWhatsApp  = useSettingsStore((s) => s.autoWhatsAppReceipt)
   const dateFormat    = useSettingsStore((s) => s.dateFormat)
+  const stamp         = useSettingsStore((s) => s.receiptStamp)
   // Thermal (ESC/POS) configured → print silently through it. Otherwise the
   // Print button falls back to the OS print dialog (receipt PDF in a hidden
   // iframe) — works with any printer installed on the machine.
@@ -38,13 +40,15 @@ export default function ReceiptModal({
   const [printError, setPrintError]     = useState<string | null>(null)
   const [drawerError, setDrawerError]   = useState<string | null>(null)
 
-  // Sale details for building the ESC/POS ticket.
+  // Sale details for building the ESC/POS ticket — and for the WhatsApp text,
+  // which is why this no longer waits on a thermal printer being configured.
   const { data: sale } = useQuery({
     queryKey: ['sale', saleId],
     queryFn: () => getSale(saleId),
-    enabled: isOpen && hasThermal,
+    enabled: isOpen && (hasThermal || autoWhatsApp),
   })
 
+  const customerPhone = sale?.customer?.phone ?? ''
 
   // Store header/footer and BTW number for the printed ticket.
   const { data: store } = useQuery<Store>({
@@ -53,7 +57,7 @@ export default function ReceiptModal({
       const { data } = await apiClient.get(`/stores/${storeId}`)
       return data.data
     },
-    enabled: isOpen && hasThermal && !!storeId,
+    enabled: isOpen && (hasThermal || autoWhatsApp) && !!storeId,
   })
 
   // Which sale has already had its drawer kicked, so a reprint doesn't.
@@ -63,47 +67,13 @@ export default function ReceiptModal({
     if (!sale || !store) return
     setPrintStatus('printing')
     try {
-      const locale = i18n.language === 'nl' ? 'nl' : 'en'
-      const bytes = buildReceiptBytes({
-        sale: {
-          sale_number:       sale.sale_number,
-          // A raw ISO timestamp is not something to hand a customer, and
-          // Suriname reads dates day-first. GET /sales/{id} loads the cashier
-          // relation — the previous build printed the raw cashier UUID here
-          // under a comment claiming the name was resolved server-side.
-          occurred_at:       formatDateTime(sale.occurred_at, dateFormat, locale),
-          cashier_name:      sale.cashier?.name ?? '—',
-          customer_name:     sale.customer?.name,
-          payment_method:    sale.payment_method,
-          payment_provider:  sale.payment_provider ?? undefined,
-          payment_reference: sale.payment_reference ?? undefined,
-          subtotal_srd:      sale.subtotal_srd,
-          discount_srd:      sale.discount_srd,
-          total_srd:         sale.total_srd,
-          btw_srd:           sale.btw_srd,
-          btw_exempt_reason: sale.btw_exempt ? sale.btw_exempt_reason : undefined,
-          cash_tendered:     cashTendered > 0 ? cashTendered.toFixed(2) : undefined,
-          change:            change > 0 ? change.toFixed(2) : undefined,
-          exchange_rate_used: sale.exchange_rate_used,
-          items: sale.items.map((item) => ({
-            product_name:   item.product_name_snapshot,
-            quantity:       item.quantity,
-            unit_price_srd: item.unit_price_srd,
-            line_total_srd: item.line_total_srd,
-            discount_srd:   item.discount_srd,
-            btw_rate:       item.btw_rate,
-            btw_exempt:     false,
-          })),
-        },
-        store: {
-          name:           store.name,
-          receipt_header: store.receipt_header,
-          receipt_footer: store.receipt_footer,
-          // Per-store receipt BTW number overrides the organisation's.
-          btw_number:     store.settings?.receipt_btw_number || store.organisation?.btw_number || undefined,
-        },
-        locale,
+      // One shared builder with Transactions — see lib/saleReceipt.ts. The
+      // cashier NAME (not the UUID) and the AST day-first date were both
+      // fixed here once and would have been reintroduced by a second copy.
+      const bytes = saleToEscPosBytes({
+        sale, store, lang: i18n.language, dateFormat, stamp,
         paperWidth: printer.paperWidth ?? 80,
+        cashTendered, change,
       })
 
       const result = await printEscPos(bytes, printer)
@@ -152,7 +122,7 @@ export default function ReceiptModal({
       setPrintError(String(e))
       return false
     }
-  }, [sale, store, printer, cashTendered, change, i18n.language])
+  }, [sale, store, printer, dateFormat, stamp, cashTendered, change, saleId, i18n.language])
 
   /**
    * Browser-print fallback — no thermal printer configured. Fetches the
@@ -237,6 +207,15 @@ export default function ReceiptModal({
       printViaBrowser()
     }
   }, [isOpen, autoPrint, saleId, hasThermal, sale, store, handleEscPosPrint, printViaBrowser])
+
+  // Hand WhatsApp a message already addressed to this customer, built from
+  // the sale. Electron routes https:// windows to the system browser, which
+  // in turn hands off to the WhatsApp app.
+  function handleWhatsApp() {
+    if (!sale) return
+    const text = saleToReceiptText(sale, store?.name || 'Josbin POS', i18n.language, change)
+    window.open(buildWhatsAppLink(customerPhone, text), '_blank', 'noopener,noreferrer')
+  }
 
   const statusIcon = { idle: '🖨', printing: '⏳', ok: '✓', error: '✗' }
   const statusColor = { idle: 'var(--text-primary)', printing: 'var(--color-warning)', ok: 'var(--color-success)', error: 'var(--color-error)' }
@@ -337,7 +316,41 @@ export default function ReceiptModal({
               are things you reach for later, about a sale that already
               happened — they belong on Transactions, where you can find
               the right sale first. Putting them on this popup made the
-              cashier read five buttons to press one. */}
+              cashier read five buttons to press one.
+
+              The single exception below is not an option in a list: it only
+              appears when this customer actually left a number, and it is
+              already addressed to them. */}
+
+          {/* WhatsApp the receipt to THIS customer.
+              Only when the sale has a customer with a phone number and the
+              manager has left the switch on (Settings → Printer). The message
+              is built and addressed; WhatsApp opens on that chat and the
+              cashier presses send there. It cannot be sent hands-off —
+              WhatsApp accepts machine-sent messages only through Meta's
+              Business API (business account, paid provider, pre-approved
+              template per message). This is the whole of what a till can do,
+              and it is one tap. */}
+          {autoWhatsApp && customerPhone && (
+            <button
+              onClick={handleWhatsApp}
+              disabled={!sale}
+              data-testid="btn-receipt-whatsapp"
+              style={{
+                height: 'var(--touch-target)',
+                borderRadius: 'var(--border-radius)',
+                border: '1px solid #25D366',
+                background: 'rgba(37,211,102,.12)',
+                color: 'var(--text-primary)',
+                cursor: sale ? 'pointer' : 'wait',
+                fontWeight: 600,
+                fontSize: 'var(--font-size-sm)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              💬 {t('pos.receipt.whatsappTo', { phone: customerPhone })}
+            </button>
+          )}
 
           {/* New sale */}
           <button

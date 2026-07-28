@@ -26,6 +26,8 @@ export default function SettingsScreen() {
     printer, setPrinter,
     cardTerminal, setCardTerminal,
     autoPrintReceipt, setAutoPrintReceipt,
+    autoWhatsAppReceipt, setAutoWhatsAppReceipt,
+    receiptStamp, setReceiptStamp,
     embeddedBarcode, setEmbeddedBarcode,
   } = useSettingsStore()
   const storeId = useSettingsStore((s) => s.storeId)
@@ -440,6 +442,68 @@ export default function SettingsScreen() {
             </div>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
               {t('settings.printer.autoPrintHelp')}
+            </p>
+          </div>
+
+          {/* Offer the WhatsApp receipt when the customer left a number.
+              A manager switch, because some shops do not want the till
+              leaving the sale screen at all. */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                {t('settings.printer.autoWhatsApp')}
+              </span>
+              <button
+                onClick={() => { setAutoWhatsAppReceipt(!autoWhatsAppReceipt); handleSave() }}
+                data-testid="toggle-auto-whatsapp"
+                style={{
+                  width: 52, height: 28, borderRadius: 14,
+                  background: autoWhatsAppReceipt ? 'var(--color-primary)' : 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 3, left: autoWhatsAppReceipt ? 25 : 3,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: '#fff', transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
+              {t('settings.printer.autoWhatsAppHelp')}
+            </p>
+          </div>
+
+          {/* Josbin mark stamped at the foot of the printed receipt.
+              A thermal head cannot print a watermark BEHIND the text — it
+              burns one line at a time, there is nothing to composite into —
+              so the mark lands at the bottom, the way a rubber stamp does.
+              The A4/PDF receipt does carry a true watermark. */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
+                {t('settings.printer.receiptStamp')}
+              </span>
+              <button
+                onClick={() => { setReceiptStamp(!receiptStamp); handleSave() }}
+                data-testid="toggle-receipt-stamp"
+                style={{
+                  width: 52, height: 28, borderRadius: 14,
+                  background: receiptStamp ? 'var(--color-primary)' : 'var(--bg-input)',
+                  border: '1px solid var(--border-color)',
+                  cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
+                }}
+              >
+                <div style={{
+                  position: 'absolute', top: 3, left: receiptStamp ? 25 : 3,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: '#fff', transition: 'left 0.2s',
+                }} />
+              </button>
+            </div>
+            <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
+              {t('settings.printer.receiptStampHelp')}
             </p>
           </div>
 

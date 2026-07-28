@@ -175,4 +175,42 @@ class RegisterHandoverTest extends TestCase
         $this->assertStringContainsString($manager->name, $session->closing_note);
         $this->assertStringContainsString('cashier went home sick', $session->closing_note);
     }
+
+    public function test_a_cashier_reopening_their_own_live_session_just_resumes_it(): void
+    {
+        // The cashier closed the app / logged out / the till restarted
+        // mid-shift. Coming back to the gate must return them to their own
+        // session, not tell them the register is "already open" by someone
+        // who is in fact themselves. Also makes the call idempotent, so a
+        // duplicated open request cannot surface as a 409.
+        $this->org->update(['settings' => array_merge($this->org->settings ?? [], [
+            'register_policy' => ['self_service_handover' => true],
+        ])]);
+        $first = $this->openAs($this->cashierB)->assertStatus(201);
+        $sessionId = $first->json('data.id');
+
+        $again = $this->openAs($this->cashierB)->assertOk();
+
+        $this->assertSame($sessionId, $again->json('data.id'), 'must be the same session, not a new one');
+        $this->assertTrue($again->json('resumed'));
+        $this->assertSame(
+            1,
+            RegisterSession::where('register_id', $this->register->id)->where('status', 'open')->count(),
+            'resuming must not create a second open session',
+        );
+    }
+
+    public function test_another_cashier_is_still_blocked_by_a_live_session(): void
+    {
+        $this->org->update(['settings' => array_merge($this->org->settings ?? [], [
+            'register_policy' => ['self_service_handover' => true],
+        ])]);
+        $this->openAs($this->cashierB)->assertStatus(201);
+
+        // Resuming is for the session's OWNER only — it must never become a
+        // way for one cashier to walk into another's open drawer.
+        $this->openAs($this->cashierA)
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'REGISTER_ALREADY_OPEN');
+    }
 }
