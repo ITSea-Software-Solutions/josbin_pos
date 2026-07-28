@@ -158,7 +158,11 @@ function IconSpinner() {
 
 // ─── Feature list shown on the branding panel ─────────────────────────────
 const FEATURES = [
-  { nl: 'Volledig offline verkooppunt — geen internet nodig',       en: 'Fully offline POS — no internet required' },
+  // Accurate, not flattering: the till is a thin client that must reach its
+  // STORE server. That server sits in the shop, so no internet is needed —
+  // but "fully offline" would promise selling with no connection at all,
+  // which this app cannot do and has never claimed in its architecture.
+  { nl: 'Werkt zonder internet — winkelserver staat ter plaatse', en: 'Runs without internet — the store server is on site' },
   { nl: 'BTW-compliant voor Belastingdienst Suriname',              en: 'BTW-compliant for Belastingdienst Suriname' },
   { nl: 'Realtime multi-store dashboard & rapportage',             en: 'Real-time multi-store dashboard & reporting' },
 ]

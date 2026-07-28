@@ -204,7 +204,6 @@ export default function POSScreen() {
           cashTendered={completedSale.cashTendered}
           change={completedSale.change}
           onNewSale={handleNewSale}
-          onOpenSettings={() => { setCompletedSale(null); setActiveScreen('settings') }}
         />
       )}
 

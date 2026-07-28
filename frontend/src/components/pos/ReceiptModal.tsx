@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import Modal from '@/components/shared/Modal'
 import HelpButton from '@/components/shared/HelpButton'
-import { getSale, sendReceiptEmail } from '@/api/sales'
+import { getSale } from '@/api/sales'
 import { buildReceiptBytes } from '@/lib/escpos'
-import { buildReceiptText, buildWhatsAppLink } from '@/lib/receiptText'
 import { printEscPos, openCashDrawer } from '@/lib/hardware'
 import { useSettingsStore } from '@/store/settingsStore'
 import { formatDateTime } from '@/utils/date'
@@ -19,11 +18,10 @@ interface ReceiptModalProps {
   cashTendered: number
   change: number
   onNewSale: () => void
-  onOpenSettings?: () => void
 }
 
 export default function ReceiptModal({
-  isOpen, onClose, saleId, cashTendered, change, onNewSale, onOpenSettings,
+  isOpen, onClose, saleId, cashTendered, change, onNewSale,
 }: ReceiptModalProps) {
   const { t, i18n } = useTranslation()
   const printer       = useSettingsStore((s) => s.printer)
@@ -38,43 +36,23 @@ export default function ReceiptModal({
 
   const [printStatus, setPrintStatus]   = useState<'idle' | 'printing' | 'ok' | 'error'>('idle')
   const [printError, setPrintError]     = useState<string | null>(null)
-  const [pdfStatus, setPdfStatus]       = useState<'idle' | 'loading' | 'error'>('idle')
-  const [emailInput, setEmailInput]     = useState('')
-  const [showEmail, setShowEmail]       = useState(false)
-  const [emailStatus, setEmailStatus]   = useState<'idle' | 'sending' | 'ok' | 'error'>('idle')
-  const [showWhatsApp, setShowWhatsApp] = useState(false)
-  const [phoneInput, setPhoneInput]     = useState('')
 
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  const emailValid = EMAIL_RE.test(emailInput.trim())
-
-  // Fetch sale details for ESC/POS building. Also needed (for the attached
-  // customer's email) when the email panel is used on a non-thermal terminal,
-  // so enable it whenever the email form is open too.
+  // Sale details for building the ESC/POS ticket.
   const { data: sale } = useQuery({
     queryKey: ['sale', saleId],
     queryFn: () => getSale(saleId),
-    enabled: isOpen && (hasThermal || showEmail || showWhatsApp),
+    enabled: isOpen && hasThermal,
   })
 
-  const customerEmail = sale?.customer?.email?.trim() || ''
-  const customerPhone = sale?.customer?.phone?.trim() || ''
 
-  // Fetch store details for receipt header/footer (thermal) and the store
-  // name on the WhatsApp text receipt.
+  // Store header/footer and BTW number for the printed ticket.
   const { data: store } = useQuery<Store>({
     queryKey: ['store', storeId],
     queryFn: async () => {
       const { data } = await apiClient.get(`/stores/${storeId}`)
       return data.data
     },
-    enabled: isOpen && (hasThermal || showWhatsApp) && !!storeId,
-  })
-
-  const emailMutation = useMutation({
-    mutationFn: () => sendReceiptEmail(saleId, emailInput.trim(), i18n.language === 'nl' ? 'nl' : 'en'),
-    onSuccess: () => setEmailStatus('ok'),
-    onError:   () => setEmailStatus('error'),
+    enabled: isOpen && hasThermal && !!storeId,
   })
 
   // Which sale has already had its drawer kicked, so a reprint doesn't.
@@ -245,68 +223,6 @@ export default function ReceiptModal({
     }
   }, [isOpen, autoPrint, saleId, hasThermal, sale, store, handleEscPosPrint, printViaBrowser])
 
-  async function openPdf() {
-    setPdfStatus('loading')
-    try {
-      const params = new URLSearchParams({ locale: i18n.language })
-      if (cashTendered > 0) params.set('cash_tendered', String(cashTendered))
-      if (change > 0) params.set('change', String(change))
-      const res = await apiClient.get(`/sales/${saleId}/receipt/pdf?${params}`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.target = '_blank'
-      a.click()
-      URL.revokeObjectURL(url)
-      setPdfStatus('idle')
-    } catch {
-      setPdfStatus('error')
-      setTimeout(() => setPdfStatus('idle'), 3000)
-    }
-  }
-
-  function handleEmail() {
-    // Require a syntactically valid address — the backend rejects anything else
-    // with a 422, and sending to an empty field is the bug this replaces.
-    if (!emailValid) {
-      setEmailStatus('error')
-      return
-    }
-    setEmailStatus('sending')
-    emailMutation.mutate()
-  }
-
-  // "Bon via WhatsApp" — builds a compact text receipt into a wa.me deep
-  // link. With a number → straight to that chat; empty → WhatsApp's own
-  // chat picker. Electron routes https:// windows to the system browser,
-  // which hands off to WhatsApp (app or Web).
-  function handleWhatsApp() {
-    if (!sale) return
-    const lang = i18n.language
-    const locale = lang === 'en' || lang === 'srn' ? lang : 'nl'
-    const text = buildReceiptText({
-      storeName:       store?.name || 'Josbin POS',
-      saleNumber:      sale.sale_number,
-      occurredAt:      sale.occurred_at,
-      items: sale.items.map((item) => ({
-        product_name:   item.product_name_snapshot,
-        quantity:       item.quantity,
-        unit_price_srd: item.unit_price_srd,
-        line_total_srd: item.line_total_srd,
-      })),
-      subtotalSrd:     sale.subtotal_srd,
-      discountSrd:     sale.discount_srd,
-      btwSrd:          sale.btw_srd,
-      btwExemptReason: sale.btw_exempt ? sale.btw_exempt_reason : undefined,
-      totalSrd:        sale.total_srd,
-      paymentMethod:   sale.payment_method,
-      paymentProvider: sale.payment_provider ?? undefined,
-      change:          change > 0 ? change.toFixed(2) : undefined,
-      locale,
-    })
-    window.open(buildWhatsAppLink(phoneInput, text), '_blank', 'noopener,noreferrer')
-  }
-
   const statusIcon = { idle: '🖨', printing: '⏳', ok: '✓', error: '✗' }
   const statusColor = { idle: 'var(--text-primary)', printing: 'var(--color-warning)', ok: 'var(--color-success)', error: 'var(--color-error)' }
 
@@ -380,201 +296,14 @@ export default function ReceiptModal({
             </div>
           )}
 
-          {/* PDF fallback — always shown */}
-          <button
-            onClick={openPdf}
-            disabled={pdfStatus === 'loading'}
-            data-testid="btn-print-pdf"
-            style={{
-              height: 'var(--touch-target)',
-              borderRadius: 'var(--border-radius)',
-              border: `1px solid ${pdfStatus === 'error' ? 'var(--color-error)' : 'var(--border-color)'}`,
-              background: 'var(--bg-elevated)',
-              color: pdfStatus === 'error' ? 'var(--color-error)' : 'var(--text-primary)',
-              cursor: pdfStatus === 'loading' ? 'wait' : 'pointer',
-              fontWeight: 600,
-              fontSize: 'var(--font-size-sm)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              opacity: pdfStatus === 'loading' ? 0.7 : 1,
-            }}
-          >
-            {pdfStatus === 'loading' ? '⏳' : pdfStatus === 'error' ? '✗' : '📄'} {t('pos.receipt.printPdf')}
-          </button>
+          {/* Reprint and New sale only.
 
-          {/* Email receipt */}
-          {!showEmail ? (
-            <button
-              onClick={() => setShowEmail(true)}
-              data-testid="btn-email-receipt"
-              style={{
-                height: 'var(--touch-target)',
-                borderRadius: 'var(--border-radius)',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 'var(--font-size-sm)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-            >
-              ✉ {t('pos.receipt.email')}
-            </button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {/* Prefill chip — one tap uses the attached customer's email */}
-              {customerEmail && customerEmail !== emailInput.trim() && (
-                <button
-                  type="button"
-                  onClick={() => { setEmailInput(customerEmail); if (emailStatus === 'error') setEmailStatus('idle') }}
-                  data-testid="chip-use-customer-email"
-                  style={{
-                    alignSelf: 'flex-start',
-                    height: 26, padding: '0 10px',
-                    borderRadius: 20, cursor: 'pointer',
-                    fontSize: 11, fontWeight: 600,
-                    background: 'rgba(79,142,247,0.12)',
-                    border: '1px solid var(--color-primary)',
-                    color: 'var(--color-primary)',
-                    whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}
-                >
-                  👤 {t('pos.receipt.useCustomerEmail')}: {customerEmail}
-                </button>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="email"
-                  placeholder={t('pos.receipt.emailPlaceholder')}
-                  value={emailInput}
-                  onChange={(e) => { setEmailInput(e.target.value); if (emailStatus === 'error') setEmailStatus('idle') }}
-                  style={{
-                    flex: 1, height: 'var(--touch-target)',
-                    borderRadius: 'var(--border-radius)',
-                    border: `1px solid ${emailInput.trim() && !emailValid ? 'var(--color-error)' : 'var(--border-color)'}`,
-                    background: 'var(--bg-input)',
-                    color: 'var(--text-primary)',
-                    padding: '0 12px', fontSize: 'var(--font-size-sm)',
-                  }}
-                />
-                <button
-                  onClick={handleEmail}
-                  disabled={emailStatus === 'sending' || !emailValid}
-                  style={{
-                    height: 'var(--touch-target)', padding: '0 16px',
-                    borderRadius: 'var(--border-radius)',
-                    border: 'none',
-                    background: emailStatus === 'ok' ? 'var(--color-success)' : emailStatus === 'error' ? 'var(--color-error)' : 'var(--color-primary)',
-                    color: '#fff', cursor: emailStatus === 'sending' || !emailValid ? 'not-allowed' : 'pointer', fontWeight: 600,
-                    fontSize: 'var(--font-size-sm)',
-                    opacity: emailStatus === 'sending' || !emailValid ? 0.5 : 1,
-                  }}
-                >
-                  {emailStatus === 'sending' ? '⏳' : emailStatus === 'ok' ? '✓' : emailStatus === 'error' ? '✗' : t('app.send')}
-                </button>
-              </div>
-              {/* Inline validation — only once they have typed something invalid */}
-              {emailInput.trim() && !emailValid && (
-                <span style={{ fontSize: 11, color: 'var(--color-error)' }}>
-                  {t('pos.receipt.emailInvalid')}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* WhatsApp receipt — Suriname's channel of choice */}
-          {!showWhatsApp ? (
-            <button
-              onClick={() => { setShowWhatsApp(true); if (customerPhone) setPhoneInput(customerPhone) }}
-              data-testid="btn-whatsapp-receipt"
-              style={{
-                height: 'var(--touch-target)',
-                borderRadius: 'var(--border-radius)',
-                border: '1px solid var(--border-color)',
-                background: 'var(--bg-elevated)',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                fontWeight: 600,
-                fontSize: 'var(--font-size-sm)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-            >
-              💬 {t('pos.receipt.whatsapp')}
-            </button>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {customerPhone && customerPhone !== phoneInput.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setPhoneInput(customerPhone)}
-                  data-testid="chip-use-customer-phone"
-                  style={{
-                    alignSelf: 'flex-start',
-                    height: 26, padding: '0 10px',
-                    borderRadius: 20, cursor: 'pointer',
-                    fontSize: 11, fontWeight: 600,
-                    background: 'rgba(79,142,247,0.12)',
-                    border: '1px solid var(--color-primary)',
-                    color: 'var(--color-primary)',
-                    whiteSpace: 'nowrap', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}
-                >
-                  👤 {t('pos.receipt.useCustomerPhone')}: {customerPhone}
-                </button>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                <input
-                  type="tel"
-                  placeholder={t('pos.receipt.whatsappPlaceholder')}
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  data-testid="input-whatsapp-phone"
-                  style={{
-                    flex: 1, height: 'var(--touch-target)',
-                    borderRadius: 'var(--border-radius)',
-                    border: '1px solid var(--border-color)',
-                    background: 'var(--bg-input)',
-                    color: 'var(--text-primary)',
-                    padding: '0 12px', fontSize: 'var(--font-size-sm)',
-                  }}
-                />
-                <button
-                  onClick={handleWhatsApp}
-                  disabled={!sale}
-                  data-testid="btn-whatsapp-open"
-                  style={{
-                    height: 'var(--touch-target)', padding: '0 16px',
-                    borderRadius: 'var(--border-radius)',
-                    border: 'none',
-                    background: '#25D366',
-                    color: '#fff', cursor: !sale ? 'wait' : 'pointer', fontWeight: 600,
-                    fontSize: 'var(--font-size-sm)',
-                    opacity: !sale ? 0.6 : 1,
-                  }}
-                >
-                  {!sale ? '⏳' : t('pos.receipt.whatsappOpen')}
-                </button>
-              </div>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>
-                {t('pos.receipt.whatsappHint')}
-              </span>
-            </div>
-          )}
-
-          {/* No thermal printer configured → nudge to set one up (the Print
-              button still works via the OS dialog; this is a shortcut). */}
-          {!hasThermal && onOpenSettings && (
-            <button
-              onClick={() => { onOpenSettings(); onClose() }}
-              style={{
-                height: 'var(--touch-target)', background: 'none', border: '1px dashed var(--border-color)',
-                borderRadius: 'var(--border-radius)', color: 'var(--text-secondary)', cursor: 'pointer',
-                fontSize: 'var(--font-size-sm)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-              }}
-            >
-              🖨 {t('pos.receipt.setupPrinter')}
-            </button>
-          )}
+              A cashier at a live till has one job here: hand over the
+              receipt and serve the next customer. PDF, e-mail and WhatsApp
+              are things you reach for later, about a sale that already
+              happened — they belong on Transactions, where you can find
+              the right sale first. Putting them on this popup made the
+              cashier read five buttons to press one. */}
 
           {/* New sale */}
           <button
