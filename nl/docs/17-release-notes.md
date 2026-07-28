@@ -11,7 +11,15 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.8 — 28 juli 2026 *(actueel)*
+## 1.5.9 — 28 juli 2026 *(actueel)*
+
+- **De bon wacht nooit meer op de server.** De winkelgegevens worden nu
+  opgehaald zodra het kassascherm opent, in plaats van op het moment dat er een
+  bon nodig is. De eerste verkoop na een rustige periode merkte dat die
+  gegevens verlopen waren en haalde ze opnieuw op — bij een cloudserver over
+  het internet, met een klant die aan de toonbank staat te wachten.
+
+## 1.5.8 — 28 juli 2026
 
 - **Betaling voltooien is bereikbaar zonder scrollen.** Op een kassascherm was
   de contant-stap hoger dan het scherm, waardoor de knop die het geld aanneemt

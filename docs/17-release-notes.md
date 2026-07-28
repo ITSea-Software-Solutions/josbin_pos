@@ -11,7 +11,15 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.8 — 28 July 2026 *(current)*
+## 1.5.9 — 28 July 2026 *(current)*
+
+- **The receipt never waits for the server.** The shop's details are now
+  fetched when the POS screen opens rather than at the moment a receipt is
+  needed. The first sale after a quiet spell used to find that information
+  expired and fetch it again — on a cloud server, across the internet, with a
+  customer waiting at the counter.
+
+## 1.5.8 — 28 July 2026
 
 - **Complete Payment no longer needs scrolling to reach.** On a till screen the
   cash step ran taller than the screen, so the button that takes the money sat

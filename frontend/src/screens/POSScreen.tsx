@@ -54,6 +54,31 @@ export default function POSScreen() {
   const [activeScreen, setActiveScreen] = useState<Screen>('pos')
   const isManagerPlus = ['store_manager', 'organisation_admin', 'super_admin']
     .includes(user?.role ?? '')
+
+  // Warm everything the receipt needs BEFORE a sale happens.
+  //
+  // The receipt screen must not wait on the network: the cashier is standing
+  // at the counter and the customer is waiting for paper. The sale itself is
+  // handed straight over from the payment screen, and the shop record is
+  // normally already cached — but "normally" fails on the first sale after a
+  // quiet spell, when the cache has gone stale and a receipt suddenly costs a
+  // round trip. On a cloud server that round trip crosses the internet.
+  //
+  // Fetching both here, once, when the POS screen opens removes the last case
+  // where printing waits for anything at all.
+  useEffect(() => {
+    if (!storeId) return
+    qc.prefetchQuery({
+      queryKey: ['store', storeId],
+      queryFn: () => import('@/api/stores').then((m) => m.getStore(storeId)),
+      staleTime: 10 * 60_000,
+    })
+    qc.prefetchQuery({
+      queryKey: ['receipt-stamp', storeId],
+      queryFn: () => import('@/api/stores').then((m) => m.getReceiptStamp(storeId)),
+      staleTime: 60 * 60_000,
+    })
+  }, [storeId, qc])
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
