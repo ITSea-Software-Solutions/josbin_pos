@@ -134,7 +134,7 @@ function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean;
             <div style={{ display: 'flex', gap: 8 }}>
               {(['native', 'external'] as const).map((t) => (
                 <button key={t} type="button" onClick={() => setForm({ ...form, pos_type: t })}
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: form.pos_type === t ? '2px solid #293371' : '1.5px solid #e5e7eb', background: form.pos_type === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: form.pos_type === t ? '#293371' : '#6b7280', cursor: 'pointer' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: form.pos_type === t ? '2px solid #003366' : '1.5px solid #e5e7eb', background: form.pos_type === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: form.pos_type === t ? '#003366' : '#6b7280', cursor: 'pointer' }}>
                   {t === 'native' ? 'Josbin POS (native)' : 'External POS (API only)'}
                 </button>
               ))}
@@ -147,7 +147,7 @@ function AddStoreModal({ orgId, isNl, onClose }: { orgId: string; isNl: boolean;
               {isNl ? 'Annuleren' : 'Cancel'}
             </button>
             <button onClick={() => mutation.mutate()} disabled={!ok || mutation.isPending}
-              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!ok || mutation.isPending) ? 0.5 : 1 }}>
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!ok || mutation.isPending) ? 0.5 : 1 }}>
               {mutation.isPending ? '…' : (isNl ? 'Vestiging aanmaken' : 'Create store')}
             </button>
           </div>
@@ -180,7 +180,7 @@ function RenameStoreModal({ store, isNl, onClose }: { store: Store; isNl: boolea
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={name.trim().length < 2 || mutation.isPending}
-            style={{ flex: 2, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (name.trim().length < 2 || mutation.isPending) ? 0.5 : 1 }}>
+            style={{ flex: 2, padding: '10px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (name.trim().length < 2 || mutation.isPending) ? 0.5 : 1 }}>
             {mutation.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -288,7 +288,7 @@ export default function StoresScreen() {
         </div>
         <button onClick={() => setAddOpen(true)} disabled={!canCreate}
           title={blockReason ?? undefined}
-          style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5, boxShadow: '0 4px 12px rgba(41,51,113,.3)', whiteSpace: 'nowrap' }}>
+          style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: canCreate ? 'pointer' : 'not-allowed', opacity: canCreate ? 1 : 0.5, boxShadow: '0 4px 12px rgba(0,51,102,.3)', whiteSpace: 'nowrap' }}>
           + {isNl ? 'Nieuwe vestiging' : 'New store'}
         </button>
       </div>
@@ -296,7 +296,7 @@ export default function StoresScreen() {
       {/* Super-Admin org dropdown */}
       {isSuperAdmin && (
         <div style={{ marginBottom: 16, padding: '12px 16px', background: '#f4f6fc', border: '1px solid #e6ebf7', borderRadius: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: '#293371' }}>{isNl ? 'Organisatie' : 'Organisation'}:</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#003366' }}>{isNl ? 'Organisatie' : 'Organisation'}:</span>
           <select value={selectedOrgId} onChange={(e) => setSelectedOrgId(e.target.value)}
             style={{ flex: 1, height: 32, borderRadius: 8, border: '1.5px solid #d5deef', padding: '0 10px', fontSize: 13, background: '#fff' }}>
             <option value="">{isNl ? '— kies een organisatie —' : '— pick an organisation —'}</option>
@@ -326,9 +326,9 @@ export default function StoresScreen() {
               ? `Organisatiegegevens worden door ${vendor.name} (uw Josbin POS leverancier) beheerd en zijn alleen-lezen. Voor wijzigingen: e-mail `
               : `Organisation details are managed by ${vendor.name} (your Josbin POS vendor) and are read-only. For changes, email `}
             <a href={`mailto:${vendor.email}?subject=${encodeURIComponent(`[${headerOrg.name}] Organisation details change request`)}`}
-               style={{ color: '#293371', fontWeight: 700 }}>{vendor.email}</a>
+               style={{ color: '#003366', fontWeight: 700 }}>{vendor.email}</a>
             {isNl ? ' of bel ' : ' or call '}
-            <a href={`tel:${vendor.phone.replace(/\s/g, '')}`} style={{ color: '#293371', fontWeight: 700 }}>{vendor.phone}</a>.
+            <a href={`tel:${vendor.phone.replace(/\s/g, '')}`} style={{ color: '#003366', fontWeight: 700 }}>{vendor.phone}</a>.
           </p>
         </div>
       )}
@@ -466,7 +466,7 @@ export default function StoresScreen() {
                     onClick={h.key ? () => toggle(h.key) : undefined}
                     style={{ padding: '10px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>

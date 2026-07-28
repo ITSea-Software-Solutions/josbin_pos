@@ -47,7 +47,7 @@ function EditModal({ customer, isNl, onClose }: { customer: Customer; isNl: bool
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#003366', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -149,7 +149,7 @@ export default function CustomersScreen({ onOpenDetail }: Props) {
                   onClick={h.key ? () => toggle(h.key) : undefined}
                   style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                   {h.label}
-                  {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                  {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                 </th>
               ))}
             </tr>
@@ -183,12 +183,12 @@ export default function CustomersScreen({ onOpenDetail }: Props) {
                 style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .1s', cursor: onOpenDetail ? 'pointer' : 'default' }}
                 onClick={() => onOpenDetail?.(c.id)}
                 title={onOpenDetail ? (isNl ? 'Klik voor aankoophistorie en overzicht' : 'Click for purchase history and statement') : undefined}
-                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                 onMouseLeave={e => (e.currentTarget.style.background = '')}
               >
                 <td style={{ padding: '12px 16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#293371,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'linear-gradient(135deg,#003366,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                       {c.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
                     </div>
                     <span style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{c.name}</span>
@@ -196,7 +196,7 @@ export default function CustomersScreen({ onOpenDetail }: Props) {
                 </td>
                 <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{c.phone ?? '—'}</td>
                 <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{c.email ?? '—'}</td>
-                <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#293371' }}>
+                <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#003366' }}>
                   SRD {parseFloat(c.total_spend_srd).toFixed(2)}
                 </td>
                 <td style={{ padding: '12px 16px' }}>
@@ -212,7 +212,7 @@ export default function CustomersScreen({ onOpenDetail }: Props) {
                     {onOpenDetail && (
                       <button
                         onClick={e => { e.stopPropagation(); onOpenDetail(c.id) }}
-                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #c7cdea', background: '#f4f6fc', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#293371' }}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: '1px solid #c7cdea', background: '#f4f6fc', fontSize: 12, cursor: 'pointer', fontWeight: 600, color: '#003366' }}
                       >
                         {isNl ? 'Details' : 'Details'}
                       </button>

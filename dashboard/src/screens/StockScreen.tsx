@@ -151,7 +151,7 @@ function AdjustModal({ product, isNl, onClose }: { product: Product | LowStockPr
           <button
             onClick={() => mut.mutate()}
             disabled={!qtyChange || isNaN(parseFloat(qtyChange)) || parseFloat(qtyChange) === 0 || !storeId || mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !qtyChange ? 0.5 : 1 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#003366', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !qtyChange ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -363,8 +363,8 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
             style={{
               padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
               fontSize: 14, fontWeight: activeTab === tab.key ? 700 : 500,
-              color: activeTab === tab.key ? (tab.key === 'low' ? '#dc2626' : '#293371') : '#6b7280',
-              borderBottom: activeTab === tab.key ? `2px solid ${tab.key === 'low' ? '#dc2626' : '#293371'}` : '2px solid transparent',
+              color: activeTab === tab.key ? (tab.key === 'low' ? '#dc2626' : '#003366') : '#6b7280',
+              borderBottom: activeTab === tab.key ? `2px solid ${tab.key === 'low' ? '#dc2626' : '#003366'}` : '2px solid transparent',
               marginBottom: -2,
             }}>
             {isNl ? tab.nl : tab.en}
@@ -426,7 +426,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
           />
         )}
         {filterStoreId && stores.length > 1 && (
-          <span style={{ fontSize: 12, color: '#293371', fontWeight: 600 }}>
+          <span style={{ fontSize: 12, color: '#003366', fontWeight: 600 }}>
             ↳ {isNl ? 'voorraad per vestiging' : 'per-store stock'}
           </span>
         )}
@@ -446,7 +446,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
                 <th key={h.key} onClick={() => toggle(h.key)}
                   style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', cursor: 'pointer', userSelect: 'none' }}>
                   {h.label}
-                  <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                  <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>
                 </th>
               ))}
               <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px' }}></th>
@@ -482,7 +482,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
               // Pastel backgrounds — strong enough to scan a busy table,
               // weak enough not to drown out the row text.
               const baseBg = isOut ? 'rgba(220,38,38,.06)' : isLow ? 'rgba(245,158,11,.08)' : undefined
-              const hoverBg = isOut ? 'rgba(220,38,38,.10)' : isLow ? 'rgba(245,158,11,.13)' : 'rgba(41,51,113,.025)'
+              const hoverBg = isOut ? 'rgba(220,38,38,.10)' : isLow ? 'rgba(245,158,11,.13)' : 'rgba(0,51,102,.025)'
 
               return (
                 <tr key={p.id}
@@ -530,7 +530,7 @@ export default function StockScreen({ initialActiveTab = 'all' }: StockScreenPro
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button
                         onClick={() => setAdjustProduct(p)}
-                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#293371', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#003366', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                       >
                         {isNl ? '+ Aanpassen' : '+ Adjust'}
                       </button>

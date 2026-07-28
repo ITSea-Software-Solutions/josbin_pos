@@ -576,7 +576,7 @@ export default function SettingsScreen() {
               {/* Printer bridge: make this USB printer a network printer.
                   The software equivalent of the printer's LAN card — Android
                   tills print to this PC's address on port 9100. */}
-              <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: printerShareEnabled ? 'rgba(41,51,113,.12)' : 'var(--bg-input)' }}>
+              <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 'var(--border-radius)', border: '1px solid var(--border-color)', background: printerShareEnabled ? 'rgba(0,51,102,.12)' : 'var(--bg-input)' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
                   <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)', fontWeight: 600 }}>
                     📡 {t('settings.printer.share')}

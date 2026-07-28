@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { passkeysSupported } from '@/lib/passkeys'
 import { useDashboardAuthStore } from '@/store/authStore'
+import ProcessBar from '@/components/ProcessBar'
 
 const STYLES = `
   @keyframes orb-a { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(60px,-80px) scale(1.1)} 70%{transform:translate(-40px,50px) scale(0.93)} }
@@ -23,7 +24,7 @@ const STYLES = `
     font-family:inherit; box-sizing:border-box;
   }
   .login-input::placeholder{color:rgba(148,163,184,0.45)}
-  .login-input:focus{border-color:#293371;background:rgba(41,51,113,0.09);box-shadow:0 0 0 4px rgba(41,51,113,0.2)}
+  .login-input:focus{border-color:#003366;background:rgba(0,51,102,0.09);box-shadow:0 0 0 4px rgba(0,51,102,0.2)}
   .login-input:disabled{opacity:.4;cursor:not-allowed}
   .login-btn {
     width:100%; height:54px; border:none; border-radius:14px;
@@ -48,7 +49,7 @@ const STYLES = `
     border:none; cursor:pointer; font-family:inherit; transition:all .15s;
     color:rgba(248,250,252,.6); background:transparent;
   }
-  .lang-pill button.active{background:rgba(41,51,113,.5);color:#fff}
+  .lang-pill button.active{background:rgba(0,51,102,.5);color:#fff}
   .lang-pill button:hover:not(.active){background:rgba(255,255,255,.07);color:#fff}
   .feat-row{display:flex;align-items:flex-start;gap:12px;animation:fade-rise .5s ease both}
 `
@@ -105,7 +106,7 @@ export default function LoginScreen() {
     }}>
       {/* ── Orbs ── */}
       <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 0, overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-8%', left: '-6%', width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(circle, rgba(41,51,113,.32) 0%, transparent 68%)', animation: 'orb-a 20s ease-in-out infinite', filter: 'blur(3px)' }} />
+        <div style={{ position: 'absolute', top: '-8%', left: '-6%', width: 580, height: 580, borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,51,102,.32) 0%, transparent 68%)', animation: 'orb-a 20s ease-in-out infinite', filter: 'blur(3px)' }} />
         <div style={{ position: 'absolute', bottom: '-12%', right: '-5%', width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle, rgba(31,42,99,.26) 0%, transparent 68%)', animation: 'orb-b 25s ease-in-out infinite', filter: 'blur(3px)' }} />
         <div style={{ position: 'absolute', top: '35%', left: '42%', width: 340, height: 340, borderRadius: '50%', background: 'radial-gradient(circle, rgba(6,182,212,.1) 0%, transparent 70%)', animation: 'orb-c 16s ease-in-out infinite' }} />
         <div style={{ position: 'absolute', inset: 0, backgroundImage: 'linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px)', backgroundSize: '52px 52px' }} />
@@ -129,9 +130,9 @@ export default function LoginScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 56 }}>
           <div style={{
             width: 56, height: 56, borderRadius: 16, flexShrink: 0,
-            background: 'linear-gradient(135deg,#293371,#1f2a63)',
+            background: 'linear-gradient(135deg,#003366,#1f2a63)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 10px 30px rgba(41,51,113,.55)',
+            boxShadow: '0 10px 30px rgba(0,51,102,.55)',
           }}>
             <svg viewBox="0 0 28 28" fill="none" style={{ width: 28, height: 28 }}>
               <rect x="3" y="3" width="10" height="10" rx="3" fill="white" fillOpacity=".9" />
@@ -169,7 +170,7 @@ export default function LoginScreen() {
             <div key={i} className="feat-row" style={{ animationDelay: `${i * 0.1}s` }}>
               <div style={{
                 width: 26, height: 26, borderRadius: 8, flexShrink: 0, marginTop: 1,
-                background: 'rgba(41,51,113,.2)', border: '1px solid rgba(41,51,113,.4)',
+                background: 'rgba(0,51,102,.2)', border: '1px solid rgba(0,51,102,.4)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8f9ac9" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -247,8 +248,12 @@ export default function LoginScreen() {
             </div>
           )}
 
+          {/* Process bar — the four inks Josbin's machines lay down. Signature
+              only; it never carries state or becomes a control. */}
+          <ProcessBar onDark height={4} />
+
           {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 22, marginTop: 24 }}>
             {/* Email */}
             <div>
               <label style={{ display: 'block', fontSize: 13.5, fontWeight: 700, color: 'rgba(203,213,225,.85)', letterSpacing: '.2px', marginBottom: 10 }}>

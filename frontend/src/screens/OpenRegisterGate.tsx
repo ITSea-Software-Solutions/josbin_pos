@@ -40,7 +40,7 @@ function Numpad({ value, onChange }: { value: string; onChange: (v: string) => v
       ))}
       <button onClick={() => press('⌫')} style={{
         height: 52, borderRadius: 12, border: '1px solid #e5e7eb', fontSize: 18, fontWeight: 700,
-        background: '#f5f5ff', color: '#293371', cursor: 'pointer', fontFamily: 'inherit',
+        background: '#f5f5ff', color: '#003366', cursor: 'pointer', fontFamily: 'inherit',
         boxShadow: '0 1px 3px rgba(0,0,0,.06)', transition: 'all .1s', gridColumn: 'span 1',
       }}
         onMouseDown={e => (e.currentTarget.style.transform = 'scale(.95)')}
@@ -200,7 +200,7 @@ export default function OpenRegisterGate() {
   if (loading) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#f2f5fb', gap: 16 }}>
-        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #d9e1f1', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite' }} />
+        <div style={{ width: 40, height: 40, borderRadius: '50%', border: '3px solid #d9e1f1', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite' }} />
         <p style={{ color: '#7e88a0', fontSize: 14 }}>{isNl ? 'Laden…' : 'Loading…'}</p>
       </div>
     )
@@ -246,9 +246,9 @@ export default function OpenRegisterGate() {
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{
             width: 52, height: 52, borderRadius: 16, margin: '0 auto 14px',
-            background: 'linear-gradient(135deg,#293371,#1f2a63)',
+            background: 'linear-gradient(135deg,#003366,#1f2a63)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(41,51,113,.45)',
+            boxShadow: '0 8px 24px rgba(0,51,102,.45)',
           }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/>
@@ -336,7 +336,7 @@ export default function OpenRegisterGate() {
                     <button
                       onClick={() => stale ? handleCloseStale(target.id, expected) : handleReconcile(target.id, expected)}
                       disabled={closingStale}
-                      style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: closingStale ? 'not-allowed' : 'pointer', opacity: closingStale ? 0.6 : 1, fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                      style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: closingStale ? 'not-allowed' : 'pointer', opacity: closingStale ? 0.6 : 1, fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(0,51,102,.5)' }}>
                       {closingStale ? '…' : stale
                         ? (isNl ? 'Gisteren afsluiten' : 'Close yesterday')
                         : (isNl ? 'Telling vastleggen' : 'Record the count')}
@@ -353,7 +353,7 @@ export default function OpenRegisterGate() {
                   {managerPhone ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <a href={`tel:${managerPhone}`}
-                        style={{ display: 'block', padding: '13px 0', borderRadius: 12, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                        style={{ display: 'block', padding: '13px 0', borderRadius: 12, background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, textDecoration: 'none', boxShadow: '0 4px 16px rgba(0,51,102,.5)' }}>
                         📞 {isNl ? 'Bel' : 'Call'} {managerName ?? 'manager'} · {managerPhone}
                       </a>
                       <a href={`https://wa.me/${managerPhone.replace(/[^0-9]/g, '')}`} target="_blank" rel="noreferrer"
@@ -377,7 +377,7 @@ export default function OpenRegisterGate() {
                   {registers.some(r => r.status === 'available' || (r.status === 'closed_today' && selfHandover)) && (
                     <button onClick={() => setStep('pick')}
                       data-testid="gate-other-register"
-                      style={{ marginTop: 10, padding: '12px 22px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                      style={{ marginTop: 10, padding: '12px 22px', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit', width: '100%', boxShadow: '0 4px 16px rgba(0,51,102,.5)' }}>
                       {isNl ? '→ Doorgaan op een andere kassa' : '→ Continue on another register'}
                     </button>
                   )}
@@ -427,8 +427,8 @@ export default function OpenRegisterGate() {
                 : isClosedToday
                   ? { text: isNl ? 'Gesloten' : 'Closed',   fg: '#fbbf24', bg: 'rgba(251,191,36,.1)', bd: 'rgba(251,191,36,.3)' }
                   : { text: isNl ? 'Beschikbaar' : 'Available', fg: '#4ade80', bg: 'rgba(34,197,94,.1)', bd: 'rgba(34,197,94,.25)' }
-              const borderCol = disabled ? 'rgba(255,255,255,.06)' : 'rgba(41,51,113,.4)'
-              const bgCol     = disabled ? 'rgba(255,255,255,.03)' : 'rgba(41,51,113,.1)'
+              const borderCol = disabled ? 'rgba(255,255,255,.06)' : 'rgba(0,51,102,.4)'
+              const bgCol     = disabled ? 'rgba(255,255,255,.03)' : 'rgba(0,51,102,.1)'
               return (
                 <button key={r.id} onClick={() => { if (!disabled) { setSelected(r); setStep('float') } }}
                   disabled={disabled}
@@ -441,11 +441,11 @@ export default function OpenRegisterGate() {
                     cursor: disabled ? 'not-allowed' : 'pointer',
                     opacity: disabled ? 0.55 : 1, transition: 'all .15s',
                   }}
-                  onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'rgba(41,51,113,.18)' }}
-                  onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = 'rgba(41,51,113,.1)' }}
+                  onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = 'rgba(0,51,102,.18)' }}
+                  onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = 'rgba(0,51,102,.1)' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
-                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(41,51,113,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(0,51,102,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <span style={{ color: '#8f9ac9', fontSize: 15, fontWeight: 800 }}>{r.number}</span>
                     </div>
                     <div style={{ textAlign: 'left', minWidth: 0, flex: 1 }}>
@@ -477,7 +477,7 @@ export default function OpenRegisterGate() {
         {/* Step 2: Opening float */}
         {step === 'float' && selected && (
           <div>
-            <div style={{ background: 'rgba(41,51,113,.1)', border: '1px solid rgba(41,51,113,.25)', borderRadius: 12, padding: '10px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ background: 'rgba(0,51,102,.1)', border: '1px solid rgba(0,51,102,.25)', borderRadius: 12, padding: '10px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 10 }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8f9ac9" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
               <span style={{ color: '#8f9ac9', fontSize: 13, fontWeight: 700 }}>{selected.name}</span>
             </div>
@@ -503,7 +503,7 @@ export default function OpenRegisterGate() {
                 {isNl ? 'Terug' : 'Back'}
               </button>
               <button onClick={handleOpen} disabled={opening}
-                style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: opening ? 'not-allowed' : 'pointer', opacity: opening ? 0.6 : 1, fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(41,51,113,.5)' }}>
+                style={{ flex: 2, padding: '12px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 15, fontWeight: 800, cursor: opening ? 'not-allowed' : 'pointer', opacity: opening ? 0.6 : 1, fontFamily: 'inherit', boxShadow: '0 4px 16px rgba(0,51,102,.5)' }}>
                 {opening ? '…' : (isNl ? 'Kassa openen' : 'Open register')}
               </button>
             </div>

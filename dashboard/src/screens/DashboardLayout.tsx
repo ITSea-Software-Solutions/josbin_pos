@@ -195,7 +195,7 @@ export default function DashboardLayout() {
           <p style={{ margin: 0, fontSize: 14, color: '#6b7280' }}>
             {isNl ? 'Dit account heeft geen toegang tot de dashboard-UI.' : 'This account has no access to the dashboard UI.'}
           </p>
-          <button onClick={logout} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
+          <button onClick={logout} style={{ marginTop: 20, padding: '10px 24px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontWeight: 700, cursor: 'pointer' }}>
             {isNl ? 'Uitloggen' : 'Log out'}
           </button>
         </div>
@@ -428,16 +428,16 @@ export default function DashboardLayout() {
       }
     : {
         sidebarBg: '#16203a',
-        logoGrad: 'linear-gradient(135deg, #293371, #1f2a63)',
-        logoShadow: '0 4px 14px rgba(41,51,113,0.45)',
+        logoGrad: 'linear-gradient(135deg, #003366, #1f2a63)',
+        logoShadow: '0 4px 14px rgba(0,51,102,0.45)',
         brand: 'Josbin POS',
         portal: isNl ? 'Beheerportaal' : 'Management Portal',
-        portalColor: '#293371',
-        activeBg: 'linear-gradient(90deg, rgba(41,51,113,0.25), rgba(31,42,99,0.15))',
+        portalColor: '#003366',
+        activeBg: 'linear-gradient(90deg, rgba(0,51,102,0.25), rgba(31,42,99,0.15))',
         activeText: '#8f9ac9',
-        activeBar: '#293371',
-        toggleGrad: 'linear-gradient(135deg, #293371, #1f2a63)',
-        toggleShadow: '0 2px 8px rgba(41,51,113,0.4)',
+        activeBar: '#003366',
+        toggleGrad: 'linear-gradient(135deg, #003366, #1f2a63)',
+        toggleShadow: '0 2px 8px rgba(0,51,102,0.4)',
       }
 
   return (
@@ -635,7 +635,7 @@ export default function DashboardLayout() {
             </span>
             {/* User chip */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 6px', borderRadius: 24, background: '#f2f5fb', border: '1px solid #e6ecf5', cursor: 'default' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #293371, #1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, #003366, #1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#fff' }}>
                 {initials}
               </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#3d3d50' }}>{user?.name?.split(' ')[0]}</span>

@@ -71,7 +71,7 @@ function EditOverrideModal({
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={!productId || !price || mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !productId || !price ? 0.5 : 1 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#003366', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !productId || !price ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -147,7 +147,7 @@ export default function PriceOverridesScreen() {
           disabled={pushStatus !== 'idle'}
           style={{
             height: 42, padding: '0 20px', borderRadius: 10, border: 'none', cursor: pushStatus !== 'idle' ? 'not-allowed' : 'pointer',
-            background: pushStatus === 'done' ? '#16a34a' : pushStatus === 'error' ? '#dc2626' : 'linear-gradient(135deg,#293371,#1f2a63)',
+            background: pushStatus === 'done' ? '#16a34a' : pushStatus === 'error' ? '#dc2626' : 'linear-gradient(135deg,#003366,#1f2a63)',
             color: '#fff', fontSize: 13, fontWeight: 700, transition: 'background .3s',
           }}
         >
@@ -176,7 +176,7 @@ export default function PriceOverridesScreen() {
         {selectedStoreId && (
           <button
             onClick={() => setEditOverride('new')}
-            style={{ height: 38, padding: '0 16px', borderRadius: 8, border: 'none', background: '#293371', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}
+            style={{ height: 38, padding: '0 16px', borderRadius: 8, border: 'none', background: '#003366', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginLeft: 'auto' }}
           >
             {isNl ? '+ Overschrijving toevoegen' : '+ Add override'}
           </button>
@@ -189,7 +189,7 @@ export default function PriceOverridesScreen() {
           <p style={{ fontSize: 15, fontWeight: 700, color: '#6b7280' }}>{isNl ? 'Kies een vestiging' : 'Choose a store'}</p>
         </div>
       ) : isLoading ? (
-        <div style={{ textAlign: 'center', padding: 40 }}><div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} /></div>
+        <div style={{ textAlign: 'center', padding: 40 }}><div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} /></div>
       ) : overrides.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5' }}>
           <p style={{ fontSize: 36, marginBottom: 10 }}>💰</p>
@@ -214,7 +214,7 @@ export default function PriceOverridesScreen() {
                   <th key={h.key} onClick={() => toggle(h.key)}
                     style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
                 <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px' }}></th>
@@ -226,12 +226,12 @@ export default function PriceOverridesScreen() {
                 return (
                   <tr key={o.id}
                     style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                     onMouseLeave={e => (e.currentTarget.style.background = '')}
                   >
                     <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, color: '#16203a' }}>{o.product_name}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, color: '#6b7280' }}>SRD {parseFloat(o.base_price).toFixed(2)}</td>
-                    <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#293371' }}>SRD {parseFloat(o.price_override).toFixed(2)}</td>
+                    <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#003366' }}>SRD {parseFloat(o.price_override).toFixed(2)}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: diff > 0 ? '#dc2626' : '#16a34a' }}>
                       {diff > 0 ? '+' : ''}{diff.toFixed(2)}
                     </td>

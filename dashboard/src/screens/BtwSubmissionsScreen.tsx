@@ -128,7 +128,7 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
             ['monthly', isNl ? '📆 Maandelijks' : '📆 Monthly',  setMonthly],
           ] as const).map(([pt, label, fn]) => (
             <button key={pt} onClick={fn}
-              style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === pt ? '2px solid #293371' : '1.5px solid #e5e7eb', background: periodType === pt ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === pt ? '#293371' : '#6b7280', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '10px 0', borderRadius: 10, border: periodType === pt ? '2px solid #003366' : '1.5px solid #e5e7eb', background: periodType === pt ? '#f5f0ff' : '#fff', fontSize: 13, fontWeight: 700, color: periodType === pt ? '#003366' : '#6b7280', cursor: 'pointer' }}>
               {label}
             </button>
           ))}
@@ -158,7 +158,7 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
         {/* Preview result */}
         {preview && (
           <div style={{ background: '#f4f6fc', border: '1px solid #e6ebf7', borderRadius: 12, padding: '14px 16px', marginBottom: 14 }}>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#293371', marginBottom: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: '#003366', marginBottom: 8 }}>
               {isNl ? '📊 Voorbeeld — totalen voor deze periode' : '📊 Preview — totals for this period'}
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
@@ -167,7 +167,7 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
               <div>{isNl ? 'Belastbaar:' : 'Taxable:'} <strong>SRD {fmtSrd(preview.totals.btw_taxable_srd)}</strong></div>
               <div>{isNl ? 'Vrijgesteld:' : 'Exempt:'} <strong>SRD {fmtSrd(preview.totals.btw_exempt_srd)}</strong></div>
               <div style={{ gridColumn: '1 / -1', borderTop: '1px solid #e6ebf7', paddingTop: 8, marginTop: 4 }}>
-                {isNl ? 'BTW te betalen:' : 'BTW due:'} <strong style={{ color: '#293371', fontSize: 15 }}>SRD {fmtSrd(preview.totals.total_btw_srd)}</strong>
+                {isNl ? 'BTW te betalen:' : 'BTW due:'} <strong style={{ color: '#003366', fontSize: 15 }}>SRD {fmtSrd(preview.totals.total_btw_srd)}</strong>
               </div>
             </div>
             {preview.existing && (
@@ -199,7 +199,7 @@ function SubmitBtwModal({ isNl, onClose, onSubmitted }: { isNl: boolean; onClose
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => submitMut.mutate()} disabled={submitMut.isPending || !preview || !!preview.existing}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitMut.isPending || !preview || !!preview.existing) ? 0.5 : 1, boxShadow: '0 4px 12px rgba(41,51,113,.3)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (submitMut.isPending || !preview || !!preview.existing) ? 0.5 : 1, boxShadow: '0 4px 12px rgba(0,51,102,.3)' }}>
             {submitMut.isPending ? (isNl ? 'Indienen…' : 'Filing…') : (isNl ? '✓ Indienen bij Belastingdienst' : '✓ File with Belastingdienst')}
           </button>
         </div>
@@ -303,7 +303,7 @@ function ResubmitModal({ submission, isNl, onClose, onResubmitted }: { submissio
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={mut.isPending}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mut.isPending ? 0.5 : 1 }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mut.isPending ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? '↺ Opnieuw indienen' : '↺ Resubmit')}
           </button>
         </div>
@@ -460,7 +460,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
           </div>
           {canSubmit && (
             <button onClick={() => setShowSubmit(true)}
-              style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(41,51,113,.3)' }}>
+              style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,51,102,.3)' }}>
               + {isNl ? 'Nieuwe aangifte' : 'New submission'}
             </button>
           )}
@@ -637,7 +637,7 @@ export default function BtwSubmissionsScreen({ onOpenDetail, initialFilter }: Pr
                   <tr key={s.id}
                     onClick={() => onOpenDetail?.(s.id)}
                     style={{ borderBottom: i < (page!.data.length - 1) ? '1px solid #f1f4fb' : 'none', cursor: onOpenDetail ? 'pointer' : 'default', transition: 'background .12s' }}
-                    onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = isInspector ? BD.greenSoft : 'rgba(41,51,113,.03)' }}
+                    onMouseEnter={(e) => { if (onOpenDetail) e.currentTarget.style.background = isInspector ? BD.greenSoft : 'rgba(0,51,102,.03)' }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}>
                     {canReview && (
                       <td style={{ padding: '14px 8px 14px 16px' }} onClick={(e) => e.stopPropagation()}>

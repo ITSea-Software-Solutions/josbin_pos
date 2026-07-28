@@ -62,7 +62,7 @@ export default function MyAccountScreen() {
     <div style={{ padding: 28, maxWidth: 960, margin: '0 auto' }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#293371,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, fontWeight: 800 }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'linear-gradient(135deg,#003366,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 22, fontWeight: 800 }}>
           {(user.name || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
         </div>
         <div>
@@ -75,7 +75,7 @@ export default function MyAccountScreen() {
               meaningful for cashier + store_manager; org-scoped roles operate
               at the org level and don't have a single store. */}
           {(user.role === 'cashier' || user.role === 'store_manager') && (
-            <p style={{ margin: '4px 0 0', fontSize: 12, color: user.store_id ? '#293371' : '#dc2626', fontWeight: 600 }}>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: user.store_id ? '#003366' : '#dc2626', fontWeight: 600 }}>
               📍 {user.store_id
                 ? (isNl
                     ? `Toegewezen aan ${user.store_name ?? '—'}`
@@ -239,7 +239,7 @@ const EVENT_LABEL: Record<string, { nl: string; en: string; tint: string }> = {
   'auth.login_success':         { nl: 'Ingelogd',                    en: 'Logged in',                tint: '#16a34a' },
   'single_device_logout':       { nl: 'Andere apparaten uitgelogd',  en: 'Other devices logged out', tint: '#f59e0b' },
   'geo_alert_login':            { nl: '⚠️ Login buiten Suriname',     en: '⚠️ Login outside Suriname', tint: '#dc2626' },
-  'session.revoked_self':       { nl: 'Sessie ingetrokken',          en: 'Session revoked',          tint: '#293371' },
+  'session.revoked_self':       { nl: 'Sessie ingetrokken',          en: 'Session revoked',          tint: '#003366' },
   'user.store_assigned':        { nl: 'Vestiging-toewijzing aangepast', en: 'Store assignment changed', tint: '#2563eb' },
   'btw.submitted':              { nl: 'BTW-aangifte ingediend',      en: 'BTW submission filed',     tint: '#16a34a' },
   'btw.accepted':               { nl: 'BTW-aangifte geaccepteerd',   en: 'BTW submission accepted',  tint: '#15803d' },
@@ -248,8 +248,8 @@ const EVENT_LABEL: Record<string, { nl: string; en: string; tint: string }> = {
   'sale.payment_confirmed':     { nl: 'Betaling bevestigd',          en: 'Payment confirmed',        tint: '#15803d' },
   'sale.refunded':              { nl: 'Verkoop terugbetaald',        en: 'Sale refunded',            tint: '#f59e0b' },
   'sale.voided':                { nl: 'Verkoop geannuleerd',         en: 'Sale voided',              tint: '#dc2626' },
-  'z_report.closed':            { nl: 'Z-Rapport gesloten',          en: 'Z-Report closed',          tint: '#293371' },
-  'z_report.submitted':         { nl: 'Z-Rapport verstuurd naar HQ', en: 'Z-Report sent to HQ',      tint: '#293371' },
+  'z_report.closed':            { nl: 'Z-Rapport gesloten',          en: 'Z-Report closed',          tint: '#003366' },
+  'z_report.submitted':         { nl: 'Z-Rapport verstuurd naar HQ', en: 'Z-Report sent to HQ',      tint: '#003366' },
 }
 
 function ActivityTab({ isNl }: { isNl: boolean }) {
@@ -331,10 +331,10 @@ function SessionsTab({ isNl }: { isNl: boolean }) {
           </thead>
           <tbody>
             {sessions.map((s, i) => (
-              <tr key={s.id} style={{ borderBottom: i < sessions.length - 1 ? '1px solid #f3f4f6' : 'none', background: s.is_current ? 'rgba(41,51,113,0.04)' : undefined }}>
+              <tr key={s.id} style={{ borderBottom: i < sessions.length - 1 ? '1px solid #f3f4f6' : 'none', background: s.is_current ? 'rgba(0,51,102,0.04)' : undefined }}>
                 <td style={{ ...td(), fontSize: 13 }}>
                   <div style={{ fontWeight: 600 }}>{s.name}</div>
-                  {s.is_current && <div style={{ fontSize: 11, color: '#293371', fontWeight: 700 }}>{isNl ? '◉ Deze sessie' : '◉ This session'}</div>}
+                  {s.is_current && <div style={{ fontSize: 11, color: '#003366', fontWeight: 700 }}>{isNl ? '◉ Deze sessie' : '◉ This session'}</div>}
                 </td>
                 <td style={{ ...td(), fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(s.last_used_at)}</td>
                 <td style={{ ...td(), fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{fmtDate(s.created_at)}</td>
@@ -538,4 +538,4 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const card = (): React.CSSProperties => ({ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 14, padding: 24 })
 const cardHeading = (): React.CSSProperties => ({ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#16203a' })
 const input = (): React.CSSProperties => ({ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1.5px solid #e5e7eb', fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' })
-const primaryBtn = (): React.CSSProperties => ({ width: '100%', padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 14px rgba(41,51,113,.35)' })
+const primaryBtn = (): React.CSSProperties => ({ width: '100%', padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontWeight: 700, fontSize: 14, cursor: 'pointer', boxShadow: '0 4px 14px rgba(0,51,102,.35)' })

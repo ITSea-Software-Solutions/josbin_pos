@@ -134,7 +134,7 @@ export default function PendingPaymentsScreen() {
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24, maxWidth: 600 }}>
         <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
-          <div style={{ fontSize: 28, fontWeight: 900, color: '#293371' }}>{pendingCount}</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: '#003366' }}>{pendingCount}</div>
           <div style={{ fontSize: 12, color: '#7e88a0', marginTop: 3, fontWeight: 500 }}>{isNl ? 'In afwachting' : 'Pending'}</div>
         </div>
         <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '16px 20px' }}>
@@ -174,7 +174,7 @@ export default function PendingPaymentsScreen() {
                   <th key={h.key} onClick={() => toggle(h.key)}
                     style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
                 <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px' }}>{isNl ? 'Actie' : 'Action'}</th>

@@ -141,7 +141,7 @@ export default function CustomerDetailScreen({ customerId, onBack }: Props) {
       </button>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 22 }}>
-        <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#293371,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+        <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'linear-gradient(135deg,#003366,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700, color: '#fff', flexShrink: 0 }}>
           {customer.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
         </div>
         <div>
@@ -159,7 +159,7 @@ export default function CustomerDetailScreen({ customerId, onBack }: Props) {
         {aggregates.map((a, i) => (
           <div key={i} style={{ background: '#fff', borderRadius: 14, border: '1px solid #e6ecf5', padding: '16px 18px', boxShadow: '0 2px 12px rgba(0,0,0,.04)' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: 6 }}>{a.label}</div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: '#293371' }}>{a.value}</div>
+            <div style={{ fontSize: 18, fontWeight: 800, color: '#003366' }}>{a.value}</div>
           </div>
         ))}
       </div>
@@ -181,14 +181,14 @@ export default function CustomerDetailScreen({ customerId, onBack }: Props) {
         <button
           onClick={() => download('pdf')}
           disabled={downloading !== null}
-          style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: downloading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700, opacity: downloading === 'csv' ? 0.6 : 1 }}
+          style={{ height: 36, padding: '0 16px', borderRadius: 8, border: 'none', background: '#003366', color: '#fff', cursor: downloading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700, opacity: downloading === 'csv' ? 0.6 : 1 }}
         >
           {downloading === 'pdf' ? '…' : (isNl ? 'Download overzicht (PDF)' : 'Download statement (PDF)')}
         </button>
         <button
           onClick={() => download('csv')}
           disabled={downloading !== null}
-          style={{ height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid #293371', background: '#fff', color: '#293371', cursor: downloading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700, opacity: downloading === 'pdf' ? 0.6 : 1 }}
+          style={{ height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid #003366', background: '#fff', color: '#003366', cursor: downloading ? 'wait' : 'pointer', fontSize: 13, fontWeight: 700, opacity: downloading === 'pdf' ? 0.6 : 1 }}
         >
           {downloading === 'csv' ? '…' : 'CSV'}
         </button>
@@ -263,7 +263,7 @@ export default function CustomerDetailScreen({ customerId, onBack }: Props) {
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151', textAlign: 'right' }}>{formatSRD(s.discount_srd)}</td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151', textAlign: 'right' }}>{formatSRD(s.btw_srd)}</td>
-                  <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, textAlign: 'right', color: s.is_refund ? '#dc2626' : '#293371' }}>
+                  <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 700, textAlign: 'right', color: s.is_refund ? '#dc2626' : '#003366' }}>
                     {formatSRD(s.total_srd)}
                   </td>
                   <td style={{ padding: '12px 16px' }}>

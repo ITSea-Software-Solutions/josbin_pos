@@ -239,9 +239,9 @@ export default function ApiKeysScreen() {
           style={{
             display: 'inline-flex', alignItems: 'center', gap: 7,
             padding: '10px 20px', borderRadius: 10,
-            background: 'linear-gradient(135deg, #293371, #1f2a63)',
+            background: 'linear-gradient(135deg, #003366, #1f2a63)',
             color: '#fff', border: 'none', fontSize: 13, fontWeight: 700,
-            cursor: 'pointer', boxShadow: '0 2px 10px rgba(41,51,113,.35)',
+            cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,51,102,.35)',
           }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -255,7 +255,7 @@ export default function ApiKeysScreen() {
       {!isLoading && keys && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 28, maxWidth: 580 }}>
           {[
-            { label: isNl ? 'Totaal sleutels' : 'Total keys', value: total,  color: '#293371' },
+            { label: isNl ? 'Totaal sleutels' : 'Total keys', value: total,  color: '#003366' },
             { label: isNl ? 'Actief' : 'Active',              value: active, color: '#16a34a' },
             { label: isNl ? 'Ingetrokken' : 'Revoked',        value: total - active, color: '#9ca3af' },
           ].map((s) => (
@@ -427,7 +427,7 @@ export default function ApiKeysScreen() {
                 disabled={!form.store_id || !form.pos_system || create.isPending}
                 style={{
                   flex: 1, padding: '11px 0',
-                  background: 'linear-gradient(135deg, #293371, #1f2a63)',
+                  background: 'linear-gradient(135deg, #003366, #1f2a63)',
                   color: '#fff', border: 'none', borderRadius: 10,
                   fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   opacity: (!form.store_id || !form.pos_system || create.isPending) ? 0.5 : 1,
@@ -566,7 +566,7 @@ export default function ApiKeysScreen() {
                 disabled={!editForm.pos_system || update.isPending}
                 style={{
                   flex: 1, padding: '11px 0',
-                  background: 'linear-gradient(135deg, #293371, #1f2a63)',
+                  background: 'linear-gradient(135deg, #003366, #1f2a63)',
                   color: '#fff', border: 'none', borderRadius: 10,
                   fontSize: 13, fontWeight: 700, cursor: 'pointer',
                   opacity: (!editForm.pos_system || update.isPending) ? 0.5 : 1,
@@ -608,7 +608,7 @@ export default function ApiKeysScreen() {
                   <th key={h.label || 'actions'} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
                     style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
@@ -618,7 +618,7 @@ export default function ApiKeysScreen() {
                 <tr
                   key={key.id}
                   style={{ borderBottom: i < sortedKeys.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >
                   <td style={{ padding: '14px 20px' }}>

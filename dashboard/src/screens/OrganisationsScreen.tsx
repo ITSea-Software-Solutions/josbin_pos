@@ -38,8 +38,8 @@ const inputSt: React.CSSProperties = {
 }
 
 function focusIn(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-  e.currentTarget.style.borderColor = '#293371'
-  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(41,51,113,.12)'
+  e.currentTarget.style.borderColor = '#003366'
+  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,51,102,.12)'
 }
 function focusOut(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = '#e5e7eb'
@@ -115,7 +115,7 @@ function OrgRow({
 
   return (
     <tr style={{ borderBottom: '1px solid #f1f4fb', transition: 'background .12s' }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
     >
       {/* Name */}
@@ -331,8 +331,8 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                 style={{
                   padding: '9px 18px', border: 'none', background: 'none', cursor: 'pointer',
                   fontSize: 13, fontWeight: 700,
-                  color: tab === t.id ? '#293371' : '#7e88a0',
-                  borderBottom: tab === t.id ? '2px solid #293371' : '2px solid transparent',
+                  color: tab === t.id ? '#003366' : '#7e88a0',
+                  borderBottom: tab === t.id ? '2px solid #003366' : '2px solid transparent',
                   marginBottom: -1,
                 }}
               >
@@ -415,7 +415,7 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                           disabled={toggleImpersonation.isPending}
                           style={{
                             position: 'relative', width: 44, height: 24, borderRadius: 12, border: 'none',
-                            background: org.allow_impersonation ? '#293371' : '#d1d5db',
+                            background: org.allow_impersonation ? '#003366' : '#d1d5db',
                             cursor: 'pointer', transition: 'background .2s', flexShrink: 0,
                           }}
                         >
@@ -442,7 +442,7 @@ function OrgViewModal({ orgId, isNl, onClose, onEdit }: {
                 </span>
                 <button
                   onClick={() => setShowAddStore(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, #003366, #1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
                   {isNl ? 'Vestiging toevoegen' : 'Add store'}
@@ -578,7 +578,7 @@ function AddStoreModal({ orgId, isNl, onClose, onCreated }: {
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name}
-            style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1 }}>
+            style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1 }}>
             {mutation.isPending ? '…' : (isNl ? 'Aanmaken' : 'Create')}
           </button>
         </div>
@@ -780,7 +780,7 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
               <label key={field} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
                 <input type="checkbox" checked={(form[field] as boolean) ?? false}
                   onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.checked }))}
-                  style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }} />
+                  style={{ width: 16, height: 16, accentColor: '#003366', cursor: 'pointer' }} />
                 <div>
                   <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>{title}</div>
                   <div style={{ fontSize: 11.5, color: '#7e88a0', marginTop: 1 }}>{desc}</div>
@@ -795,7 +795,7 @@ function OrgEditModal({ org, isNl, onClose }: { org: Organisation; isNl: boolean
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}>
             {mutation.isPending ? (isNl ? 'Opslaan…' : 'Saving…') : (isNl ? 'Opslaan' : 'Save changes')}
           </button>
         </div>
@@ -887,7 +887,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
             <input type="checkbox" checked={form.is_government ?? false}
               onChange={(e) => setForm((f) => ({ ...f, is_government: e.target.checked }))}
-              style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }} />
+              style={{ width: 16, height: 16, accentColor: '#003366', cursor: 'pointer' }} />
             <div>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>
                 {isNl ? 'Overheidsinstelling' : 'Government organisation'}
@@ -904,7 +904,7 @@ function CreateOrgModal({ onClose, onCreated }: { onClose: () => void; onCreated
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate(form)} disabled={mutation.isPending || !form.name}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name ? 0.5 : 1, boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}>
             {mutation.isPending ? (isNl ? 'Aanmaken…' : 'Creating…') : (isNl ? 'Aanmaken' : 'Create')}
           </button>
         </div>
@@ -982,9 +982,9 @@ export default function OrganisationsScreen() {
           <button onClick={() => setShowCreate(true)} style={{
             display: 'inline-flex', alignItems: 'center', gap: 8,
             padding: '10px 20px', border: 'none', borderRadius: 12,
-            background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff',
+            background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff',
             fontSize: 14, fontWeight: 700, cursor: 'pointer',
-            boxShadow: '0 4px 16px rgba(41,51,113,.35)',
+            boxShadow: '0 4px 16px rgba(0,51,102,.35)',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             {isNl ? 'Nieuwe organisatie' : 'New organisation'}
@@ -996,7 +996,7 @@ export default function OrganisationsScreen() {
       {!isLoading && orgs && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 24, maxWidth: 580 }}>
           {[
-            { label: isNl ? 'Totaal'     : 'Total',       value: total,    color: '#293371' },
+            { label: isNl ? 'Totaal'     : 'Total',       value: total,    color: '#003366' },
             { label: isNl ? 'Actief'     : 'Active',      value: active,   color: '#16a34a' },
             { label: isNl ? 'Overheid'   : 'Government',  value: govCount, color: '#1d4ed8' },
           ].map((s) => (
@@ -1080,7 +1080,7 @@ export default function OrganisationsScreen() {
                     onClick={h.key ? () => toggle(h.key) : undefined}
                     style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>

@@ -6,9 +6,9 @@ import { useDashboardAuthStore } from '@/store/authStore'
 // (the role isn't known yet during the challenge, so we key off the URL).
 const IS_TAX_PORTAL = /(^|\/)belastingdienst\/?$/i.test(window.location.pathname)
   || new URLSearchParams(window.location.search).has('belastingdienst')
-const ACCENT       = IS_TAX_PORTAL ? '#1f6b3b' : '#293371'
-const ACCENT_GRAD  = IS_TAX_PORTAL ? 'linear-gradient(135deg,#1f6b3b,#0e4429)' : 'linear-gradient(135deg, #293371, #1f2a63)'
-const ACCENT_SHADOW = IS_TAX_PORTAL ? '0 8px 24px rgba(15,58,34,0.4)' : '0 8px 24px rgba(41,51,113,0.4)'
+const ACCENT       = IS_TAX_PORTAL ? '#1f6b3b' : '#003366'
+const ACCENT_GRAD  = IS_TAX_PORTAL ? 'linear-gradient(135deg,#1f6b3b,#0e4429)' : 'linear-gradient(135deg, #003366, #1f2a63)'
+const ACCENT_SHADOW = IS_TAX_PORTAL ? '0 8px 24px rgba(15,58,34,0.4)' : '0 8px 24px rgba(0,51,102,0.4)'
 const PAGE_BG      = IS_TAX_PORTAL ? 'linear-gradient(135deg,#0e4429 0%,#0c3a22 100%)' : 'linear-gradient(135deg, #16203a 0%, #2d2d44 100%)'
 
 // ─── 2FA Challenge ────────────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ function SetupView() {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
             {recoveryCodes.map((c) => (
-              <code key={c} style={{ fontSize: 12, fontFamily: 'monospace', color: '#8f9ac9', background: 'rgba(41,51,113,0.15)', padding: '4px 8px', borderRadius: 6 }}>{c}</code>
+              <code key={c} style={{ fontSize: 12, fontFamily: 'monospace', color: '#8f9ac9', background: 'rgba(0,51,102,0.15)', padding: '4px 8px', borderRadius: 6 }}>{c}</code>
             ))}
           </div>
         </div>

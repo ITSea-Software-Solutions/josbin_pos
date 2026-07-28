@@ -184,7 +184,7 @@ export default function CatalogueImportExportScreen() {
           disabled={exporting}
           style={{
             height: 42, padding: '0 20px', borderRadius: 10, border: 'none', cursor: exporting ? 'not-allowed' : 'pointer',
-            background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700,
+            background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700,
             display: 'flex', alignItems: 'center', gap: 8, opacity: exporting ? 0.7 : 1,
           }}
         >
@@ -233,7 +233,7 @@ export default function CatalogueImportExportScreen() {
               padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 600,
               background: COL_LABELS[h]?.required ? '#f5f0ff' : '#f9f9f9',
               border: `1px solid ${COL_LABELS[h]?.required ? '#b9c1de' : '#e5e7eb'}`,
-              color: COL_LABELS[h]?.required ? '#293371' : '#374151',
+              color: COL_LABELS[h]?.required ? '#003366' : '#374151',
             }}>
               <code style={{ fontFamily: 'monospace', fontSize: 11 }}>{h}</code>
               <span style={{ marginLeft: 6, color: '#6b7280', fontWeight: 400 }}>
@@ -294,7 +294,7 @@ export default function CatalogueImportExportScreen() {
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
         style={{
-          border: `2px dashed ${dragOver ? '#293371' : file ? '#22c55e' : '#d1d5db'}`,
+          border: `2px dashed ${dragOver ? '#003366' : file ? '#22c55e' : '#d1d5db'}`,
           borderRadius: 16, padding: '36px 24px', textAlign: 'center', cursor: 'pointer',
           background: dragOver ? '#f5f0ff' : file ? '#f0fdf4' : '#fafafa',
           transition: 'all .15s', marginBottom: 20,

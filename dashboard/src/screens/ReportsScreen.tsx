@@ -220,11 +220,11 @@ export default function ReportsScreen() {
               padding: '9px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700,
               cursor: 'pointer', transition: 'all 0.12s',
               background: tab === t.id
-                ? 'linear-gradient(135deg, #293371, #1f2a63)'
+                ? 'linear-gradient(135deg, #003366, #1f2a63)'
                 : '#fff',
               color: tab === t.id ? '#fff' : '#6b7280',
               boxShadow: tab === t.id
-                ? '0 2px 10px rgba(41,51,113,.35)'
+                ? '0 2px 10px rgba(0,51,102,.35)'
                 : '0 1px 4px rgba(0,0,0,.06)',
               border: tab === t.id ? 'none' : '1px solid #e6ecf5',
             }}
@@ -318,7 +318,7 @@ export default function ReportsScreen() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: '#f2f5fb', color: '#293371',
+              background: '#f2f5fb', color: '#003366',
               border: '1px solid #d5deef', fontSize: 12, fontWeight: 600,
               cursor: isFetching ? 'not-allowed' : 'pointer',
               opacity: isFetching ? 0.6 : 1,
@@ -333,10 +333,10 @@ export default function ReportsScreen() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 7,
               padding: '8px 18px', borderRadius: 8,
-              background: 'linear-gradient(135deg, #293371, #1f2a63)',
+              background: 'linear-gradient(135deg, #003366, #1f2a63)',
               color: '#fff', border: 'none', fontSize: 13, fontWeight: 700,
               cursor: exporting ? 'not-allowed' : 'pointer',
-              boxShadow: '0 2px 8px rgba(41,51,113,.35)',
+              boxShadow: '0 2px 8px rgba(0,51,102,.35)',
               opacity: exporting ? 0.7 : 1,
             }}
           >
@@ -359,7 +359,7 @@ export default function ReportsScreen() {
           {!cLoading && consolidated && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
               {[
-                { label: isNl ? 'Totale omzet'  : 'Total revenue',  value: formatSRD(consolidated.total_sales),        color: '#293371' },
+                { label: isNl ? 'Totale omzet'  : 'Total revenue',  value: formatSRD(consolidated.total_sales),        color: '#003366' },
                 { label: isNl ? 'Transacties'   : 'Transactions',   value: consolidated.transaction_count.toString(),   color: '#2563eb' },
                 { label: isNl ? 'Gemiddelde bon' : 'Avg basket',     value: formatSRD(consolidated.avg_basket),          color: '#0891b2' },
                 { label: 'BTW',                                       value: formatSRD(consolidated.total_btw),           color: '#059669' },
@@ -389,7 +389,7 @@ export default function ReportsScreen() {
               {[
                 { label: isNl ? 'Contant'    : 'Cash',     value: consolidated.payment_breakdown.cash,  color: '#16a34a' },
                 { label: isNl ? 'PIN/Kaart'  : 'Card/PIN', value: consolidated.payment_breakdown.card,  color: '#2563eb' },
-                { label: isNl ? 'Gemengd'    : 'Mixed',    value: consolidated.payment_breakdown.mixed, color: '#293371' },
+                { label: isNl ? 'Gemengd'    : 'Mixed',    value: consolidated.payment_breakdown.mixed, color: '#003366' },
                 // Phase 2/3 methods — hidden until actually used in the
                 // period so the familiar three-column layout stays clean.
                 { label: isNl ? 'Overschrijving'   : 'Bank transfer',  value: consolidated.payment_breakdown.bank_transfer   ?? '0', color: '#0e7490' },
@@ -425,7 +425,7 @@ export default function ReportsScreen() {
                     <th key={h.key} onClick={() => perStoreSort.toggle(h.key)}
                       style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                       {h.label}
-                      <span style={{ marginLeft: 5, fontSize: 9, color: perStoreSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{perStoreSort.indicator(h.key)}</span>
+                      <span style={{ marginLeft: 5, fontSize: 9, color: perStoreSort.sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{perStoreSort.indicator(h.key)}</span>
                     </th>
                   ))}
                 </tr>
@@ -437,12 +437,12 @@ export default function ReportsScreen() {
                     <tr
                       key={row.store_id}
                       style={{ borderBottom: i < perStoreSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '14px 20px', fontWeight: 700, color: '#16203a', fontSize: 14 }}>{row.store_name}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13, color: '#6b7280' }}>{row.city ?? '—'}</td>
-                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 700, color: '#293371' }}>{formatSRD(row.total_sales)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 700, color: '#003366' }}>{formatSRD(row.total_sales)}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#059669', fontWeight: 600 }}>{formatSRD(row.total_btw)}</td>
                       <td style={{ padding: '14px 20px', fontSize: 14, color: '#374151', fontWeight: 600 }}>{row.transaction_count}</td>
                     </tr>
@@ -472,7 +472,7 @@ export default function ReportsScreen() {
                       <th key={h.label} onClick={h.key ? () => topProductsSort.toggle(h.key!) : undefined}
                         style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                         {h.label}
-                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: topProductsSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{topProductsSort.indicator(h.key)}</span>}
+                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: topProductsSort.sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{topProductsSort.indicator(h.key)}</span>}
                       </th>
                     ))}
                   </tr>
@@ -482,7 +482,7 @@ export default function ReportsScreen() {
                     <tr
                       key={p.name}
                       style={{ borderBottom: i < topProductsSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '14px 20px', width: 40 }}>
@@ -495,7 +495,7 @@ export default function ReportsScreen() {
                       </td>
                       <td style={{ padding: '14px 20px', fontWeight: 700, color: '#16203a', fontSize: 14 }}>{p.name}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#6b7280', fontWeight: 600 }}>{parseFloat(p.qty).toFixed(0)}</td>
-                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#293371' }}>{formatSRD(p.revenue)}</td>
+                      <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#003366' }}>{formatSRD(p.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -512,7 +512,7 @@ export default function ReportsScreen() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
               {[
                 { label: isNl ? 'Totale BTW te betalen' : 'Total BTW payable',   value: formatSRD(btwReport.total_btw),   sub: `${dateFrom} → ${dateTo}`, color: '#dc2626' },
-                { label: isNl ? 'Totale bruto omzet'   : 'Total gross revenue',  value: formatSRD(btwReport.total_gross), sub: btwReport.format,           color: '#293371' },
+                { label: isNl ? 'Totale bruto omzet'   : 'Total gross revenue',  value: formatSRD(btwReport.total_gross), sub: btwReport.format,           color: '#003366' },
               ].map((s) => (
                 <div key={s.label} style={{
                   background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14,
@@ -549,7 +549,7 @@ export default function ReportsScreen() {
                     <th key={h.key} onClick={() => btwBreakdownSort.toggle(h.key)}
                       style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                       {h.label}
-                      <span style={{ marginLeft: 5, fontSize: 9, color: btwBreakdownSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{btwBreakdownSort.indicator(h.key)}</span>
+                      <span style={{ marginLeft: 5, fontSize: 9, color: btwBreakdownSort.sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{btwBreakdownSort.indicator(h.key)}</span>
                     </th>
                   ))}
                 </tr>
@@ -561,7 +561,7 @@ export default function ReportsScreen() {
                     <tr
                       key={i}
                       style={{ borderBottom: i < btwBreakdownSort.sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '14px 20px', fontWeight: 800, fontSize: 15, color: '#16203a' }}>{row.btw_rate}%</td>
@@ -599,8 +599,8 @@ export default function ReportsScreen() {
           {!eLoading && exemptions && (
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16, marginBottom: 24 }}>
               {[
-                { label: isNl ? 'Vrijgestelde verkopen' : 'Exempt sales',        value: String(exemptions.summary.count),                        sub: `${dateFrom} → ${dateTo}`, color: '#293371' },
-                { label: isNl ? 'Vrijgestelde omzet'    : 'Exempt turnover',     value: formatSRD(exemptions.summary.exempt_turnover_srd),       sub: isNl ? 'excl. BTW (netto geprijsd)' : 'excl. BTW (net priced)', color: '#293371' },
+                { label: isNl ? 'Vrijgestelde verkopen' : 'Exempt sales',        value: String(exemptions.summary.count),                        sub: `${dateFrom} → ${dateTo}`, color: '#003366' },
+                { label: isNl ? 'Vrijgestelde omzet'    : 'Exempt turnover',     value: formatSRD(exemptions.summary.exempt_turnover_srd),       sub: isNl ? 'excl. BTW (netto geprijsd)' : 'excl. BTW (net priced)', color: '#003366' },
                 { label: isNl ? 'Gederfde BTW'          : 'BTW forgone',         value: formatSRD(exemptions.summary.btw_forgone_srd),           sub: isNl ? 'wat de staat zou hebben ontvangen' : 'what the state would have received', color: '#dc2626' },
               ].map((c) => (
                 <div key={c.label} style={{
@@ -690,7 +690,7 @@ export default function ReportsScreen() {
           {!pLoading && profitReport && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 14, marginBottom: 20 }}>
               {[
-                { label: isNl ? 'Omzet'           : 'Revenue',       value: formatSRD(profitReport.revenue_srd), accent: '#293371' },
+                { label: isNl ? 'Omzet'           : 'Revenue',       value: formatSRD(profitReport.revenue_srd), accent: '#003366' },
                 { label: isNl ? 'Inkoopkosten'    : 'Cost of goods', value: formatSRD(profitReport.cost_srd),    accent: '#dc2626' },
                 { label: isNl ? 'Winst'           : 'Profit',        value: formatSRD(profitReport.profit_srd),  accent: '#16a34a', big: true },
                 { label: isNl ? 'Marge %'         : 'Margin %',
@@ -737,7 +737,7 @@ export default function ReportsScreen() {
                     labelFormatter={(d) => format(new Date(d), 'EEE d MMM yyyy')}
                     contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
                   />
-                  <Line type="monotone" dataKey="revenue_srd" stroke="#293371" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="revenue_srd" stroke="#003366" strokeWidth={2} dot={{ r: 2 }} />
                   <Line type="monotone" dataKey="profit_srd"  stroke="#16a34a" strokeWidth={2.5} dot={{ r: 3 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -764,7 +764,7 @@ export default function ReportsScreen() {
                       <th key={h.key} onClick={() => profitPerStoreSort.toggle(h.key)}
                         style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                         {h.label}
-                        <span style={{ marginLeft: 5, fontSize: 9, color: profitPerStoreSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{profitPerStoreSort.indicator(h.key)}</span>
+                        <span style={{ marginLeft: 5, fontSize: 9, color: profitPerStoreSort.sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{profitPerStoreSort.indicator(h.key)}</span>
                       </th>
                     ))}
                   </tr>
@@ -806,7 +806,7 @@ export default function ReportsScreen() {
                       <th key={h.label} onClick={h.key ? () => profitTopSort.toggle(h.key!) : undefined}
                         style={{ padding: '11px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                         {h.label}
-                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: profitTopSort.sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{profitTopSort.indicator(h.key)}</span>}
+                        {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: profitTopSort.sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{profitTopSort.indicator(h.key)}</span>}
                       </th>
                     ))}
                   </tr>

@@ -25,7 +25,7 @@ function EventBadge({ event }: { event: string }) {
 // ─── Model badge ─────────────────────────────────────────────────────────────
 function ModelBadge({ type }: { type: string }) {
   const colors: Record<string, string> = {
-    Sale: '#293371', Product: '#0891b2', User: '#d97706',
+    Sale: '#003366', Product: '#0891b2', User: '#d97706',
     Organisation: '#059669', Store: '#3a4a8f', ZReport: '#be185d',
   }
   const color = colors[type] ?? '#6b7280'
@@ -271,7 +271,7 @@ export default function AuditLogScreen() {
       {summary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 24 }}>
           <div style={{ background: '#fff', borderRadius: 14, padding: '16px 20px', border: '1px solid #ebebf0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
-            <p style={{ fontSize: 24, fontWeight: 800, color: '#293371' }}>{summary.total_30d}</p>
+            <p style={{ fontSize: 24, fontWeight: 800, color: '#003366' }}>{summary.total_30d}</p>
             <p style={{ fontSize: 12, color: '#7e88a0', marginTop: 2 }}>{isNl ? 'Totaal 30 dagen' : 'Total 30 days'}</p>
           </div>
           {Object.entries(summary.by_event).map(([evt, cnt]) => (
@@ -304,7 +304,7 @@ export default function AuditLogScreen() {
             />
             <button
               onClick={applySearch}
-              style={{ height: 36, padding: '0 14px', borderRadius: 8, border: 'none', background: '#293371', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
+              style={{ height: 36, padding: '0 14px', borderRadius: 8, border: 'none', background: '#003366', color: '#fff', fontWeight: 600, fontSize: 13, cursor: 'pointer' }}
             >
               {isNl ? 'Zoek' : 'Search'}
             </button>
@@ -360,7 +360,7 @@ export default function AuditLogScreen() {
       <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #ebebf0', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
         {isLoading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
-            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite' }} />
           </div>
         ) : (
           <>

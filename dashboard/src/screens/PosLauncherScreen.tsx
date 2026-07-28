@@ -268,10 +268,10 @@ const pill = (r: Reachability): React.CSSProperties => ({
 })
 const primaryBtn = (enabled: boolean): React.CSSProperties => ({
   padding: '10px 16px', borderRadius: 10, border: 'none',
-  background: enabled ? 'linear-gradient(135deg,#293371,#1f2a63)' : '#cbd5e1',
+  background: enabled ? 'linear-gradient(135deg,#003366,#1f2a63)' : '#cbd5e1',
   color: '#fff', fontSize: 14, fontWeight: 700,
   cursor: enabled ? 'pointer' : 'not-allowed',
-  boxShadow: enabled ? '0 4px 14px rgba(41,51,113,.35)' : 'none',
+  boxShadow: enabled ? '0 4px 14px rgba(0,51,102,.35)' : 'none',
 })
 const secondaryBtn = (): React.CSSProperties => ({
   padding: '10px 16px', borderRadius: 10, border: '1px solid #c7d2fe',

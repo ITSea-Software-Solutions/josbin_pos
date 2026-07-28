@@ -2,24 +2,44 @@
 /* Design tokens — dark theme for POS terminal */
 
 :root {
-  /* Brand */
-  --color-primary: #4f8ef7;
-  --color-primary-hover: #3a7de6;
+  /* ── Brand ────────────────────────────────────────────────────────────────
+     Josbin's own colours, taken from josbinit.com's stylesheet:
+     --theme-color #EF6C00 and --color-dark #002739. The till runs on the
+     dark ground because a shop opens before sunrise and a white screen at
+     that hour is a lamp; orange is the only saturated thing on the glass, so
+     a cashier's eye lands on the action without looking for it.            */
+  --color-primary: #EF6C00;        /* CMYK 0/55/100/6  */
+  --color-primary-hover: #FF7D14;
   --color-accent: #00d4aa;
 
-  /* POS dark theme */
-  --bg-base: #0f0f1a;
-  --bg-surface: #1a1a2e;
-  --bg-elevated: #252540;
-  --bg-input: #1e1e35;
+  /* Brand navy, for surfaces that need to read as "not the accent". */
+  --color-navy: #003366;           /* CMYK 100/50/0/60 */
+
+  /* ── Process inks (CMYK signature bar) ────────────────────────────────────
+     Josbin sells Konica Minolta machines — cyan, magenta, yellow and key are
+     literally what comes off them. Used ONLY as the four-block bar on the
+     login card. Never a button, never a status colour: the moment these
+     compete with the semantic palette the screen starts arguing with itself. */
+  --ink-cyan:    #00AEEF;
+  --ink-magenta: #EC008C;
+  --ink-yellow:  #FFF200;
+  --ink-key:     #F5FAFF;          /* the "K" block, inverted for a dark ground */
+
+  /* POS dark theme — a teal-biased scale derived from #002739 rather than a
+     neutral grey, so the ground belongs to the brand instead of sitting next
+     to it. */
+  --bg-base: #002739;              /* CMYK 100/32/0/78 */
+  --bg-surface: #04303F;
+  --bg-elevated: #0A3B4C;
+  --bg-input: #01212F;
 
   /* Text */
-  --text-primary: #f0f0f5;
-  --text-secondary: #9090b0;
-  --text-muted: #606080;
+  --text-primary: #F5FAFF;         /* the site's own --footer-text-color */
+  --text-secondary: #9DB3BF;
+  --text-muted: #6E8794;
 
   /* Borders */
-  --border-color: #2e2e50;
+  --border-color: #14485A;
   --border-radius: 8px;
   --border-radius-lg: 12px;
 

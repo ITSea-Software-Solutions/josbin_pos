@@ -103,7 +103,7 @@ function CloseSessionModal({ register, isNl, onClose }: { register: Register; is
           onClick={() => mut.mutate()}
           disabled={!valid || mut.isPending}
           data-testid="close-session-submit"
-          style={{ marginTop: 16, width: '100%', height: 44, borderRadius: 12, border: 'none', background: valid ? 'linear-gradient(135deg,#293371,#1f2a63)' : '#e5e7eb', color: valid ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 800, cursor: valid && !mut.isPending ? 'pointer' : 'not-allowed' }}
+          style={{ marginTop: 16, width: '100%', height: 44, borderRadius: 12, border: 'none', background: valid ? 'linear-gradient(135deg,#003366,#1f2a63)' : '#e5e7eb', color: valid ? '#fff' : '#9ca3af', fontSize: 14, fontWeight: 800, cursor: valid && !mut.isPending ? 'pointer' : 'not-allowed' }}
         >
           {mut.isPending ? '…' : (isNl ? 'Sessie sluiten & telling vastleggen' : 'Close session & record count')}
         </button>
@@ -201,7 +201,7 @@ function ApproveReopenModal({ session, isNl, onClose }: { session: RegisterSessi
           <button
             onClick={() => mutation.mutate({ approved: true })}
             disabled={mutation.isPending}
-            style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.5 : 1, boxShadow: '0 4px 14px rgba(41,51,113,.35)' }}>
+            style={{ flex: 2, padding: '11px 0', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.5 : 1, boxShadow: '0 4px 14px rgba(0,51,102,.35)' }}>
             {mutation.isPending ? '…' : (isNl ? 'Goedkeuren' : 'Approve')}
           </button>
         </div>
@@ -296,7 +296,7 @@ function ReopenRegisterModal({
             </button>
             <button onClick={() => mutation.mutate()}
               disabled={reason.trim().length < 3 || mutation.isPending}
-              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (reason.trim().length < 3 || mutation.isPending) ? 0.5 : 1 }}>
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (reason.trim().length < 3 || mutation.isPending) ? 0.5 : 1 }}>
               {mutation.isPending ? '…' : (isNl ? 'Heropenen' : 'Reopen')}
             </button>
           </div>
@@ -389,7 +389,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* Add new register */}
       <div style={{ background: '#f4f6fc', border: '1px solid #e6ebf7', borderRadius: 14, padding: '18px 20px' }}>
-        <p style={{ fontSize: 13, fontWeight: 700, color: '#293371', marginBottom: 12 }}>
+        <p style={{ fontSize: 13, fontWeight: 700, color: '#003366', marginBottom: 12 }}>
           {isNl ? '+ Nieuwe kassa toevoegen' : '+ Add new register'}
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
@@ -402,7 +402,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
           <button
             onClick={() => setCreateNoteOpen(true)}
             disabled={newName.trim().length < 2 || createMut.isPending}
-            style={{ height: 38, padding: '0 18px', borderRadius: 8, border: 'none', background: '#293371', color: '#fff', fontSize: 13, fontWeight: 700, cursor: newName.trim().length < 2 ? 'not-allowed' : 'pointer', opacity: newName.trim().length < 2 ? 0.5 : 1 }}
+            style={{ height: 38, padding: '0 18px', borderRadius: 8, border: 'none', background: '#003366', color: '#fff', fontSize: 13, fontWeight: 700, cursor: newName.trim().length < 2 ? 'not-allowed' : 'pointer', opacity: newName.trim().length < 2 ? 0.5 : 1 }}
           >
             {createMut.isPending ? '…' : (isNl ? 'Toevoegen' : 'Add')}
           </button>
@@ -436,7 +436,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
               : null
             return (
               <div key={r.id} style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#293371', flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: 15, color: '#003366', flexShrink: 0 }}>
                   {r.number}
                 </div>
                 {editId === r.id ? (
@@ -444,7 +444,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                     value={editName}
                     onChange={e => setEditName(e.target.value)}
                     autoFocus
-                    style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 7, border: '1.5px solid #293371', fontSize: 13 }}
+                    style={{ flex: 1, height: 34, padding: '0 10px', borderRadius: 7, border: '1.5px solid #003366', fontSize: 13 }}
                   />
                 ) : (
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -458,7 +458,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                     <button
                       onClick={() => updateMut.mutate({ id: r.id, name: editName })}
                       disabled={editName.trim().length < 1}
-                      style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#293371', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
+                      style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: '#003366', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}
                     >
                       {isNl ? 'Opslaan' : 'Save'}
                     </button>
@@ -485,7 +485,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
                       <button
                         onClick={() => setReopenTarget(r)}
                         title={isNl ? 'Heropenen voor volgende ploeg' : 'Reopen for next shift'}
-                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
+                        style={{ height: 30, padding: '0 12px', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}
                       >
                         ↻ {isNl ? 'Heropenen' : 'Reopen'}
                       </button>
@@ -528,7 +528,7 @@ function ManageRegistersPanel({ storeId, isNl }: { storeId: string; isNl: boolea
             : 'Short note — e.g. why you\'re adding this register or where it sits.'}
           placeholder={isNl ? 'Bijv.: extra kassa voor zaterdagdrukte' : 'E.g.: extra register for Saturday rush'}
           confirmLabel={isNl ? 'Kassa toevoegen' : 'Add register'}
-          confirmColor="#293371"
+          confirmColor="#003366"
           isNl={isNl}
           onCancel={() => setCreateNoteOpen(false)}
           onConfirm={(note) => createMut.mutate(note || undefined)}
@@ -652,8 +652,8 @@ export default function RegistersScreen() {
             style={{
               padding: '10px 20px', border: 'none', background: 'none', cursor: 'pointer',
               fontSize: 14, fontWeight: activeTab === t.key ? 700 : 500,
-              color: activeTab === t.key ? '#293371' : '#6b7280',
-              borderBottom: activeTab === t.key ? '2px solid #293371' : '2px solid transparent',
+              color: activeTab === t.key ? '#003366' : '#6b7280',
+              borderBottom: activeTab === t.key ? '2px solid #003366' : '2px solid transparent',
               marginBottom: -2,
             }}
           >
@@ -769,7 +769,7 @@ export default function RegistersScreen() {
                     <th key={h.label} onClick={h.key ? () => toggleSort(h.key as string) : undefined}
                       style={{ padding: '11px 14px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                       {h.label}
-                      {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                      {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                     </th>
                   ))}
                 </tr>
@@ -781,12 +781,12 @@ export default function RegistersScreen() {
                   return (
                     <tr key={s.id}
                       style={{ borderBottom: i < sortedSessions.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '12px 14px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: 9, background: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#293371' }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: '#eef2fb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, color: '#003366' }}>
                             {s.register_number ?? '?'}
                           </div>
                           <span style={{ fontSize: 13, fontWeight: 700, color: '#16203a' }}>{s.register_name ?? `Register ${s.register_number}`}</span>

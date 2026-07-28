@@ -46,12 +46,12 @@ function ProductRow({
       display: 'grid', gridTemplateColumns: '36px 1fr 120px 80px',
       alignItems: 'center', padding: '10px 16px', gap: 12,
       borderBottom: '1px solid #eef2fb',
-      background: selected ? 'rgba(41,51,113,0.04)' : 'transparent',
+      background: selected ? 'rgba(0,51,102,0.04)' : 'transparent',
       transition: 'background 0.1s',
     }}>
       <input
         type="checkbox" checked={selected} onChange={onToggle}
-        style={{ width: 18, height: 18, accentColor: '#293371', cursor: 'pointer' }}
+        style={{ width: 18, height: 18, accentColor: '#003366', cursor: 'pointer' }}
       />
       <div>
         <p style={{ fontSize: 13, fontWeight: 500, color: '#16203a' }}>{name}</p>
@@ -234,7 +234,7 @@ export default function BarcodeLabelScreen() {
               </svg>
               {isNl ? 'Vernieuwen' : 'Refresh'}
             </button>
-            <button onClick={selectAll} style={btnStyle('#f0eeff', '#293371')}>
+            <button onClick={selectAll} style={btnStyle('#f0eeff', '#003366')}>
               {T.selectAll}
             </button>
             <button onClick={clearAll} style={btnStyle('#fff', '#7e88a0', '#d9e1f1')}>
@@ -293,7 +293,7 @@ export default function BarcodeLabelScreen() {
                 <input
                   type="radio" name="btype" value={t} checked={barcodeType === t}
                   onChange={() => setBarcodeType(t)}
-                  style={{ accentColor: '#293371' }}
+                  style={{ accentColor: '#003366' }}
                 />
                 <span style={{ color: '#16203a', fontWeight: barcodeType === t ? 600 : 400 }}>{t}</span>
               </label>
@@ -310,7 +310,7 @@ export default function BarcodeLabelScreen() {
                 <input
                   type="radio" name="lsize" value={s} checked={labelSize === s}
                   onChange={() => setLabelSize(s)}
-                  style={{ accentColor: '#293371' }}
+                  style={{ accentColor: '#003366' }}
                 />
                 <span style={{ color: '#16203a', fontWeight: labelSize === s ? 600 : 400 }}>
                   {LABEL_SIZES[s].label}
@@ -325,14 +325,14 @@ export default function BarcodeLabelScreen() {
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
             <input
               type="checkbox" checked={showName} onChange={e => setShowName(e.target.checked)}
-              style={{ accentColor: '#293371', width: 16, height: 16 }}
+              style={{ accentColor: '#003366', width: 16, height: 16 }}
             />
             <span style={{ color: '#16203a', fontWeight: 500 }}>{T.showName}</span>
           </label>
           <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13 }}>
             <input
               type="checkbox" checked={showPrice} onChange={e => setShowPrice(e.target.checked)}
-              style={{ accentColor: '#293371', width: 16, height: 16 }}
+              style={{ accentColor: '#003366', width: 16, height: 16 }}
             />
             <span style={{ color: '#16203a', fontWeight: 500 }}>{T.showPrice}</span>
           </label>
@@ -342,8 +342,8 @@ export default function BarcodeLabelScreen() {
 
         {/* Selection summary */}
         {selection.size > 0 && (
-          <div style={{ background: 'rgba(41,51,113,0.08)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
-            <p style={{ fontSize: 22, fontWeight: 800, color: '#293371' }}>{totalLabels}</p>
+          <div style={{ background: 'rgba(0,51,102,0.08)', borderRadius: 10, padding: '12px 14px', textAlign: 'center' }}>
+            <p style={{ fontSize: 22, fontWeight: 800, color: '#003366' }}>{totalLabels}</p>
             <p style={{ fontSize: 12, color: '#5f6a84', marginTop: 2 }}>
               {T.labels} · {selection.size} {T.selected}
             </p>
@@ -376,11 +376,11 @@ export default function BarcodeLabelScreen() {
             cursor: selection.size === 0 ? 'not-allowed' : 'pointer',
             background: selection.size === 0
               ? '#d9e1f1'
-              : 'linear-gradient(135deg, #293371, #1f2a63)',
+              : 'linear-gradient(135deg, #003366, #1f2a63)',
             color: selection.size === 0 ? '#7e88a0' : '#fff',
             fontSize: 15,
             fontWeight: 700,
-            boxShadow: selection.size === 0 ? 'none' : '0 4px 14px rgba(41,51,113,0.4)',
+            boxShadow: selection.size === 0 ? 'none' : '0 4px 14px rgba(0,51,102,0.4)',
             transition: 'all 0.15s',
           }}
         >

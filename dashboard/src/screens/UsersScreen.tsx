@@ -68,8 +68,8 @@ const inputSt: React.CSSProperties = {
   transition: 'border-color .15s, box-shadow .15s', boxSizing: 'border-box',
 }
 function focusIn(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
-  e.currentTarget.style.borderColor = '#293371'
-  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(41,51,113,.12)'
+  e.currentTarget.style.borderColor = '#003366'
+  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,51,102,.12)'
 }
 function focusOut(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) {
   e.currentTarget.style.borderColor = '#e5e7eb'
@@ -449,7 +449,7 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
               type="checkbox"
               checked={form.send_welcome_email ?? true}
               onChange={(e) => set('send_welcome_email', e.target.checked)}
-              style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }}
+              style={{ width: 16, height: 16, accentColor: '#003366', cursor: 'pointer' }}
             />
             <div>
               <div style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>
@@ -471,7 +471,7 @@ function CreateUserModal({ orgs, isNl, onClose, onCreated }: {
           <button
             onClick={() => mutation.mutate()}
             disabled={mutation.isPending || !canSubmit}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !canSubmit ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !canSubmit ? 0.5 : 1, boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}
           >
             {mutation.isPending ? (isNl ? 'Aanmaken…' : 'Creating…') : (isNl ? 'Gebruiker aanmaken' : 'Create user')}
           </button>
@@ -662,7 +662,7 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name || !form.email}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name || !form.email ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name || !form.email ? 0.5 : 1, boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}>
             {mutation.isPending ? (isNl ? 'Opslaan…' : 'Saving…') : (isNl ? 'Opslaan' : 'Save changes')}
           </button>
         </div>
@@ -711,7 +711,7 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 22px', background: 'none', border: 'none', cursor: 'pointer' }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg,#29337120,#1f2a6320)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
+          <div style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, background: 'linear-gradient(135deg,#00336620,#1f2a6320)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>
             🔐
           </div>
           <div style={{ textAlign: 'left' }}>
@@ -768,7 +768,7 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
                       onClick={() => toggleRole(role)}
                       style={{
                         width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                        background: on ? '#293371' : '#d1d5db', padding: 2, transition: 'background .15s',
+                        background: on ? '#003366' : '#d1d5db', padding: 2, transition: 'background .15s',
                         display: 'flex', justifyContent: on ? 'flex-end' : 'flex-start',
                       }}
                     >
@@ -790,7 +790,7 @@ function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
                   disabled={!dirty || save.isPending}
                   style={{
                     padding: '9px 20px', borderRadius: 10, border: 'none',
-                    background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff',
+                    background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff',
                     fontSize: 13, fontWeight: 700, cursor: 'pointer',
                     opacity: (!dirty || save.isPending) ? 0.5 : 1,
                   }}
@@ -975,7 +975,7 @@ export default function UsersScreen() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
           {isNl ? 'Gebruiker aanmaken' : 'Create user'}
@@ -999,7 +999,7 @@ export default function UsersScreen() {
       {!isLoading && users && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, marginBottom: 28, maxWidth: 580 }}>
           {[
-            { label: isNl ? 'Totaal gebruikers' : 'Total users', value: total,   color: '#293371' },
+            { label: isNl ? 'Totaal gebruikers' : 'Total users', value: total,   color: '#003366' },
             { label: isNl ? 'Actief' : 'Active',                  value: active,  color: '#16a34a' },
             { label: isNl ? 'Met 2FA' : 'With 2FA',              value: with2fa, color: '#2563eb' },
           ].map((s) => (
@@ -1015,7 +1015,7 @@ export default function UsersScreen() {
           Only rendered for actors who can manage users (super_admin,
           organisation_admin, store_manager). */}
       {canManageUsers && selectedIds.size > 0 && (
-        <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#293371,#1f2a63)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(41,51,113,.35)' }}>
+        <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#003366,#1f2a63)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(0,51,102,.35)' }}>
           <span style={{ fontSize: 13.5, fontWeight: 700 }}>
             {bulkProgress
               ? (isNl ? `Bezig… ${bulkProgress.done}/${bulkProgress.total}` : `Working… ${bulkProgress.done}/${bulkProgress.total}`)
@@ -1059,7 +1059,7 @@ export default function UsersScreen() {
                   <th style={{ padding: '12px 8px 12px 20px', width: 38 }}>
                     <input type="checkbox" checked={allSelected} disabled={selectableIds.length === 0}
                       onChange={toggleAll} title={isNl ? 'Alles selecteren (deze pagina)' : 'Select all (this page)'}
-                      style={{ width: 16, height: 16, cursor: selectableIds.length ? 'pointer' : 'not-allowed', accentColor: '#293371' }} />
+                      style={{ width: 16, height: 16, cursor: selectableIds.length ? 'pointer' : 'not-allowed', accentColor: '#003366' }} />
                   </th>
                 )}
                 {[
@@ -1080,7 +1080,7 @@ export default function UsersScreen() {
                     onClick={h.key ? () => toggle(h.key) : undefined}
                     style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: h.key ? 'pointer' : 'default', userSelect: 'none' }}>
                     {h.label}
-                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>}
+                    {h.key && <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>}
                   </th>
                 ))}
               </tr>
@@ -1089,7 +1089,7 @@ export default function UsersScreen() {
               {sortedUsers.map((user, i) => (
                 <tr key={user.id}
                   style={{ borderBottom: i < sortedUsers.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                 >
                   {/* Bulk-select checkbox — only for rows the actor can manage
@@ -1098,7 +1098,7 @@ export default function UsersScreen() {
                     <td style={{ padding: '14px 8px 14px 20px' }}>
                       {canManage(user) ? (
                         <input type="checkbox" checked={selectedIds.has(user.id)} onChange={() => toggleOne(user.id)}
-                          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#293371' }} />
+                          style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#003366' }} />
                       ) : (
                         <span style={{ display: 'inline-block', width: 16 }} />
                       )}

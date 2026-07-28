@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import ServerConfigModal from '@/components/shared/ServerConfigModal'
 import { useAuthStore } from '@/store/authStore'
+import ProcessBar from '@/components/shared/ProcessBar'
 
 // ─── Keyframe & global styles injected once ──────────────────────────────────
 const STYLES = `
@@ -46,9 +47,9 @@ const STYLES = `
   }
   .jpos-login-input::placeholder { color: rgba(148,163,184,0.55); }
   .jpos-login-input:focus {
-    border-color: #293371;
-    background: rgba(41,51,113,0.08);
-    box-shadow: 0 0 0 4px rgba(41,51,113,0.18);
+    border-color: #003366;
+    background: rgba(0,51,102,0.08);
+    box-shadow: 0 0 0 4px rgba(0,51,102,0.18);
   }
   .jpos-login-input:disabled { opacity: 0.45; cursor: not-allowed; }
   .jpos-submit-btn {
@@ -99,7 +100,7 @@ const STYLES = `
     font-family: inherit;
     z-index: 10;
   }
-  .jpos-lang-btn:hover { background: rgba(41,51,113,0.3); color: #fff; }
+  .jpos-lang-btn:hover { background: rgba(0,51,102,0.3); color: #fff; }
 `
 
 // ─── Icons ─────────────────────────────────────────────────────────────────
@@ -209,7 +210,7 @@ export default function LoginScreen() {
       height: '100vh',
       width: '100vw',
       overflow: 'hidden',
-      background: '#0b0f1a',
+      background: '#002739',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -224,7 +225,7 @@ export default function LoginScreen() {
         <div style={{
           position: 'absolute', top: '-10%', left: '-5%',
           width: 560, height: 560,
-          background: 'radial-gradient(circle, rgba(41,51,113,0.35) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(0,51,102,0.35) 0%, transparent 70%)',
           borderRadius: '50%',
           animation: 'orb-drift-1 18s ease-in-out infinite',
           filter: 'blur(2px)',
@@ -277,10 +278,10 @@ export default function LoginScreen() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 48 }}>
           <div style={{
             width: 52, height: 52,
-            background: 'linear-gradient(135deg, #293371, #1f2a63)',
+            background: 'linear-gradient(135deg, #003366, #00405C)',
             borderRadius: 14,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(41,51,113,0.5)',
+            boxShadow: '0 8px 24px rgba(0,51,102,0.5)',
             flexShrink: 0,
           }}>
             {/* Abstract POS icon */}
@@ -313,7 +314,7 @@ export default function LoginScreen() {
           {isNl ? 'Welkom terug.' : 'Welcome back.'}
           <br />
           <span style={{
-            background: 'linear-gradient(90deg, #8f9ac9, #60a5fa)',
+            background: 'linear-gradient(90deg, #9DB3BF, #EF6C00)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
           }}>
@@ -344,11 +345,11 @@ export default function LoginScreen() {
             >
               <div style={{
                 width: 28, height: 28,
-                background: 'rgba(41,51,113,0.2)',
-                border: '1px solid rgba(41,51,113,0.4)',
+                background: 'rgba(0,51,102,0.2)',
+                border: '1px solid rgba(0,51,102,0.4)',
                 borderRadius: 8,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#8f9ac9',
+                color: '#9DB3BF',
                 flexShrink: 0,
                 marginTop: 1,
               }}>
@@ -450,8 +451,12 @@ export default function LoginScreen() {
             </div>
           )}
 
+          {/* Process bar — the four inks Josbin's machines lay down. Signature
+              only; it never carries state or becomes a control. */}
+          <ProcessBar onDark height={4} />
+
           {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 20, marginTop: 22 }}>
 
             {/* Email field */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -461,7 +466,7 @@ export default function LoginScreen() {
               <div style={{ position: 'relative' }}>
                 <div style={{
                   position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)',
-                  color: focusField === 'email' ? '#8f9ac9' : 'rgba(148,163,184,0.5)',
+                  color: focusField === 'email' ? '#9DB3BF' : 'rgba(148,163,184,0.5)',
                   transition: 'color 0.2s',
                   pointerEvents: 'none',
                 }}>
@@ -490,7 +495,7 @@ export default function LoginScreen() {
               <div style={{ position: 'relative' }}>
                 <div style={{
                   position: 'absolute', left: 15, top: '50%', transform: 'translateY(-50%)',
-                  color: focusField === 'pw' ? '#8f9ac9' : 'rgba(148,163,184,0.5)',
+                  color: focusField === 'pw' ? '#9DB3BF' : 'rgba(148,163,184,0.5)',
                   transition: 'color 0.2s',
                   pointerEvents: 'none',
                 }}>
@@ -515,7 +520,7 @@ export default function LoginScreen() {
                   style={{
                     position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)',
                     background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                    color: showPw ? '#8f9ac9' : 'rgba(148,163,184,0.45)',
+                    color: showPw ? '#9DB3BF' : 'rgba(148,163,184,0.45)',
                     transition: 'color 0.15s',
                     display: 'flex', alignItems: 'center',
                   }}

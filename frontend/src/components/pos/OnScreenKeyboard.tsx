@@ -183,7 +183,7 @@ export default function OnScreenKeyboard({ onClose }: Props) {
         left: 0,
         right: 0,
         background: '#1e1e2e',
-        borderTop: '2px solid rgba(41,51,113,0.4)',
+        borderTop: '2px solid rgba(0,51,102,0.4)',
         padding: '10px 8px 12px',
         zIndex: 900,
         userSelect: 'none',
@@ -226,7 +226,7 @@ export default function OnScreenKeyboard({ onClose }: Props) {
                   fontFamily: 'monospace',
                   transition: 'background 0.08s',
                   background: isActive
-                    ? 'rgba(41,51,113,0.7)'
+                    ? 'rgba(0,51,102,0.7)'
                     : action
                       ? 'rgba(255,255,255,0.12)'
                       : 'rgba(255,255,255,0.07)',
@@ -235,12 +235,12 @@ export default function OnScreenKeyboard({ onClose }: Props) {
                 }}
                 onMouseEnter={e => {
                   e.currentTarget.style.background = isActive
-                    ? 'rgba(41,51,113,0.85)'
+                    ? 'rgba(0,51,102,0.85)'
                     : 'rgba(255,255,255,0.18)'
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.background = isActive
-                    ? 'rgba(41,51,113,0.7)'
+                    ? 'rgba(0,51,102,0.7)'
                     : action
                       ? 'rgba(255,255,255,0.12)'
                       : 'rgba(255,255,255,0.07)'

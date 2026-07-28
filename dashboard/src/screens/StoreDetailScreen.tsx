@@ -121,10 +121,10 @@ export default function StoreDetailScreen({ storeId, onBack }: Props) {
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 20 }}>
           <div style={{
             width: 64, height: 64, borderRadius: 14,
-            background: 'linear-gradient(135deg, #293371, #1f2a63)',
+            background: 'linear-gradient(135deg, #003366, #1f2a63)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 26, fontWeight: 800, color: '#fff', flexShrink: 0,
-            boxShadow: '0 8px 24px rgba(41,51,113,0.25)',
+            boxShadow: '0 8px 24px rgba(0,51,102,0.25)',
           }}>
             {data.store_name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()}
           </div>
@@ -210,7 +210,7 @@ export default function StoreDetailScreen({ storeId, onBack }: Props) {
           label={isNl ? 'Omzet vandaag' : "Today's revenue"}
           value={formatSRD(data.today_revenue_srd)}
           delta={data.delta_revenue_pct}
-          accent="#293371"
+          accent="#003366"
         />
         <KpiTile
           label={isNl ? 'Transacties' : 'Transactions'}
@@ -256,7 +256,7 @@ export default function StoreDetailScreen({ storeId, onBack }: Props) {
                     labelFormatter={(h) => `${h}:00`}
                     contentStyle={{ borderRadius: 8, border: '1px solid #e5e7eb', fontSize: 12 }}
                   />
-                  <Bar dataKey="count" fill="#293371" radius={[4, 4, 0, 0]} name={isNl ? 'Verkopen' : 'Sales'} />
+                  <Bar dataKey="count" fill="#003366" radius={[4, 4, 0, 0]} name={isNl ? 'Verkopen' : 'Sales'} />
                 </BarChart>
               </ResponsiveContainer>
             )
@@ -304,7 +304,7 @@ export default function StoreDetailScreen({ storeId, onBack }: Props) {
                       <td style={{ padding: '10px 4px', fontSize: 12, color: '#6b7280', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {parseFloat(p.qty).toFixed(0)} {isNl ? 'st.' : 'units'}
                       </td>
-                      <td style={{ padding: '10px 4px', fontSize: 13, fontWeight: 700, color: '#293371', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '10px 4px', fontSize: 13, fontWeight: 700, color: '#003366', textAlign: 'right', whiteSpace: 'nowrap' }}>
                         {formatSRD(p.revenue)}
                       </td>
                     </tr>
@@ -370,7 +370,7 @@ export default function StoreDetailScreen({ storeId, onBack }: Props) {
                         {s.payment_method}
                       </span>
                     </td>
-                    <td style={{ padding: '10px 12px', fontWeight: 700, color: '#293371', textAlign: 'right' }}>{formatSRD(s.total_srd)}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: '#003366', textAlign: 'right' }}>{formatSRD(s.total_srd)}</td>
                   </tr>
                 ))}
               </tbody>

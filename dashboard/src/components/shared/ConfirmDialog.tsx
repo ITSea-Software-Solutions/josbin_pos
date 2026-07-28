@@ -57,7 +57,7 @@ export default function ConfirmDialog({
   const accent = {
     danger:  { bg: '#dc2626', hover: '#b91c1c', tint: 'danger'  as const, ring: 'rgba(220,38,38,0.30)' },
     warning: { bg: '#d97706', hover: '#b45309', tint: 'warning' as const, ring: 'rgba(217,119,6,0.30)' },
-    default: { bg: '#293371', hover: '#1e2657', tint: 'default' as const, ring: 'rgba(41,51,113,0.30)' },
+    default: { bg: '#003366', hover: '#1e2657', tint: 'default' as const, ring: 'rgba(0,51,102,0.30)' },
   }[tone]
 
   return (

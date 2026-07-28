@@ -10,7 +10,7 @@ function pct(v: number | string | null) {
   return `${sign}${n.toFixed(1)}%`
 }
 
-function StatCard({ label, value, sub, color = '#293371' }: { label: string; value: string; sub?: string; color?: string }) {
+function StatCard({ label, value, sub, color = '#003366' }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div style={{ background: '#fff', border: '1px solid #e6ecf5', borderRadius: 14, padding: '18px 22px', flex: 1, minWidth: 160 }}>
       <p style={{ fontSize: 11, fontWeight: 700, color: '#7e88a0', textTransform: 'uppercase', letterSpacing: '0.8px', marginBottom: 6 }}>{label}</p>
@@ -63,11 +63,11 @@ export default function AiInsightsScreen() {
 
         {summaryLoading ? (
           <div style={{ height: 120, background: '#f4f6fc', borderRadius: 14, border: '1px solid #e6ebf7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite' }} />
+            <div style={{ width: 28, height: 28, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite' }} />
           </div>
         ) : !summary ? (
           <div style={{ background: '#f4f6fc', border: '1px dashed #b9c1de', borderRadius: 14, padding: '32px 24px', textAlign: 'center' }}>
-            <p style={{ fontSize: 15, fontWeight: 700, color: '#293371', marginBottom: 6 }}>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#003366', marginBottom: 6 }}>
               {isNl ? 'Nog geen samenvatting beschikbaar' : 'No summary available yet'}
             </p>
             <p style={{ fontSize: 13, color: '#7e88a0' }}>
@@ -94,7 +94,7 @@ export default function AiInsightsScreen() {
                 <StatCard
                   label={isNl ? 'Gem. bonbedrag' : 'Avg. basket'}
                   value={`SRD ${parseFloat(String(stats.this_week.avg_basket)).toFixed(2)}`}
-                  color='#293371'
+                  color='#003366'
                 />
                 {stats.this_week.void_count > 0 && (
                   <StatCard
@@ -109,11 +109,11 @@ export default function AiInsightsScreen() {
             {/* AI narrative */}
             {summary.narrative && (
               <div style={{ background: 'linear-gradient(135deg,#f4f6fc,#eff6ff)', border: '1px solid #e0e7ff', borderRadius: 14, padding: '20px 24px', display: 'flex', gap: 14 }}>
-                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#293371,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#003366,#1f2a63)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, flexShrink: 0 }}>
                   🤖
                 </div>
                 <div>
-                  <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#293371', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#003366', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
                     AI {isNl ? 'Analyse' : 'Analysis'}
                   </p>
                   <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.6 }}>{summary.narrative}</p>
@@ -130,7 +130,7 @@ export default function AiInsightsScreen() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {stats.top_products.slice(0, 5).map((p, i) => (
                     <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 16px', background: '#fff', borderRadius: 10, border: '1px solid #f1f4fb' }}>
-                      <span style={{ width: 24, height: 24, borderRadius: 6, background: '#293371', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
+                      <span style={{ width: 24, height: 24, borderRadius: 6, background: '#003366', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
                         {i + 1}
                       </span>
                       <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: '#16203a' }}>{p.name}</span>

@@ -87,7 +87,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
   return (
     <div style={{ padding: '28px 32px', maxWidth: '100%', background: isInspector ? BD.paper : undefined, minHeight: isInspector ? '100%' : undefined }}>
       {/* Back */}
-      <button onClick={onBack} style={{ background: 'none', border: 'none', color: isInspector ? BD.green : '#293371', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
+      <button onClick={onBack} style={{ background: 'none', border: 'none', color: isInspector ? BD.green : '#003366', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
         ← {isNl ? 'Terug naar lijst' : 'Back to list'}
       </button>
 
@@ -342,7 +342,7 @@ export default function BtwSubmissionDetailScreen({ submissionId, onBack }: { su
                   flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mut.isPending ? 0.5 : 1,
                   background: action === 'accept' ? 'linear-gradient(135deg,#16a34a,#15803d)' :
                               action === 'dispute' ? 'linear-gradient(135deg,#dc2626,#b91c1c)' :
-                              'linear-gradient(135deg,#293371,#1f2a63)',
+                              'linear-gradient(135deg,#003366,#1f2a63)',
                 }}>
                 {mut.isPending ? '…' :
                   action === 'accept'  ? '✓ ' + (isNl ? 'Accepteer' : 'Accept') :

@@ -144,7 +144,7 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
             <p style={{ fontSize: 13, color: '#6b7280', marginBottom: 24 }}>
               {isNl ? 'U wordt binnen 1 werkdag gecontacteerd.' : 'You will be contacted within 1 business day.'}
             </p>
-            <button onClick={onClose} style={{ padding: '11px 32px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+            <button onClick={onClose} style={{ padding: '11px 32px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #003366, #1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
               {isNl ? 'Sluiten' : 'Close'}
             </button>
           </div>
@@ -202,7 +202,7 @@ function RenewalModal({ license, isNl, onClose }: { license: License; isNl: bool
               <button
                 onClick={() => mutation.mutate()}
                 disabled={mutation.isPending}
-                style={{ flex: 1, padding: '11px 0', background: 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.6 : 1 }}
+                style={{ flex: 1, padding: '11px 0', background: 'linear-gradient(135deg, #003366, #1f2a63)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: mutation.isPending ? 0.6 : 1 }}
               >
                 {mutation.isPending ? (isNl ? 'Versturen...' : 'Sending...') : (isNl ? 'Aanvraag versturen' : 'Submit request')}
               </button>
@@ -285,7 +285,7 @@ function LicenseFormModal({
             <div style={{ display: 'flex', gap: 8 }}>
               {(['standard', 'professional', 'enterprise'] as const).map((t) => (
                 <button key={t} onClick={() => setTier(t)} type="button"
-                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: tier === t ? '2px solid #293371' : '1.5px solid #e5e7eb', background: tier === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: tier === t ? '#293371' : '#6b7280', cursor: 'pointer', textTransform: 'capitalize' }}>
+                  style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: tier === t ? '2px solid #003366' : '1.5px solid #e5e7eb', background: tier === t ? '#f5f0ff' : '#fff', fontSize: 12, fontWeight: 700, color: tier === t ? '#003366' : '#6b7280', cursor: 'pointer', textTransform: 'capitalize' }}>
                   {t}
                 </button>
               ))}
@@ -337,7 +337,7 @@ function LicenseFormModal({
               {isNl ? 'Annuleren' : 'Cancel'}
             </button>
             <button onClick={() => mutation.mutate()} disabled={!canSubmit || mutation.isPending}
-              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!canSubmit || mutation.isPending) ? 0.5 : 1 }}>
+              style={{ flex: 2, padding: '11px 0', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', opacity: (!canSubmit || mutation.isPending) ? 0.5 : 1 }}>
               {mutation.isPending ? '…' : (isNew ? (isNl ? 'Licentie uitgeven' : 'Issue license') : (isNl ? 'Opslaan' : 'Save'))}
             </button>
           </div>
@@ -415,7 +415,7 @@ export default function LicenseScreen() {
         </div>
         {isSuperAdmin && (
           <button onClick={() => setFormTarget('new')}
-            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(41,51,113,.3)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+            style={{ padding: '10px 18px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 12px rgba(0,51,102,.3)', whiteSpace: 'nowrap', flexShrink: 0 }}>
             + {isNl ? 'Nieuwe licentie' : 'Issue license'}
           </button>
         )}
@@ -425,7 +425,7 @@ export default function LicenseScreen() {
       {!isLoading && licenses && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24, maxWidth: 720 }}>
           {[
-            { label: isNl ? 'Totaal'    : 'Total',    value: total,         color: '#293371' },
+            { label: isNl ? 'Totaal'    : 'Total',    value: total,         color: '#003366' },
             { label: isNl ? 'Actief'    : 'Active',   value: activeCount,   color: '#16a34a' },
             { label: isNl ? 'Verlopen'  : 'Expiring', value: highCount,     color: '#d97706' },
             { label: isNl ? 'Kritiek'   : 'Critical', value: criticalCount, color: '#dc2626' },
@@ -521,7 +521,7 @@ export default function LicenseScreen() {
                   <tr
                     key={lic.id}
                     style={{ borderBottom: i < (licenses?.length ?? 0) - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                   >
                     <td style={{ padding: '14px 20px' }}>
@@ -529,7 +529,7 @@ export default function LicenseScreen() {
                         <OrgAvatar name={lic.organisation_name} />
                         <div>
                           <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{lic.organisation_name}</div>
-                          <div style={{ fontSize: 11.5, color: '#293371', marginTop: 2, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600, letterSpacing: '0.3px' }}>
+                          <div style={{ fontSize: 11.5, color: '#003366', marginTop: 2, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontWeight: 600, letterSpacing: '0.3px' }}>
                             {lic.reference}
                           </div>
                           {lic.issued_at && (
@@ -598,7 +598,7 @@ export default function LicenseScreen() {
                         </button>
                         {lic.renewal_status !== 'renewal_pending' && lic.urgency !== 'ok' && (
                           <button onClick={() => setRenewTarget(lic)}
-                            style={{ padding: '6px 12px', borderRadius: 8, background: lic.urgency === 'critical' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #293371, #1f2a63)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                            style={{ padding: '6px 12px', borderRadius: 8, background: lic.urgency === 'critical' ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'linear-gradient(135deg, #003366, #1f2a63)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}>
                             {isNl ? 'Vernieuwen' : 'Renew'}
                           </button>
                         )}

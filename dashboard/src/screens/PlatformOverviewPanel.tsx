@@ -99,7 +99,7 @@ export default function PlatformOverviewPanel() {
       {/* Top row — 4 headline tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 14, marginBottom: 16 }}>
         <div style={TILE_BASE}>
-          <div style={{ ...TILE_BIG_NUM, color: '#293371' }}>{data.orgs.total}</div>
+          <div style={{ ...TILE_BIG_NUM, color: '#003366' }}>{data.orgs.total}</div>
           <div style={TILE_LABEL}>{isNl ? 'Organisaties totaal' : 'Organisations'}</div>
           <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 4 }}>
             ✅ {data.orgs.active} {isNl ? 'actief' : 'active'}

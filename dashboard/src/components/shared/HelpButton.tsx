@@ -50,7 +50,7 @@ export default function HelpButton({ topic }: { topic: string }) {
             animation: 'dash-help-slide .18s ease-out',
           }}>
             <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 22px', borderBottom: '1px solid #e9eef9' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: '#293371' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: '#003366' }}>
                 {isNl ? 'Hulp' : 'Help'}
               </span>
               <button onClick={() => setOpen(false)} aria-label={isNl ? 'Sluiten' : 'Close'}
@@ -64,7 +64,7 @@ export default function HelpButton({ topic }: { topic: string }) {
                 {c.steps.map((s, i) => (
                   <li key={i} style={{ display: 'flex', gap: 12, marginBottom: 12, fontSize: 14, lineHeight: 1.5, color: '#16203a' }}>
                     <span style={{
-                      flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: '#293371',
+                      flexShrink: 0, width: 24, height: 24, borderRadius: '50%', background: '#003366',
                       color: '#fff', fontSize: 12, fontWeight: 800, display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                     }}>{i + 1}</span>
                     <span>{s}</span>
@@ -75,7 +75,7 @@ export default function HelpButton({ topic }: { topic: string }) {
 
             <footer style={{ padding: '14px 22px', borderTop: '1px solid #e9eef9' }}>
               <a href={`${DOCS_URL}/${entry.guide}`} target="_blank" rel="noreferrer"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#293371', textDecoration: 'none' }}>
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14, fontWeight: 700, color: '#003366', textDecoration: 'none' }}>
                 {isNl ? 'Open volledige handleiding' : 'Open full guide'} →
               </a>
             </footer>

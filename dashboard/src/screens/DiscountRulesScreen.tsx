@@ -128,7 +128,7 @@ function RuleModal({ rule, isNl, onClose }: { rule: DiscountRule | null; isNl: b
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mut.mutate()} disabled={!form.name || mut.isPending}
-            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#293371', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !form.name ? 0.5 : 1 }}>
+            style={{ flex: 1, height: 40, borderRadius: 8, border: 'none', background: '#003366', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700, opacity: !form.name ? 0.5 : 1 }}>
             {mut.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -266,14 +266,14 @@ export default function DiscountRulesScreen() {
           </p>
         </div>
         <button onClick={() => setEditRule('new')}
-          style={{ height: 42, padding: '0 20px', borderRadius: 10, border: 'none', background: '#293371', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+          style={{ height: 42, padding: '0 20px', borderRadius: 10, border: 'none', background: '#003366', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           {isNl ? '+ Nieuwe regel' : '+ New rule'}
         </button>
       </div>
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : rules.length === 0 ? (
         <div style={{ background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5' }}>
@@ -289,7 +289,7 @@ export default function DiscountRulesScreen() {
         <>
         {/* Sticky bulk-action bar — appears when rows are selected. */}
         {selectedIds.size > 0 && (
-          <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#293371,#1f2a63)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(41,51,113,.35)' }}>
+          <div style={{ position: 'sticky', top: 12, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 14, padding: '12px 18px', background: 'linear-gradient(135deg,#003366,#1f2a63)', borderRadius: 12, color: '#fff', boxShadow: '0 6px 18px rgba(0,51,102,.35)' }}>
             <span style={{ fontSize: 13.5, fontWeight: 700 }}>
               {bulkProgress
                 ? (isNl ? `Bezig… ${bulkProgress.done}/${bulkProgress.total}` : `Working… ${bulkProgress.done}/${bulkProgress.total}`)
@@ -322,7 +322,7 @@ export default function DiscountRulesScreen() {
                 <th style={{ padding: '11px 8px 11px 16px', width: 38 }}>
                   <input type="checkbox" checked={allSelected} onChange={toggleAll}
                     title={isNl ? 'Alles selecteren' : 'Select all'}
-                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#293371' }} />
+                    style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#003366' }} />
                 </th>
                 {[
                   { key: 'name',     label: isNl ? 'Naam' : 'Name' },
@@ -335,7 +335,7 @@ export default function DiscountRulesScreen() {
                   <th key={h.key} onClick={() => toggle(h.key)}
                     style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
                 <th style={{ padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}></th>
@@ -345,19 +345,19 @@ export default function DiscountRulesScreen() {
               {sorted.map((r, i) => (
                 <tr key={r.id}
                   style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none', opacity: r.is_active ? 1 : 0.5 }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                   onMouseLeave={e => (e.currentTarget.style.background = '')}
                 >
                   <td style={{ padding: '12px 8px 12px 16px' }}>
                     <input type="checkbox" checked={selectedIds.has(r.id)} onChange={() => toggleOne(r.id)}
-                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#293371' }} />
+                      style={{ width: 16, height: 16, cursor: 'pointer', accentColor: '#003366' }} />
                   </td>
                   <td style={{ padding: '12px 16px' }}>
                     <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: '#16203a' }}>{r.name}</p>
-                    {r.stackable && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#293371' }}>{isNl ? 'Stapelbaar' : 'Stackable'}</p>}
+                    {r.stackable && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#003366' }}>{isNl ? 'Stapelbaar' : 'Stackable'}</p>}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: 15, fontWeight: 800, color: '#293371' }}>{typeLabel(r)}</span>
+                    <span style={{ fontSize: 15, fontWeight: 800, color: '#003366' }}>{typeLabel(r)}</span>
                     {r.max_discount_srd && <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e88a0' }}>max SRD {r.max_discount_srd.toFixed(2)}</p>}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: 13, color: '#374151' }}>{appliesToLabel(r)}</td>

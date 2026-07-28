@@ -239,7 +239,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
             title={i18n.language === 'nl' ? 'Schermtoetsenbord aan/uit' : 'Toggle on-screen keyboard'}
             style={{
               height: 34, padding: '0 10px',
-              background: keyboardOpen ? 'rgba(41,51,113,0.12)' : 'var(--bg-elevated)',
+              background: keyboardOpen ? 'rgba(0,51,102,0.12)' : 'var(--bg-elevated)',
               border: `1px solid ${keyboardOpen ? 'var(--color-primary)' : 'var(--border-color)'}`,
               borderRadius: 'var(--border-radius)',
               color: keyboardOpen ? 'var(--color-primary)' : 'var(--text-secondary)',

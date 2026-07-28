@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getPlatformSummary, type StoreOverview } from '@/api/dashboard'
 
-function Bar({ value, max, color = '#293371' }: { value: number; max: number; color?: string }) {
+function Bar({ value, max, color = '#003366' }: { value: number; max: number; color?: string }) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0
   return (
     <div style={{ height: 8, borderRadius: 4, background: '#eef2fb', overflow: 'hidden' }}>
@@ -91,7 +91,7 @@ export default function StoreComparisonScreen() {
 
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 80 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : allStores.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '64px 20px', background: '#fff', borderRadius: 16, border: '1px solid #e6ecf5' }}>
@@ -133,11 +133,11 @@ export default function StoreComparisonScreen() {
                               {s.is_online ? (isNl ? 'Online' : 'Online') : (isNl ? 'Offline' : 'Offline')}
                             </span>
                           </div>
-                          <span style={{ fontSize: 14, fontWeight: 800, color: isTop ? '#f59e0b' : '#293371' }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: isTop ? '#f59e0b' : '#003366' }}>
                             {metricLabel(v)}
                           </span>
                         </div>
-                        <Bar value={v} max={maxValue} color={isTop ? '#f59e0b' : '#293371'} />
+                        <Bar value={v} max={maxValue} color={isTop ? '#f59e0b' : '#003366'} />
                       </div>
                     </div>
                   </div>
@@ -173,7 +173,7 @@ export default function StoreComparisonScreen() {
                   {sorted.map((s, i) => (
                     <tr key={s.store_id}
                       style={{ borderBottom: i < sorted.length - 1 ? '1px solid #f1f4fb' : 'none' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                       onMouseLeave={e => (e.currentTarget.style.background = '')}
                     >
                       <td style={{ padding: '12px 16px' }}>
@@ -181,7 +181,7 @@ export default function StoreComparisonScreen() {
                         <p style={{ margin: '2px 0 0', fontSize: 11, color: '#7e88a0' }}>{s.city}</p>
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 12, color: '#6b7280' }}>{s.organisation_name}</td>
-                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#293371' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#003366' }}>
                         SRD {parseFloat(s.today_revenue_srd).toFixed(2)}
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: 700, color: '#374151' }}>

@@ -278,7 +278,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
             hint={isNl ? 'Aan: een vergeten kassa wordt ’s nachts automatisch afgesloten (zonder telling) zodat de volgende ochtend gewoon kan beginnen. De manager telt de la de volgende dag.' : 'On: a forgotten register is auto-closed overnight (without a count) so the next morning starts unblocked. The manager counts the drawer the next day.'}
           >
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13.5, color: '#374151' }}>
-              <input type="checkbox" checked={form.auto_close_enabled} onChange={e => set('auto_close_enabled', e.target.checked)} style={{ width: 16, height: 16, accentColor: '#293371', cursor: 'pointer' }} />
+              <input type="checkbox" checked={form.auto_close_enabled} onChange={e => set('auto_close_enabled', e.target.checked)} style={{ width: 16, height: 16, accentColor: '#003366', cursor: 'pointer' }} />
               {isNl ? 'Automatisch afsluiten inschakelen' : 'Enable auto-close'}
             </label>
           </Field>
@@ -350,7 +350,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
           disabled={saveMut.isPending}
           style={{
             height: 44, padding: '0 28px', borderRadius: 10, border: 'none', cursor: saveMut.isPending ? 'not-allowed' : 'pointer',
-            background: saveStatus === 'ok' ? '#16a34a' : saveStatus === 'error' ? '#dc2626' : 'linear-gradient(135deg,#293371,#1f2a63)',
+            background: saveStatus === 'ok' ? '#16a34a' : saveStatus === 'error' ? '#dc2626' : 'linear-gradient(135deg,#003366,#1f2a63)',
             color: '#fff', fontSize: 14, fontWeight: 700, transition: 'background .3s',
             opacity: saveMut.isPending ? 0.8 : 1,
           }}
@@ -456,7 +456,7 @@ export default function StoreSettingsScreen() {
         </div>
       ) : isLoading ? (
         <div style={{ textAlign: 'center', padding: 60 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#293371', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
+          <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid #e6ebf7', borderTopColor: '#003366', animation: 'spin 0.8s linear infinite', margin: '0 auto' }} />
         </div>
       ) : store ? (
         <StoreForm key={store.id} store={store} isNl={isNl} onSaved={() => {}} />

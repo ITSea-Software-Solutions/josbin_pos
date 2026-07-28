@@ -55,7 +55,7 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
             width: 34, height: 34, borderRadius: 10, flexShrink: 0,
-            background: 'linear-gradient(135deg, #29337120, #1f2a6320)',
+            background: 'linear-gradient(135deg, #00336620, #1f2a6320)',
             display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
           }}>
             💾
@@ -148,10 +148,10 @@ function UsbImportPanel({ isNl }: { isNl: boolean }) {
             disabled={uploading || !storeId.trim()}
             style={{
               padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: 'linear-gradient(135deg, #293371, #1f2a63)',
+              background: 'linear-gradient(135deg, #003366, #1f2a63)',
               color: '#fff', fontWeight: 700, fontSize: 13,
               opacity: (uploading || !storeId.trim()) ? 0.5 : 1,
-              boxShadow: '0 2px 8px rgba(41,51,113,.3)',
+              boxShadow: '0 2px 8px rgba(0,51,102,.3)',
             }}
           >
             {uploading ? (isNl ? 'Importeren…' : 'Importing…') : (isNl ? 'Importeren' : 'Import')}
@@ -235,7 +235,7 @@ export default function ZReportScreen() {
       {!isLoading && data && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24, maxWidth: 720 }}>
           {[
-            { label: isNl ? 'Totaal'       : 'Total',    value: data.total,   color: '#293371' },
+            { label: isNl ? 'Totaal'       : 'Total',    value: data.total,   color: '#003366' },
             { label: isNl ? 'Verzonden'    : 'Synced',   value: syncedCount,  color: '#16a34a' },
             { label: isNl ? 'In wachtrij'  : 'Pending',  value: pendingCount, color: '#d97706' },
             { label: isNl ? 'Mislukt'      : 'Failed',   value: failedCount,  color: '#dc2626' },
@@ -308,7 +308,7 @@ export default function ZReportScreen() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
               padding: '8px 14px', borderRadius: 8,
-              background: '#f2f5fb', color: '#293371',
+              background: '#f2f5fb', color: '#003366',
               border: '1px solid #d5deef', fontSize: 12, fontWeight: 600,
               cursor: isFetching ? 'not-allowed' : 'pointer',
               opacity: isFetching ? 0.6 : 1,
@@ -355,7 +355,7 @@ export default function ZReportScreen() {
                   <th key={h.key} onClick={() => toggleSort(h.key)}
                     style={{ padding: '12px 20px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.7px', cursor: 'pointer', userSelect: 'none' }}>
                     {h.label}
-                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#293371' : '#c0c0cc' }}>{indicator(h.key)}</span>
+                    <span style={{ marginLeft: 5, fontSize: 9, color: sort?.key === h.key ? '#003366' : '#c0c0cc' }}>{indicator(h.key)}</span>
                   </th>
                 ))}
               </tr>
@@ -369,7 +369,7 @@ export default function ZReportScreen() {
                   <tr
                     key={r.id}
                     style={{ borderBottom: i < sortedReports.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                   >
                     <td style={{ padding: '14px 20px', fontWeight: 700, color: '#16203a', fontSize: 13.5, whiteSpace: 'nowrap' }}>
@@ -379,7 +379,7 @@ export default function ZReportScreen() {
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#16203a' }}>{r.store?.name ?? r.store_id.slice(0, 8) + '…'}</div>
                       {r.store?.city && <div style={{ fontSize: 11, color: '#7e88a0', marginTop: 1 }}>{r.store.city}</div>}
                     </td>
-                    <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#293371' }}>
+                    <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 800, color: '#003366' }}>
                       {formatSRD(r.total_sales_srd)}
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#059669', fontWeight: 600 }}>

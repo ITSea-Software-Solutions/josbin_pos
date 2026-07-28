@@ -65,8 +65,8 @@ const inputSt: React.CSSProperties = {
   transition: 'border-color .15s, box-shadow .15s', boxSizing: 'border-box',
 }
 function fi(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
-  e.currentTarget.style.borderColor = '#293371'
-  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(41,51,113,.12)'
+  e.currentTarget.style.borderColor = '#003366'
+  e.currentTarget.style.boxShadow = '0 0 0 3px rgba(0,51,102,.12)'
 }
 function fo(e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) {
   e.currentTarget.style.borderColor = '#e5e7eb'
@@ -148,7 +148,7 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid rgba(255,255,255,.08)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(41,51,113,.25)', border: '1px solid rgba(41,51,113,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(0,51,102,.25)', border: '1px solid rgba(0,51,102,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8f9ac9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/>
                 <path d="M21 16h-3v3M18 21h3M14 3v3M14 8h-3M14 13h3v3M14 19v2M8 14H3M3 21h5v-2"/>
@@ -167,14 +167,14 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
           <div ref={viewportRef} style={{ width: '100%', minHeight: 260, position: 'relative' }} />
           {/* Scan line overlay */}
           <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ width: '70%', height: 2, background: flash ? '#22c55e' : 'rgba(41,51,113,.7)', boxShadow: flash ? '0 0 12px #22c55e' : '0 0 8px rgba(41,51,113,.8)', transition: 'all .15s', borderRadius: 2 }} />
+            <div style={{ width: '70%', height: 2, background: flash ? '#22c55e' : 'rgba(0,51,102,.7)', boxShadow: flash ? '0 0 12px #22c55e' : '0 0 8px rgba(0,51,102,.8)', transition: 'all .15s', borderRadius: 2 }} />
           </div>
           {/* Corner brackets */}
           {[
-            { top: 16, left: 16, borderTop: '3px solid #293371', borderLeft: '3px solid #293371' },
-            { top: 16, right: 16, borderTop: '3px solid #293371', borderRight: '3px solid #293371' },
-            { bottom: 16, left: 16, borderBottom: '3px solid #293371', borderLeft: '3px solid #293371' },
-            { bottom: 16, right: 16, borderBottom: '3px solid #293371', borderRight: '3px solid #293371' },
+            { top: 16, left: 16, borderTop: '3px solid #003366', borderLeft: '3px solid #003366' },
+            { top: 16, right: 16, borderTop: '3px solid #003366', borderRight: '3px solid #003366' },
+            { bottom: 16, left: 16, borderBottom: '3px solid #003366', borderLeft: '3px solid #003366' },
+            { bottom: 16, right: 16, borderBottom: '3px solid #003366', borderRight: '3px solid #003366' },
           ].map((s, i) => (
             <div key={i} style={{ position: 'absolute', width: 22, height: 22, borderRadius: 2, pointerEvents: 'none', ...s }} />
           ))}
@@ -198,7 +198,7 @@ function BarcodeScanModal({ isNl, onDetected, onClose }: {
               </span>
             </div>
             <button onClick={confirm} disabled={!detected}
-              style={{ padding: '10px 18px', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: detected ? 'pointer' : 'not-allowed', background: detected ? 'linear-gradient(135deg,#293371,#1f2a63)' : 'rgba(255,255,255,.07)', color: detected ? '#fff' : 'rgba(148,163,184,.3)', transition: 'all .15s', whiteSpace: 'nowrap', boxShadow: detected ? '0 4px 14px rgba(41,51,113,.4)' : 'none' }}>
+              style={{ padding: '10px 18px', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: detected ? 'pointer' : 'not-allowed', background: detected ? 'linear-gradient(135deg,#003366,#1f2a63)' : 'rgba(255,255,255,.07)', color: detected ? '#fff' : 'rgba(148,163,184,.3)', transition: 'all .15s', whiteSpace: 'nowrap', boxShadow: detected ? '0 4px 14px rgba(0,51,102,.4)' : 'none' }}>
               {isNl ? 'Gebruiken' : 'Use this'}
             </button>
           </div>
@@ -274,7 +274,7 @@ function CategoryFormModal({ cat, orgId, isNl, onClose }: {
             <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
               <input type="checkbox" checked={(form as { is_active?: boolean }).is_active ?? cat.is_active}
                 onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked } as CreateCategoryPayload & { is_active: boolean }))}
-                style={{ width: 16, height: 16, accentColor: '#293371' }} />
+                style={{ width: 16, height: 16, accentColor: '#003366' }} />
               <span style={{ fontSize: 13.5, fontWeight: 600, color: '#16203a' }}>
                 {isNl ? 'Actief' : 'Active'}
               </span>
@@ -287,7 +287,7 @@ function CategoryFormModal({ cat, orgId, isNl, onClose }: {
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name_nl || !form.name_en}
-            style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name_nl || !form.name_en ? 0.5 : 1 }}>
+            style={{ flex: 1, padding: '10px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name_nl || !form.name_en ? 0.5 : 1 }}>
             {mutation.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -487,8 +487,8 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
                 <input type="text" value={form.barcode ?? ''} onChange={(e) => set('barcode', e.target.value)}
                   placeholder="EAN-13 / Code 128" style={{ ...inputSt, fontFamily: 'monospace', flex: 1 }} onFocus={fi} onBlur={fo} />
                 <button type="button" onClick={() => setShowScanner(true)} title={isNl ? 'Scannen met camera' : 'Scan with camera'}
-                  style={{ flexShrink: 0, width: 42, height: 42, border: '1.5px solid #e5e7eb', borderRadius: 10, background: '#f4f6fc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#293371', transition: 'all .15s' }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = '#e6ebf7'; e.currentTarget.style.borderColor = '#293371' }}
+                  style={{ flexShrink: 0, width: 42, height: 42, border: '1.5px solid #e5e7eb', borderRadius: 10, background: '#f4f6fc', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#003366', transition: 'all .15s' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = '#e6ebf7'; e.currentTarget.style.borderColor = '#003366' }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = '#f4f6fc'; e.currentTarget.style.borderColor = '#e5e7eb' }}>
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/>
@@ -619,7 +619,7 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
               <input type="checkbox" checked={form.btw_exempt ?? false}
                 onChange={(e) => set('btw_exempt', e.target.checked)}
                 disabled={!canSetBtw}
-                style={{ width: 15, height: 15, accentColor: '#293371' }} />
+                style={{ width: 15, height: 15, accentColor: '#003366' }} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: '#16203a' }}>{isNl ? 'BTW-vrijgesteld' : 'BTW exempt'}</div>
                 <div style={{ fontSize: 11, color: '#7e88a0' }}>{isNl ? 'Basisvoedsel, medicijnen' : 'Basic food, medicine'}</div>
@@ -629,7 +629,7 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
               <label style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', padding: '10px 14px', background: '#f9fafb', borderRadius: 10, border: '1px solid #e5e7eb' }}>
                 <input type="checkbox" checked={form.is_active ?? true}
                   onChange={(e) => set('is_active', e.target.checked)}
-                  style={{ width: 15, height: 15, accentColor: '#293371' }} />
+                  style={{ width: 15, height: 15, accentColor: '#003366' }} />
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#16203a' }}>{isNl ? 'Actief' : 'Active'}</div>
                   <div style={{ fontSize: 11, color: '#7e88a0' }}>{isNl ? 'Zichtbaar in POS' : 'Visible in POS'}</div>
@@ -644,7 +644,7 @@ function ProductFormModal({ product, categories, orgId, isNl, onClose }: {
             {isNl ? 'Annuleren' : 'Cancel'}
           </button>
           <button onClick={() => mutation.mutate()} disabled={mutation.isPending || !form.name_nl || !form.name_en || !form.price}
-            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#293371,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name_nl || !form.name_en || !form.price ? 0.5 : 1, boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}>
+            style={{ flex: 1, padding: '11px 0', border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, color: '#fff', background: 'linear-gradient(135deg,#003366,#1f2a63)', cursor: 'pointer', opacity: mutation.isPending || !form.name_nl || !form.name_en || !form.price ? 0.5 : 1, boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}>
             {mutation.isPending ? '…' : (isNl ? 'Opslaan' : 'Save')}
           </button>
         </div>
@@ -805,7 +805,7 @@ export default function CatalogueScreen() {
             <PushCatalogueButton orgId={effectiveOrgId ?? ''} isNl={isNl} />
             <button
               onClick={() => tab === 'products' ? (setEditProduct(undefined), setShowProductForm(true)) : (setEditCategory(undefined), setShowCategoryForm(true))}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(41,51,113,.35)' }}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '10px 20px', border: 'none', borderRadius: 12, background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', boxShadow: '0 4px 16px rgba(0,51,102,.35)' }}
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
               {tab === 'products'
@@ -824,13 +824,13 @@ export default function CatalogueScreen() {
         ].map((t) => (
           <button key={t.id} onClick={() => setTab(t.id)} style={{
             padding: '9px 20px', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer',
-            background: tab === t.id ? 'linear-gradient(135deg, #293371, #1f2a63)' : '#fff',
+            background: tab === t.id ? 'linear-gradient(135deg, #003366, #1f2a63)' : '#fff',
             color: tab === t.id ? '#fff' : '#6b7280',
-            boxShadow: tab === t.id ? '0 2px 10px rgba(41,51,113,.35)' : '0 1px 4px rgba(0,0,0,.06)',
+            boxShadow: tab === t.id ? '0 2px 10px rgba(0,51,102,.35)' : '0 1px 4px rgba(0,0,0,.06)',
             border: tab === t.id ? '1px solid transparent' : '1px solid #e6ecf5',
           } as React.CSSProperties}>
             {isNl ? t.nl : t.en}
-            <span style={{ marginLeft: 7, padding: '1px 7px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: tab === t.id ? 'rgba(255,255,255,.2)' : '#eef2fb', color: tab === t.id ? '#fff' : '#293371' }}>
+            <span style={{ marginLeft: 7, padding: '1px 7px', borderRadius: 10, fontSize: 11, fontWeight: 700, background: tab === t.id ? 'rgba(255,255,255,.2)' : '#eef2fb', color: tab === t.id ? '#fff' : '#003366' }}>
               {t.id === 'products' ? prodTotal : categories.length}
             </span>
           </button>
@@ -916,13 +916,13 @@ export default function CatalogueScreen() {
                           onClick={h.key ? () => toggleSort(h.key as string) : undefined}
                           style={{
                             padding: '11px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700,
-                            color: active ? '#293371' : '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px',
+                            color: active ? '#003366' : '#5f6a84', textTransform: 'uppercase', letterSpacing: '0.6px',
                             cursor: h.key ? 'pointer' : 'default', userSelect: 'none', whiteSpace: 'nowrap',
                           }}
                         >
                           {h.label}
                           {h.key && (
-                            <span style={{ marginLeft: 5, fontSize: 9, color: active ? '#293371' : '#c0c0cc' }}>
+                            <span style={{ marginLeft: 5, fontSize: 9, color: active ? '#003366' : '#c0c0cc' }}>
                               {indicator(h.key)}
                             </span>
                           )}
@@ -935,7 +935,7 @@ export default function CatalogueScreen() {
                   {sortedProducts.map((p, i) => (
                     <tr key={p.id}
                       style={{ borderBottom: i < sortedProducts.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                       onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                     >
                       {/* Image thumbnail — placeholder square if none. 36×36
@@ -967,7 +967,7 @@ export default function CatalogueScreen() {
                       <td style={{ padding: '12px 16px', fontSize: 12.5, color: '#6b7280', fontFamily: 'monospace' }}>
                         {p.barcode || <span style={{ color: '#d1d5db' }}>—</span>}
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#293371' }}>
+                      <td style={{ padding: '12px 16px', fontSize: 14, fontWeight: 800, color: '#003366' }}>
                         SRD {parseFloat(p.price).toFixed(2)}
                       </td>
                       {canViewCost && (
@@ -1082,13 +1082,13 @@ export default function CatalogueScreen() {
                 {categories.map((cat, i) => (
                   <tr key={cat.id}
                     style={{ borderBottom: i < categories.length - 1 ? '1px solid #f1f4fb' : 'none', transition: 'background .12s' }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(41,51,113,.025)')}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,51,102,.025)')}
                     onMouseLeave={(e) => (e.currentTarget.style.background = '')}
                   >
                     <td style={{ padding: '14px 20px', fontSize: 14, fontWeight: 700, color: '#16203a' }}>{cat.name_nl}</td>
                     <td style={{ padding: '14px 20px', fontSize: 13.5, color: '#6b7280' }}>{cat.name_en}</td>
                     <td style={{ padding: '14px 20px' }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: '#293371' }}>{cat.product_count ?? '—'}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#003366' }}>{cat.product_count ?? '—'}</span>
                     </td>
                     <td style={{ padding: '14px 20px', fontSize: 13, color: '#7e88a0', fontWeight: 600 }}>{cat.sort_order}</td>
                     <td style={{ padding: '14px 20px' }}>
@@ -1253,7 +1253,7 @@ function VariantsSection({ productId, canSetCost, isNl }: {
                   <tr key={v.id} style={{ borderBottom: '1px solid #f1f4fb' }}>
                     <td style={{ padding: '7px 8px', color: '#16203a', fontWeight: 600 }}>{isNl ? v.name_nl : v.name_en}</td>
                     <td style={{ padding: '7px 8px', color: '#6b7280', fontFamily: 'monospace', fontSize: 11.5 }}>{v.sku || <span style={{ color: '#d1d5db' }}>—</span>}</td>
-                    <td style={{ padding: '7px 8px', textAlign: 'right', color: '#293371', fontWeight: 700 }}>
+                    <td style={{ padding: '7px 8px', textAlign: 'right', color: '#003366', fontWeight: 700 }}>
                       SRD {parseFloat(v.effective_price).toFixed(2)}
                       {v.price == null && <span style={{ marginLeft: 4, fontSize: 9.5, color: '#7e88a0', fontStyle: 'italic' }}>{isNl ? '(erfd)' : '(inh)'}</span>}
                     </td>
@@ -1296,7 +1296,7 @@ function VariantsSection({ productId, canSetCost, isNl }: {
           placeholder={isNl ? 'voorr.' : 'stock'}
           style={{ ...inputSt, padding: '7px 10px', fontSize: 12 }} />
         <button onClick={() => createMut.mutate()} disabled={!draft.name_nl || createMut.isPending}
-          style={{ padding: '7px 12px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: !draft.name_nl || createMut.isPending ? 0.4 : 1 }}>
+          style={{ padding: '7px 12px', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', opacity: !draft.name_nl || createMut.isPending ? 0.4 : 1 }}>
           +
         </button>
       </div>

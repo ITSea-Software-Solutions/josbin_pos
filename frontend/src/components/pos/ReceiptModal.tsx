@@ -37,6 +37,7 @@ export default function ReceiptModal({
   
 
   const [printStatus, setPrintStatus]   = useState<'idle' | 'printing' | 'ok' | 'error'>('idle')
+  const [printError, setPrintError]     = useState<string | null>(null)
   const [pdfStatus, setPdfStatus]       = useState<'idle' | 'loading' | 'error'>('idle')
   const [emailInput, setEmailInput]     = useState('')
   const [showEmail, setShowEmail]       = useState(false)
@@ -128,6 +129,11 @@ export default function ReceiptModal({
 
       const result = await printEscPos(bytes, printer)
       setPrintStatus(result.success ? 'ok' : 'error')
+      // Say WHY. Until now this screen showed a bare "print error" and every
+      // field report turned into guesswork — the Settings hardware tests have
+      // surfaced the real spooler/socket message since 1.3.2, and the screen
+      // the cashier actually stands in front of should too.
+      setPrintError(result.success ? null : (result.error ?? null))
 
       // Kick the drawer as its own job, AFTER the receipt has been handed to
       // the printer — never at the same time.
@@ -148,8 +154,9 @@ export default function ReceiptModal({
         await openCashDrawer(printer).catch(() => {})
       }
       return result.success
-    } catch {
+    } catch (e) {
       setPrintStatus('error')
+      setPrintError(String(e))
       return false
     }
   }, [sale, store, printer, cashTendered, change, i18n.language])
@@ -217,9 +224,20 @@ export default function ReceiptModal({
         // while the spooler or the socket is still coming up, and the cashier
         // should not have to notice that — before this, the first attempt
         // showed an error and only a manual tap on Print produced paper.
-        handleEscPosPrint().then((ok) => {
-          if (!ok) setTimeout(() => { void handleEscPosPrint() }, 900)
-        })
+        // Retry ladder, not a single retry. The failure that keeps showing up
+        // is the FIRST sale of the day: the printer slept overnight, or the
+        // spooler / socket is still coming up, and one attempt 900ms later is
+        // not long enough for a thermal printer to wake. Three tries spread
+        // over ~7s covers a cold start without making a genuinely dead
+        // printer take forever to report itself.
+        const attempt = (delays: number[]) => {
+          void handleEscPosPrint().then((ok) => {
+            if (ok || !delays.length) return
+            const [wait, ...rest] = delays
+            setTimeout(() => attempt(rest), wait)
+          })
+        }
+        attempt([1200, 3000, 3000])
       }
     } else {
       autoPrintedFor.current = saleId
@@ -343,6 +361,24 @@ export default function ReceiptModal({
               hasThermal ? t('pos.receipt.printThermal') : t('pos.receipt.print')
             }
           </button>
+
+          {/* The actual reason, verbatim from Windows / the printer socket.
+              "Printer not reachable at 192.168.0.251:9100" tells a shop what
+              to do; a red button does not. */}
+          {printStatus === 'error' && printError && (
+            <div
+              data-testid="print-error-detail"
+              style={{
+                fontSize: 12, lineHeight: 1.45, color: 'var(--color-error)',
+                background: 'rgba(224,82,82,.08)',
+                border: '1px solid rgba(224,82,82,.25)',
+                borderRadius: 'var(--border-radius)',
+                padding: '8px 10px', wordBreak: 'break-word',
+              }}
+            >
+              {printError}
+            </div>
+          )}
 
           {/* PDF fallback — always shown */}
           <button

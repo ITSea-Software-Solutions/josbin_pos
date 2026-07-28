@@ -63,9 +63,9 @@ export default function EmptyState({ icon, isNl, title, description, cta }: Empt
           title={cta.title}
           style={{
             marginTop: 18, padding: '10px 22px', borderRadius: 10, border: 'none',
-            background: 'linear-gradient(135deg,#293371,#1f2a63)', color: '#fff',
+            background: 'linear-gradient(135deg,#003366,#1f2a63)', color: '#fff',
             fontSize: 13, fontWeight: 700, cursor: cta.disabled ? 'not-allowed' : 'pointer',
-            opacity: cta.disabled ? 0.5 : 1, boxShadow: '0 4px 12px rgba(41,51,113,.3)',
+            opacity: cta.disabled ? 0.5 : 1, boxShadow: '0 4px 12px rgba(0,51,102,.3)',
           }}
         >
           {pick(cta.label)}
