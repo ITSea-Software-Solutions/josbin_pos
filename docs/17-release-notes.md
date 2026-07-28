@@ -11,7 +11,16 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.6 — 28 July 2026 *(current)*
+## 1.5.7 — 28 July 2026 *(current)*
+
+- **One image for the whole platform, at the foot of every receipt.** Set it
+  under Users → *Receipt footer stamp (whole platform)* in the dashboard —
+  Super Admin only. It applies to every store that has not uploaded its own,
+  so it does not have to be set store by store, and it can be changed later
+  without touching any till. Changing it reaches the shop floor on the next
+  receipt, and every change is recorded in the audit log.
+
+## 1.5.6 — 28 July 2026
 
 - **The receipt now prints straight away.** There was a 3–5 second pause
   between finishing a sale and anything happening at the printer. The till was

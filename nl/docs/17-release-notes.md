@@ -11,7 +11,16 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.6 — 28 juli 2026 *(actueel)*
+## 1.5.7 — 28 juli 2026 *(actueel)*
+
+- **Eén afbeelding voor het hele platform, onderaan elke bon.** In te stellen
+  via Gebruikers → *Stempel onderaan de bon (hele platform)* in het dashboard —
+  alleen Super Admin. Hij geldt voor elke winkel die er zelf geen heeft
+  geüpload, dus hij hoeft niet per winkel te worden ingesteld en is later te
+  wijzigen zonder aan een kassa te komen. Een wijziging is bij de volgende bon
+  al van kracht, en elke wijziging staat in het auditlogboek.
+
+## 1.5.6 — 28 juli 2026
 
 - **De bon print nu meteen.** Er zat 3 à 5 seconden tussen het afronden van een
   verkoop en het moment dat er iets bij de printer gebeurde. De kassa vroeg de
