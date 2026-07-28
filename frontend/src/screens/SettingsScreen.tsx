@@ -5,7 +5,7 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { getStore } from '@/api/stores'
 import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform, needsPrinterTypeHeal } from '@/lib/hardware'
 import { probeUsbPrinters, UsbPrinter, type UsbDeviceInfo, type UsbProbe } from '@/lib/usbPrinter'
-import { buildReceiptBytes } from '@/lib/escpos'
+import { buildReceiptBytes, drawerVariants } from '@/lib/escpos'
 import { LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML } from '@/lib/labelSheet'
 import type { ProductDisplay } from '@/store/settingsStore'
 import type { PrinterConfig } from '@/lib/hardware'
@@ -57,6 +57,9 @@ export default function SettingsScreen() {
   }, [])
   const [windowsPrinters, setWindowsPrinters] = useState<string[]>([])
   const [drawerTestStatus, setDrawerTestStatus] = useState<HardwareTestStatus>('idle')
+  // Drawer sweep: which variant is firing right now, and what each one did.
+  const [sweepAt, setSweepAt] = useState<number | null>(null)
+  const [sweepLog, setSweepLog] = useState<Array<{ id: number; label: string; ok: boolean; error?: string }>>([])
   const [receiptTestStatus, setReceiptTestStatus] = useState<HardwareTestStatus>('idle')
   const [labelTestStatus, setLabelTestStatus] = useState<HardwareTestStatus>('idle')
   const printerShareEnabled = useSettingsStore((s) => s.printerShareEnabled)
@@ -83,6 +86,40 @@ export default function SettingsScreen() {
     setDrawerTestStatus(result.success ? 'ok' : 'error')
     if (!result.success) setHwError(result.error ?? null)
     setTimeout(() => setDrawerTestStatus('idle'), 3000)
+  }
+
+  /**
+   * Fire every plausible drawer pulse in turn, one every 2.5 seconds, saying
+   * out loud which one is going.
+   *
+   * A drawer that stays shut looks identical whatever the cause — wrong pin,
+   * too short a pulse for a 24 V solenoid, firmware that drops a job with no
+   * printable data. Guessing between those from a distance has cost several
+   * release cycles. The shop watches the drawer, notes the number that opens
+   * it, and taps Save — one test instead of another round trip.
+   */
+  async function sweepDrawer() {
+    setSweepLog([]); setHwError(null)
+    const variants = drawerVariants()
+    for (const v of variants) {
+      setSweepAt(v.id)
+      const result = await printEscPos(v.bytes, printer)
+      setSweepLog((log) => [...log, {
+        id: v.id, label: v.label, ok: result.success, error: result.error,
+      }])
+      // Long enough for the solenoid to settle and for a human to see which
+      // number was on screen when the drawer jumped.
+      await new Promise((r) => setTimeout(r, 2500))
+    }
+    setSweepAt(null)
+  }
+
+  /** Lock in the variant that actually opened the drawer. */
+  function adoptVariant(id: number) {
+    const v = drawerVariants().find((x) => x.id === id)
+    if (!v) return
+    updatePrinter({ drawerPin: v.pin, drawerOnMs: v.onMs, drawerInJob: v.inJob })
+    handleSave()
   }
 
   // Sends a real ESC/POS ticket through the exact same path a sale receipt
@@ -764,6 +801,62 @@ export default function SettingsScreen() {
                drawerTestStatus === 'error'   ? `✗ ${t('settings.printer.drawerError')}` :
                `🗄 ${t('settings.printer.testDrawer')}`}
             </button>
+          )}
+
+          {/* Drawer sweep — the diagnostic for "print works, drawer doesn't".
+              Fires each plausible pulse in turn so the shop can SEE which one
+              throws the latch, instead of another guess-and-ship cycle. */}
+          {printer.type !== 'none' && (
+            <div style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)', padding: 12 }}>
+              <button
+                onClick={sweepDrawer}
+                disabled={sweepAt !== null}
+                data-testid="btn-sweep-drawer"
+                style={{ ...testBtnSt(sweepAt !== null ? 'testing' : 'idle'), width: '100%' }}
+              >
+                {sweepAt !== null
+                  ? `⏳ ${t('settings.printer.sweepRunning', { n: sweepAt })}`
+                  : `🔎 ${t('settings.printer.sweepDrawer')}`}
+              </button>
+              <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '8px 0 0' }}>
+                {t('settings.printer.sweepHelp')}
+              </p>
+
+              {sweepLog.length > 0 && (
+                <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {sweepLog.map((r) => (
+                    <div
+                      key={r.id}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        fontSize: 12, color: 'var(--text-secondary)',
+                      }}
+                    >
+                      <span style={{ fontWeight: 700, minWidth: 20 }}>{r.id}.</span>
+                      <span style={{ flex: 1 }}>{r.label}</span>
+                      {r.ok ? (
+                        <button
+                          onClick={() => adoptVariant(r.id)}
+                          data-testid={`btn-adopt-drawer-${r.id}`}
+                          style={{
+                            height: 28, padding: '0 10px', borderRadius: 6,
+                            border: '1px solid var(--color-primary)',
+                            background: 'var(--color-primary)', color: '#fff',
+                            fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                          }}
+                        >
+                          {t('settings.printer.sweepUseThis')}
+                        </button>
+                      ) : (
+                        <span style={{ color: 'var(--color-error)', fontSize: 11 }} title={r.error}>
+                          ✗ {t('settings.printer.sweepSendFailed')}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
 
           <button

@@ -11,7 +11,7 @@
  *   web        → No native hardware access (graceful fallback)
  */
 
-import { cashDrawerPulse } from './escpos'
+import { cashDrawerPulse, cashDrawerPulseInJob, DRAWER_ON_MS_DEFAULT } from './escpos'
 
 // ── Platform detection ──────────────────────────────────────────────────────
 
@@ -39,6 +39,15 @@ export interface PrinterConfig {
   printerName?: string
   /** Which cash drawer pin to trigger (1 = pin 2, 2 = pin 5). Most printers use 1. */
   drawerPin?: 1 | 2
+  /**
+   * Solenoid on-time in ms. Default 200 — the Epson 50 ms default is for a
+   * 12 V drawer and a 24 V one often will not throw its latch in that time,
+   * failing with no error anywhere. Set by the drawer sweep in Settings.
+   */
+  drawerOnMs?: number
+  /** Wrap the pulse in a minimal print job — for firmware that discards a
+   *  job containing no printable data. Costs one blank line. */
+  drawerInJob?: boolean
   /** Paper roll width: 80 mm (42 chars, countertop) or 58 mm (32 chars, compact). */
   paperWidth?: 58 | 80
   /** Android USB printing: which physical device. Vendor+product survive a
@@ -193,7 +202,11 @@ export async function openCashDrawer(
 ): Promise<{ success: boolean; error?: string }> {
   if (config.type === 'none') return { success: false, error: 'No printer configured' }
 
-  const bytes = cashDrawerPulse(config.drawerPin ?? 1)
+  const pin = config.drawerPin ?? 1
+  const onMs = config.drawerOnMs ?? DRAWER_ON_MS_DEFAULT
+  const bytes = config.drawerInJob
+    ? cashDrawerPulseInJob(pin, onMs)
+    : cashDrawerPulse(pin, onMs)
   return printEscPos(bytes, config)
 }
 

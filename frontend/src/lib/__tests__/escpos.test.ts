@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import {
   buildReceiptBytes,
   cashDrawerPulse,
+  cashDrawerPulseInJob,
+  drawerVariants,
   paperCut,
   encodeCp858Char,
-  buildVerificationPayload,
   type EscPosReceiptOptions,
 } from '@/lib/escpos'
-import { josbinStampBits, STAMP_WIDTH, STAMP_HEIGHT } from '@/lib/receiptStamp'
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -117,14 +117,55 @@ describe('escpos — control commands', () => {
   // "USB write failed after 0 of 5 bytes" — on a printer that had accepted a
   // full receipt seconds before. Windows' spooler tolerated it, Android did
   // not. Do not "simplify" this back to the bare pulse.
-  it('cashDrawerPulse(1) is a well-formed job: INIT then ESC p 0', () => {
+  // 200 ms on-time (t1 = 100 units of 2 ms), not Epson's 25.
+  //
+  // The 50 ms default is specified for a 12 V drawer. Under a Posiflex till
+  // the drawer is usually 24 V and often will not throw its latch that fast —
+  // the write succeeds, the printer reports success, and nothing moves. That
+  // failure has no error anywhere to find, which is why it survived several
+  // releases. Do not lower this to "match the spec": the spec's number is for
+  // different hardware.
+  it('cashDrawerPulse(1) is a well-formed job: INIT then ESC p 0, 200 ms', () => {
     expect(Array.from(cashDrawerPulse(1)))
-      .toEqual([0x1b, 0x40, 0x1b, 0x74, 19, 0x1b, 0x70, 0x00, 0x19, 0xfa])
+      .toEqual([0x1b, 0x40, 0x1b, 0x74, 19, 0x1b, 0x70, 0x00, 100, 100])
   })
 
   it('cashDrawerPulse(2) drives the second pin', () => {
     expect(Array.from(cashDrawerPulse(2)))
-      .toEqual([0x1b, 0x40, 0x1b, 0x74, 19, 0x1b, 0x70, 0x01, 0x19, 0xfa])
+      .toEqual([0x1b, 0x40, 0x1b, 0x74, 19, 0x1b, 0x70, 0x01, 100, 100])
+  })
+
+  it('accepts a custom on-time and converts ms to ESC p 2 ms units', () => {
+    expect(Array.from(cashDrawerPulse(1, 50))[8]).toBe(25)
+    expect(Array.from(cashDrawerPulse(1, 400))[8]).toBe(200)
+  })
+
+  it('clamps a pulse the byte cannot carry instead of wrapping it', () => {
+    // 600 ms would be 300 units — truncating to a byte gives 44, a 88 ms
+    // pulse, i.e. silently the opposite of what was asked for.
+    expect(Array.from(cashDrawerPulse(1, 600))[8]).toBe(255)
+    expect(Array.from(cashDrawerPulse(1, 0))[8]).toBe(1)
+  })
+
+  it('the in-job variant ends with printable data', () => {
+    // Some firmware discards a job containing nothing printable, drawer
+    // command included. A space and a feed makes it a real job.
+    const b = Array.from(cashDrawerPulseInJob(1))
+    expect(b.slice(-2)).toEqual([0x20, 0x0a])
+  })
+
+  it('offers every combination worth trying, each labelled for a human', () => {
+    const v = drawerVariants()
+    expect(v.length).toBeGreaterThanOrEqual(6)
+    expect(new Set(v.map((x) => x.id)).size).toBe(v.length)
+    // Both pins and both pulse lengths must be represented, or the sweep
+    // cannot actually locate the fault it exists to find.
+    expect(v.some((x) => x.pin === 1)).toBe(true)
+    expect(v.some((x) => x.pin === 2)).toBe(true)
+    expect(v.some((x) => x.onMs === 50)).toBe(true)
+    expect(v.some((x) => x.onMs === 200)).toBe(true)
+    expect(v.some((x) => x.inJob)).toBe(true)
+    for (const x of v) expect(x.label).toMatch(/Pin [25]/)
   })
 
   it('never ends with a line feed — the drawer test must not spit paper', () => {
@@ -262,129 +303,58 @@ describe('escpos — cash drawer rides the receipt', () => {
   })
 })
 
-describe('escpos — the Josbin stamp at the foot of the receipt', () => {
-  // A thermal head burns one line at a time and cannot composite, so there is
-  // no "watermark behind the text" to print. The mark lands at the bottom as
-  // a raster image instead — like a rubber stamp on a docket. The A4/PDF
-  // receipt is where a real watermark lives (ReceiptService).
+describe('escpos — the shop\'s own footer stamp', () => {
+  // Nothing is stamped by default. A receipt is the customer's record of what
+  // they paid, not advertising space for the till vendor — so the footer image
+  // is the SHOP's, uploaded by them, or there is none.
   const GS_V_0 = [0x1d, 0x76, 0x30, 0x00]
 
-  it('emits a GS v 0 raster block by default', () => {
-    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions()), GS_V_0))
-      .toBeGreaterThan(-1)
+  // 240x16 of solid ink — enough to assert the raster header without
+  // depending on any particular artwork.
+  const fakeStamp = {
+    bits: new Uint8Array(30 * 16).fill(0xff),
+    width: 240,
+    height: 16,
+  }
+
+  it('prints nothing when the shop has uploaded no image', () => {
+    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions()), GS_V_0)).toBe(-1)
   })
 
-  it('omits it when the shop turns the stamp off', () => {
-    const bytes = buildReceiptBytes(makeReceiptOptions({ stamp: false }))
+  it('prints the shop\'s image when there is one', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp }))
+    expect(indexOfSubsequence(bytes, GS_V_0)).toBeGreaterThan(-1)
+  })
+
+  it('stays off when the till switches stamps off, image or not', () => {
+    const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp, stamp: false }))
     expect(indexOfSubsequence(bytes, GS_V_0)).toBe(-1)
   })
 
-  it('sits after the total, near the end of the ticket', () => {
-    const bytes = buildReceiptBytes(makeReceiptOptions())
-    const at = indexOfSubsequence(bytes, GS_V_0)
-    const totalAt = bytesToLatin1(bytes).indexOf('TOTAAL')
-    expect(at).toBeGreaterThan(totalAt)
-  })
-
   it('declares width in BYTES and height in DOTS, little-endian', () => {
-    // Getting these two backwards is the classic way to print noise: the
-    // command takes xL/xH as byte count and yL/yH as a dot count.
-    const bytes = buildReceiptBytes(makeReceiptOptions())
+    // Getting these two backwards is the classic way to print noise.
+    const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp }))
     const at = indexOfSubsequence(bytes, GS_V_0)
-    const widthBytes = bytes[at + 4] | (bytes[at + 5] << 8)
-    const heightDots = bytes[at + 6] | (bytes[at + 7] << 8)
-
-    expect(widthBytes).toBe(72)              // 576-dot head on 80 mm paper
-    expect(heightDots).toBe(STAMP_HEIGHT)
-    // …and exactly that many payload bytes must follow, or the printer eats
-    // the rest of the receipt as image data.
-    expect(bytes.length - (at + 8)).toBeGreaterThanOrEqual(widthBytes * heightDots)
+    expect(bytes[at + 4] | (bytes[at + 5] << 8)).toBe(72)   // 576-dot head, 80 mm
+    expect(bytes[at + 6] | (bytes[at + 7] << 8)).toBe(16)
   })
 
   it('narrows to the 384-dot head on 58 mm paper', () => {
-    const bytes = buildReceiptBytes(makeReceiptOptions({ paperWidth: 58 }))
+    const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp, paperWidth: 58 }))
     const at = indexOfSubsequence(bytes, GS_V_0)
     expect(bytes[at + 4] | (bytes[at + 5] << 8)).toBe(48)
   })
 
-  it('centres the mark by padding rows, not with an alignment command', () => {
-    // Several ESC/POS clones ignore ESC a for raster data and left-align it
-    // regardless, so the padding has to be in the bitmap itself.
-    const bytes = buildReceiptBytes(makeReceiptOptions())
+  it('centres by padding rows, not with an alignment command', () => {
+    // Several ESC/POS clones ignore ESC a for raster data and left-align it.
+    const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp }))
     const at = indexOfSubsequence(bytes, GS_V_0)
-    const rowStart = at + 8
-    const pad = Math.floor((72 - Math.ceil(STAMP_WIDTH / 8)) / 2)
-    expect(pad).toBeGreaterThan(0)
-    for (let i = 0; i < pad; i++) expect(bytes[rowStart + i]).toBe(0x00)
+    const pad = Math.floor((72 - 30) / 2)
+    for (let i = 0; i < pad; i++) expect(bytes[at + 8 + i]).toBe(0x00)
   })
 
-  it('is a logo, not a black bar', () => {
-    const bits = josbinStampBits()
-    const inked = bits.reduce((n, b) => n + b.toString(2).replace(/0/g, '').length, 0)
-    const coverage = inked / (STAMP_WIDTH * STAMP_HEIGHT)
-    expect(coverage).toBeGreaterThan(0.05)
-    expect(coverage).toBeLessThan(0.6)
+  it('prints no QR — the verification code was removed from the receipt', () => {
+    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions()), [0x1d, 0x28, 0x6b])).toBe(-1)
   })
 })
 
-describe('escpos — verification QR under the BTW block', () => {
-  // The honest answer to "make the customer trust the BTW": a figure they can
-  // have CHECKED, not an emblem asserting someone checked it. The QR carries
-  // the shop's BTW registration number plus the sale's own numbers, so the
-  // paper and the stored sale either agree or they do not.
-  const GS_PAREN_K = [0x1d, 0x28, 0x6b]
-
-  it('prints a QR when the store has a BTW registration number', () => {
-    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions()), GS_PAREN_K))
-      .toBeGreaterThan(-1)
-  })
-
-  it('prints none when there is no BTW number — nothing to verify against', () => {
-    const opts = makeReceiptOptions()
-    opts.store.btw_number = undefined
-    expect(indexOfSubsequence(buildReceiptBytes(opts), GS_PAREN_K)).toBe(-1)
-  })
-
-  it('can be switched off', () => {
-    expect(indexOfSubsequence(buildReceiptBytes(makeReceiptOptions({ verifyQr: false })), GS_PAREN_K))
-      .toBe(-1)
-  })
-
-  it('carries the BTW number, sale number, total and BTW amount', () => {
-    const text = bytesToLatin1(buildReceiptBytes(makeReceiptOptions()))
-    expect(text).toContain('JOSBIN1|BTW-001234|S-0001|2026-05-26 10:15|11.00|1.00')
-  })
-
-  it('declares a payload length of data + 3 header bytes', () => {
-    // Off by three here prints a truncated code that scans to nothing — which
-    // is worse than no QR, because the paper looks correct.
-    const payload = buildVerificationPayload({
-      btwNumber: 'BTW-001234', saleNumber: 'S-0001',
-      occurredAt: '2026-05-26 10:15', totalSrd: '11.00', btwSrd: '1.00',
-    })
-    const bytes = buildReceiptBytes(makeReceiptOptions())
-    const store = indexOfSubsequence(bytes, [0x1d, 0x28, 0x6b, ...[
-      (payload.length + 3) & 0xff, ((payload.length + 3) >> 8) & 0xff, 0x31, 0x50, 0x30,
-    ]])
-    expect(store).toBeGreaterThan(-1)
-  })
-
-  it('issues model, size, ECC, store and print in that order', () => {
-    const bytes = buildReceiptBytes(makeReceiptOptions())
-    const at = (fn: number[]) => indexOfSubsequence(bytes, [0x1d, 0x28, 0x6b, ...fn])
-    const model = at([0x04, 0x00, 0x31, 0x41])
-    const size  = at([0x03, 0x00, 0x31, 0x43])
-    const ecc   = at([0x03, 0x00, 0x31, 0x45])
-    const print = at([0x03, 0x00, 0x31, 0x51])
-    expect(model).toBeGreaterThan(-1)
-    expect(size).toBeGreaterThan(model)
-    expect(ecc).toBeGreaterThan(size)
-    expect(print).toBeGreaterThan(ecc)
-  })
-
-  it('sits above the stamp — verify first, branding last', () => {
-    const bytes = buildReceiptBytes(makeReceiptOptions())
-    expect(indexOfSubsequence(bytes, GS_PAREN_K))
-      .toBeLessThan(indexOfSubsequence(bytes, [0x1d, 0x76, 0x30, 0x00]))
-  })
-})

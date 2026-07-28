@@ -9,7 +9,6 @@
  * Reference: EPSON ESC/POS Command Reference (TM-T20 compatible)
  */
 
-import { josbinStampBits, STAMP_WIDTH, STAMP_HEIGHT } from '@/lib/receiptStamp'
 
 // ── ESC/POS byte constants ──────────────────────────────────────────────────
 
@@ -40,6 +39,27 @@ const CMD = {
   CASH_DRAWER_1:  [ESC, 0x70, 0x00, 0x19, 0xfa],
   // Cash drawer pin 5: ESC p 1 t1 t2
   CASH_DRAWER_2:  [ESC, 0x70, 0x01, 0x19, 0xfa],
+}
+
+/**
+ * Solenoid on-time, in milliseconds, for the drawer pulse.
+ *
+ * ESC p's t1 is in 2 ms units, and the Epson default of 25 (= 50 ms) is
+ * specified for a 12 V drawer. A 24 V drawer — which is most of what sits
+ * under a Posiflex till — often will not throw its latch in 50 ms. The write
+ * succeeds, the printer reports success, and the drawer does not move: a
+ * failure with no error anywhere, which is the worst kind to chase.
+ *
+ * 200 ms is the safe end of the range for both. t1 caps at 255 units (510 ms)
+ * and a long pulse only wastes solenoid heat, so erring long costs nothing a
+ * shop would notice.
+ */
+export const DRAWER_ON_MS_DEFAULT = 200
+export const DRAWER_OFF_MS_DEFAULT = 200
+
+/** ms → ESC p's 2 ms units, clamped to the byte the command actually takes. */
+function pulseUnits(ms: number): number {
+  return Math.max(1, Math.min(255, Math.round(ms / 2)))
 }
 
 // ── Character encoding (code page 858) ──────────────────────────────────────
@@ -292,7 +312,11 @@ export function buildVerificationPayload(v: {
 // ── Public API ──────────────────────────────────────────────────────────────
 
 /** Returns the cash drawer kick command bytes (pin 2 — most common). */
-export function cashDrawerPulse(pin: 1 | 2 = 1): Uint8Array {
+export function cashDrawerPulse(
+  pin: 1 | 2 = 1,
+  onMs: number = DRAWER_ON_MS_DEFAULT,
+  offMs: number = DRAWER_OFF_MS_DEFAULT,
+): Uint8Array {
   // INIT first, then the pulse — not the bare 5-byte pulse on its own.
   //
   // A standalone `ESC p 0 25 250` is a naked control fragment with no job
@@ -304,7 +328,68 @@ export function cashDrawerPulse(pin: 1 | 2 = 1): Uint8Array {
   // No trailing line feed on purpose: this is also what the standalone
   // "Test cash drawer" button sends, and a LF would spit blank paper every
   // time someone checks the drawer.
-  return new Uint8Array([...CMD.INIT, ...(pin === 1 ? CMD.CASH_DRAWER_1 : CMD.CASH_DRAWER_2)])
+  return new Uint8Array([
+    ...CMD.INIT,
+    ESC, 0x70, pin === 1 ? 0x00 : 0x01, pulseUnits(onMs), pulseUnits(offMs),
+  ])
+}
+
+/**
+ * The same pulse, but wrapped in a minimal print job.
+ *
+ * Some ESC/POS clones will not act on a drawer command that arrives in a job
+ * containing no printable data — the firmware treats the job as empty and
+ * discards it whole. A single space and a feed is enough to make it a real
+ * job. It costs one blank line of paper, so it is a fallback the drawer sweep
+ * offers rather than the everyday path.
+ */
+export function cashDrawerPulseInJob(
+  pin: 1 | 2 = 1,
+  onMs: number = DRAWER_ON_MS_DEFAULT,
+): Uint8Array {
+  return new Uint8Array([
+    ...CMD.INIT,
+    ESC, 0x70, pin === 1 ? 0x00 : 0x01, pulseUnits(onMs), pulseUnits(DRAWER_OFF_MS_DEFAULT),
+    0x20, LF,
+  ])
+}
+
+/**
+ * Every plausible way to open a drawer, in the order worth trying.
+ *
+ * Diagnosing this from another continent has cost several release cycles of
+ * "try this / still nothing", because a drawer that does not open looks the
+ * same whatever the reason. Firing the variants one at a time with a visible
+ * label turns an unbounded guessing loop into a single test the shop runs
+ * once: whichever number opens the drawer is the answer, and it gets saved.
+ */
+export interface DrawerVariant {
+  id: number
+  pin: 1 | 2
+  onMs: number
+  inJob: boolean
+  label: string
+  bytes: Uint8Array
+}
+
+export function drawerVariants(): DrawerVariant[] {
+  const combos: Array<[1 | 2, number, boolean]> = [
+    [1, 200, false], // 24 V drawer on pin 2 — the most likely miss
+    [2, 200, false], // …same, wired to pin 5
+    [1, 50, false],  // Epson 12 V default, pin 2
+    [2, 50, false],  // …pin 5
+    [1, 400, false], // stiff or cold solenoid
+    [1, 200, true],  // firmware that discards a job with no printable data
+    [2, 200, true],
+  ]
+  return combos.map(([pin, onMs, inJob], i) => ({
+    id: i + 1,
+    pin,
+    onMs,
+    inJob,
+    label: `Pin ${pin === 1 ? '2' : '5'} · ${onMs} ms${inJob ? ' · with paper feed' : ''}`,
+    bytes: inJob ? cashDrawerPulseInJob(pin, onMs) : cashDrawerPulse(pin, onMs),
+  }))
 }
 
 /** Returns a full-cut command. */
@@ -374,12 +459,6 @@ export interface EscPosReceiptOptions {
    * receipt always prints with a mark on it.
    */
   stampBits?: { bits: Uint8Array; width: number; height: number }
-  /**
-   * Print the verification QR under the BTW block. On by default whenever the
-   * store has a BTW registration number — a receipt with no BTW number has
-   * nothing to verify against.
-   */
-  verifyQr?: boolean
 }
 
 const TRANSLATIONS = {
@@ -401,7 +480,6 @@ const TRANSLATIONS = {
     total_btw:      'Totaal BTW',
     btw_exempt:     'BTW vrijgesteld',
     btw_number:     'BTW-nr.',
-    verify_hint:    'Scan om deze bon te controleren',
     payment:        'Betaalmethode',
     cash:           'Contant',
     card:           'Pin / Kaart',
@@ -436,7 +514,6 @@ const TRANSLATIONS = {
     total_btw:      'Total BTW',
     btw_exempt:     'BTW exempt',
     btw_number:     'BTW no.',
-    verify_hint:    'Scan to verify this receipt',
     payment:        'Payment',
     cash:           'Cash',
     card:           'Card / PIN',
@@ -469,7 +546,7 @@ function fmtRate(rate: string): string {
 
 export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   const t   = TRANSLATIONS[opts.locale]
-  const { sale, store, stamp, stampBits, verifyQr } = opts
+  const { sale, store, stamp, stampBits } = opts
   const b   = new EscPosBuilder(CHARS_PER_LINE[opts.paperWidth ?? 80])
 
   b.cmd(CMD.INIT)
@@ -616,31 +693,12 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   // burns one line at a time with no compositing, so there is no "behind the
   // text" to print into. On the A4/PDF receipt it IS a true watermark — see
   // ReceiptService::receiptWatermarkDataUri.
-  // ── Verification QR ───────────────────────────────────────────────────────
-  //
-  // What makes a customer able to trust the BTW on a receipt is being able to
-  // have it CHECKED — not a badge saying someone checked it. This encodes the
-  // sale number, timestamp, total and BTW alongside the shop's BTW
-  // registration number, so the paper in the customer's hand can be matched
-  // against the recorded sale by the shop, an auditor or a Belastingdienst
-  // inspector. A receipt whose figures were altered after printing stops
-  // matching; an emblem would not have noticed.
-  if (verifyQr !== false && store.btw_number) {
+  // The footer image is the SHOP's, uploaded by them, or there is none.
+  // Nothing is printed by default: a receipt is the customer's record of what
+  // they paid, not advertising space for the till vendor.
+  if (stamp !== false && stampBits) {
     b.emptyLine()
-    b.cmd(CMD.FONT_SMALL).line(t.verify_hint).cmd(CMD.FONT_NORMAL)
-    b.qr(buildVerificationPayload({
-      btwNumber:  store.btw_number,
-      saleNumber: sale.sale_number,
-      occurredAt: sale.occurred_at,
-      totalSrd:   sale.total_srd,
-      btwSrd:     sale.btw_srd,
-    }))
-  }
-
-  if (stamp !== false) {
-    b.emptyLine()
-    if (stampBits) b.raster(stampBits.bits, stampBits.width, stampBits.height)
-    else b.raster(josbinStampBits(), STAMP_WIDTH, STAMP_HEIGHT)
+    b.raster(stampBits.bits, stampBits.width, stampBits.height)
   }
 
   // Feed + cut

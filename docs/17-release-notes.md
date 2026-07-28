@@ -11,7 +11,24 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.3 — 28 July 2026 *(current)*
+## 1.5.4 — 28 July 2026 *(current)*
+
+- **The cash drawer signal is now four times longer.** It was 50 ms, which is
+  the printer manufacturer's figure for a 12 V drawer; the drawers under these
+  tills are usually 24 V and often will not throw their latch that fast. The
+  signal was being sent and accepted correctly — the drawer simply never had
+  enough time to move, with no error anywhere to explain it. It is now 200 ms.
+- **Settings → Hardware → Find my cash drawer.** If a drawer still stays shut,
+  this sends seven different drawer signals in turn — both wiring pins, three
+  pulse lengths, and the variant for printers that ignore a signal with no
+  paper attached — one every 2.5 seconds, showing which one is going. Watch
+  the drawer, tap *Use this* on the number that opens it, and the till
+  remembers it. It replaces guesswork with one test.
+- **The QR code and the Josbin logo are off the printed receipt.** The footer
+  image is now the shop's own, uploaded by the shop; tills with no image
+  uploaded print no image.
+
+## 1.5.3 — 28 July 2026
 
 - **A verification QR on every receipt with a BTW number.** It carries the
   shop's BTW registration number together with the receipt number, time,

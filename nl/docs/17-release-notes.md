@@ -11,7 +11,24 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.3 — 28 juli 2026 *(actueel)*
+## 1.5.4 — 28 juli 2026 *(actueel)*
+
+- **Het signaal naar de geldlade duurt nu vier keer zo lang.** Het was 50 ms,
+  de waarde die de printerfabrikant opgeeft voor een 12V-lade; de lades onder
+  deze kassa's zijn meestal 24V en krijgen hun grendel in die tijd vaak niet
+  om. Het signaal werd correct verstuurd en aangenomen — de lade had simpelweg
+  geen tijd om te bewegen, zonder ook maar ergens een foutmelding. Nu 200 ms.
+- **Instellingen → Hardware → Geldlade zoeken.** Blijft een lade toch dicht,
+  dan stuurt dit zeven verschillende ladesignalen achter elkaar — beide
+  aansluitpennen, drie pulslengtes, en de variant voor printers die een
+  signaal zonder papier negeren — elke 2,5 seconde één, met op het scherm
+  welke er gaat. Kijk naar de lade, tik bij het nummer dat hem opent op
+  *Gebruik deze*, en de kassa onthoudt het. Eén test in plaats van gokwerk.
+- **De QR-code en het Josbin-logo staan niet meer op de geprinte bon.** De
+  afbeelding onderaan is nu die van de winkel zelf; kassa's zonder geüploade
+  afbeelding printen er geen.
+
+## 1.5.3 — 28 juli 2026
 
 - **Een controle-QR op elke bon met een BTW-nummer.** Daarin staan het
   BTW-nummer van de winkel plus bonnummer, tijd, totaal en BTW-bedrag — zo is
