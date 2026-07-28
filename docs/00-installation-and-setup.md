@@ -484,15 +484,26 @@ continue.
 | Device | How it connects | Works? |
 |---|---|---|
 | Barcode scanner (USB dongle or Bluetooth, e.g. NT-M8) | Acts as a keyboard | ✅ Plug and scan — nothing to configure |
-| Receipt printer | **Network (LAN/Wi-Fi) interface, port 9100** | ✅ Set the printer's IP under *Settings → Hardware*, same as Windows |
-| Receipt printer | USB only | ⚠️ Not supported for receipts on Android — fit the printer's network (LAN) interface module, or use a network-capable printer |
+| Receipt printer | **USB straight into the terminal** | ✅ Pair once under *Settings → Hardware → Connect USB printer* — no network card needed |
+| Receipt printer | Network (LAN/Wi-Fi) interface, port 9100 | ✅ Set the printer's IP under *Settings → Hardware*, same as Windows |
 | Cash drawer | RJ11 cable into the **printer** | ✅ Opens on cash/mixed sales — works whenever the printer works |
 | Label printer | Android print service (Wi-Fi/Bluetooth/USB via the maker's print-service app) | ✅ The Labels screen and the Settings label test print via the Android print dialog |
 | Customer-facing second screen | HDMI/USB monitor | 🔲 Mirrors the till today; a dedicated customer display is on the roadmap |
 
-The rule of thumb: **on Android, the receipt printer must be on the network.**
-Printers like the Posiflex PP-9000 take an optional LAN interface module —
-with that fitted, receipts and the cash drawer behave exactly as on Windows.
+The rule of thumb: **plug the printer into the terminal by USB unless several
+tills have to share it.** USB is the simpler install — one cable, one pairing,
+no network card, and it keeps working if the wi-fi does not. Put the printer on
+the network when two or more tills print to the same machine, because a USB
+printer belongs to the one terminal it is plugged into; printers like the
+Posiflex PP-9000 take an optional LAN interface module for exactly that.
+
+::: warning Corrected
+Guides issued before version 1.4 stated that Android *required* a network
+printer. That has not been true since 1.4 — a USB receipt printer works
+directly on the terminal. Do not buy a LAN module for a single-till counter
+on the strength of an older sheet.
+:::
+
 The scanner never needs anything: it types like a keyboard on every platform.
 
 **Updating** — install the newer APK over the old one; settings and the server

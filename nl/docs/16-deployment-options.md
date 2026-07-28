@@ -20,6 +20,13 @@ U kiest per winkel — en kassa's mogen door elkaar (§16.6).
 De vorm die de meeste supermarkten kiezen. Alles staat in de winkel; het
 internet dient alleen om resultaten naar het hoofdkantoor te sturen.
 
+**De server hoeft geen tweede machine te zijn.** Een Windows-kassa is een
+volwaardige PC en kan de serversoftware dus zelf naast de kassa-app draaien —
+één apparaat dat tegelijk de kassa is, de server, en het ding waar de scanner,
+de printer en de geldlade in gaan. Voor een winkel met één of twee kassa's is
+dat de goedkoopste complete opzet die er is: geen extra hardware, niets op het
+netwerk dat stuk kan, en nog steeds volledig kunnen verkopen zonder internet.
+
 <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Windows-kassa en server-PC in de winkel, printer en lade op het lokale netwerk, internet optioneel" style="max-width:640px;width:100%;height:auto;font-family:sans-serif">
   <rect x="250" y="10" width="140" height="40" rx="8" fill="none" stroke="#9aa3b8" stroke-width="2" stroke-dasharray="6 5"/>
   <text x="320" y="35" text-anchor="middle" font-size="14" fill="#6b7280">☁️ Internet</text>
@@ -47,10 +54,23 @@ internet dient alleen om resultaten naar het hoofdkantoor te sturen.
   <text x="155" y="287" text-anchor="middle" font-size="13" fill="#1d7a46">✅ Internet weg → verkopen gaat door</text>
 </svg>
 
-- **Nodig:** een Windows-kassa + een willekeurige Windows-PC als server (een
-  oude kantoor-PC volstaat — of in een éénkassawinkel is de kassa zelf de
-  server).
-- **Printer:** netwerk *of* USB rechtstreeks in de kassa — op Windows werkt
+**Twee manieren om het te bouwen**
+
+| | **A1 — alles in één** | **A2 — aparte server-PC** |
+|---|---|---|
+| Machines | 1 (de kassa draait alles) | 2 (kassa + een PC, een oude volstaat) |
+| Extra kosten | geen | ± USD 150–200 als er geen over is |
+| Geschikt voor | 1–2 kassa's | 3+ kassa's, of een drukke winkel |
+| Valt die machine uit | de winkel ligt stil tot hij terug is | de andere kassa's verkopen door |
+| Kassa's delen de gegevens | alle kassa's wijzen naar het adres van de kassa-server | alle kassa's wijzen naar de server-PC |
+
+A2 is de veiligere vorm zodra een winkel meerdere kassa's heeft, om één reden
+die duidelijk gezegd mag worden: bij A1 zijn de kassa en de server dezelfde
+machine, dus wat de een neerhaalt, haalt de ander mee. Voor een kleine winkel
+is dat een aanvaardbare afweging, voor een supermarkt met vier banen niet.
+
+- **Nodig:** een Windows-kassa. Een tweede PC alleen als u voor A2 kiest.
+- **Printer:** USB rechtstreeks in de kassa *of* netwerk — op Windows werkt
   allebei.
 - **Ideaal voor:** elke winkel waar "we kunnen niet verkopen" onacceptabel is.
 
@@ -101,9 +121,9 @@ het kantoortje die het systeem draait, alles op het eigen winkelnetwerk.
   <rect x="240" y="180" width="160" height="72" rx="10" fill="#ffffff" stroke="#293371" stroke-width="2.5"/>
   <text x="320" y="207" text-anchor="middle" font-size="14" fill="#111827">🗄 Server-PC</text>
   <text x="320" y="228" text-anchor="middle" font-size="12" fill="#6b7280">elke Windows-PC</text>
-  <rect x="430" y="180" width="180" height="72" rx="10" fill="#ffffff" stroke="#EF6C00" stroke-width="2.5"/>
+  <rect x="430" y="180" width="180" height="72" rx="10" fill="#ffffff" stroke="#293371" stroke-width="2.5"/>
   <text x="520" y="203" text-anchor="middle" font-size="14" fill="#111827">🖨 Netwerkprinter</text>
-  <text x="520" y="222" text-anchor="middle" font-size="12" fill="#EF6C00">moet op het netwerk</text>
+  <text x="520" y="222" text-anchor="middle" font-size="12" fill="#6b7280">USB naar de kassa, of netwerk</text>
   <line x1="520" y1="252" x2="520" y2="272" stroke="#111827" stroke-width="2"/>
   <text x="527" y="270" font-size="11" fill="#6b7280">RJ11</text>
   <rect x="455" y="272" width="130" height="24" rx="6" fill="#f3f4f6" stroke="#9aa3b8" stroke-width="1.5"/>
@@ -112,9 +132,12 @@ het kantoortje die het systeem draait, alles op het eigen winkelnetwerk.
   <text x="155" y="287" text-anchor="middle" font-size="13" fill="#1d7a46">✅ Internet weg → verkopen gaat door</text>
 </svg>
 
-- **Nodig:** Android-terminal(s) + een PC als server + een **netwerk-**
-  bonprinter (dé harde regel op Android — zie
-  [hoofdstuk 15](/nl/docs/15-android-terminals)).
+- **Nodig:** Android-terminal(s) + een PC als server + een bonprinter,
+  **met USB rechtstreeks in de terminal of op het netwerk** — allebei werkt.
+- **Printerkeuze:** USB is eenvoudiger en heeft geen netwerkkaart nodig. Zet
+  de printer alleen op het netwerk wanneer **meerdere kassa's één printer
+  delen** — een USB-printer hoort bij de ene terminal waar hij in zit. Zie
+  [hoofdstuk 15](/nl/docs/15-android-terminals).
 - **Ideaal voor:** toonbanken met moderne Android-hardware die tóch
   offline-bestendig moeten zijn.
 
@@ -132,23 +155,25 @@ Nul computers in de winkel. Eén Android-terminal, rechtstreeks naar de cloud.
   <text x="437" y="112" font-size="12" fill="#EF6C00">internet — vereist</text>
   <rect x="30" y="120" width="180" height="72" rx="10" fill="#ffffff" stroke="#293371" stroke-width="2.5"/>
   <text x="120" y="147" text-anchor="middle" font-size="14" fill="#111827">📱 Android-kassa</text>
-  <text x="120" y="168" text-anchor="middle" font-size="12" fill="#6b7280">scanner op de kassa</text>
+  <text x="120" y="168" text-anchor="middle" font-size="12" fill="#6b7280">scanner + printer + lade</text>
   <line x1="210" y1="143" x2="250" y2="143" stroke="#293371" stroke-width="2.5" stroke-dasharray="7 5"/>
   <rect x="30" y="212" width="350" height="28" rx="6" fill="#fdecec"/>
   <text x="205" y="231" text-anchor="middle" font-size="13" fill="#b3261e">⛔ Internet weg → geen verkoop (hotspot overbrugt korte storingen)</text>
 </svg>
 
-- **Nodig:** de terminal, wifi, betrouwbaar internet. Een netwerkprinter op
-  dezelfde wifi voor bonnen + lade.
+- **Nodig:** de terminal, wifi, betrouwbaar internet, en een bonprinter die
+  met USB in de terminal zit (of op de wifi, als kassa's er één delen). De
+  geldlade gaat zoals altijd met een kabel in de printer.
 - **Ideaal voor:** de kleinste winkels die hun allereerste stap zetten —
-  later opwaarderen naar opzet C door er een PC bij te zetten.
+  later opwaarderen naar opzet C door er een PC bij te zetten, zonder aan de
+  hardware op de toonbank te komen.
 
 ## 16.5 Kiezen in drie vragen
 
 | Vraag | Bij **ja** | Bij **nee** |
 |---|---|---|
 | 1. Moet u kunnen verkopen als het internet uitvalt? | Server in de winkel (A of C) | Cloud is prima (B of D) |
-| 2. Staat er ergens in de winkel een Windows-PC (mag oud zijn)? | Die kan de server zijn — A of C kost geen nieuwe hardware | Cloud (B/D), of reken ± USD 150–200 voor een mini-PC |
+| 2. Staat er ergens in de winkel een Windows-PC (mag oud zijn)? | Die kan de server zijn — A2 of C kost geen nieuwe hardware | Een Windows-kassa kan zijn eigen server zijn (A1); anders cloud (B/D), of ± USD 150–200 voor een mini-PC |
 | 3. Welke kassa's heeft u? | Windows-machines → A/B · Android-terminals → C/D | Nieuw aan het kopen? Beide platforms worden volledig ondersteund — kies op hardware­voorkeur, niet op software |
 
 **Regels die in élke opzet gelden:**
@@ -156,8 +181,10 @@ Nul computers in de winkel. Eén Android-terminal, rechtstreeks naar de cloud.
 - De **scanner** zit altijd in de kassa en werkt direct.
 - De **geldlade** zit altijd met haar kabel aan de **printer** — nooit aan
   een computer (waarom: [hoofdstuk 15 §15.1](/nl/docs/15-android-terminals)).
-- De **printer**: netwerk kan in elke opzet; USB kan alléén extra op
-  Windows-kassa's.
+- De **printer** kan **met USB in de kassa of op het netwerk, zowel op
+  Windows als op Android**. USB rechtstreeks op Android wordt ondersteund
+  sinds versie 1.4. Kies netwerk alleen wanneer meerdere kassa's één printer
+  moeten delen.
 - Het **dashboard** heeft nergens een extra machine nodig — elke browser op
   het netwerk (of op internet, bij cloudopzetten) opent het.
 

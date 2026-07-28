@@ -493,16 +493,29 @@ lees verder.
 | Apparaat | Aansluiting | Werkt? |
 |---|---|---|
 | Barcodescanner (USB-dongle of Bluetooth, bijv. NT-M8) | Gedraagt zich als toetsenbord | ✅ Inpluggen en scannen — niets in te stellen |
-| Bonprinter | **Netwerk (LAN/wifi), poort 9100** | ✅ Stel het IP-adres van de printer in onder *Instellingen → Hardware*, net als op Windows |
-| Bonprinter | Alleen USB | ⚠️ Niet ondersteund voor bonnen op Android — plaats de netwerk (LAN)-interfacemodule van de printer, of gebruik een netwerkprinter |
+| Bonprinter | **USB rechtstreeks in de terminal** | ✅ Eenmalig koppelen via *Instellingen → Hardware → USB-printer verbinden* — geen netwerkkaart nodig |
+| Bonprinter | Netwerk (LAN/wifi), poort 9100 | ✅ Stel het IP-adres van de printer in onder *Instellingen → Hardware*, net als op Windows |
 | Geldlade | RJ11-kabel in de **printer** | ✅ Opent bij contant/gemengd — werkt zodra de printer werkt |
 | Etiketprinter | Android-afdrukservice (Wi-Fi/Bluetooth/USB via de afdrukservice-app van de fabrikant) | ✅ Het Etiketten-scherm en de etikettest in Instellingen printen via het Android-afdrukvenster |
 | Klantenscherm (tweede scherm) | HDMI/USB-monitor | 🔲 Spiegelt vandaag de kassa; een echt klantenscherm staat op de roadmap |
 
-De vuistregel: **op Android moet de bonprinter op het netwerk zitten.**
-Printers zoals de Posiflex PP-9000 hebben een optionele LAN-interfacemodule —
-daarmee werken bonnen en de geldlade precies zoals op Windows. De scanner
-heeft nooit iets nodig: die typt als een toetsenbord op elk platform.
+De vuistregel: **sluit de printer met USB op de terminal aan, tenzij meerdere
+kassa's hem moeten delen.** USB is de eenvoudigste installatie — één kabel, één
+koppeling, geen netwerkkaart, en hij blijft werken als de wifi dat niet doet.
+Zet de printer op het netwerk wanneer twee of meer kassa's naar dezelfde
+machine printen, want een USB-printer hoort bij de ene terminal waar hij in
+zit; printers zoals de Posiflex PP-9000 hebben daar een optionele
+LAN-interfacemodule voor.
+
+::: warning Gecorrigeerd
+Handleidingen van vóór versie 1.4 stelden dat Android een netwerkprinter
+*vereiste*. Dat klopt sinds 1.4 niet meer — een USB-bonprinter werkt
+rechtstreeks op de terminal. Schaf op grond van een ouder blad geen
+LAN-module aan voor een toonbank met één kassa.
+:::
+
+De scanner heeft nooit iets nodig: die typt als een toetsenbord op elk
+platform.
 
 **Bijwerken** — installeer de nieuwere APK over de oude heen; instellingen en
 het serveradres blijven bewaard. Automatisch bijwerken is er op Android nog
