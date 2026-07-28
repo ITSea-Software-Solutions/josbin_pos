@@ -316,7 +316,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
   const isProcessing = saleMutation.isPending
 
   return (
-    <Modal isOpen={isOpen} onClose={isProcessing ? undefined : onClose} title={t('pos.payment.title')} width={400} persistent={isProcessing}>
+    <Modal isOpen={isOpen} onClose={isProcessing ? undefined : onClose} title={t('pos.payment.title')}
+      width={step === 'cash' || step === 'mixed' ? 620 : 400} persistent={isProcessing}>
       {step === 'method' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Total due */}
@@ -806,12 +807,25 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       )}
 
       {(step === 'cash' || step === 'mixed') && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <button onClick={() => setStep('method')} style={{
             alignSelf: 'flex-start', background: 'none', border: 'none',
             color: 'var(--text-secondary)', cursor: 'pointer', fontSize: 'var(--font-size-sm)',
             display: 'flex', alignItems: 'center', gap: 4,
           }}>← {t('app.back')}</button>
+
+          {/* Figures beside the numpad, not above it.
+              Stacked, this step ran 143px taller than a 600px-high till screen
+              could show, so Complete sat below the fold and taking money meant
+              scrolling first. Side by side it fits with room to spare, and the
+              keypad ends up under the cashier's thumb where it belongs.
+              auto-fit collapses it back to one column on a narrow screen. */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+            gap: 12, alignItems: 'start',
+          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
 
           {/* Amount due */}
           <div style={{
@@ -828,14 +842,14 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
 
           {/* Display */}
           <div style={{
-            textAlign: 'right', padding: '10px 16px',
+            textAlign: 'right', padding: '8px 16px',
             background: 'var(--bg-input)', borderRadius: 'var(--border-radius)',
             border: '1px solid var(--border-color)',
           }}>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>
               {step === 'mixed' ? t('pos.payment.cardAmount') : t('pos.payment.cashReceived')}
             </div>
-            <div className="currency-srd" style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)' }}>
+            <div className="currency-srd" style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)' }}>
               SRD {(step === 'mixed' ? cardAmount : cashInput) || '0'}
             </div>
           </div>
@@ -869,7 +883,9 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
           {/* Quick amounts (cash only) */}
           {step === 'cash' && (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {[total, Math.ceil(total / 5) * 5, Math.ceil(total / 10) * 10, 50, 100, 200].filter((v, i, a) => a.indexOf(v) === i).slice(0,6).map((amt) => (
+              {/* Four, not six: six wrapped onto a second row on a 400px-wide modal and
+                  cost 42px of a screen that was already overflowing. */}
+              {[total, Math.ceil(total / 5) * 5, Math.ceil(total / 10) * 10, 50, 100, 200].filter((v, i, a) => a.indexOf(v) === i).slice(0, 4).map((amt) => (
                 <button
                   key={amt}
                   onClick={() => quickCash(amt)}
@@ -886,7 +902,9 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
             </div>
           )}
 
-          {/* Numpad */}
+          </div>{/* /left column */}
+
+          {/* Numpad — right column */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
             {NUMPAD.map((k, i) => (
               k === '' ? <div key={i} /> :
@@ -894,7 +912,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
                 key={i}
                 onClick={() => numpadPress(k)}
                 style={{
-                  height: 52, borderRadius: 'var(--border-radius)',
+                  height: 48, borderRadius: 'var(--border-radius)',
                   border: '1px solid var(--border-color)', background: 'var(--bg-elevated)',
                   color: 'var(--text-primary)', cursor: 'pointer',
                   fontSize: 'var(--font-size-lg)', fontWeight: 600,
@@ -906,7 +924,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
             <button
               onClick={numpadDel}
               style={{
-                height: 52, borderRadius: 'var(--border-radius)',
+                height: 48, borderRadius: 'var(--border-radius)',
                 border: '1px solid var(--border-color)', background: 'var(--bg-elevated)',
                 color: 'var(--text-muted)', cursor: 'pointer', fontSize: 'var(--font-size-base)',
               }}
@@ -914,6 +932,8 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               ⌫
             </button>
           </div>
+
+          </div>{/* /two-column region */}
 
           {/* Optional reconciliation — only meaningful on mixed payments
               (cash step never carries card data). Collapsed by default to
@@ -956,7 +976,12 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
             </div>
           )}
 
-          {/* Complete button */}
+          {/* Complete button — pinned to the bottom of the scroll area.
+              The numpad, the quick amounts and the change row add up to more
+              than a 600px-tall till screen can show, so on the terminal this
+              button sat below the fold and the cashier had to scroll to take
+              money. Sticky keeps it reachable on any screen height instead of
+              trimming pixels until it happens to fit one device. */}
           <button
             onClick={() => handleComplete(step === 'cash' ? 'cash' : 'mixed')}
             disabled={
@@ -964,8 +989,13 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               (step === 'cash' && cashTendered < total) ||
               (step === 'mixed' && cardAmt <= 0)
             }
+            data-testid="btn-complete-payment"
             style={{
+              position: 'sticky',
+              bottom: 0,
+              zIndex: 2,
               height: 'var(--touch-target-xl)',
+              minHeight: 'var(--touch-target-xl)',
               borderRadius: 'var(--border-radius)',
               border: 'none',
               background: 'var(--color-primary)',
@@ -973,6 +1003,9 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
               cursor: isProcessing ? 'wait' : 'pointer',
               fontWeight: 700,
               fontSize: 'var(--font-size-base)',
+              // The modal body scrolls behind it; without a shadow the button
+              // looks like it is sitting on top of half a numpad key.
+              boxShadow: '0 -10px 16px -6px var(--bg-surface)',
               opacity: (isProcessing || (step === 'cash' && cashTendered < total) || (step === 'mixed' && cardAmt <= 0)) ? 0.5 : 1,
             }}
           >

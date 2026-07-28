@@ -11,7 +11,25 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.7 — 28 July 2026 *(current)*
+## 1.5.8 — 28 July 2026 *(current)*
+
+- **Complete Payment no longer needs scrolling to reach.** On a till screen the
+  cash step ran taller than the screen, so the button that takes the money sat
+  below the fold. The amount, the change and the keypad now sit side by side
+  instead of stacked — the whole step fits with room to spare, and the keypad
+  lands under the cashier's thumb.
+- **Labels and Exchange rate are manager screens now.** Shelf labels are
+  printed in a batch by whoever priced the goods, and the daily rate is locked
+  once for the whole store — neither is a cashier's job, and the till menu is
+  shorter without them. (A cashier taking foreign cash still gets the day's
+  locked rate applied automatically.)
+- **The on-screen keyboard is gone from Android terminals**, where tapping a
+  box already raises the tablet's own keyboard — it was a second keyboard on
+  top of the first. It stays on Windows, where a touch-only till may have no
+  other way to type. The dead Settings switch for it has been removed: it had
+  never been connected to anything.
+
+## 1.5.7 — 28 July 2026
 
 - **One image for the whole platform, at the foot of every receipt.** Set it
   under Users → *Receipt footer stamp (whole platform)* in the dashboard —

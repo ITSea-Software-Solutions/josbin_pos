@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { detectPlatform } from '@/lib/hardware'
 import { useAuthStore } from '@/store/authStore'
 import { useSettingsStore } from '@/store/settingsStore'
 import { useCartStore } from '@/store/cartStore'
@@ -81,13 +82,21 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
   // modal on the right (which uses register-session-close, not z_report.close).
   const isManagerPlus = ['store_manager', 'organisation_admin', 'super_admin'].includes(user?.role ?? '')
 
+  // Labels and the exchange rate are manager work, not cashier work: shelf
+  // labels are printed in a batch by whoever priced the goods, and the daily
+  // USD rate is locked once for the whole store — a cashier has no reason to
+  // set it and every reason not to be able to. A cashier ringing a foreign-cash
+  // sale still gets the locked rate applied automatically; that path does not
+  // go through this screen.
   const navItems = [
     { key: 'pos',           label: t('nav.pos') },
     { key: 'history',       label: i18n.language === 'nl' ? 'Transacties' : 'Transactions' },
     { key: 'reports',       label: t('nav.reports') },
-    { key: 'labels',        label: t('nav.labels') },
-    { key: 'exchange-rate', label: t('nav.exchangeRate') },
-    ...(isManagerPlus ? [{ key: 'end-of-day', label: t('nav.endOfDay') }] : []),
+    ...(isManagerPlus ? [
+      { key: 'labels',        label: t('nav.labels') },
+      { key: 'exchange-rate', label: t('nav.exchangeRate') },
+      { key: 'end-of-day',    label: t('nav.endOfDay') },
+    ] : []),
     { key: 'settings',      label: t('nav.settings') },
   ]
 
@@ -233,21 +242,29 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
           {/* Context-aware help for the current screen */}
           <HelpButton topic={activeScreen} />
 
-          {/* On-screen keyboard toggle */}
-          <button
-            onClick={onToggleKeyboard}
-            title={i18n.language === 'nl' ? 'Schermtoetsenbord aan/uit' : 'Toggle on-screen keyboard'}
-            style={{
-              height: 34, padding: '0 10px',
-              background: keyboardOpen ? 'rgba(0,51,102,0.12)' : 'var(--bg-elevated)',
-              border: `1px solid ${keyboardOpen ? 'var(--color-primary)' : 'var(--border-color)'}`,
-              borderRadius: 'var(--border-radius)',
-              color: keyboardOpen ? 'var(--color-primary)' : 'var(--text-secondary)',
-              cursor: 'pointer', fontSize: 16,
-            }}
-          >
-            ⌨
-          </button>
+          {/* On-screen keyboard toggle — Windows only.
+              Android and the browser build both raise the system keyboard the
+              moment an input is focused, so this was a second keyboard on top
+              of the one already covering the screen. A touch-only Windows till
+              is the case that still needs it: Windows does not reliably raise
+              its touch keyboard for inputs inside a desktop app window, and
+              such a till may have no other way to type at all. */}
+          {detectPlatform() === 'electron' && (
+            <button
+              onClick={onToggleKeyboard}
+              title={i18n.language === 'nl' ? 'Schermtoetsenbord aan/uit' : 'Toggle on-screen keyboard'}
+              style={{
+                height: 34, padding: '0 10px',
+                background: keyboardOpen ? 'rgba(0,51,102,0.12)' : 'var(--bg-elevated)',
+                border: `1px solid ${keyboardOpen ? 'var(--color-primary)' : 'var(--border-color)'}`,
+                borderRadius: 'var(--border-radius)',
+                color: keyboardOpen ? 'var(--color-primary)' : 'var(--text-secondary)',
+                cursor: 'pointer', fontSize: 16,
+              }}
+            >
+              ⌨
+            </button>
+          )}
 
           {/* Language toggle */}
           <button

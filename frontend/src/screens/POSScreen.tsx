@@ -52,6 +52,8 @@ export default function POSScreen() {
   const totals = useCartStore((s) => s.totals)
 
   const [activeScreen, setActiveScreen] = useState<Screen>('pos')
+  const isManagerPlus = ['store_manager', 'organisation_admin', 'super_admin']
+    .includes(user?.role ?? '')
   const [paymentOpen, setPaymentOpen] = useState(false)
   const [completedSale, setCompletedSale] = useState<CompletedSale | null>(null)
   const [keyboardOpen, setKeyboardOpen] = useState(false)
@@ -186,10 +188,16 @@ export default function POSScreen() {
             </div>
           }>
             {activeScreen === 'reports'       && <ReportsScreen storeId={storeId} />}
-            {activeScreen === 'exchange-rate' && <ExchangeRateScreen />}
-            {activeScreen === 'end-of-day'   && <EndOfDayScreen storeId={storeId} />}
+            {/* Manager-only screens are checked here too, not just in the nav.
+                A hidden menu item is decluttering, not a gate — the render must
+                agree with it or a stale activeScreen shows a screen the nav
+                says does not exist. (The real enforcement is the API: a
+                cashier holds rates.view but neither rates.override nor
+                rates.lock, so the rate was never theirs to change.) */}
+            {activeScreen === 'exchange-rate' && isManagerPlus && <ExchangeRateScreen />}
+            {activeScreen === 'end-of-day'   && isManagerPlus && <EndOfDayScreen storeId={storeId} />}
             {activeScreen === 'settings'     && <SettingsScreen />}
-            {activeScreen === 'labels'       && <BarcodeLabelScreen />}
+            {activeScreen === 'labels'       && isManagerPlus && <BarcodeLabelScreen />}
             {activeScreen === 'history'      && <SalesHistoryScreen storeId={storeId} />}
           </Suspense>
         )}

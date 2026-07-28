@@ -11,7 +11,26 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.7 — 28 juli 2026 *(actueel)*
+## 1.5.8 — 28 juli 2026 *(actueel)*
+
+- **Betaling voltooien is bereikbaar zonder scrollen.** Op een kassascherm was
+  de contant-stap hoger dan het scherm, waardoor de knop die het geld aanneemt
+  onder de rand viel. Het bedrag, het wisselgeld en het toetsenblok staan nu
+  naast elkaar in plaats van onder elkaar — de hele stap past ruim, en het
+  toetsenblok ligt onder de duim van de kassamedewerker.
+- **Etiketten en Wisselkoers zijn nu managerschermen.** Schaplabels worden in
+  één keer geprint door wie de goederen geprijsd heeft, en de dagkoers wordt
+  één keer voor de hele winkel vastgezet — geen van beide is werk van een
+  kassamedewerker, en het kassamenu is er korter door. (Wie vreemde valuta
+  aanneemt, krijgt de vastgezette dagkoers nog steeds automatisch toegepast.)
+- **Het schermtoetsenbord is weg op Android-terminals**, waar een tik in een
+  invoerveld het eigen toetsenbord van de tablet al oproept — het was een
+  tweede toetsenbord bovenop het eerste. Op Windows blijft het, want een kassa
+  met alleen een aanraakscherm heeft misschien geen andere manier om te typen.
+  De bijbehorende schakelaar in Instellingen is verwijderd: die was nooit ergens
+  op aangesloten.
+
+## 1.5.7 — 28 juli 2026
 
 - **Eén afbeelding voor het hele platform, onderaan elke bon.** In te stellen
   via Gebruikers → *Stempel onderaan de bon (hele platform)* in het dashboard —

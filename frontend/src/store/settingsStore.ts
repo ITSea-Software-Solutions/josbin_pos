@@ -9,7 +9,6 @@ interface SettingsState {
   storeId: string | null
   productDisplay: ProductDisplay
   dateFormat: string
-  onScreenKeyboard: boolean
   defaultBtwRate: string
   printer: PrinterConfig
   /** Windows only: expose the USB printer on TCP 9100 so Android tills can
@@ -50,7 +49,6 @@ interface SettingsState {
   setStoreId: (storeId: string | null) => void
   setProductDisplay: (display: ProductDisplay) => void
   setDateFormat: (format: string) => void
-  setOnScreenKeyboard: (enabled: boolean) => void
   setDefaultBtwRate: (rate: string) => void
   setPrinter: (config: PrinterConfig) => void
   setPrinterShareEnabled: (v: boolean) => void
@@ -73,7 +71,6 @@ export const useSettingsStore = create<SettingsState>()(
       storeId: null,
       productDisplay: 'both',
       dateFormat: 'DD-MM-YYYY',
-      onScreenKeyboard: false,
       defaultBtwRate: '10',
       printer: {
         type: 'none',
@@ -99,7 +96,6 @@ export const useSettingsStore = create<SettingsState>()(
       setStoreId: (storeId) => set({ storeId: storeId ?? null }),
       setProductDisplay: (productDisplay) => set({ productDisplay }),
       setDateFormat: (dateFormat) => set({ dateFormat }),
-      setOnScreenKeyboard: (onScreenKeyboard) => set({ onScreenKeyboard }),
       setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),
       setPrinter: (printer) => set({ printer }),
       setPrinterShareEnabled: (printerShareEnabled) => set({ printerShareEnabled }),

@@ -21,7 +21,6 @@ export default function SettingsScreen() {
   const {
     productDisplay, setProductDisplay,
     dateFormat, setDateFormat,
-    onScreenKeyboard, setOnScreenKeyboard,
     defaultBtwRate, setDefaultBtwRate,
     printer, setPrinter,
     cardTerminal, setCardTerminal,
@@ -382,31 +381,6 @@ export default function SettingsScreen() {
                 fontSize: 'var(--font-size-base)', padding: '0 14px', outline: 'none', width: '100%',
               }}
             />
-          </div>
-        </div>
-
-        {/* On-screen keyboard */}
-        <div style={sectionSt}>
-          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>{t('settings.onScreenKeyboard')}</h3>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-              {t('settings.onScreenKeyboard')}
-            </span>
-            <button
-              onClick={() => { setOnScreenKeyboard(!onScreenKeyboard); handleSave() }}
-              style={{
-                width: 52, height: 28, borderRadius: 14,
-                background: onScreenKeyboard ? 'var(--color-primary)' : 'var(--bg-input)',
-                border: '1px solid var(--border-color)',
-                cursor: 'pointer', position: 'relative', transition: 'background 0.2s',
-              }}
-            >
-              <div style={{
-                position: 'absolute', top: 3, left: onScreenKeyboard ? 25 : 3,
-                width: 20, height: 20, borderRadius: '50%',
-                background: '#fff', transition: 'left 0.2s',
-              }} />
-            </button>
           </div>
         </div>
 
