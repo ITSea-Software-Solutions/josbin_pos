@@ -131,4 +131,30 @@ return [
     |
     */
     'qr_webhooks_enabled' => (bool) env('JOSBIN_POS_QR_WEBHOOKS_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Receipt watermark
+    |--------------------------------------------------------------------------
+    |
+    | Faint image printed behind the body of the HTML, emailed and PDF
+    | receipt for EVERY store, unless that store sets its own under
+    | settings.receipt_watermark_path.
+    |
+    | Path is relative to the backend's public/ directory. Missing file =
+    | no watermark, never a broken image on a customer's receipt.
+    |
+    | The thermal printed receipt cannot carry a watermark: ESC/POS is
+    | one-bit black dots with no layering, so there is nothing to print
+    | "behind" the text.
+    |
+    */
+    'receipt_watermark_default' => env('JOSBIN_POS_RECEIPT_WATERMARK', 'branding/receipt-watermark.png'),
+
+    /*
+    | How strongly the watermark shows through (0 = invisible, 1 = solid).
+    | Keep it faint: the receipt is a financial document and the figures must
+    | stay the most legible thing on the paper.
+    */
+    'receipt_watermark_opacity' => (float) env('JOSBIN_POS_RECEIPT_WATERMARK_OPACITY', 0.08),
 ];

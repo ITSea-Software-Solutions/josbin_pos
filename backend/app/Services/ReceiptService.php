@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Sale;
+use App\Models\Store;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -79,6 +80,7 @@ class ReceiptService
                 'btw_number'     => data_get($store->settings, 'receipt_btw_number')
                     ?: ($store->organisation?->btw_number ?? ''),
                 'logo'           => $this->receiptLogoDataUri($store->receipt_logo_path),
+                'watermark'      => $this->receiptWatermarkDataUri($store),
             ],
             'sale' => [
                 'sale_number'    => $sale->sale_number,
@@ -113,6 +115,7 @@ class ReceiptService
                 'items'          => $items,
             ],
             'btw_items' => $btwItems ?: null,
+            'watermark_opacity' => (float) config('josbin_pos.receipt_watermark_opacity', 0.08),
             't'         => $this->translations($locale),
         ];
     }
@@ -137,6 +140,49 @@ class ReceiptService
         $mime = $disk->mimeType($path) ?: 'image/png';
 
         return 'data:' . $mime . ';base64,' . base64_encode($disk->get($path));
+    }
+
+    /**
+     * Faint image printed behind the bill body.
+     *
+     * A store may set its own under `settings.receipt_watermark_path` (a file
+     * on the public disk, uploaded like the header logo). Everything else
+     * falls back to the platform default configured in
+     * `josbin_pos.receipt_watermark_default`, which is a file shipped with the
+     * backend rather than per-tenant storage — one file, every store.
+     *
+     * Returns null when neither is present, so a missing file simply means no
+     * watermark instead of a broken image on a customer's receipt.
+     *
+     * NOTE: this reaches the HTML, emailed and PDF receipt only. The thermal
+     * printed receipt cannot carry it — ESC/POS is one-bit black dots with no
+     * layering, so there is no "behind the text" to print into.
+     */
+    private function receiptWatermarkDataUri(Store $store): ?string
+    {
+        if ($storePath = data_get($store->settings, 'receipt_watermark_path')) {
+            if ($uri = $this->receiptLogoDataUri($storePath)) {
+                return $uri;
+            }
+        }
+
+        $default = config('josbin_pos.receipt_watermark_default');
+        if (! $default) {
+            return null;
+        }
+
+        $absolute = public_path($default);
+        if (! is_file($absolute) || ! is_readable($absolute)) {
+            return null;
+        }
+
+        $mime = match (strtolower(pathinfo($absolute, PATHINFO_EXTENSION))) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'svg'         => 'image/svg+xml',
+            default       => 'image/png',
+        };
+
+        return 'data:' . $mime . ';base64,' . base64_encode((string) file_get_contents($absolute));
     }
 
     /**

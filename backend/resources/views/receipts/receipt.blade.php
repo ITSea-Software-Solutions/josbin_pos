@@ -34,7 +34,20 @@
 </style>
 </head>
 <body>
-<div class="receipt">
+
+{{-- Watermark behind the bill.
+     position:fixed so DomPDF repeats it on every page of a long receipt, and
+     it is emitted BEFORE the content so the figures always sit on top of it.
+     Kept faint deliberately — a receipt is a financial document and the
+     amounts must stay the most legible thing on the paper. --}}
+@if(!empty($store['watermark']))
+  <div style="position:fixed; top:38%; left:0; width:100%; text-align:center; z-index:0;">
+    <img src="{{ $store['watermark'] }}" alt=""
+         style="width:62%; opacity:{{ $watermark_opacity ?? 0.08 }};">
+  </div>
+@endif
+
+<div class="receipt" style="position:relative; z-index:1;">
 
 {{-- Store header --}}
 @if(!empty($store['logo']))
