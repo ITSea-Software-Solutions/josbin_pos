@@ -434,7 +434,13 @@ class SaleController extends Controller
         // Fraud & anomaly detection — runs in background queue, never blocks response
         DetectSaleAnomaly::dispatch($sale->id)->onQueue('ai')->delay(now()->addSeconds(5));
 
-        return response()->json(['data' => $sale->load('items')], 201);
+        // Load exactly what show() loads. The till prints the cashier's NAME
+        // and the customer's name, so a create response carrying only items
+        // forced the receipt screen to re-fetch the sale before it could build
+        // anything — two extra round trips to the server, on the one screen
+        // where the cashier is standing in front of a customer waiting for
+        // paper. Measured at 3-5s against a remote server.
+        return response()->json(['data' => $sale->load('items', 'customer', 'cashier')], 201);
     }
 
     // ─── Show ─────────────────────────────────────────────────────────────

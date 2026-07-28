@@ -54,3 +54,23 @@ export async function uploadStoreLogo(storeId: string, file: File): Promise<{ re
   )
   return res.data.data
 }
+
+/**
+ * Upload the image stamped at the foot of this store's printed receipts.
+ *
+ * The image is the SHOP's own — their logo or mark. It must not be used to
+ * imply that a third party has approved, certified or verified the sale; a
+ * government emblem in particular asserts an endorsement that does not exist,
+ * which misleads the customer holding the receipt and is a trademark problem
+ * for the agency whose mark it is.
+ */
+export async function uploadReceiptStamp(storeId: string, file: File): Promise<{ receipt_stamp_path: string }> {
+  const fd = new FormData()
+  fd.append('stamp', file)
+  const res = await apiClient.post<{ data: { receipt_stamp_path: string } }>(
+    `/stores/${storeId}/receipt-stamp`,
+    fd,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  return res.data.data
+}

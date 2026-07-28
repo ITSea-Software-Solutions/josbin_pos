@@ -10,19 +10,22 @@ import { buildWhatsAppLink } from '@/lib/receiptText'
 import { getReceiptStamp } from '@/api/stores'
 import { useSettingsStore } from '@/store/settingsStore'
 import apiClient from '@/api/client'
-import type { Store } from '@/types/models'
+import type { Sale, Store } from '@/types/models'
 
 interface ReceiptModalProps {
   isOpen: boolean
   onClose: () => void
   saleId: string
+  /** The sale POST /sales already returned. Seeds the query so the ticket can
+   *  be built on the first render — the receipt used to wait on a re-fetch. */
+  initialSale?: Sale
   cashTendered: number
   change: number
   onNewSale: () => void
 }
 
 export default function ReceiptModal({
-  isOpen, onClose, saleId, cashTendered, change, onNewSale,
+  isOpen, onClose, saleId, initialSale, cashTendered, change, onNewSale,
 }: ReceiptModalProps) {
   const { t, i18n } = useTranslation()
   const printer       = useSettingsStore((s) => s.printer)
@@ -47,6 +50,10 @@ export default function ReceiptModal({
     queryKey: ['sale', saleId],
     queryFn: () => getSale(saleId),
     enabled: isOpen && (hasThermal || autoWhatsApp),
+    // Present immediately when the till already has it — no round trip before
+    // the first byte reaches the printer.
+    initialData: initialSale,
+    staleTime: 30_000,
   })
 
   const customerPhone = sale?.customer?.phone ?? ''
@@ -59,6 +66,9 @@ export default function ReceiptModal({
       return data.data
     },
     enabled: isOpen && (hasThermal || autoWhatsApp) && !!storeId,
+    // The store's name, header and BTW number do not change between sales.
+    // Re-fetching them on every receipt added a round trip to every print.
+    staleTime: 10 * 60_000,
   })
 
   // The store's own stamp image, when one has been uploaded. Long-lived in

@@ -11,7 +11,21 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.5 — 28 juli 2026 *(actueel)*
+## 1.5.6 — 28 juli 2026 *(actueel)*
+
+- **De bon print nu meteen.** Er zat 3 à 5 seconden tussen het afronden van een
+  verkoop en het moment dat er iets bij de printer gebeurde. De kassa vroeg de
+  server om de verkoop die hij *net had gekregen* — en dat twee keer, één keer
+  voor de verkoop en één keer voor de winkelgegevens — voordat hij de bon kon
+  samenstellen. Hij gebruikt nu wat hij al heeft, en de winkelgegevens blijven
+  tussen verkopen bewaard in plaats van bij elke klant opnieuw opgehaald.
+- **Een winkel kan een eigen afbeelding onderaan de bon zetten.**
+  Dashboard → Winkelinstellingen → *Stempel onderaan de bon*. Hij print als een
+  stempel op een bonnetje. Thermische printers kennen geen grijstinten, dus een
+  egaal beeldmerk met veel contrast werkt het best. Geen upload betekent geen
+  afbeelding — standaard wordt er niets geprint.
+
+## 1.5.5 — 28 juli 2026
 
 **De geldlade op Android-terminals — de echte oorzaak, gevonden.**
 

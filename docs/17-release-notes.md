@@ -11,7 +11,20 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.5 — 28 July 2026 *(current)*
+## 1.5.6 — 28 July 2026 *(current)*
+
+- **The receipt now prints straight away.** There was a 3–5 second pause
+  between finishing a sale and anything happening at the printer. The till was
+  asking the server for the sale it had *just been given* — twice over, once
+  for the sale and once for the shop's details — before it could compose the
+  ticket. It now uses what it already has, and the shop's details are kept
+  between sales rather than fetched again for every customer.
+- **A store can put its own image at the foot of the receipt.**
+  Dashboard → Store settings → *Receipt footer stamp*. It prints like a stamp
+  on a docket. Thermal printers have no greys, so a flat, high-contrast mark
+  works best. No upload means no image — nothing is printed by default.
+
+## 1.5.5 — 28 July 2026
 
 **The cash drawer on Android terminals — the actual cause, found.**
 

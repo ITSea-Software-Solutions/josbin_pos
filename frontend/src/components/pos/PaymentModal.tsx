@@ -7,14 +7,16 @@ import { useSettingsStore } from '@/store/settingsStore'
 import { createSale } from '@/api/sales'
 import { getStore } from '@/api/stores'
 import { openCashDrawer } from '@/lib/hardware'
-import type { PaymentMethod } from '@/types/models'
+import type { PaymentMethod, Sale } from '@/types/models'
 import type { CreateSalePayload } from '@/api/sales'
 
 interface PaymentModalProps {
   isOpen: boolean
   onClose: (() => void) | undefined
   storeId: string
-  onSuccess: (saleId: string, cashTendered: number, change: number) => void
+  /** The full sale is passed along so the receipt screen can print without
+   *  re-fetching what we already hold. */
+  onSuccess: (saleId: string, cashTendered: number, change: number, sale: Sale) => void
 }
 
 type Step = 'method' | 'cash' | 'card' | 'mixed' | 'bank_transfer' | 'mobile_transfer' | 'foreign_cash' | 'qr_payment'
@@ -207,7 +209,7 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
       // Burn the idempotency key so the *next* sale gets a fresh one
       saleRefRef.current = ''
       clearCart()
-      onSuccess(sale.id, tendered, chg)
+      onSuccess(sale.id, tendered, chg, sale)
     },
   })
 

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useDashboardAuthStore } from '@/store/authStore'
-import { getStore, updateStore, uploadStoreLogo, uploadWalletQr, deleteWalletQr, type Store, type WalletProvider } from '@/api/stores'
+import { getStore, updateStore, uploadStoreLogo, uploadReceiptStamp, uploadWalletQr, deleteWalletQr, type Store, type WalletProvider } from '@/api/stores'
 
 const API_BASE = import.meta.env.VITE_API_URL?.replace('/api', '') ?? 'http://localhost:8080'
 
@@ -142,6 +142,20 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
   })
   const [logoPreview, setLogoPreview] = useState<string | null>(logoUrl(store.receipt_logo_path))
   const [logoFile, setLogoFile] = useState<File | null>(null)
+  const stampInputRef = useRef<HTMLInputElement>(null)
+  const [stampPreview, setStampPreview] = useState<string | null>(
+    logoUrl((store.settings as Record<string, string> | undefined)?.receipt_stamp_path),
+  )
+  const [stampFile, setStampFile] = useState<File | null>(null)
+  const [stampStatus, setStampStatus] = useState<'idle' | 'uploading' | 'ok' | 'error'>('idle')
+
+  function handleStampChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0]
+    if (!f) return
+    setStampFile(f)
+    setStampPreview(URL.createObjectURL(f))
+    setStampStatus('idle')
+  }
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'ok' | 'error'>('idle')
   const [logoStatus, setLogoStatus] = useState<'idle' | 'uploading' | 'ok' | 'error'>('idle')
   const [error, setError] = useState('')
@@ -178,6 +192,16 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
       }
       const updated = await updateStore(store.id, payload)
 
+      if (stampFile) {
+        setStampStatus('uploading')
+        try {
+          await uploadReceiptStamp(store.id, stampFile)
+          setStampStatus('ok')
+          setStampFile(null)
+        } catch {
+          setStampStatus('error')
+        }
+      }
       if (logoFile) {
         setLogoStatus('uploading')
         try {
@@ -327,6 +351,41 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
                 )}
                 {logoStatus === 'uploading' && <span style={{ fontSize: 12, color: '#6b7280', lineHeight: '34px' }}>{isNl ? 'Uploaden…' : 'Uploading…'}</span>}
                 {logoStatus === 'ok' && <span style={{ fontSize: 12, color: '#16a34a', lineHeight: '34px' }}>✓ {isNl ? 'Geüpload' : 'Uploaded'}</span>}
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Section title={isNl ? 'Stempel onderaan de bon' : 'Receipt footer stamp'}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            {stampPreview ? (
+              <div style={{ width: 80, height: 80, borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden', background: '#f9f9f9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={stampPreview} alt="stamp" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              </div>
+            ) : (
+              <div style={{ width: 80, height: 80, borderRadius: 10, border: '2px dashed #e5e7eb', background: '#f9f9f9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 28 }}>
+                🏷
+              </div>
+            )}
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: '0 0 8px', fontSize: 13, color: '#6b7280' }}>
+                {isNl
+                  ? 'PNG of JPG, max. 2 MB. Wordt onderaan de geprinte bon afgedrukt, als een stempel. Een thermische printer kent geen grijstinten — een egaal, contrastrijk beeldmerk werkt het best. Geen upload betekent geen afbeelding.'
+                  : 'PNG or JPG, max 2 MB. Printed at the foot of the receipt, like a stamp. A thermal printer has no greys — a flat, high-contrast mark works best. No upload means no image.'}
+              </p>
+              <input ref={stampInputRef} type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} onChange={handleStampChange} />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => stampInputRef.current?.click()} style={{ height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}>
+                  {isNl ? 'Afbeelding kiezen' : 'Choose image'}
+                </button>
+                {stampPreview && (
+                  <button onClick={() => { setStampPreview(null); setStampFile(null) }} style={{ height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 12 }}>
+                    {isNl ? 'Verwijderen' : 'Remove'}
+                  </button>
+                )}
+                {stampStatus === 'uploading' && <span style={{ fontSize: 12, color: '#6b7280', lineHeight: '34px' }}>{isNl ? 'Uploaden…' : 'Uploading…'}</span>}
+                {stampStatus === 'ok' && <span style={{ fontSize: 12, color: '#16a34a', lineHeight: '34px' }}>✓ {isNl ? 'Geüpload' : 'Uploaded'}</span>}
+                {stampStatus === 'error' && <span style={{ fontSize: 12, color: '#dc2626', lineHeight: '34px' }}>{isNl ? 'Upload mislukt' : 'Upload failed'}</span>}
               </div>
             </div>
           </div>

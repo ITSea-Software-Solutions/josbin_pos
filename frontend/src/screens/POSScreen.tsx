@@ -13,6 +13,7 @@ import TopBar from '@/components/pos/TopBar'
 import OnScreenKeyboard from '@/components/pos/OnScreenKeyboard'
 import PaymentModal from '@/components/pos/PaymentModal'
 import ReceiptModal from '@/components/pos/ReceiptModal'
+import type { Sale } from '@/types/models'
 import HoldBillModal from '@/components/pos/HoldBillModal'
 
 // Lazy-load secondary screens
@@ -29,6 +30,9 @@ interface CompletedSale {
   saleId: string
   cashTendered: number
   change: number
+  /** The sale as POST /sales returned it — already carries items, cashier and
+   *  customer, so the receipt screen prints without asking the server again. */
+  sale?: Sale
 }
 
 export default function POSScreen() {
@@ -53,9 +57,13 @@ export default function POSScreen() {
   const [keyboardOpen, setKeyboardOpen] = useState(false)
   const [holdModalOpen, setHoldModalOpen] = useState(false)
 
-  function handleSaleComplete(saleId: string, cashTendered: number, change: number) {
+  function handleSaleComplete(
+    saleId: string, cashTendered: number, change: number, sale?: Sale,
+  ) {
     setPaymentOpen(false)
-    setCompletedSale({ saleId, cashTendered, change })
+    // Hand the receipt screen the sale we already have. Re-fetching it just to
+    // print it cost two round trips before any paper moved.
+    setCompletedSale({ saleId, cashTendered, change, sale })
   }
 
   function handleNewSale() {
@@ -201,6 +209,7 @@ export default function POSScreen() {
           isOpen
           onClose={() => setCompletedSale(null)}
           saleId={completedSale.saleId}
+          initialSale={completedSale.sale}
           cashTendered={completedSale.cashTendered}
           change={completedSale.change}
           onNewSale={handleNewSale}
