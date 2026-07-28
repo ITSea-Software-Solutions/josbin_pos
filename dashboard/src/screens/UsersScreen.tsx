@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useTableSort } from '@/lib/useTableSort'
 import { getUsers, createUser, updateUser, type User, type CreateUserPayload } from '@/api/users'
 import { getOrganisations, getOrgStores, type Organisation, type Store } from '@/api/organisations'
-import { getTwoFactorPolicy, updateTwoFactorPolicy } from '@/api/securityPolicy'
+import { getTwoFactorPolicy, updateTwoFactorPolicy, getPlatformReceiptStamp, uploadPlatformReceiptStamp, clearPlatformReceiptStamp } from '@/api/securityPolicy'
 import { useDashboardAuthStore } from '@/store/authStore'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import EmptyState from '@/components/shared/EmptyState'
@@ -671,6 +671,125 @@ function EditUserModal({ user, orgs, isNl, onClose }: {
   )
 }
 
+
+// ─── Platform receipt footer stamp (Super Admin only) ─────────────────────────
+//
+// One image for the whole platform, stamped at the foot of every printed
+// receipt unless a store has uploaded its own. Kept here rather than in a
+// store's settings because it is a platform decision, and changeable from the
+// dashboard so it never needs a redeploy.
+function ReceiptStampPanel({ isNl }: { isNl: boolean }) {
+  const qc = useQueryClient()
+  const [open, setOpen] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const { data: stamp, isLoading } = useQuery({
+    queryKey: ['platform-receipt-stamp'],
+    queryFn: getPlatformReceiptStamp,
+  })
+
+  const upload = useMutation({
+    mutationFn: (file: File) => uploadPlatformReceiptStamp(file),
+    onSuccess: (updated) => {
+      qc.setQueryData(['platform-receipt-stamp'], updated)
+      setError(null)
+    },
+    onError: (e: unknown) => setError(
+      (e as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? (isNl ? 'Upload mislukt' : 'Upload failed'),
+    ),
+  })
+
+  const clear = useMutation({
+    mutationFn: clearPlatformReceiptStamp,
+    onSuccess: (updated) => qc.setQueryData(['platform-receipt-stamp'], updated),
+  })
+
+  return (
+    <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, background: '#fff', marginBottom: 20 }}>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        data-testid="btn-toggle-receipt-stamp"
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 18px', background: 'none', border: 'none', cursor: 'pointer',
+          fontSize: 14, fontWeight: 700, color: '#003366',
+        }}
+      >
+        <span>🏷 {isNl ? 'Stempel onderaan de bon (hele platform)' : 'Receipt footer stamp (whole platform)'}</span>
+        <span style={{ color: '#9ca3af' }}>{open ? '▾' : '▸'}</span>
+      </button>
+
+      {open && (
+        <div style={{ padding: '0 18px 18px' }}>
+          <p style={{ margin: '0 0 14px', fontSize: 12.5, color: '#6b7280', lineHeight: 1.55 }}>
+            {isNl
+              ? 'Deze afbeelding wordt onderaan elke geprinte bon gestempeld, voor elke winkel die er zelf geen heeft geüpload. Een thermische printer kent geen grijstinten — een egaal beeldmerk met veel contrast werkt het best; een te lichte of bijna volledig gevulde afbeelding wordt geweigerd in plaats van papier te verspillen. Zonder afbeelding wordt er niets geprint.'
+              : 'This image is stamped at the foot of every printed receipt, for every store that has not uploaded one of its own. A thermal printer has no greys — a flat, high-contrast mark works best; an image that is too faint or almost entirely filled is rejected rather than wasting paper. With no image set, nothing is printed.'}
+          </p>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+            {isLoading ? null : stamp?.url ? (
+              <div style={{ width: 88, height: 88, borderRadius: 10, border: '1px solid #e5e7eb', overflow: 'hidden', background: '#f9f9f9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={stamp.url} alt="stamp" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+              </div>
+            ) : (
+              <div style={{ width: 88, height: 88, borderRadius: 10, border: '2px dashed #e5e7eb', background: '#f9f9f9', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af', fontSize: 30 }}>
+                🏷
+              </div>
+            )}
+
+            <div style={{ flex: 1 }}>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                style={{ display: 'none' }}
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) upload.mutate(f)
+                  e.target.value = ''
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={upload.isPending}
+                  data-testid="btn-upload-platform-stamp"
+                  style={{ height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+                >
+                  {upload.isPending
+                    ? (isNl ? 'Uploaden…' : 'Uploading…')
+                    : stamp?.url ? (isNl ? 'Vervangen' : 'Replace') : (isNl ? 'Afbeelding kiezen' : 'Choose image')}
+                </button>
+                {stamp?.url && (
+                  <button
+                    onClick={() => clear.mutate()}
+                    disabled={clear.isPending}
+                    data-testid="btn-clear-platform-stamp"
+                    style={{ height: 34, padding: '0 14px', borderRadius: 8, border: '1px solid #fecaca', background: '#fef2f2', color: '#dc2626', cursor: 'pointer', fontSize: 12 }}
+                  >
+                    {isNl ? 'Verwijderen' : 'Remove'}
+                  </button>
+                )}
+              </div>
+              {error && (
+                <p style={{ margin: '8px 0 0', fontSize: 12, color: '#dc2626' }}>{error}</p>
+              )}
+              <p style={{ margin: '10px 0 0', fontSize: 11.5, color: '#9ca3af', lineHeight: 1.5 }}>
+                {isNl
+                  ? 'PNG, JPG of WebP, max. 2 MB. Elke wijziging wordt vastgelegd in het auditlogboek.'
+                  : 'PNG, JPG or WebP, max 2 MB. Every change is recorded in the audit log.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Per-role 2FA policy panel (Super Admin only) ─────────────────────────────
 function TwoFactorPolicyPanel({ isNl }: { isNl: boolean }) {
   const qc = useQueryClient()
@@ -994,6 +1113,9 @@ export default function UsersScreen() {
 
       {/* Per-role 2FA policy — Super Admin only */}
       {isSuperAdmin && <TwoFactorPolicyPanel isNl={isNl} />}
+
+      {/* Platform-wide receipt footer stamp — Super Admin only */}
+      {isSuperAdmin && <ReceiptStampPanel isNl={isNl} />}
 
       {/* Stats row */}
       {!isLoading && users && (

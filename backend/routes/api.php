@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\OrganisationController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\SaleController;
+use App\Http\Controllers\Api\PlatformBrandingController;
 use App\Http\Controllers\Api\SecurityPolicyController;
 use App\Http\Controllers\Api\StoreController;
 use App\Http\Controllers\Api\UserController;
@@ -172,6 +173,12 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('two-factor-policy',  [SecurityPolicyController::class, 'show'])->name('2fa-policy.show');
         Route::put('two-factor-policy',  [SecurityPolicyController::class, 'update'])->name('2fa-policy.update');
+
+        // Platform-wide image stamped at the foot of receipts, for every store
+        // that has not uploaded one of its own (Super Admin only).
+        Route::get('receipt-stamp',    [PlatformBrandingController::class, 'show'])->name('receipt-stamp.show');
+        Route::post('receipt-stamp',   [PlatformBrandingController::class, 'update'])->name('receipt-stamp.update');
+        Route::delete('receipt-stamp', [PlatformBrandingController::class, 'destroy'])->name('receipt-stamp.destroy');
     });
 
     // Audit Log (SPOS-310)

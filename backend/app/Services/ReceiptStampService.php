@@ -85,6 +85,20 @@ class ReceiptStampService
             }
         }
 
+        // Platform default set by a Super Admin in the dashboard. Sits above
+        // the file shipped with the backend so the image can be changed
+        // without a redeploy.
+        $platform = \App\Models\AppSetting::get(
+            \App\Http\Controllers\Api\PlatformBrandingController::STAMP_KEY,
+        );
+        if ($platform && $disk->exists($platform)) {
+            return [
+                'path'  => 'public:' . $platform,
+                'mtime' => (int) $disk->lastModified($platform),
+                'bytes' => (string) $disk->get($platform),
+            ];
+        }
+
         $default = config('josbin_pos.receipt_watermark_default');
         if (! $default) {
             return null;

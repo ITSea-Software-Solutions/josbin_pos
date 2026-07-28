@@ -22,3 +22,34 @@ export async function updateTwoFactorPolicy(roles: string[]): Promise<TwoFactorP
   })
   return res.data.data
 }
+
+// ── Platform receipt footer stamp (Super Admin only) ────────────────────────
+//
+// The image stamped at the foot of printed receipts for every store that has
+// not uploaded one of its own. Stored in the audited app_settings table, so it
+// can be changed from the dashboard without a redeploy and every change leaves
+// a row naming who made it.
+
+export interface PlatformReceiptStamp {
+  path: string | null
+  url: string | null
+}
+
+export async function getPlatformReceiptStamp(): Promise<PlatformReceiptStamp> {
+  const res = await apiClient.get<{ data: PlatformReceiptStamp }>('/settings/receipt-stamp')
+  return res.data.data
+}
+
+export async function uploadPlatformReceiptStamp(file: File): Promise<PlatformReceiptStamp> {
+  const fd = new FormData()
+  fd.append('stamp', file)
+  const res = await apiClient.post<{ data: PlatformReceiptStamp }>('/settings/receipt-stamp', fd, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return res.data.data
+}
+
+export async function clearPlatformReceiptStamp(): Promise<PlatformReceiptStamp> {
+  const res = await apiClient.delete<{ data: PlatformReceiptStamp }>('/settings/receipt-stamp')
+  return res.data.data
+}
