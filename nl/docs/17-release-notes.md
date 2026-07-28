@@ -11,7 +11,26 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.0 — 28 juli 2026 *(actueel)*
+## 1.5.1 — 28 juli 2026 *(actueel)*
+
+- **Een geldlade die niet opengaat, vertelt nu waarom.** Hij faalde in
+  stilte: de kassa gooide het antwoord van de lade helemaal weg, waardoor
+  een lade die nooit openging er precies zo uitzag als een die dat wél deed
+  — daarom kostte dit meerdere pogingen. De melding staat nu op het
+  bonscherm, naast het printresultaat.
+- **De lade wacht tot de bon de printer heeft verlaten** voordat hij klopt.
+  Een bon die door Windows is aangenomen is niet hetzelfde als papier dat
+  eruit is, en de puls kwam nog midden in het printen aan.
+- **Het bonscherm heeft nog twee knoppen: Opnieuw printen en Nieuwe
+  verkoop.** PDF, e-mail en WhatsApp gebruikt u later, over een verkoop die
+  al gebeurd is — die verhuizen naar Transacties, waar u eerst de juiste
+  verkoop opzoekt.
+- **Een bewering op het inlogscherm gecorrigeerd.** Er stond "volledig
+  offline", en dat was te veel gezegd. De kassa heeft zijn winkelserver
+  nodig — die staat alleen ín de winkel, dus internet is niet vereist. Dat
+  staat er nu ook zo.
+
+## 1.5.0 — 28 juli 2026
 
 **Nieuwe uitstraling.** De kassa en het dashboard dragen nu de eigen
 kleuren van Josbin, overgenomen van de website in plaats van benaderd: het

@@ -36,6 +36,7 @@ export default function ReceiptModal({
 
   const [printStatus, setPrintStatus]   = useState<'idle' | 'printing' | 'ok' | 'error'>('idle')
   const [printError, setPrintError]     = useState<string | null>(null)
+  const [drawerError, setDrawerError]   = useState<string | null>(null)
 
   // Sale details for building the ESC/POS ticket.
   const { data: sale } = useQuery({
@@ -129,7 +130,21 @@ export default function ReceiptModal({
       const wantsDrawer = sale.payment_method === 'cash' || sale.payment_method === 'mixed'
       if (wantsDrawer && drawerDoneFor.current !== saleId) {
         drawerDoneFor.current = saleId
-        await openCashDrawer(printer).catch(() => {})
+
+        // printEscPos resolving only means the SPOOLER ACCEPTED the receipt,
+        // not that the paper is out. Firing the pulse immediately still lands
+        // it while the receipt is spooling — which is the race we thought was
+        // gone. Give the receipt a moment to clear before knocking.
+        await new Promise((r) => setTimeout(r, 1200))
+
+        const drawer = await openCashDrawer(printer).catch((e) => ({
+          success: false, error: String(e),
+        }))
+        // And SAY SO when it fails. The previous build wrote
+        // `.catch(() => {})` here — three lines below the print error we had
+        // just made visible — so a drawer that never opened looked identical
+        // to one that did. Five attempts at this bug were spent blind.
+        setDrawerError(drawer.success ? null : (drawer.error ?? 'Cash drawer did not respond'))
       }
       return result.success
     } catch (e) {
@@ -281,6 +296,25 @@ export default function ReceiptModal({
           {/* The actual reason, verbatim from Windows / the printer socket.
               "Printer not reachable at 192.168.0.251:9100" tells a shop what
               to do; a red button does not. */}
+          {/* The drawer is a separate device on the end of the printer, so it
+              fails separately — and silently, until now. Shown even when the
+              receipt printed fine, because that is exactly the case we kept
+              being unable to diagnose. */}
+          {drawerError && (
+            <div
+              data-testid="drawer-error-detail"
+              style={{
+                fontSize: 12, lineHeight: 1.45, color: 'var(--color-warning)',
+                background: 'rgba(245,166,35,.08)',
+                border: '1px solid rgba(245,166,35,.28)',
+                borderRadius: 'var(--border-radius)',
+                padding: '8px 10px', wordBreak: 'break-word',
+              }}
+            >
+              💰 {drawerError}
+            </div>
+          )}
+
           {printStatus === 'error' && printError && (
             <div
               data-testid="print-error-detail"

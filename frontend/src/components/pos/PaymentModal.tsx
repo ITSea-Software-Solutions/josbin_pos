@@ -195,9 +195,9 @@ export default function PaymentModal({ isOpen, onClose, storeId, onSuccess }: Pa
 
       // Open the cash drawer on cash or mixed — but ONLY when no receipt is
       // about to print. When auto-print is on, the receipt carries the drawer
-      // pulse in its own byte stream (see EscPosReceiptOptions.openDrawer);
-      // sending a second job here races the receipt and the printer drops one
-      // of them, which left the drawer shut while the paper came out fine.
+      // pulse itself, after the receipt has cleared the spooler; sending a
+      // second job from here at the same instant races it and the printer
+      // drops one, which left the drawer shut while the paper came out fine.
       if ((step === 'cash' || step === 'mixed') && printer.type !== 'none' && !autoPrintReceipt) {
         openCashDrawer(printer).catch(() => {
           // Drawer failure is non-fatal — sale is already recorded

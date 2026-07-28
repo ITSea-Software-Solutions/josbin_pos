@@ -11,7 +11,25 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.0 — 28 July 2026 *(current)*
+## 1.5.1 — 28 July 2026 *(current)*
+
+- **A cash drawer that does not open now says why.** It failed silently:
+  the till discarded the drawer's answer entirely, so a drawer that never
+  opened looked exactly like one that did — which is why this took several
+  attempts to pin down. The message now appears on the receipt screen next
+  to the print result.
+- **The drawer waits for the receipt to clear the printer** before it knocks.
+  A receipt being accepted by Windows is not the same as the paper being
+  out, and the pulse was still arriving mid-print.
+- **The receipt screen is down to two buttons: Reprint and New sale.** PDF,
+  e-mail and WhatsApp were things you reach for later about a sale that
+  already happened — they are moving to Transactions, where you can find the
+  right sale first.
+- **Corrected a claim on the sign-in screen.** It read "fully offline",
+  which overstated it. The till needs its store server — that server just
+  sits in the shop, so no internet is required. It now says so plainly.
+
+## 1.5.0 — 28 July 2026
 
 **New look.** The till and the dashboard now carry Josbin's own colours,
 taken from the company's website rather than approximated: the deep teal
