@@ -15,7 +15,7 @@ import { getSale, sendReceiptEmail, openReceiptPdf } from '@/api/sales'
 import { printEscPos } from '@/lib/hardware'
 import { saleToEscPosBytes, saleToReceiptText } from '@/lib/saleReceipt'
 import { buildWhatsAppLink } from '@/lib/receiptText'
-import { getReceiptStamp } from '@/api/stores'
+import { getReceiptMarks } from '@/api/stores'
 import { useSettingsStore } from '@/store/settingsStore'
 import apiClient from '@/api/client'
 import type { Sale, Store } from '@/types/models'
@@ -72,10 +72,10 @@ export default function ReceiptActionsModal({ isOpen, onClose, sale: row }: Prop
 
   // The store's own stamp image, when one has been uploaded. Long-lived in
   // cache: it changes when a manager replaces the file, not per sale.
-  const { data: stampBits } = useQuery({
-    queryKey: ['receipt-stamp', storeId],
-    queryFn: () => getReceiptStamp(storeId!),
-    enabled: !!storeId && stamp,
+  const { data: marks } = useQuery({
+    queryKey: ['receipt-marks', storeId],
+    queryFn: () => getReceiptMarks(storeId!),
+    enabled: !!storeId,
     staleTime: 60 * 60_000,
   })
 
@@ -94,7 +94,8 @@ export default function ReceiptActionsModal({ isOpen, onClose, sale: row }: Prop
     try {
       const bytes = saleToEscPosBytes({
         sale, store, lang: i18n.language, dateFormat, stamp,
-        stampBits: stampBits ?? undefined,
+        stampBits: stamp ? (marks?.stamp ?? undefined) : undefined,
+        logoBits: marks?.logo ?? undefined,
         paperWidth: printer.paperWidth ?? 80,
       })
       const result = await printEscPos(bytes, printer)
@@ -104,7 +105,7 @@ export default function ReceiptActionsModal({ isOpen, onClose, sale: row }: Prop
       setPrintStatus('error')
       setPrintError(String(e))
     }
-  }, [sale, store, printer, dateFormat, stamp, stampBits, i18n.language])
+  }, [sale, store, printer, dateFormat, stamp, marks, i18n.language])
 
   // ── Browser print fallback (no thermal printer configured) ────────────────
   // HTML in a same-origin iframe, not the PDF blob: Chrome's PDF viewer does

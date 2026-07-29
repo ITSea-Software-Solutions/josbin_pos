@@ -459,6 +459,8 @@ export interface EscPosReceiptOptions {
    * receipt always prints with a mark on it.
    */
   stampBits?: { bits: Uint8Array; width: number; height: number }
+  /** The shop's logo, printed above the store name. */
+  logoBits?: { bits: Uint8Array; width: number; height: number }
 }
 
 const TRANSLATIONS = {
@@ -546,7 +548,7 @@ function fmtRate(rate: string): string {
 
 export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   const t   = TRANSLATIONS[opts.locale]
-  const { sale, store, stamp, stampBits } = opts
+  const { sale, store, stamp, stampBits, logoBits } = opts
   const b   = new EscPosBuilder(CHARS_PER_LINE[opts.paperWidth ?? 80])
 
   b.cmd(CMD.INIT)
@@ -558,6 +560,15 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
   }
 
   // ── Header ─────────────────────────────────────────────────────────────────
+  // The shop's logo, above its name. Same raster path as the footer stamp;
+  // it simply never existed on the thermal receipt before — the logo upload
+  // reached the A4/PDF receipt only, so a shop that set one saw it in the PDF
+  // and never on paper.
+  if (logoBits) {
+    b.raster(logoBits.bits, logoBits.width, logoBits.height)
+    b.emptyLine()
+  }
+
   b.cmd(CMD.ALIGN_CENTER).cmd(CMD.BOLD_ON).cmd(CMD.FONT_LARGE)
   b.line(store.name)
   b.cmd(CMD.FONT_NORMAL).cmd(CMD.BOLD_OFF)

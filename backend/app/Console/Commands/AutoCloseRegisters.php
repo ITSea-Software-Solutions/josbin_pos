@@ -34,8 +34,23 @@ class AutoCloseRegisters extends Command
 
             $time   = $settings['auto_close_time'] ?? '23:59';
             $cutoff = now()->setTimeFromTimeString($time);
+
             if (now()->lt($cutoff)) {
-                return; // this store's cutoff hasn't passed yet today
+                // Tonight's cutoff has not arrived — but anything still open
+                // from a PREVIOUS day is already overdue, so seal that now
+                // rather than waiting for tonight.
+                //
+                // This used to `return` here, and the job could then never
+                // fire at all. It runs every fifteen minutes, on the hour and
+                // at :15/:30/:45; with the default 23:59 cutoff the 23:45 run
+                // is too early, and by the 00:00 run the date has rolled so
+                // `$cutoff` has moved to the NEXT night — early-returning
+                // again. The one-minute window between 23:59 and midnight was
+                // never sampled, so forgotten sessions stayed open forever.
+                // Found because a session left open on the 28th was still
+                // open on the 29th, sending its cashier into morning recovery
+                // on every login.
+                $cutoff = now()->startOfDay();
             }
 
             RegisterSession::where('store_id', $store->id)

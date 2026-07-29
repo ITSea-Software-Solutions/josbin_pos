@@ -47,11 +47,13 @@ interface BuildArgs {
   stamp?: boolean
   /** The store's own stamp image, if one has been uploaded and fetched. */
   stampBits?: { bits: Uint8Array; width: number; height: number }
+  /** The store's header logo, likewise. */
+  logoBits?: { bits: Uint8Array; width: number; height: number }
 }
 
 /** ESC/POS options for the thermal printer. */
 export function saleToEscPosOptions({
-  sale, store, lang, dateFormat, paperWidth, cashTendered, change, openDrawer, stamp, stampBits,
+  sale, store, lang, dateFormat, paperWidth, cashTendered, change, openDrawer, stamp, stampBits, logoBits,
 }: BuildArgs): EscPosReceiptOptions {
   const locale = printLocale(lang)
   return {
@@ -93,6 +95,7 @@ export function saleToEscPosOptions({
     ...(openDrawer ? { openDrawer } : {}),
     ...(stamp === undefined ? {} : { stamp }),
     ...(stampBits ? { stampBits } : {}),
+    ...(logoBits ? { logoBits } : {}),
   }
 }
 

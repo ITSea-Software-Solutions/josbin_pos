@@ -163,4 +163,39 @@ class MorningRecoveryTest extends TestCase
         $this->assertSame('23:45', $s['auto_close_time']);
         $this->assertSame('+597 123456', $s['manager_phone']);
     }
+    /**
+     * The nightly auto-close must seal a session left open on a PREVIOUS day
+     * even when it runs at an ordinary hour.
+     *
+     * It used to return early whenever now() was before tonight's cutoff. The
+     * job runs every fifteen minutes, so with the default 23:59 cutoff the
+     * 23:45 run was too early and the 00:00 run saw a cutoff that had already
+     * rolled to the next night. The one-minute window was never sampled and
+     * forgotten sessions stayed open indefinitely — which is exactly what was
+     * found in the field.
+     */
+    public function test_auto_close_seals_a_previous_day_session_when_run_at_midday(): void
+    {
+        $this->store->update(['settings' => array_merge($this->store->settings ?? [], [
+            'auto_close_enabled' => true,
+            'auto_close_time'    => '23:59',
+        ])]);
+
+        $session = RegisterSession::create([
+            'register_id'    => $this->register->id,
+            'store_id'       => $this->store->id,
+            'cashier_id'     => $this->cashier->id,
+            'opening_float'  => 100,
+            'status'         => 'open',
+            'opened_at'      => now()->subDay()->setTime(11, 24),
+        ]);
+
+        // Midday — nowhere near the 23:59 cutoff.
+        $this->travelTo(now()->setTime(12, 0));
+        $this->artisan('registers:auto-close')->assertSuccessful();
+
+        $this->assertSame('closed', $session->fresh()->status,
+            'a session left open since yesterday was not sealed');
+    }
+
 }

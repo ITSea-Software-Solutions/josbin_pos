@@ -7,7 +7,7 @@ import { getSale } from '@/api/sales'
 import { printEscPos } from '@/lib/hardware'
 import { saleToEscPosBytes, saleToReceiptText } from '@/lib/saleReceipt'
 import { buildWhatsAppLink } from '@/lib/receiptText'
-import { getReceiptStamp } from '@/api/stores'
+import { getReceiptMarks } from '@/api/stores'
 import { useSettingsStore } from '@/store/settingsStore'
 import apiClient from '@/api/client'
 import type { Sale, Store } from '@/types/models'
@@ -73,10 +73,10 @@ export default function ReceiptModal({
 
   // The store's own stamp image, when one has been uploaded. Long-lived in
   // cache: it changes when a manager replaces the file, not per sale.
-  const { data: stampBits } = useQuery({
-    queryKey: ['receipt-stamp', storeId],
-    queryFn: () => getReceiptStamp(storeId!),
-    enabled: !!storeId && stamp,
+  const { data: marks } = useQuery({
+    queryKey: ['receipt-marks', storeId],
+    queryFn: () => getReceiptMarks(storeId!),
+    enabled: !!storeId,
     staleTime: 60 * 60_000,
   })
 
@@ -109,7 +109,8 @@ export default function ReceiptModal({
       // fixed here once and would have been reintroduced by a second copy.
       const bytes = saleToEscPosBytes({
         sale, store, lang: i18n.language, dateFormat, stamp,
-        stampBits: stampBits ?? undefined,
+        stampBits: stamp ? (marks?.stamp ?? undefined) : undefined,
+        logoBits: marks?.logo ?? undefined,
         paperWidth: printer.paperWidth ?? 80,
         cashTendered, change, openDrawer,
       })
@@ -138,7 +139,7 @@ export default function ReceiptModal({
       setPrintError(String(e))
       return false
     }
-  }, [sale, store, printer, dateFormat, stamp, stampBits, cashTendered, change, saleId, i18n.language])
+  }, [sale, store, printer, dateFormat, stamp, marks, cashTendered, change, saleId, i18n.language])
 
   /**
    * Browser-print fallback — no thermal printer configured. Fetches the

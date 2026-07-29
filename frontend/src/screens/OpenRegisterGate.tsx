@@ -90,6 +90,25 @@ export default function OpenRegisterGate() {
       setYStatus(ystat)
       setStoreInfo(store)
 
+      // ALREADY TRADING TODAY → straight back in. This check comes first.
+      //
+      // A cashier who opened their drawer this morning and then reinstalled
+      // the app, logged out, or had the terminal restart must land back in
+      // their own shift — not be asked to pick a register and count a float
+      // they already counted. Their session is open; nothing about it needs
+      // deciding.
+      //
+      // This used to sit BELOW the morning-recovery check, which returns
+      // early. So one forgotten session from a previous day sent a cashier
+      // into the recovery flow on every single login, however healthy today's
+      // session was. Yesterday's tidying is a task for whoever owns it; it is
+      // not a reason to stop someone selling. Leftovers are still surfaced —
+      // just not in front of a cashier who is mid-shift.
+      if (existing) {
+        setSession(existing)
+        return
+      }
+
       // Morning recovery: sessions still open from a PREVIOUS day block the
       // new day — never silently resume one, route into the guided flow.
       // A manager also lands there when a system-closed session still needs
@@ -102,19 +121,15 @@ export default function OpenRegisterGate() {
         return
       }
 
-      if (existing) {
-        // Already have an open session (from today) — resume directly
-        setSession(existing)
-      } else {
-        setRegisters(regs)
-        setStep('pick') // leave the morning-recovery step once it's resolved
-        // Auto-pick only when exactly one register is *openable* — don't
-        // auto-pick a closed-today register, the cashier would be stuck.
-        const openable = regs.filter(r => r.status === 'available')
-        if (openable.length === 1) {
-          setSelected(openable[0])
-          setStep('float')
-        }
+      // No open session: choose a register. (The resume case returned above.)
+      setRegisters(regs)
+      setStep('pick') // leave the morning-recovery step once it's resolved
+      // Auto-pick only when exactly one register is *openable* — don't
+      // auto-pick a closed-today register, the cashier would be stuck.
+      const openable = regs.filter(r => r.status === 'available')
+      if (openable.length === 1) {
+        setSelected(openable[0])
+        setStep('float')
       }
     }).catch((e: unknown) => {
       // 422 from the StoreBelongsToOrg rule means the persisted storeId is

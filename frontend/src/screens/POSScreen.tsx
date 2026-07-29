@@ -74,8 +74,8 @@ export default function POSScreen() {
       staleTime: 10 * 60_000,
     })
     qc.prefetchQuery({
-      queryKey: ['receipt-stamp', storeId],
-      queryFn: () => import('@/api/stores').then((m) => m.getReceiptStamp(storeId)),
+      queryKey: ['receipt-marks', storeId],
+      queryFn: () => import('@/api/stores').then((m) => m.getReceiptMarks(storeId)),
       staleTime: 60 * 60_000,
     })
   }, [storeId, qc])

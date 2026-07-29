@@ -154,11 +154,15 @@ class StoreController extends Controller
     {
         $this->authorize('view', $store);
 
+        // Both marks in ONE response. They are fetched together at POS start
+        // and printed on the same receipt; two endpoints would be two round
+        // trips for one answer.
         $stamp = $stamps->forStore($store);
+        $logo  = $stamps->logoForStore($store);
 
-        return $stamp === null
+        return ($stamp === null && $logo === null)
             ? response()->json(null, 204)
-            : response()->json(['data' => $stamp]);
+            : response()->json(['data' => ['stamp' => $stamp, 'logo' => $logo]]);
     }
 
     /**

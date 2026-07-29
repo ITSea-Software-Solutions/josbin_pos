@@ -50,6 +50,22 @@ class ReceiptStampService
      */
     private const LUMA_CUTOFF = 190;
 
+    /** How much of a rubber stamp's tilt to imitate. Degrees, anticlockwise. */
+    private const STAMP_ROTATE_DEG = 11.0;
+
+    /** Fraction of the stamp's dots actually burned. ~45% reads as a faded
+     *  ink impression and lets the printed text show through it. */
+    private const STAMP_KEEP = 0.45;
+
+    /** Ordered 4x4 dither. Spreading the dropped dots evenly looks like
+     *  lighter ink; dropping them in blocks would look like a printing fault. */
+    private const BAYER = [
+        [0, 8, 2, 10],
+        [12, 4, 14, 6],
+        [3, 11, 1, 9],
+        [15, 7, 13, 5],
+    ];
+
     /**
      * @return array{b64:string,width:int,height:int,coverage:float}|null
      */
@@ -65,7 +81,35 @@ class ReceiptStampService
         $key = 'receipt_stamp:' . md5($source['path'] . '|' . $source['mtime']);
 
         return Cache::remember($key, now()->addDay(), function () use ($source) {
-            return $this->rasterise($source['bytes']);
+            // The footer mark is a STAMP: tilted and faded. The header logo
+            // (logoForStore) stays square and solid — that one is the shop
+            // identifying itself, not an impression pressed onto the paper.
+            return $this->rasterise($source['bytes'], self::STAMP_ROTATE_DEG, self::STAMP_KEEP);
+        });
+    }
+
+    /**
+     * The store's HEADER logo, rasterised for the top of a thermal receipt.
+     *
+     * Same pipeline as the footer stamp — the difference is only which field
+     * it comes from (`receipt_logo_path`, the one the logo upload writes) and
+     * that there is no platform-wide fallback: a header logo identifies the
+     * SHOP, so an empty one prints nothing rather than someone else's mark.
+     *
+     * @return array{b64:string,width:int,height:int,coverage:float}|null
+     */
+    public function logoForStore(Store $store): ?array
+    {
+        $disk = Storage::disk('public');
+        $path = $store->receipt_logo_path;
+        if (! $path || ! $disk->exists($path)) {
+            return null;
+        }
+
+        $key = 'receipt_logo:' . md5($path . '|' . $disk->lastModified($path));
+
+        return Cache::remember($key, now()->addDay(), function () use ($disk, $path) {
+            return $this->rasterise((string) $disk->get($path));
         });
     }
 
@@ -119,7 +163,7 @@ class ReceiptStampService
     /**
      * @return array{b64:string,width:int,height:int,coverage:float}|null
      */
-    private function rasterise(string $bytes): ?array
+    private function rasterise(string $bytes, float $rotateDeg = 0.0, float $keep = 1.0): ?array
     {
         $src = @imagecreatefromstring($bytes);
         if ($src === false) {
@@ -152,6 +196,28 @@ class ReceiptStampService
         imagecopyresampled($dst, $src, 0, 0, 0, 0, $w, $h, $srcW, $srcH);
         imagedestroy($src);
 
+        // Tilt it, the way a hand presses a rubber stamp — never quite square.
+        if (abs($rotateDeg) > 0.01) {
+            $rotated = imagerotate($dst, $rotateDeg, $white);
+            if ($rotated !== false) {
+                imagedestroy($dst);
+                $dst = $rotated;
+                $w = imagesx($dst);
+                $h = imagesy($dst);
+                // Rotation grows the canvas; keep it inside the paper.
+                if ($w > self::WIDTH || $h > self::MAX_HEIGHT) {
+                    $scale = min(self::WIDTH / $w, self::MAX_HEIGHT / $h);
+                    $fw = max(1, (int) floor($w * $scale));
+                    $fh = max(1, (int) floor($h * $scale));
+                    $fit = imagecreatetruecolor($fw, $fh);
+                    imagefilledrectangle($fit, 0, 0, $fw, $fh, imagecolorallocate($fit, 255, 255, 255));
+                    imagecopyresampled($fit, $dst, 0, 0, 0, 0, $fw, $fh, $w, $h);
+                    imagedestroy($dst);
+                    $dst = $fit; $w = $fw; $h = $fh;
+                }
+            }
+        }
+
         $rowBytes = intdiv($w + 7, 8);
         $packed = array_fill(0, $rowBytes * $h, 0);
         $inked = 0;
@@ -167,6 +233,18 @@ class ReceiptStampService
                 if ($luma >= self::LUMA_CUTOFF) {
                     continue;
                 }
+                // Fade, by printing only some of the dots.
+                //
+                // Thermal paper has no grey — a dot is burned or it is not —
+                // so "lighter" means "fewer dots". An ordered (Bayer) pattern
+                // drops them evenly, which the eye reads as a lighter ink
+                // rather than as gaps. A rubber stamp is never solid black
+                // either, so this is closer to the real thing AND it burns
+                // fewer dots, which is faster to print and kinder to the head.
+                if ($keep < 1.0 && self::BAYER[$y & 3][$x & 3] >= $keep * 16) {
+                    continue;
+                }
+
                 // MSB first within each byte — the order ESC/POS GS v 0 reads.
                 $packed[$y * $rowBytes + ($x >> 3)] |= 0x80 >> ($x & 7);
                 $inked++;
@@ -187,7 +265,9 @@ class ReceiptStampService
         // Coverage travels back with the bitmap so the upload screen can warn
         // that a dark image will come out heavy on thermal paper — a warning
         // the shop can act on beats a refusal it never sees.
-        $coverage = $inked / ($w * $h);
+        // Judge density BEFORE the fade — otherwise dithering would drag a
+        // solid black slab under the ceiling and let it through.
+        $coverage = $keep > 0 ? ($inked / ($w * $h)) / $keep : 0.0;
         if ($coverage < 0.01 || $coverage > 0.85) {
             return null;
         }
