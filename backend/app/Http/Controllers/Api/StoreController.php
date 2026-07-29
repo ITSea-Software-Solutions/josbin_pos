@@ -217,6 +217,19 @@ class StoreController extends Controller
             'receipt_stamp_path' => $path,
         ])]);
 
+        // Render the printable version NOW, while a manager is sitting at the
+        // screen expecting an upload to take a moment — not on the first sale
+        // of the day, where the same work lands between the customer paying
+        // and the paper moving. forStore() rasterises and caches; calling it
+        // here means every till's first print finds it already done.
+        try {
+            app(ReceiptStampService::class)->forStore($store->fresh());
+        } catch (\Throwable $e) {
+            // A failure here costs nothing — the next print falls back to
+            // rendering on demand, exactly as before.
+            report($e);
+        }
+
         return response()->json(['data' => ['receipt_stamp_path' => $path]]);
     }
 

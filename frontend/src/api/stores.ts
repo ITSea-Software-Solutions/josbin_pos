@@ -31,11 +31,48 @@ function unpack(d: { b64?: string; width: number; height: number } | null | unde
  * cannot reach its server must still print, just without the artwork.
  */
 export async function getReceiptMarks(storeId: string): Promise<ReceiptMarks> {
+  // Serve from the till's own disk FIRST, then refresh behind the sale.
+  //
+  // These images change when a manager uploads a new one — a few times a year
+  // — but they were fetched across the internet before the paper could move.
+  // On a cold start that put a round trip to Suriname, plus the server's first
+  // rasterisation of the day, between "sale complete" and the receipt coming
+  // out. A shop should never wait on a network for artwork it already has, and
+  // a shop with no internet must still print its own logo.
+  const cached = readCachedMarks(storeId)
+  if (cached) {
+    void refreshMarks(storeId)   // fire and forget; next print gets any change
+    return cached
+  }
+  return (await refreshMarks(storeId)) ?? { stamp: null, logo: null }
+}
+
+const MARKS_KEY = (storeId: string) => `josbin_pos_receipt_marks:${storeId}`
+
+/** Fetch, cache to disk, return. Null on any failure — a till that cannot
+ *  reach its server still prints, just without the artwork. */
+async function refreshMarks(storeId: string): Promise<ReceiptMarks | null> {
   try {
     const res = await apiClient.get(`/stores/${storeId}/receipt-stamp`)
     const d = res.data?.data
+    try {
+      localStorage.setItem(MARKS_KEY(storeId), JSON.stringify({
+        stamp: d?.stamp ?? null, logo: d?.logo ?? null,
+      }))
+    } catch { /* quota or private mode — the fetch still succeeded */ }
     return { stamp: unpack(d?.stamp), logo: unpack(d?.logo) }
   } catch {
-    return { stamp: null, logo: null }
+    return null
+  }
+}
+
+function readCachedMarks(storeId: string): ReceiptMarks | null {
+  try {
+    const raw = localStorage.getItem(MARKS_KEY(storeId))
+    if (!raw) return null
+    const d = JSON.parse(raw)
+    return { stamp: unpack(d?.stamp), logo: unpack(d?.logo) }
+  } catch {
+    return null
   }
 }
