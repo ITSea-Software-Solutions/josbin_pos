@@ -93,6 +93,21 @@ class StoreController extends Controller
             unset($data['default_btw_rate'], $data['is_active'], $data['pos_type']);
         }
 
+        // MERGE settings — never replace the column.
+        //
+        // `settings` is one JSON blob shared by several features that write to
+        // it through their OWN endpoints: wallet QR uploads, the receipt
+        // footer stamp, the per-store BTW number, closing times. A form that
+        // owns four of those keys was sending the whole object back, so
+        // anything written since that screen loaded was erased on save — a
+        // wallet QR uploaded a minute earlier vanished when the header text
+        // was changed. The client cannot be relied on to send a complete
+        // object, and it should not have to: an update sends what it changed,
+        // and keys it never mentioned survive untouched.
+        if (array_key_exists('settings', $data)) {
+            $data['settings'] = array_merge($store->settings ?? [], $data['settings']);
+        }
+
         $store->update($data);
 
         return response()->json(['data' => $store->fresh()]);

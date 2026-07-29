@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -17,7 +18,11 @@ class SessionTimeout
     {
         $token = $request->user()?->currentAccessToken();
 
-        if ($token && $token->expires_at && $token->expires_at->isPast()) {
+        // TransientToken (what actingAs() supplies, and what a session-guard
+        // request carries) has no expires_at at all — reading it raised an
+        // undefined-property error and turned a healthy request into a 500.
+        // Only a real issued token can expire.
+        if ($token instanceof PersonalAccessToken && $token->expires_at && $token->expires_at->isPast()) {
             $token->delete();
 
             return response()->json([

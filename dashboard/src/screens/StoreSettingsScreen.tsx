@@ -73,12 +73,12 @@ function WalletQrCard({ store, provider, isNl }: { store: Store; provider: Walle
 
   const upload = useMutation({
     mutationFn: (file: File) => uploadWalletQr(store.id, provider, file),
-    onSuccess: (d) => { setPreview(d.wallet_qr_url); setStatus('ok'); qc.invalidateQueries({ queryKey: ['store', store.id] }) },
+    onSuccess: (d) => { setPreview(d.wallet_qr_url); setStatus('ok'); qc.invalidateQueries({ queryKey: ['store', store.id] }); qc.invalidateQueries({ queryKey: ['store-settings', store.id] }) },
     onError: () => setStatus('error'),
   })
   const remove = useMutation({
     mutationFn: () => deleteWalletQr(store.id, provider),
-    onSuccess: () => { setPreview(null); setStatus('idle'); qc.invalidateQueries({ queryKey: ['store', store.id] }) },
+    onSuccess: () => { setPreview(null); setStatus('idle'); qc.invalidateQueries({ queryKey: ['store', store.id] }); qc.invalidateQueries({ queryKey: ['store-settings', store.id] }) },
     onError: () => setStatus('error'),
   })
 
@@ -180,8 +180,12 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
         default_btw_rate: form.default_btw_rate,
         receipt_header:   form.receipt_header,
         receipt_footer:   form.receipt_footer,
+        // Send ONLY the keys this form owns. Spreading the whole settings
+        // object meant shipping back a copy captured when the screen loaded —
+        // stale the moment any other panel (wallet QR, footer stamp) wrote to
+        // it — and that stale copy then overwrote the newer values. The server
+        // merges, so absent keys are preserved.
         settings:         {
-          ...store.settings,
           receipt_btw_number: form.receipt_btw_number,
           closing_time:       form.closing_time || null,
           auto_close_enabled: form.auto_close_enabled,
