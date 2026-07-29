@@ -700,6 +700,41 @@ Two more from the same fix, both worth their own rule:
 
 **G-041:** authenticated large-file downloads can't be a plain `<a href>` (the Bearer token lives in a header) — fetch as a blob via the axios client with `timeout: 0` + `onDownloadProgress`, then object-URL it; the file passes through memory once, acceptable for a once-per-till action.
 
+- **2026-07-29 (1.7.0 — day theme, product glyphs, user menu)** — Three
+  look-at-it changes plus two traps worth keeping.
+
+  **G-052 (the control was there, just off-screen).** The POS top bar had
+  carried the user's name, switch-store and log out for months; on a 1024- or
+  1280-wide till they sat past the right edge, clipped by the bar's own
+  `overflow: hidden`. Two compounding causes: (a) a flex item defaults to
+  `min-width: auto`, so `flex: 1` on the nav let it *grow* but never *shrink* —
+  it held its seven buttons at intrinsic width and pushed the right-hand group
+  out of the viewport; (b) `overflow: hidden` on the bar then hid the evidence,
+  and later swallowed the dropdown that replaced it. Fixes: `minWidth: 0` +
+  `overflowX: auto` on the nav so it yields and clips *itself*, and drop the
+  clip from the bar. **Class of bug: "feature exists but cannot be reached."**
+  It reads as a missing feature in a bug report and as done in the code, and
+  neither a unit test nor a code read can see it. Only laying eyes on the real
+  screen at the real width finds it — which is why §2 says walk the UI.
+
+  **G-053 (a version that only one artifact knows about).** `android/app/
+  build.gradle` held `versionCode`/`versionName` as literals kept in step by
+  hand, and `npx cap sync` does not touch them — so 1.7.0's first APK built
+  and signed happily while still stamped 1.6.1, and Android would have refused
+  it as a duplicate of the installed build. Now parsed out of
+  `frontend/package.json` at configure time, so the two artifacts cannot
+  disagree. Generalises G-041: *any* platform-owned version field must be
+  derived from the single source, never mirrored — a mirror is a thing that
+  drifts silently, and the drift only shows up on the device.
+
+  Also worth recording: the release APKs are signed with the **Android debug
+  keystore** (`~/.android/debug.keystore`, alias `androiddebugkey`), the same
+  key since 1.0.0. That is deliberate for sideloaded terminal installs — the
+  key must stay the same or Android refuses the upgrade — but it is not a
+  release key, and a Play Store listing would need a real one generated and
+  escrowed. Do not "fix" this by generating a new keystore: it would break the
+  upgrade path on every terminal in the field.
+
 - **2026-07-25 (labels on Android + Settings hardware tests)** — Field test: the Labels print button did nothing on the Posiflex Android build. **G-045 (4th packaged-context bug — the class from G-042/043/044 continues):** `window.print()` is a **silent no-op inside the Android Capacitor WebView** — Android's WebView never implemented it (Chrome-the-browser has it; the embedded WebView doesn't). Dev (vite in a real browser), the exe and the POS web build all print fine, so nothing surfaced until the APK ran on real hardware — no error, no dialog, nothing. Fix: HTML printing routes through `hardware.ts::printHtmlSheet` — Android → `CapacitorPrinter.printHtml` (`@capgo/capacitor-printer` → PrintManager), Electron/web → hidden-iframe `window.print()`; sheet generation shared in `lib/labelSheet.ts`; failures surface in the UI instead of vanishing. Alongside (user request): Settings → Printer & Cash Drawer gained three test buttons — receipt (real `buildReceiptBytes`→`printEscPos` sale path — a green test means sales print), drawer, label (works with type **None**; exercises the printHtmlSheet path) — so any till, Windows or Android, proves its printing without ringing a sale. Also killed the stale `helpAndroid` i18n (referenced the G-043 phantom-plugin era `@anuradev` package and "see README" — dev-speak in client copy, G-014's rule). i18n `pos.labels.*` + `settings.printer.*` in en/nl/srn; 109 vitest (+10), tsc clean; live-walked web on the demo stack; APK rebuilt, sha256-verified onto the droplet, installer API confirmed serving it. **Lesson:** extend the packaged-context checklist (CSP G-042, phantom plugins G-043, CORS G-044) with **"BOM APIs that delegate to the embedder"** — `window.print`, notifications, file pickers: if the embedder (WebView) chose not to implement it, the call silently no-ops. Route such features through an explicit platform bridge and return a result the UI can show, never fire-and-forget.
 
 ---

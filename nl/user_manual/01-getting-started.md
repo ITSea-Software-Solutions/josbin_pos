@@ -75,12 +75,12 @@ Het hoofdscherm is verdeeld in drie gebieden:
 ```
 
 **Bovenbalk** — bevat:
-- Naam vestiging en uw naam (linksboven)
 - Dagtotaal verkopen en aantal transacties
 - **Online/Offline-indicator** — een klein label met een groene of rode stip (hieronder uitgelegd)
-- Navigatieknoppen: POS, Rapporten, Wisselkoers, Einde dag, Instellingen, Labels
-- Knop voor schermtoetsenbord (toetsenbordpictogram)
-- Taalkeuze (NL / EN)
+- Navigatieknoppen: POS, Transacties, Rapporten, Instellingen — plus Labels, Wisselkoers en Einde dag voor managers. Op een smalle kassa schuift de rij zijwaarts; veeg of sleep om de rest te bereiken.
+- Knoppen voor Klant, Openstaande bonnen en Kas in / uit
+- Een groen label met de kassa waarop u werkt
+- **Uw naam, uiterst rechts** — tik erop voor het menu dat hieronder wordt beschreven
 
 **Productraster** — de hoofd-verkoopzone:
 - Typ in de zoekbalk om elk product op naam of barcode te vinden
@@ -110,15 +110,24 @@ Offline gaan is geen noodgeval. Josbin POS is gebouwd voor de wisselvallige verb
 
 ---
 
-## 1.5 Taal wisselen
+## 1.5 Het menu onder uw naam (rechtsboven)
 
-Josbin POS is volledig tweetalig — Nederlands en Engels.
+Tik op uw naam in de rechterbovenhoek. Er opent een klein paneel met:
 
-1. Zoek de **NL / EN**-knop in de bovenbalk.
-2. Klik erop om de gehele interface direct te wisselen.
-3. De taalvoorkeur wordt per gebruiker opgeslagen. De volgende keer dat u inlogt, onthoudt het systeem uw keuze.
+| Onderdeel | Wat het doet |
+|---|---|
+| Uw naam, rol en vestiging | Bevestigt wie er is ingelogd — handig op een gedeelde kassa |
+| **NL / EN / SRN** | Wisselt de gehele interface direct. Wordt per gebruiker opgeslagen, dus de volgende keer is het weer uw taal. |
+| **Schermtoetsenbord** | Alleen Windows-kassa's — toont of verbergt het typetoetsenbord (zie [hoofdstuk 13](13-settings.md), paragraaf 13.4) |
+| **Vestiging wisselen** | Voor medewerkers die aan meer dan één locatie zijn toegewezen |
+| **Kassa sluiten** | Beëindigt uw dienst en telt de lade (zie [hoofdstuk 3](03-register.md)) |
+| **Uitloggen** | Meldt u af |
 
 Bonnen worden afgedrukt in de taal die actief is op het moment van de verkoop.
+
+> Staan er nog artikelen in het mandje, of is uw kassa nog open, dan vraagt de
+> app om bevestiging voordat u kunt uitloggen of van vestiging wisselen. Dat is
+> met opzet — zo blijft er 's nachts geen lade openstaan.
 
 ---
 

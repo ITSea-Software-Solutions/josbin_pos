@@ -116,6 +116,26 @@ Selecteer de notatie die overeenkomt met uw voorkeur of lokale conventie.
 
 ---
 
+## 13.3a Weergave — Nacht of Dag
+
+Het kassascherm staat standaard op **Nacht**: een donker scherm, prettiger voor
+de ogen in een winkel die vóór zonsopgang opengaat en zonder terugkaatsing in
+een schemerig gangpad.
+
+**Dag** is de lichte versie. Gebruik die waar de kassa in echt daglicht staat —
+bij een raam, onder een lichtkoepel of op een buitentoonbank — want een donker
+scherm in fel licht wordt een spiegel.
+
+1. Open **Instellingen**.
+2. Zoek het onderdeel **Weergave**.
+3. Tik op **🌙 Nacht** of **☀ Dag**. Het hele scherm verandert in één keer.
+
+De keuze hoort bij de kassa, niet bij de persoon: het gaat om waar die kassa
+staat en welk licht erop valt, dus de instelling blijft staan als de volgende
+kassière inlogt.
+
+---
+
 ## 13.4 Schermtoetsenbord
 
 Het schermtoetsenbord is een volledig toetsenbord dat onderaan het POS-scherm wordt weergegeven — handig voor terminals met alleen touchscreen zonder fysiek toetsenbord.

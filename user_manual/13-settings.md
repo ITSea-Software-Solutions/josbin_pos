@@ -119,6 +119,26 @@ Select the format that matches your preference or local convention.
 
 ---
 
+## 13.3a Appearance — Night or Day
+
+The till screen comes set to **Night**: a dark screen, which is easier on the
+eyes in a shop that opens before sunrise and does not glare back at you in a
+dim aisle.
+
+**Day** is the light version. Use it where the terminal sits in real daylight
+— by a window, under a skylight, or on an outdoor counter — because a dark
+screen in bright light turns into a mirror.
+
+1. Open **Settings**.
+2. Find the **Appearance** section.
+3. Tap **🌙 Night** or **☀ Day**. The whole screen changes at once.
+
+The choice belongs to the terminal, not to the person: it is a property of
+where that till stands and what light falls on it, so it stays put when the
+next cashier signs in.
+
+---
+
 ## 13.4 On-screen keyboard
 
 The on-screen keyboard is a full keyboard displayed at the bottom of the POS screen — useful for touchscreen-only terminals without a physical keyboard.

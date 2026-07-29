@@ -75,12 +75,12 @@ The main screen is divided into three areas:
 ```
 
 **Top Bar** — contains:
-- Store name and your name (top left)
 - Today's total sales and transaction count
 - **Online / Offline indicator** — a small pill with a green or red dot (explained below)
-- Navigation buttons: POS, Reports, Exchange Rate, End of Day, Settings, Labels
-- On-screen keyboard toggle button (keyboard icon)
-- Language toggle (NL / EN)
+- Navigation buttons: POS, Transactions, Reports, Settings — plus Labels, Exchange Rate and End of Day for managers. On a narrow till the row scrolls sideways; swipe or drag it to reach the rest.
+- Customer, Open Bills and Cash in / out buttons
+- A green pill showing which register you are on
+- **Your name, far right** — tap it for the menu described below
 
 **Product Grid** — the main selling area:
 - Type in the search bar to find any product by name or barcode
@@ -110,15 +110,24 @@ Going offline is not an emergency. Josbin POS is built for Suriname's patchy con
 
 ---
 
-## 1.5 Switching language
+## 1.5 Your name menu (top right)
 
-Josbin POS is fully bilingual — Dutch and English.
+Tap your name in the top right corner. A small panel opens showing:
 
-1. Look for the **NL / EN** toggle in the top bar.
-2. Click it to switch the entire interface instantly.
-3. The language preference is saved per user. The next time you log in, it will remember your choice.
+| Item | What it does |
+|---|---|
+| Your name, role and store | Confirms who is signed in — useful on a terminal several people share |
+| **NL / EN / SRN** | Switches the whole interface instantly. Saved per user, so it is still your language next time you log in. |
+| **On-screen keyboard** | Windows tills only — shows or hides the typing keyboard (see [Chapter 13](13-settings.md), section 13.4) |
+| **Switch store** | For staff assigned to more than one location |
+| **Close register** | Ends your shift and counts the drawer (see [Chapter 3](03-register.md)) |
+| **Log out** | Signs you out |
 
 Receipts are printed in whichever language is active at the time of the sale.
+
+> If the cart still has items, or your register is still open, the app asks you
+> to confirm before it lets you log out or switch store. That is deliberate —
+> it is how a drawer gets left open overnight.
 
 ---
 

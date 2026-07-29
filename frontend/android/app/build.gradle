@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Single version source: frontend/package.json. See defaultConfig below.
+import groovy.json.JsonSlurper
+def josbinPkg = new JsonSlurper().parse(file("$rootDir/../package.json"))
+def (jbMajor, jbMinor, jbPatch) = josbinPkg.version.tokenize('.').collect { it.toInteger() }
+ext.josbinVersionName = josbinPkg.version
+ext.josbinVersionCode = jbMajor * 10000 + jbMinor * 100 + jbPatch
+
 android {
     namespace = "sr.josbin_pos.pos"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -7,11 +14,17 @@ android {
         applicationId "sr.josbin_pos.pos"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // Derived from versionName as MAJOR*10000 + MINOR*100 + PATCH. Android
-        // refuses to install a build whose versionCode is not higher than the
-        // installed one, so this must never be hand-set to a constant.
-        versionCode 10601
-        versionName "1.6.1"
+        // Read straight out of ../../package.json — the single version source
+        // for both artifacts. It used to be two literals kept in step by hand,
+        // and `npx cap sync` does not touch them, so a release could (and once
+        // did) ship an APK still stamped with the previous version while the
+        // .exe beside it was correct.
+        //
+        // versionCode is MAJOR*10000 + MINOR*100 + PATCH. Android refuses to
+        // install a build whose versionCode is not higher than the installed
+        // one, so it has to move on every release, not just versionName.
+        versionCode project.josbinVersionCode
+        versionName project.josbinVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
