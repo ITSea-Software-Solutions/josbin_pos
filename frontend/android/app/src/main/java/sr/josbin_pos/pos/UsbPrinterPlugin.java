@@ -39,8 +39,28 @@ import java.util.HashMap;
 public class UsbPrinterPlugin extends Plugin {
 
     private static final String ACTION_USB_PERMISSION = "sr.josbin_pos.pos.USB_PERMISSION";
-    private static final int WRITE_TIMEOUT_MS = 5000;
-    private static final int CHUNK = 4096;
+    /**
+     * Per-attempt bulk timeout. This was 5000 ms, which conflated two very
+     * different things: a printer whose input buffer is momentarily full, and
+     * a printer whose endpoint is wedged. The first clears in tens of
+     * milliseconds; the second never clears by waiting. Waiting five seconds
+     * to find that out — twice, because the recovery path then tried again —
+     * is where "the receipt takes ten seconds" came from once receipts started
+     * carrying images and could actually fill a buffer.
+     */
+    private static final int WRITE_TIMEOUT_MS = 400;
+
+    /** How many times a busy printer may say "not yet" before we treat it as
+     *  wedged. 25 x 400 ms = 10 s of genuine patience, but a printer that is
+     *  merely draining its buffer gets through on the first or second go. */
+    private static final int BUSY_RETRIES = 25;
+    /**
+     * Thermal printers commonly hold 4 KB or less of input. Handing them 4096
+     * bytes in one transfer means the tail of every chunk lands in a full
+     * buffer and blocks. Smaller writes drain as they go, which is both
+     * faster overall and far less likely to look like a fault.
+     */
+    private static final int CHUNK = 1024;
 
     private UsbManager usbManager() {
         return (UsbManager) getContext().getSystemService(Context.USB_SERVICE);
@@ -307,6 +327,18 @@ public class UsbPrinterPlugin extends Plugin {
                 System.arraycopy(bytes, offset, chunk, 0, len);
                 int sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
 
+                // BACK-PRESSURE, not failure. bulkTransfer returns -1 for a
+                // timeout, and a timeout on a printer that is physically
+                // printing simply means "my buffer is full, come back". The
+                // old code sent that straight into stall recovery — tearing
+                // down and re-claiming the interface on a printer that was
+                // working perfectly, and costing five seconds to do it.
+                // Retry the same chunk briefly first; only a printer that
+                // refuses for the whole patience window is actually stuck.
+                for (int tries = 0; sent < 0 && tries < BUSY_RETRIES; tries++) {
+                    sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);
+                }
+
                 // A transfer that returns -1 having moved ZERO bytes is not a
                 // busy printer — it is a HALTED endpoint, and no amount of
                 // waiting clears one.
@@ -325,7 +357,10 @@ public class UsbPrinterPlugin extends Plugin {
                 //
                 // USB's own remedy is CLEAR_FEATURE(ENDPOINT_HALT), so send
                 // that and retry rather than sleeping and hoping.
-                if (sent == 0 || sent < 0) {
+                // Zero bytes moved is the halted endpoint this recovery was
+                // written for — see the note above. A negative return that
+                // survived the retry loop above has also earned it.
+                if (sent <= 0) {
                     boolean cleared = clearHalt(conn, ep);
                     try { Thread.sleep(120); } catch (InterruptedException ignored) {}
                     sent = conn.bulkTransfer(ep, chunk, len, WRITE_TIMEOUT_MS);

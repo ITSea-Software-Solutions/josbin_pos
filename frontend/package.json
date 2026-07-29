@@ -1,6 +1,6 @@
 {
   "name": "josbin_pos-frontend",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "Josbin POS — Electron POS & Admin Dashboard",
   "main": "dist-electron/main.js",
   "author": "Josbin POS Development Team",
