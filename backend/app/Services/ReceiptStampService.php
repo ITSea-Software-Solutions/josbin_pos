@@ -66,6 +66,16 @@ class ReceiptStampService
      *  printing one on real hardware. */
     private const STAMP_KEEP = 0.70;
 
+    /**
+     * Bumped whenever the rasterisation itself changes — fade, tilt, cutoff,
+     * dither. The cache key is built from the FILE (path + mtime), so tuning
+     * a constant left every store serving the artwork rendered under the old
+     * settings until someone ran cache:clear by hand. That is exactly how the
+     * 0.45 to 0.70 ink fix looked like it had not shipped: correct code
+     * deployed, stale bitmap served.
+     */
+    private const RASTER_REVISION = 2;
+
     /** Ordered 4x4 dither. Spreading the dropped dots evenly looks like
      *  lighter ink; dropping them in blocks would look like a printing fault. */
     private const BAYER = [
@@ -87,7 +97,8 @@ class ReceiptStampService
 
         // Keyed by the resolved path AND its mtime, so replacing the file
         // takes effect without anyone remembering to flush a cache.
-        $key = 'receipt_stamp:' . md5($source['path'] . '|' . $source['mtime']);
+        $key = 'receipt_stamp:' . md5($source['path'] . '|' . $source['mtime']
+            . '|r' . self::RASTER_REVISION . '|k' . self::STAMP_KEEP . '|d' . self::STAMP_ROTATE_DEG);
 
         return Cache::remember($key, now()->addDay(), function () use ($source) {
             // The footer mark is a STAMP: tilted and faded. The header logo
@@ -115,7 +126,8 @@ class ReceiptStampService
             return null;
         }
 
-        $key = 'receipt_logo:' . md5($path . '|' . $disk->lastModified($path));
+        $key = 'receipt_logo:' . md5($path . '|' . $disk->lastModified($path)
+            . '|r' . self::RASTER_REVISION);
 
         return Cache::remember($key, now()->addDay(), function () use ($disk, $path) {
             return $this->rasterise((string) $disk->get($path));
