@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
             SuperAdminSeeder::class,
             DevelopmentDataSeeder::class,
             CategoriesSeeder::class,
+            // After CategoriesSeeder — it resolves each line to a real
+            // category and throws rather than leaving products uncategorised.
+            SurinameCatalogueSeeder::class,
         ]);
     }
 }
