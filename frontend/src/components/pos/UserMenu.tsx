@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { detectPlatform } from '@/lib/hardware'
 
 /**
  * The cashier's own corner of the top bar.
@@ -189,6 +190,19 @@ export default function UserMenu({
             <span style={{ width: 18, textAlign: 'center' }}>⎋</span>
             {t('auth.logout')}
           </button>
+
+          {/* Which build this terminal is actually on. Until 1.7.1 the login
+              screen printed a hardcoded "v1.0", so a shop could not tell an
+              updated till from a stale one — and neither could we, over the
+              phone, which is where it matters. */}
+          <div style={{
+            padding: '8px 14px', borderTop: '1px solid var(--border-color)',
+            fontSize: 10.5, color: 'var(--text-muted)',
+            display: 'flex', justifyContent: 'space-between', gap: 8,
+          }}>
+            <span>Josbin POS v{__APP_VERSION__}</span>
+            <span style={{ textTransform: 'capitalize' }}>{detectPlatform()}</span>
+          </div>
         </div>
       )}
     </div>
