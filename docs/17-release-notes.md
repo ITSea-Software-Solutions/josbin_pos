@@ -11,7 +11,24 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.7.1 — 29 July 2026 *(current)*
+## 1.7.2 — 29 July 2026 *(current)*
+
+- **Receipts print without waiting on the internet.** The till was fetching
+  your logo and stamp from the server before the paper could move — a round
+  trip on the first print after every start-up. It now keeps its own copy and
+  refreshes quietly in the background, so a shop that is offline still prints
+  its own logo.
+- **Your shop's logo is larger and the tax-office stamp is smaller**, which is
+  how the two should sit: your mark at the head of the ticket, the countersign
+  small at the foot.
+- **Images print faster.** Every row of an image was padded out to the full
+  width of the print head, so a receipt carried nearly three times the data it
+  needed. Same picture, 60% fewer bytes.
+- **Uploading artwork prepares it straight away** rather than on the first sale
+  of the day. The wait moves to where someone is already watching a progress
+  bar.
+
+## 1.7.1 — 29 July 2026
 
 - **The app now tells you which version it is.** The sign-in screen and the
   menu under your name both show it. Until now the sign-in screen always read

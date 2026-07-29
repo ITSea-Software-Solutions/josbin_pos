@@ -11,7 +11,24 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.7.1 — 29 juli 2026 *(actueel)*
+## 1.7.2 — 29 juli 2026 *(actueel)*
+
+- **Bonnen worden afgedrukt zonder op internet te wachten.** De kassa haalde uw
+  logo en stempel bij de server op voordat het papier kon bewegen — een
+  netwerkronde bij de eerste afdruk na elke start. De kassa bewaart nu een eigen
+  kopie en ververst die stilletjes op de achtergrond, zodat een winkel zonder
+  internet nog steeds zijn eigen logo afdrukt.
+- **Het logo van uw winkel is groter en de stempel van de belastingdienst
+  kleiner**, zoals de twee horen te staan: uw merk bovenaan de bon, de
+  medeondertekening klein onderaan.
+- **Afbeeldingen drukken sneller af.** Elke beeldregel werd opgevuld tot de
+  volledige breedte van de printkop, waardoor een bon bijna drie keer zoveel
+  gegevens meedroeg als nodig. Zelfde afbeelding, 60% minder bytes.
+- **Geüploade afbeeldingen worden meteen voorbereid** in plaats van bij de
+  eerste verkoop van de dag. Het wachten verschuift naar het moment waarop
+  iemand toch al naar een voortgangsbalk kijkt.
+
+## 1.7.1 — 29 juli 2026
 
 - **De app laat nu zien welke versie er draait.** Zowel het inlogscherm als het
   menu onder uw naam tonen het. Tot nu toe stond er altijd "v1.0" op het
