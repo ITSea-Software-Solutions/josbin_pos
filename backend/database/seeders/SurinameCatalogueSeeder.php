@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Organisation;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * The catalogue a Surinamese shop actually sells.
@@ -21,30 +22,72 @@ use Illuminate\Database\Seeder;
  * They are demo figures, not a price list — a real store imports its own.
  *
  * ── On images ────────────────────────────────────────────────────────────
- * `image_url` is left null here on purpose, and the till falls back to the
- * drawn category glyph.
+ * 19 of these lines carry a real photograph, shipped in
+ * database/seeders/images/suriname/ and copied to the public disk on seed. All
+ * are Wikimedia Commons, all CC-BY / CC-BY-SA / public domain, each credited in
+ * CREDITS.md beside them. They work offline because they are files on the
+ * server, not hotlinks.
  *
- * Photographs of branded Surinamese goods — Parbo, Fernandes, Djogo — are not
- * available under any licence we can pass on to a client. Wikimedia Commons
- * has a Parbo Bier category, but it holds historical brewery interiors, not
- * product shots. Taking them from the brands' own sites would put trademarked
- * packaging into a demo that travels to supermarkets and ministries, and the
- * exposure would land on the client, not on us.
+ * Two deliberate gaps:
  *
- * Two routes that DO work, both already supported:
- *   1. The shop photographs its own shelf. Product form → image upload, or
- *      the bulk CSV/XLSX import with an image column. Genuinely theirs.
- *   2. Ask the distributor. Suriname importers hand out official product
- *      renders for exactly this purpose, and that comes with permission.
+ * BRANDED GOODS have no photo. Parbo, Fernandes, Borgoe, Sisi — there is no
+ * freely-licensed product shot of any of them. Commons' Parbo Bier category
+ * holds historical brewery interiors. Taking them from the brands' own sites
+ * would put trademarked packaging into a demo that travels to supermarkets and
+ * ministries, and the exposure lands on the client.
  *
- * Until one of those happens, the glyphs read correctly — the categories below
- * are named so that ProductGlyph's matcher resolves each line to the right
- * drawing (bier→beer mug, vis→fish, groente→produce, rijst→grain sack).
+ * SIX GENERIC LINES also have none — dry beans, charcoal, taro leaf, flour,
+ * cooking oil, kwikwi. Commons keyword search offered a 1943 gardening poster,
+ * an 1888 lumber-trade magazine cover and a plate of sticky-rice parcels. A
+ * drawing that is honestly a drawing beats a photograph of the wrong thing.
+ *
+ * Both fall back to the drawn category glyph, and the categories are named so
+ * ProductGlyph's matcher resolves each to the right drawing (bier→beer mug,
+ * vis→fish, groenten→produce, rijst→grain sack).
+ *
+ * A real store replaces all of it: product form → image upload, or the bulk
+ * CSV/XLSX import. Distributors also hand out official renders on request,
+ * which comes with permission attached.
  */
 class SurinameCatalogueSeeder extends Seeder
 {
+    /** Barcode → photo file in images/suriname/. Absent = drawn glyph. */
+    private const PHOTOS = [
+        '8712000000210' => 'rijst.jpg',            // A1 rijst
+        '8712000000227' => 'rijst.jpg',            // losse rijst
+        '8712000000272' => 'kokosmelk.jpg',
+        '8712000000310' => 'kipfilet.jpg',
+        '8712000000334' => 'varkensribben.jpg',
+        '8712000000341' => 'gehakt.jpg',
+        '8712000000358' => 'bakkeljauw.jpg',
+        '8712000000434' => 'rode-snapper.jpg',
+        '8712000000441' => 'garnalen.jpg',
+        '8712000000510' => 'madame-jeanette.jpg',
+        '8712000000527' => 'cassave.jpg',
+        '8712000000541' => 'antroewa.jpg',
+        '8712000000558' => 'sopropo.jpg',
+        '8712000000565' => 'bakbanaan.jpg',
+        '8712000000572' => 'napi.jpg',
+        '8712000000589' => 'markusa.jpg',
+        '8712000000610' => 'brood.jpg',
+        '8712000000627' => 'roti.jpg',
+        '8712000000727' => 'pinda.jpg',
+        '8712000000172' => 'kokoswater.jpg',
+    ];
+
     public function run(): void
     {
+        // Copy the shipped photos onto the public disk once, not per product.
+        // Idempotent: re-seeding overwrites with the same bytes.
+        $src = database_path('seeders/images/suriname');
+        foreach (array_unique(self::PHOTOS) as $file) {
+            $from = $src . '/' . $file;
+            $to   = 'products/suriname/' . $file;
+            if (is_file($from) && ! Storage::disk('public')->exists($to)) {
+                Storage::disk('public')->put($to, (string) file_get_contents($from));
+            }
+        }
+
         foreach (Organisation::all() as $org) {
             $categories = Category::where('organisation_id', $org->id)
                 ->get()
@@ -97,6 +140,11 @@ class SurinameCatalogueSeeder extends Seeder
                         // here. 'each' is the neutral default the schema expects; the
                         // human-readable size already lives in the product name.
                         'unit'        => $line['unit'] ?? 'each',
+                        // image_url is derived from image_path by the API, so
+                        // only the path is stored. Null keeps the glyph.
+                        'image_path'  => isset(self::PHOTOS[$line['barcode']])
+                            ? 'products/suriname/' . self::PHOTOS[$line['barcode']]
+                            : null,
                         'is_active'   => true,
                     ]
                 );
