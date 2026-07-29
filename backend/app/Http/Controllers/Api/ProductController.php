@@ -38,7 +38,12 @@ class ProductController extends Controller
     {
         $storeId = (string) $request->query('store_id', '');
         $store   = Store::findOrFail($storeId);
-        abort_unless($request->user()?->canAccessStore($store), 403);
+        // The STRING id, not the model. canAccessStore is typed `string`, and
+        // without strict_types PHP quietly stringifies an Eloquent model via
+        // __toString() — to its JSON — so this "worked" all the way down to the
+        // database, which rejected a JSON blob as a uuid. The signature was
+        // right; the call was wrong, and nothing warned in between.
+        abort_unless($request->user()?->canAccessStore($storeId), 403);
 
         $days  = min(365, max(1, (int) $request->query('days', 30)));
         $limit = min(100, max(1, (int) $request->query('limit', 40)));
