@@ -226,18 +226,33 @@ class EscPosBuilder {
     // on 80 mm paper and 384 on 58 mm, which is what the raster command
     // addresses.
     const headBytes = this.width >= 42 ? 72 : 48
-    const outBytes = Math.max(headBytes, srcBytes)
-    const pad = Math.max(0, Math.floor((outBytes - srcBytes) / 2))
+
+    // Centre by MOVING THE HEAD, not by padding the data.
+    //
+    // This used to widen every row to the full head — 72 bytes for a 30-byte
+    // logo — so the image was centred by shipping blank dots either side of
+    // it. That tripled the raster payload and made the printer chew through
+    // 576 dots per row instead of 240, on every receipt, all day. `ESC $`
+    // sets an absolute horizontal start position in dots and is far more
+    // widely honoured for rasters than `ESC a` justification, which is what
+    // the clones ignore. If a printer does ignore it the image lands
+    // left-aligned instead of centred — cosmetic, and cheap at the price.
+    const indentDots = Math.max(0, Math.floor(((headBytes - srcBytes) / 2) * 8))
+    if (indentDots > 0) {
+      this.cmd([ESC, 0x24, indentDots & 0xff, (indentDots >> 8) & 0xff])
+    }
 
     this.cmd([GS, 0x76, 0x30, 0x00,
-      outBytes & 0xff, (outBytes >> 8) & 0xff,
+      srcBytes & 0xff, (srcBytes >> 8) & 0xff,
       heightDots & 0xff, (heightDots >> 8) & 0xff])
 
     for (let y = 0; y < heightDots; y++) {
-      for (let i = 0; i < pad; i++) this.buf.push(0x00)
       for (let i = 0; i < srcBytes; i++) this.buf.push(bits[y * srcBytes + i] ?? 0x00)
-      for (let i = pad + srcBytes; i < outBytes; i++) this.buf.push(0x00)
     }
+
+    // Put the head back to the left margin or the next line of text inherits
+    // the indent.
+    if (indentDots > 0) this.cmd([ESC, 0x24, 0x00, 0x00])
     return this
   }
 

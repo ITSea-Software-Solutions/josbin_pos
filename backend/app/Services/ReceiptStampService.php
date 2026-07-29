@@ -34,6 +34,23 @@ class ReceiptStampService
      *  (58 mm) heads without needing a per-width variant. */
     private const WIDTH = 240;
 
+    /**
+     * Per-mark sizing. These used to share WIDTH/MAX_HEIGHT, which made the
+     * tax-office stamp and the shop's own logo the same size — wrong on both
+     * counts. The shop's mark is its identity and belongs large at the head
+     * of the ticket; the authority stamp is a countersign at the foot and
+     * reads better small, the way a real one does.
+     *
+     * Height is what costs TIME: a thermal head burns raster line by line, so
+     * doubling an image's height doubles how long the customer waits. Both are
+     * capped at 110 dots (~14 mm) and the wider logo is fitted by height, so
+     * the bigger mark does not buy itself a slower receipt.
+     */
+    private const LOGO_WIDTH  = 380;
+    private const LOGO_MAX_H  = 110;
+    private const STAMP_WIDTH = 150;
+    private const STAMP_MAX_H = 110;
+
     /** Tallest we will let a stamp be, in dots. A tall image is metres of
      *  paper across a trading day, and nobody notices until the roll runs out
      *  mid-queue. ~20 mm at 203 dpi. */
@@ -74,7 +91,7 @@ class ReceiptStampService
      * 0.45 to 0.70 ink fix looked like it had not shipped: correct code
      * deployed, stale bitmap served.
      */
-    private const RASTER_REVISION = 2;
+    private const RASTER_REVISION = 3;
 
     /** Ordered 4x4 dither. Spreading the dropped dots evenly looks like
      *  lighter ink; dropping them in blocks would look like a printing fault. */
@@ -104,7 +121,10 @@ class ReceiptStampService
             // The footer mark is a STAMP: tilted and faded. The header logo
             // (logoForStore) stays square and solid — that one is the shop
             // identifying itself, not an impression pressed onto the paper.
-            return $this->rasterise($source['bytes'], self::STAMP_ROTATE_DEG, self::STAMP_KEEP);
+            return $this->rasterise(
+                $source['bytes'], self::STAMP_ROTATE_DEG, self::STAMP_KEEP,
+                self::STAMP_WIDTH, self::STAMP_MAX_H,
+            );
         });
     }
 
@@ -130,7 +150,10 @@ class ReceiptStampService
             . '|r' . self::RASTER_REVISION);
 
         return Cache::remember($key, now()->addDay(), function () use ($disk, $path) {
-            return $this->rasterise((string) $disk->get($path));
+            return $this->rasterise(
+                (string) $disk->get($path), 0.0, 1.0,
+                self::LOGO_WIDTH, self::LOGO_MAX_H,
+            );
         });
     }
 
@@ -184,7 +207,13 @@ class ReceiptStampService
     /**
      * @return array{b64:string,width:int,height:int,coverage:float}|null
      */
-    private function rasterise(string $bytes, float $rotateDeg = 0.0, float $keep = 1.0): ?array
+    private function rasterise(
+        string $bytes,
+        float $rotateDeg = 0.0,
+        float $keep = 1.0,
+        ?int $targetWidth = null,
+        ?int $maxHeight = null,
+    ): ?array
     {
         $src = @imagecreatefromstring($bytes);
         if ($src === false) {
@@ -199,12 +228,13 @@ class ReceiptStampService
             return null;
         }
 
-        $w = self::WIDTH;
+        $w = $targetWidth ?? self::WIDTH;
+        $capH = $maxHeight ?? self::MAX_HEIGHT;
         $h = (int) round($srcH * ($w / $srcW));
-        if ($h > self::MAX_HEIGHT) {
+        if ($h > $capH) {
             // Too tall to scale by width — fit by height instead, so a
             // portrait logo shrinks rather than eating the paper roll.
-            $h = self::MAX_HEIGHT;
+            $h = $capH;
             $w = max(1, (int) round($srcW * ($h / $srcH)));
         }
 
