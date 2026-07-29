@@ -236,6 +236,11 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
     // Products (SPOS-203)
     Route::prefix('products')->name('products.')->group(function () {
         Route::get('pos', [ProductController::class, 'pos'])->name('pos');
+        // What this till actually sells. Deliberately NOT behind
+        // reports.top_products: that permission guards a management report,
+        // and a cashier needs this to find the milk. It exposes nothing a
+        // cashier cannot already see on the product grid.
+        Route::get('popular', [ProductController::class, 'popular'])->name('popular');
         Route::get('barcode/{barcode}', [ProductController::class, 'byBarcode'])->name('barcode');
         Route::post('import', [ProductController::class, 'import'])->name('import');
         Route::get('export', [ProductController::class, 'export'])->name('export');

@@ -89,6 +89,11 @@ export function saleToEscPosOptions({
       receipt_footer: store.receipt_footer,
       // Per-store receipt BTW number overrides the organisation's.
       btw_number:     store.settings?.receipt_btw_number || store.organisation?.btw_number || undefined,
+      // Chamber of Commerce number. Per-store only — a branch registered
+      // separately prints its own, and there is no organisation-level
+      // fallback because the registration belongs to the legal entity that
+      // holds the premises, not to the group.
+      kkf_number:     store.settings?.receipt_kkf_number || undefined,
     },
     locale,
     paperWidth: paperWidth ?? 80,

@@ -225,6 +225,9 @@
   @if(!empty($store['btw_number']))
   <div class="label" style="margin-top:3px">{{ $t['btw_number'] }}: {{ $store['btw_number'] }}</div>
   @endif
+  @if(!empty($store['kkf_number']))
+  <div class="label" style="margin-top:3px">{{ $t['kkf_number'] }}: {{ $store['kkf_number'] }}</div>
+  @endif
 </div>
 @endif
 @if(!empty($sale['btw_exempt_reason']))

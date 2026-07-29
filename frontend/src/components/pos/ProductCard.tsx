@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import ProductGlyph from '@/components/pos/ProductGlyph'
+import { useSettingsStore } from '@/store/settingsStore'
 import type { Product } from '@/types/models'
 import type { ProductDisplay } from '@/store/settingsStore'
 
@@ -26,6 +27,15 @@ export default function ProductCard({ product, display, isLowStock = false, onAd
     : showLow
       ? { text: typeof product.stock_qty === 'number' ? `${Math.max(0, Math.floor(product.stock_qty))}` : '—', bg: '#f59e0b', fg: '#fff' }
       : null
+
+  const density = useSettingsStore((st) => st.gridDensity)
+  // A 66 px tile cannot carry a "BTW-vrij" pill AND a low-stock chip AND a
+  // wrapped name. The exemption is still on the receipt and in the line-item
+  // editor, so dropping the badge at the tightest density loses nothing the
+  // cashier needs mid-scan — where the price is what they are checking.
+  const tight     = density >= 12
+  const glyphPx   = { 4: 56, 6: 44, 8: 36, 12: 26 }[density] ?? 44
+  const bodyPx    = tight ? 10.5 : undefined
 
   return (
     <button
@@ -57,7 +67,7 @@ export default function ProductCard({ product, display, isLowStock = false, onAd
       }}
     >
       {/* BTW-exempt badge */}
-      {product.btw_exempt && (
+      {product.btw_exempt && !tight && (
         <span
           style={{
             position: 'absolute',
@@ -127,7 +137,7 @@ export default function ProductCard({ product, display, isLowStock = false, onAd
           {/* Drawn goods, by category. Every tile used to be the same carton,
               which turned a full product grid into one repeating texture with
               nothing for the eye to aim at. */}
-          <ProductGlyph category={product.category?.name_nl ?? product.category?.name_en} />
+          <ProductGlyph category={product.category?.name_nl ?? product.category?.name_en} size={glyphPx} />
         </div>
       ) : null}
 
@@ -135,7 +145,7 @@ export default function ProductCard({ product, display, isLowStock = false, onAd
       {(display === 'name' || display === 'both') && (
         <div
           style={{
-            fontSize: 'var(--font-size-sm)',
+            fontSize: bodyPx ? `${bodyPx}px` : 'var(--font-size-sm)',
             color: 'var(--text-primary)',
             fontWeight: 500,
             textAlign: 'center',
@@ -155,7 +165,7 @@ export default function ProductCard({ product, display, isLowStock = false, onAd
       <div
         className="currency-srd"
         style={{
-          fontSize: 'var(--font-size-sm)',
+          fontSize: bodyPx ? `${bodyPx}px` : 'var(--font-size-sm)',
           fontWeight: 700,
           color: 'var(--color-accent)',
           marginTop: 'auto',

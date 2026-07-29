@@ -12,6 +12,9 @@ import { parseEmbeddedBarcode } from '@/lib/embeddedBarcode'
 import { looksLikeScannedCode, stripAimPrefix } from '@/lib/barcode'
 import { getRecent, getFavorites, recordRecent, toggleFavorite } from '@/lib/productFavorites'
 import CategoryFilter from './CategoryFilter'
+import GridDensityToggle from './GridDensityToggle'
+import { POPULAR_TAB } from './CategoryFilter'
+import { getPopularProductIds } from '@/api/products'
 import CameraScanModal from './CameraScanModal'
 import ProductCard from './ProductCard'
 import type { Product } from '@/types/models'
@@ -40,6 +43,26 @@ export default function ProductGrid({ storeId, scanEnabled = true }: ProductGrid
   const updateItemOverrides = useCartStore((s) => s.updateItemOverrides)
   const productDisplay = useSettingsStore((s) => s.productDisplay)
   const embeddedBarcode = useSettingsStore((s) => s.embeddedBarcode)
+  const gridDensity = useSettingsStore((s) => s.gridDensity)
+
+  // What this store actually sells, ranked. Long staleTime: the ranking is a
+  // 30-day window, so re-asking during a shift would change nothing and only
+  // cost a round trip on a connection we already know can be slow.
+  const { data: popularIds = [] } = useQuery({
+    queryKey: ['popular-products', storeId],
+    queryFn: () => getPopularProductIds(storeId),
+    enabled: !!storeId,
+    staleTime: 30 * 60_000,
+  })
+  const popularRank = useMemo(
+    () => new Map(popularIds.map((id, i) => [id, i])),
+    [popularIds],
+  )
+
+  // Tiles-per-row -> a minimum tile width the responsive grid can work with.
+  // Measured against the product area on a 1280-wide till with the cart open,
+  // which is the layout most terminals actually run.
+  const gridMinPx = { 4: 190, 6: 128, 8: 96, 12: 66 }[gridDensity] ?? 128
   const toast = useToast()
 
   const [search, setSearch] = useState('')
@@ -180,7 +203,10 @@ export default function ProductGrid({ storeId, scanEnabled = true }: ProductGrid
   const showQuickRow = quickRow.length > 0 && !search && selectedCategory === null
 
   const filtered = products.filter((p: Product) => {
-    const matchesCategory = selectedCategory === null || p.category_id === selectedCategory
+    // The Popular tab is a view across every category, not a category — it
+    // matches on the sales ranking instead of category_id.
+    const matchesCategory = selectedCategory === null
+      || (selectedCategory === POPULAR_TAB ? popularRank.has(p.id) : p.category_id === selectedCategory)
     if (!matchesCategory) return false
     if (!search) return true
     const q = search.toLowerCase()
@@ -190,6 +216,13 @@ export default function ProductGrid({ storeId, scanEnabled = true }: ProductGrid
       (p.barcode?.toLowerCase() ?? '').includes(q)
     )
   })
+
+  // Rank order matters in the Popular tab and nowhere else: filter() keeps the
+  // catalogue's own order, which would put the shop's best seller somewhere in
+  // the middle of its own tab.
+  const shown = selectedCategory === POPULAR_TAB
+    ? [...filtered].sort((a, b) => (popularRank.get(a.id) ?? 0) - (popularRank.get(b.id) ?? 0))
+    : filtered
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 10 }}>
@@ -243,12 +276,21 @@ export default function ProductGrid({ storeId, scanEnabled = true }: ProductGrid
         )}
       </div>
 
-      {/* Category filter */}
-      <CategoryFilter
-        categories={categories}
-        selected={selectedCategory}
-        onSelect={setSelectedCategory}
-      />
+      {/* Category filter, with the tiles-per-row control parked at the end of
+          the same row — the toolbar position a phone gallery puts it in. */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <CategoryFilter
+            categories={categories}
+            selected={selectedCategory}
+            onSelect={setSelectedCategory}
+            showPopular={popularIds.length > 0}
+          />
+        </div>
+        <div style={{ paddingRight: 16 }}>
+          <GridDensityToggle />
+        </div>
+      </div>
 
       {/* Quick row — cashier favorites (pinned) + recents. Tap adds; ☆ pins. */}
       {showQuickRow && (
@@ -297,7 +339,7 @@ export default function ProductGrid({ storeId, scanEnabled = true }: ProductGrid
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-secondary)' }}>
             {t('app.loading')}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : shown.length === 0 ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-secondary)' }}>
             {t('pos.noProducts')}
           </div>
@@ -305,11 +347,15 @@ export default function ProductGrid({ storeId, scanEnabled = true }: ProductGrid
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+              // auto-fill against a minimum derived from the chosen density,
+              // rather than a fixed column count: the grid still reflows when
+              // the cart panel opens or the window narrows, instead of
+              // squeezing 12 unreadable tiles onto a phone.
+              gridTemplateColumns: `repeat(auto-fill, minmax(${gridMinPx}px, 1fr))`,
               gap: 8,
             }}
           >
-            {filtered.map((product: Product) => (
+            {shown.map((product: Product) => (
               <ProductCard
                 key={product.id}
                 product={product}

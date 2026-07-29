@@ -148,6 +148,9 @@
       @if(!empty($store['btw_number']))
       <div style="margin-top:6px; color:#666">{{ $t['btw_number'] }}: {{ $store['btw_number'] }}</div>
       @endif
+      @if(!empty($store['kkf_number']))
+      <div style="margin-top:6px; color:#666">{{ $t['kkf_number'] }}: {{ $store['kkf_number'] }}</div>
+      @endif
     </div>
     @endif
   </div>

@@ -49,6 +49,7 @@ interface FormState {
   receipt_header: string
   receipt_footer: string
   receipt_btw_number: string
+  receipt_kkf_number: string
   // End-of-day freedom knobs (morning-recovery batch)
   closing_time: string
   auto_close_enabled: boolean
@@ -134,6 +135,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
     receipt_header:     store.receipt_header ?? '',
     receipt_footer:     store.receipt_footer ?? '',
     receipt_btw_number: (store.settings?.receipt_btw_number as string) ?? '',
+    receipt_kkf_number: (store.settings?.receipt_kkf_number as string) ?? '',
     closing_time:       (store.settings?.closing_time as string) ?? '',
     auto_close_enabled: (store.settings?.auto_close_enabled as boolean) ?? false,
     auto_close_time:    (store.settings?.auto_close_time as string) ?? '23:59',
@@ -187,6 +189,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
         // merges, so absent keys are preserved.
         settings:         {
           receipt_btw_number: form.receipt_btw_number,
+          receipt_kkf_number: form.receipt_kkf_number,
           closing_time:       form.closing_time || null,
           auto_close_enabled: form.auto_close_enabled,
           auto_close_time:    form.auto_close_time || '23:59',
@@ -250,6 +253,7 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
     `${isNl ? 'Totaal:' : 'Total:'}                 SRD 22.55`,
     '',
     form.receipt_btw_number ? `BTW nr: ${form.receipt_btw_number}` : '',
+    form.receipt_kkf_number ? `KKF nr: ${form.receipt_kkf_number}` : '',
     form.receipt_footer,
   ].join('\n')
 
@@ -282,9 +286,18 @@ function StoreForm({ store, isNl, onSaved }: { store: Store; isNl: boolean; onSa
         </Section>
 
         <Section title={isNl ? 'Bonopmaak' : 'Receipt Layout'}>
-          <Field label={isNl ? 'BTW-registratienummer' : 'BTW registration number'} hint={isNl ? 'Verschijnt onderaan de bon' : 'Appears at the bottom of the receipt'}>
-            <input style={{ ...inputStyle, maxWidth: 280 }} value={form.receipt_btw_number} onChange={e => set('receipt_btw_number', e.target.value)} placeholder="SB-123456789" />
-          </Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <Field label={isNl ? 'BTW-registratienummer' : 'BTW registration number'} hint={isNl ? 'Verschijnt onderaan de bon' : 'Appears at the bottom of the receipt'}>
+              <input style={{ ...inputStyle, maxWidth: 280 }} value={form.receipt_btw_number} onChange={e => set('receipt_btw_number', e.target.value)} placeholder="SB-123456789" />
+            </Field>
+            {/* KKF = Kamer van Koophandel en Fabrieken. A Surinamese invoice
+                carries this beside the BTW number: the buyer's bookkeeping
+                needs it to enter the purchase, and a government department
+                will refuse an invoice without it. */}
+            <Field label={isNl ? 'KKF-nummer (Kamer van Koophandel)' : 'Chamber of Commerce number (KKF)'} hint={isNl ? 'Verschijnt op de bon en op de factuur' : 'Appears on the receipt and the invoice'}>
+              <input style={{ ...inputStyle, maxWidth: 280 }} value={form.receipt_kkf_number} onChange={e => set('receipt_kkf_number', e.target.value)} placeholder="KKF 12345" />
+            </Field>
+          </div>
           <Field label={isNl ? 'Koptekst (max. 3 regels)' : 'Header (max. 3 lines)'} hint={isNl ? 'Wordt bovenaan elke bon afgedrukt' : 'Printed at the top of every receipt'}>
             <textarea style={textareaStyle} value={form.receipt_header} onChange={e => set('receipt_header', e.target.value)} rows={3} placeholder={isNl ? 'bijv. Supermarkt De Hoop\nParamaribo, Suriname\nTel: +597 000-0000' : 'e.g. Supermarkt De Hoop\nParamaribo, Suriname\nTel: +597 000-0000'} />
           </Field>

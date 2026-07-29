@@ -5,6 +5,11 @@ import { DEFAULT_EMBEDDED_BARCODE, type EmbeddedBarcodeConfig } from '@/lib/embe
 
 export type ProductDisplay = 'name' | 'photo' | 'both'
 
+/** Tiles per row. The grid is responsive, so these are targets on a full-width
+ *  grid — a narrow window still wraps sensibly. */
+export const GRID_DENSITIES = [4, 6, 8, 12] as const
+export type GridDensity = typeof GRID_DENSITIES[number]
+
 interface SettingsState {
   storeId: string | null
   /**
@@ -15,6 +20,14 @@ interface SettingsState {
    */
   theme: 'night' | 'day'
   productDisplay: ProductDisplay
+  /**
+   * How many product tiles per row. Not a cosmetic preference: a 10-inch
+   * Android terminal and a 24-inch touchscreen want completely different
+   * densities, and a shop with 40 lines wants big tiles where one with 2,000
+   * wants to see as many as possible without scrolling. Same idea as the
+   * pinch in a phone gallery.
+   */
+  gridDensity: GridDensity
   dateFormat: string
   defaultBtwRate: string
   printer: PrinterConfig
@@ -56,6 +69,7 @@ interface SettingsState {
   setStoreId: (storeId: string | null) => void
   setTheme: (theme: 'night' | 'day') => void
   setProductDisplay: (display: ProductDisplay) => void
+  setGridDensity: (density: GridDensity) => void
   setDateFormat: (format: string) => void
   setDefaultBtwRate: (rate: string) => void
   setPrinter: (config: PrinterConfig) => void
@@ -79,6 +93,7 @@ export const useSettingsStore = create<SettingsState>()(
       storeId: null,
       theme: 'night',
       productDisplay: 'both',
+      gridDensity: 6,
       dateFormat: 'DD-MM-YYYY',
       defaultBtwRate: '10',
       printer: {
@@ -105,6 +120,7 @@ export const useSettingsStore = create<SettingsState>()(
       setStoreId: (storeId) => set({ storeId: storeId ?? null }),
       setTheme: (theme) => set({ theme }),
       setProductDisplay: (productDisplay) => set({ productDisplay }),
+      setGridDensity: (gridDensity) => set({ gridDensity }),
       setDateFormat: (dateFormat) => set({ dateFormat }),
       setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),
       setPrinter: (printer) => set({ printer }),

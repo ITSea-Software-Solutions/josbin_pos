@@ -304,7 +304,12 @@
     },
     "closeRegister": {
       "action": "Tapu a kasi"
-    }
+    },
+    "density": {
+      "label": "Tegel na wan lin",
+      "perRow": "{{count}} na wan lin"
+    },
+    "popular": "Furu gebruik"
   },
   "reports": {
     "title": "Rapport",

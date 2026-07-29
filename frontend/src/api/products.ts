@@ -38,3 +38,18 @@ export async function getLowStockProductIds(storeId?: string): Promise<Set<strin
   const { data } = await apiClient.get<{ data: Array<{ id: string }> }>('/products', { params })
   return new Set((data.data ?? []).map(p => p.id))
 }
+
+/**
+ * Product ids this store sells most, ranked. Drives the "Populair" tab.
+ *
+ * Returns an empty list for a store with no history, which the UI treats as
+ * "hide the tab" — a tab that does nothing is worse than no tab.
+ */
+export async function getPopularProductIds(storeId: string, days = 30): Promise<string[]> {
+  try {
+    const res = await apiClient.get('/products/popular', { params: { store_id: storeId, days } })
+    return (res.data?.data?.product_ids as string[]) ?? []
+  } catch {
+    return []
+  }
+}

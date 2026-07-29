@@ -8,6 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\StockMovement;
 use App\Models\StoreProductOverride;
+use App\Models\SaleItem;
+use App\Models\Store;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +20,50 @@ use Illuminate\Validation\Rule;
 class ProductController extends Controller
 {
     /** GET /api/products — full catalogue with optional filters */
+    /**
+     * GET /api/products/popular?store_id=&days=30&limit=40
+     *
+     * The products this store actually sells most, ranked by units moved.
+     * Drives the "Populair" tab that opens ahead of the categories, so the
+     * dozen lines that make up most of a shop's day are one tap away instead
+     * of hunted for in a category — which is what a cashier does with a queue
+     * waiting.
+     *
+     * Self-tuning by design: a Nickerie shop and a Paramaribo shop earn
+     * different tabs, and both improve as they trade. A brand-new store gets
+     * an empty list and the UI simply hides the tab rather than showing a
+     * tab that does nothing.
+     */
+    public function popular(Request $request): JsonResponse
+    {
+        $storeId = (string) $request->query('store_id', '');
+        $store   = Store::findOrFail($storeId);
+        abort_unless($request->user()?->canAccessStore($store), 403);
+
+        $days  = min(365, max(1, (int) $request->query('days', 30)));
+        $limit = min(100, max(1, (int) $request->query('limit', 40)));
+
+        // Cached briefly: every till in the shop asks for this on startup, and
+        // the ranking does not meaningfully move within a few minutes.
+        $key = "popular:{$store->id}:{$days}:{$limit}";
+
+        $ids = Cache::remember($key, now()->addMinutes(10), function () use ($store, $days, $limit) {
+            return SaleItem::query()
+                ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
+                ->where('sales.store_id', $store->id)
+                ->where('sales.status', 'completed')
+                ->where('sales.occurred_at', '>=', now()->subDays($days))
+                ->whereNotNull('sale_items.product_id')
+                ->groupBy('sale_items.product_id')
+                ->orderByRaw('SUM(sale_items.quantity) DESC')
+                ->limit($limit)
+                ->pluck('sale_items.product_id')
+                ->all();
+        });
+
+        return response()->json(['data' => ['product_ids' => $ids]]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $this->authorize('viewAny', Product::class);

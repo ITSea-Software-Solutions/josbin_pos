@@ -79,6 +79,12 @@ class ReceiptService
                 // Per-store receipt BTW number overrides the organisation's.
                 'btw_number'     => data_get($store->settings, 'receipt_btw_number')
                     ?: ($store->organisation?->btw_number ?? ''),
+                // Kamer van Koophandel en Fabrieken registration. A Surinamese
+                // invoice carries this beside the BTW number — a buyer's own
+                // bookkeeping needs it to enter the purchase, and a government
+                // department will not accept an invoice without it. Per-store
+                // so a branch registered separately can print its own.
+                'kkf_number'     => data_get($store->settings, 'receipt_kkf_number') ?: '',
                 'logo'           => $this->receiptLogoDataUri($store->receipt_logo_path),
                 'watermark'      => $this->receiptWatermarkDataUri($store),
             ],
@@ -262,6 +268,7 @@ class ReceiptService
             'btw_breakdown'   => 'BTW-specificatie',
             'btw_exempt'      => 'BTW vrijgesteld',
             'btw_number'      => 'BTW-nummer',
+            'kkf_number'      => 'KKF-nummer',
             'base'            => 'Grondslag',
             'btw'             => 'BTW',
             'exempt'          => 'BTW-vrij',
@@ -299,6 +306,7 @@ class ReceiptService
             'btw_breakdown'   => 'BTW breakdown',
             'btw_exempt'      => 'BTW exempt',
             'btw_number'      => 'BTW number',
+            'kkf_number'      => 'KKF number',
             'base'            => 'Base',
             'btw'             => 'BTW',
             'exempt'          => 'BTW-exempt',

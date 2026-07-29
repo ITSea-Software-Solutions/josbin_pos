@@ -45,7 +45,7 @@ export interface Store {
   receipt_header: string
   receipt_footer: string
   receipt_logo_path?: string | null
-  settings?: { receipt_btw_number?: string; wallet_qrs?: Record<string, string> } & Record<string, unknown>
+  settings?: { receipt_btw_number?: string; receipt_kkf_number?: string; wallet_qrs?: Record<string, string> } & Record<string, unknown>
   /** Effective org pick-lists (org override or Suriname defaults) — served
    *  by GET /stores/{id} so the payment modal never hardcodes providers. */
   payment_options?: { wallets?: string[]; card_banks?: string[]; transfer_banks?: string[]; mobile_apps?: string[] }

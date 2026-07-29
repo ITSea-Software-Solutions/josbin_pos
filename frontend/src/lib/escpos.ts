@@ -445,6 +445,8 @@ export interface EscPosReceiptOptions {
     receipt_header?: string
     receipt_footer?: string
     btw_number?: string
+    /** Kamer van Koophandel en Fabrieken registration. */
+    kkf_number?: string
   }
   locale: 'nl' | 'en'
   /** 58 = 32 chars/line (compact printers), 80 = 42 chars/line. Default 80. */
@@ -497,6 +499,7 @@ const TRANSLATIONS = {
     total_btw:      'Totaal BTW',
     btw_exempt:     'BTW vrijgesteld',
     btw_number:     'BTW-nr.',
+    kkf_number:     'KKF-nr.',
     payment:        'Betaalmethode',
     cash:           'Contant',
     card:           'Pin / Kaart',
@@ -531,6 +534,7 @@ const TRANSLATIONS = {
     total_btw:      'Total BTW',
     btw_exempt:     'BTW exempt',
     btw_number:     'BTW no.',
+    kkf_number:     'KKF no.',
     payment:        'Payment',
     cash:           'Cash',
     card:           'Card / PIN',
@@ -680,6 +684,7 @@ export function buildReceiptBytes(opts: EscPosReceiptOptions): Uint8Array {
     }
     if (sale.btw_exempt_reason) b.line(`${t.btw_exempt}: ${sale.btw_exempt_reason}`)
     if (store.btw_number) b.line(`${t.btw_number}: ${store.btw_number}`)
+    if (store.kkf_number) b.line(`${t.kkf_number}: ${store.kkf_number}`)
     b.dashes()
   }
 
