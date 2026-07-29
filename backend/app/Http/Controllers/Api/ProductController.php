@@ -151,6 +151,13 @@ class ProductController extends Controller
                     'btw_exempt'   => $p->btw_exempt,
                     'stock_qty'    => $p->stockForStore($storeId),
                     'image_path'   => $p->image_path,
+                    // The POS reads image_url, not image_path — it has no way to
+                    // turn a storage path into a URL. Without this the "photo"
+                    // and "name and photo" display settings had no data to work
+                    // with on the till and every tile fell back to the glyph,
+                    // however many photos had been uploaded. The dashboard's own
+                    // formatter has always added it; this endpoint never did.
+                    'image_url'    => $p->image_path ? asset('storage/' . $p->image_path) : null,
                     'category_id'  => $p->category_id,
                     'category'     => $p->category,
                 ];
