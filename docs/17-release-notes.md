@@ -11,7 +11,23 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.6.0 — 29 July 2026 *(current)*
+## 1.6.1 — 29 July 2026 *(current)*
+
+- **Your shop's logo now prints at the top of the receipt.** It had only ever
+  reached the PDF, never the paper roll.
+- **The footer image now looks stamped** — tilted, and printed light enough to
+  read the receipt through it, the way a rubber stamp actually lands on paper.
+  It also uses under half the ink, so it prints faster.
+- **You go straight back into your own till.** If you were already trading and
+  the app restarted, was reinstalled, or you signed out, you now land back in
+  your open shift instead of picking a register and counting your float again.
+  One forgotten drawer from a previous day used to send you round that loop on
+  every single sign-in.
+- **Forgotten drawers now really do close overnight.** The nightly tidy-up
+  could never run: it checked for a one-minute window it never happened to
+  look at, so a drawer left open on Monday was still open on Friday.
+
+## 1.6.0 — 29 July 2026
 
 - **Printing is much faster on Android terminals.** The receipt was being
   handed to the printer one byte at a time — a three-kilobyte receipt meant

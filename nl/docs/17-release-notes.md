@@ -11,7 +11,24 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.6.0 — 29 juli 2026 *(actueel)*
+## 1.6.1 — 29 juli 2026 *(actueel)*
+
+- **Het logo van uw winkel staat nu bovenaan de bon.** Het kwam alleen op de
+  PDF terecht, nooit op de papierrol.
+- **De afbeelding onderaan ziet er nu gestempeld uit** — schuin, en licht
+  genoeg geprint om de bon eronder te kunnen lezen, zoals een echte stempel op
+  papier belandt. Hij gebruikt ook nog geen helft van de inkt, dus hij print
+  sneller.
+- **U komt meteen terug in uw eigen kassa.** Was u al bezig en herstartte de
+  app, werd hij opnieuw geïnstalleerd of logde u uit, dan komt u nu gewoon
+  terug in uw open dienst in plaats van opnieuw een kassa te kiezen en uw
+  startbedrag te tellen. Eén vergeten lade van een vorige dag stuurde u
+  voorheen bij élke aanmelding die ronde door.
+- **Vergeten lades gaan 's nachts nu echt dicht.** De nachtelijke opruiming kon
+  nooit draaien: hij keek naar een venster van één minuut waar hij nooit langs
+  kwam, waardoor een lade die maandag openbleef vrijdag nog steeds openstond.
+
+## 1.6.0 — 29 juli 2026
 
 - **Printen is veel sneller op Android-terminals.** De bon werd byte voor byte
   aan de printer doorgegeven — een bon van drie kilobyte betekende drieduizend
