@@ -69,7 +69,11 @@
       "editItem": "Kenki a sani",
       "clear": "Leigi ala",
       "clearTitle": "Leigi a baskita?",
-      "clearBody": "Ala {{count}} sani o puru fu a baskita. Yu no man drai en baka."
+      "clearBody": "Ala {{count}} sani o puru fu a baskita. Yu no man drai en baka.",
+      "addDiscount": "+ poti",
+      "remove": "Puru",
+      "itemCount_one": "{{count}} sani",
+      "itemCount_other": "{{count}} sani"
     },
     "holdBill": "Kibri a bon",
     "openBills": "Den kibri bon",
@@ -293,6 +297,13 @@
       "reasonExport": "Export",
       "apply": "Poti a fri",
       "receiptLine": "BTW fri"
+    },
+    "userMenu": {
+      "switchStore": "Kenki wenkri",
+      "keyboard": "Skin-keyboard"
+    },
+    "closeRegister": {
+      "action": "Tapu a kasi"
     }
   },
   "reports": {
@@ -382,6 +393,12 @@
     "lockedAt": "Yuru"
   },
   "settings": {
+    "appearance": {
+      "title": "Fasi fu luku",
+      "night": "Neti",
+      "day": "Dei",
+      "help": "Teki san e fiti nanga a leti na a toonbank. Neti na a standaard bika wan winkri e opo bifo son opo; Dei e leisi moro bun na deileti."
+    },
     "title": "Seti",
     "language": "Tongo",
     "dateFormat": "Datumformaat",
@@ -520,5 +537,18 @@
     "notFound": "No feni",
     "unauthorized": "Yu no abi toegang",
     "validationError": "Luku den gegevens di yu furu in"
+  },
+  "roles": {
+    "super_admin": "Bigi Basi",
+    "organisation_admin": "Basi fu na organisâsi",
+    "store_manager": "Manager fu a wenkri",
+    "cashier": "Kasiri",
+    "auditor": "Ondrosukuman",
+    "tax_inspector": "Belasting-ondrosukuman",
+    "api_integration": "API-koneksi"
+  },
+  "common": {
+    "on": "Opo",
+    "off": "Tapu"
   }
 }

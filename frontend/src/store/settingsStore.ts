@@ -7,6 +7,13 @@ export type ProductDisplay = 'name' | 'photo' | 'both'
 
 interface SettingsState {
   storeId: string | null
+  /**
+   * Screen theme. Night is the default because a shop opens before sunrise;
+   * day exists because the same counter at midday turns a dark screen into a
+   * mirror. Per till, not per user — it is a property of where the terminal
+   * stands and what light falls on it.
+   */
+  theme: 'night' | 'day'
   productDisplay: ProductDisplay
   dateFormat: string
   defaultBtwRate: string
@@ -47,6 +54,7 @@ interface SettingsState {
   cardTerminal: CardTerminalConfig
 
   setStoreId: (storeId: string | null) => void
+  setTheme: (theme: 'night' | 'day') => void
   setProductDisplay: (display: ProductDisplay) => void
   setDateFormat: (format: string) => void
   setDefaultBtwRate: (rate: string) => void
@@ -69,6 +77,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       storeId: null,
+      theme: 'night',
       productDisplay: 'both',
       dateFormat: 'DD-MM-YYYY',
       defaultBtwRate: '10',
@@ -94,6 +103,7 @@ export const useSettingsStore = create<SettingsState>()(
       cardTerminal: { mode: 'manual', defaultBank: 'DSB' },
 
       setStoreId: (storeId) => set({ storeId: storeId ?? null }),
+      setTheme: (theme) => set({ theme }),
       setProductDisplay: (productDisplay) => set({ productDisplay }),
       setDateFormat: (dateFormat) => set({ dateFormat }),
       setDefaultBtwRate: (defaultBtwRate) => set({ defaultBtwRate }),

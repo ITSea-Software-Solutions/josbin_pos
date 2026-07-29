@@ -28,18 +28,25 @@
   /* POS dark theme — a teal-biased scale derived from #002739 rather than a
      neutral grey, so the ground belongs to the brand instead of sitting next
      to it. */
-  --bg-base: #002739;              /* CMYK 100/32/0/78 */
-  --bg-surface: #04303F;
-  --bg-elevated: #0A3B4C;
-  --bg-input: #01212F;
+     Lifted from the original #002739. That value is the website's footer
+     colour and it is beautiful behind text, but a whole POS built on it read
+     muddy: the three surface steps sat within six points of each other, so
+     nothing looked raised and everything looked flat. Each step is now
+     clearly separated and the whole scale is a little brighter and cleaner —
+     the same teal, awake.                                                   */
+  --bg-base: #072C3D;
+  --bg-surface: #0B3A4E;
+  --bg-elevated: #124A61;
+  --bg-input: #04212F;
 
   /* Text */
   --text-primary: #F5FAFF;         /* the site's own --footer-text-color */
-  --text-secondary: #9DB3BF;
-  --text-muted: #6E8794;
+  --text-secondary: #ABC4D1;       /* lifted — the old #9DB3BF fell away under
+                                      shop lighting on a glossy till screen */
+  --text-muted: #8199A7;
 
   /* Borders */
-  --border-color: #14485A;
+  --border-color: #1B5A73;         /* was #14485A — invisible on a bright floor */
   --border-radius: 8px;
   --border-radius-lg: 12px;
 
@@ -134,3 +141,50 @@ input, textarea, [contenteditable] {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-mono);
 }
+
+/* ── Day theme ──────────────────────────────────────────────────────────────
+   The till defaults to night because a shop opens before sunrise and a white
+   screen at that hour is a lamp. But the same counter at midday, under a
+   window or a skylight, is the opposite problem: a dark screen becomes a
+   mirror. So the cashier chooses (Settings → Appearance).
+
+   Only the ground and the ink flip. Orange stays exactly where it is — it is
+   the one saturated thing on the glass in either theme, and a cashier who has
+   learned "the orange one completes the sale" must not have to relearn it
+   because the sun came out.
+
+   The neutrals keep a teal bias rather than going pure grey, so a day screen
+   still reads as the same product and not a different application. Status
+   colours are darkened: #00d4aa is legible on a dark ground and nearly
+   invisible on white, and a total nobody can read is worse than no colour.  */
+:root[data-theme='day'] {
+  --bg-base: #F2F6F8;
+  --bg-surface: #FFFFFF;
+  /* Night stacks these darker-to-lighter; day has to stack the other way or
+     every chip, well and inactive toggle flattens into the card behind it. */
+  --bg-elevated: #E9F0F4;
+  --bg-input: #FBFDFE;
+
+  --text-primary: #0A2836;
+  --text-secondary: #46626F;
+  --text-muted: #78919E;
+
+  --border-color: #D8E3E9;
+
+  /* Darkened for contrast against white — same hues, readable weight. */
+  --color-accent:  #00997E;
+  --color-success: #00876C;
+  --color-warning: #B87400;
+  --color-error:   #C93A3A;
+  --color-info:    #2F6FD0;
+  --color-btw:     #6D4FC4;
+  --color-discount:#B87400;
+  --color-total:   #00876C;
+
+  /* The K block of the CMYK bar is the ink itself on a light ground. */
+  --ink-key: #0A2836;
+
+  color-scheme: light;
+}
+
+:root { color-scheme: dark; }

@@ -20,6 +20,7 @@ type HardwareTestStatus = 'idle' | 'testing' | 'ok' | 'error'
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation()
   const {
+    theme, setTheme,
     productDisplay, setProductDisplay,
     dateFormat, setDateFormat,
     defaultBtwRate, setDefaultBtwRate,
@@ -387,6 +388,39 @@ export default function SettingsScreen() {
               }}
             />
           </div>
+        </div>
+
+        {/* ── Appearance ──────────────────────────────────────────────────── */}
+        <div style={sectionSt}>
+          <h3 style={{ fontSize: 'var(--font-size-base)', fontWeight: 600, margin: 0 }}>
+            {t('settings.appearance.title')}
+          </h3>
+          <div style={{ display: 'flex', gap: 10 }}>
+            {([
+              { key: 'night' as const, icon: '\u{1F319}', label: t('settings.appearance.night') },
+              { key: 'day' as const,   icon: '\u2600',     label: t('settings.appearance.day') },
+            ]).map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => { setTheme(opt.key); handleSave() }}
+                data-testid={`theme-${opt.key}`}
+                style={{
+                  flex: 1, height: 'var(--touch-target-xl)',
+                  borderRadius: 'var(--border-radius)',
+                  border: `2px solid ${theme === opt.key ? 'var(--color-primary)' : 'var(--border-color)'}`,
+                  background: theme === opt.key ? 'rgba(239,108,0,.10)' : 'var(--bg-elevated)',
+                  color: 'var(--text-primary)', cursor: 'pointer',
+                  fontSize: 'var(--font-size-base)', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                <span style={{ fontSize: 20 }}>{opt.icon}</span> {opt.label}
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '6px 0 0' }}>
+            {t('settings.appearance.help')}
+          </p>
         </div>
 
         {/* ── Printer & Cash Drawer ─────────────────────────────────────────── */}

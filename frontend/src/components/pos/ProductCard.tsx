@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import ProductGlyph from '@/components/pos/ProductGlyph'
 import type { Product } from '@/types/models'
 import type { ProductDisplay } from '@/store/settingsStore'
 
@@ -120,11 +121,13 @@ export default function ProductCard({ product, display, isLowStock = false, onAd
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 24,
             flexShrink: 0,
           }}
         >
-          📦
+          {/* Drawn goods, by category. Every tile used to be the same carton,
+              which turned a full product grid into one repeating texture with
+              nothing for the eye to aim at. */}
+          <ProductGlyph category={product.category?.name_nl ?? product.category?.name_en} />
         </div>
       ) : null}
 

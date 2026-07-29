@@ -14,6 +14,7 @@ import CashMovementModal from './CashMovementModal'
 import CloseRegisterModal from '@/screens/CloseRegisterModal'
 import HelpButton from '@/components/shared/HelpButton'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
+import UserMenu from './UserMenu'
 
 interface TopBarProps {
   storeId: string
@@ -71,8 +72,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
     refetchInterval: 1000 * 60 * 2, // refresh every 2 min
   })
 
-  function toggleLanguage() {
-    const next = i18n.language === 'nl' ? 'en' : 'nl'
+  function setLanguage(next: string) {
     i18n.changeLanguage(next)
     localStorage.setItem('josbin_pos_locale', next)
   }
@@ -111,7 +111,8 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
           background: 'var(--bg-surface)',
           borderBottom: '1px solid var(--border-color)',
           flexShrink: 0,
-          overflow: 'hidden',
+          // Deliberately NOT overflow:hidden — the nav clips itself now, and
+          // clipping here swallowed the user menu that drops out of the bar.
         }}
       >
         {/* Logo */}
@@ -130,7 +131,7 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
         </div>
 
         {/* Nav */}
-        <nav style={{ display: 'flex', height: '100%', flex: 1 }}>
+        <nav style={{ display: 'flex', height: '100%', flex: 1, minWidth: 0, overflowX: 'auto' }}>
           {navItems.map((nav) => (
             <button
               key={nav.key}
@@ -242,97 +243,31 @@ export default function TopBar({ storeId, onNavigate, activeScreen, keyboardOpen
           {/* Context-aware help for the current screen */}
           <HelpButton topic={activeScreen} />
 
-          {/* On-screen keyboard toggle — Windows only.
-              Android and the browser build both raise the system keyboard the
-              moment an input is focused, so this was a second keyboard on top
-              of the one already covering the screen. A touch-only Windows till
-              is the case that still needs it: Windows does not reliably raise
-              its touch keyboard for inputs inside a desktop app window, and
-              such a till may have no other way to type at all. */}
-          {detectPlatform() === 'electron' && (
-            <button
-              onClick={onToggleKeyboard}
-              title={i18n.language === 'nl' ? 'Schermtoetsenbord aan/uit' : 'Toggle on-screen keyboard'}
-              style={{
-                height: 34, padding: '0 10px',
-                background: keyboardOpen ? 'rgba(0,51,102,0.12)' : 'var(--bg-elevated)',
-                border: `1px solid ${keyboardOpen ? 'var(--color-primary)' : 'var(--border-color)'}`,
-                borderRadius: 'var(--border-radius)',
-                color: keyboardOpen ? 'var(--color-primary)' : 'var(--text-secondary)',
-                cursor: 'pointer', fontSize: 16,
-              }}
-            >
-              ⌨
-            </button>
-          )}
-
-          {/* Language toggle */}
-          <button
-            onClick={toggleLanguage}
-            style={{
-              height: 34, padding: '0 10px',
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border-color)',
-              borderRadius: 'var(--border-radius)',
-              color: 'var(--text-secondary)',
-              cursor: 'pointer', fontSize: 'var(--font-size-sm)', fontWeight: 600,
-            }}
-          >
-            {i18n.language === 'nl' ? 'EN' : 'NL'}
-          </button>
-
-          {/* Register status + close button */}
+          {/* Register status — the pill stays visible at a glance; closing the
+              register is an end-of-shift action and now sits in the user menu
+              beside log out, which is where a cashier goes to finish up. */}
           {session && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, borderLeft: '1px solid var(--border-color)', paddingLeft: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 20, background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.25)' }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d' }}>
-                  {session.register_name ?? `#${session.register_number}`}
-                </span>
-              </div>
-              <button
-                onClick={() => setCloseRegisterOpen(true)}
-                title={i18n.language === 'nl' ? 'Kassa sluiten' : 'Close register'}
-                style={{
-                  height: 28, padding: '0 10px',
-                  background: 'rgba(220,38,38,.08)', border: '1px solid rgba(220,38,38,.25)',
-                  borderRadius: 4, color: '#dc2626',
-                  cursor: 'pointer', fontSize: 11, fontWeight: 700,
-                }}
-              >
-                {i18n.language === 'nl' ? 'Kassa sluiten' : 'Close register'}
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 9px', borderRadius: 20, background: 'rgba(34,197,94,.1)', border: '1px solid rgba(34,197,94,.25)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
+              <span style={{ fontSize: 11, fontWeight: 700, color: '#15803d' }}>
+                {session.register_name ?? `#${session.register_number}`}
+              </span>
             </div>
           )}
 
-          {/* User / logout */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderLeft: '1px solid var(--border-color)', paddingLeft: 10 }}>
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-              {user?.name}
-            </span>
-            <button
-              onClick={requestSwitchStore}
-              title={i18n.language === 'nl' ? 'Vestiging wisselen' : 'Switch store'}
-              style={{
-                height: 28, padding: '0 8px',
-                background: 'none', border: '1px solid var(--border-color)',
-                borderRadius: 4, color: 'var(--text-muted)',
-                cursor: 'pointer', fontSize: 11,
-              }}
-            >
-              ⇄
-            </button>
-            <button
-              onClick={requestLogout}
-              style={{
-                height: 28, padding: '0 10px',
-                background: 'none', border: '1px solid var(--border-color)',
-                borderRadius: 4, color: 'var(--text-muted)',
-                cursor: 'pointer', fontSize: 'var(--font-size-sm)',
-              }}
-            >
-              {t('auth.logout')}
-            </button>
+          {/* User menu — name, store, switch store, log out */}
+          <div style={{ display: 'flex', alignItems: 'center', borderLeft: '1px solid var(--border-color)', paddingLeft: 10 }}>
+            <UserMenu
+              name={user?.name ?? '—'}
+              roleLabel={user?.role ? t(`roles.${user.role}`, { defaultValue: user.role }) : undefined}
+              storeName={storeData?.name}
+              language={i18n.language}
+              onSetLanguage={setLanguage}
+              {...(detectPlatform() === 'electron' ? { keyboardOpen, onToggleKeyboard } : {})}
+              onSwitchStore={requestSwitchStore}
+              {...(session ? { onCloseRegister: () => setCloseRegisterOpen(true) } : {})}
+              onLogout={requestLogout}
+            />
           </div>
         </div>
       </div>

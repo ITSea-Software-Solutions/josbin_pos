@@ -68,6 +68,15 @@ function usePrinterShareAutostart() {
 }
 
 export default function App() {
+  // Paint the chosen theme onto <html> so the CSS variables under
+  // :root[data-theme='day'] take over. Done here, once, rather than in each
+  // screen — the ground colour is a property of the terminal, not of whatever
+  // happens to be on screen.
+  const theme = useSettingsStore((st) => st.theme)
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme
+  }, [theme])
+
   usePrinterShareAutostart()
   const token     = useAuthStore((s) => s.token)
   const expiresAt = useAuthStore((s) => s.expiresAt)

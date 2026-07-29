@@ -11,7 +11,30 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.6.1 — 29 July 2026 *(current)*
+## 1.7.0 — 29 July 2026 *(current)*
+
+- **A day screen.** The till has always been dark, which is right for a shop
+  that opens before sunrise and wrong for a counter under a skylight at noon.
+  Settings → Appearance now switches between Night and Day, per till. The
+  remaining colours were freshened at the same time — the same palette, pitched
+  brighter so prices and totals hold up on a cheap panel in daylight.
+- **Products now look like products.** Every tile used to carry the same box
+  icon, so a full screen of goods read as one repeating pattern and the cashier
+  had nothing but the name to aim at. Each category now has its own drawing —
+  bread, bottles, a cut of meat, a fish, produce — so the eye can land before
+  the reading does. A real product photo still wins where one has been
+  uploaded; this is what fills in where none has.
+- **Your name at the top right is now a menu.** Tap it for your role, your
+  store, your language, close register and log out. On a 1024- or 1280-wide
+  till the toolbar used to run off the edge and take log out with it, so the
+  one thing you need at the end of a shift was the one you could not reach.
+- **Sranantongo is reachable from the till.** The old language button only ever
+  flipped between Dutch and English; the menu offers all three.
+- **Two Dutch words no longer appear in the English and Sranantongo tills.**
+  The cart's "add discount" and "remove" labels had been typed in rather than
+  translated.
+
+## 1.6.1 — 29 July 2026
 
 - **Your shop's logo now prints at the top of the receipt.** It had only ever
   reached the PDF, never the paper roll.

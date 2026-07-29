@@ -11,7 +11,31 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.6.1 — 29 juli 2026 *(actueel)*
+## 1.7.0 — 29 juli 2026 *(actueel)*
+
+- **Een dagweergave.** De kassa was altijd donker — juist voor een winkel die
+  vóór zonsopgang opengaat, verkeerd voor een toonbank onder een lichtkoepel om
+  twaalf uur. Instellingen → Weergave schakelt nu per kassa tussen Nacht en
+  Dag. De overige kleuren zijn tegelijk opgefrist: hetzelfde palet, helderder
+  gezet zodat prijzen en totalen ook op een goedkoop scherm in daglicht leesbaar
+  blijven.
+- **Producten zien er nu uit als producten.** Elke tegel had hetzelfde
+  doosje-icoon, waardoor een vol scherm als één herhalend patroon las en de
+  kassière alleen op de naam kon mikken. Elke categorie heeft nu een eigen
+  tekening — brood, flessen, een stuk vlees, vis, groente — zodat het oog kan
+  landen vóór het lezen. Een echte productfoto gaat nog steeds voor; dit vult
+  in waar er geen is.
+- **Uw naam rechtsboven is nu een menu.** Tik erop voor uw rol, uw filiaal, uw
+  taal, kassa sluiten en uitloggen. Op een kassa van 1024 of 1280 breed liep de
+  werkbalk voorbij de schermrand en nam het uitloggen mee — precies wat u aan
+  het eind van een dienst nodig hebt, was onbereikbaar.
+- **Sranantongo is bereikbaar vanaf de kassa.** De oude taalknop wisselde
+  alleen tussen Nederlands en Engels; het menu biedt alle drie.
+- **Twee Nederlandse woorden staan niet langer in de Engelse en Sranantongo
+  kassa.** De labels "korting toevoegen" en "verwijderen" in het mandje waren
+  ingetypt in plaats van vertaald.
+
+## 1.6.1 — 29 juli 2026
 
 - **Het logo van uw winkel staat nu bovenaan de bon.** Het kwam alleen op de
   PDF terecht, nooit op de papierrol.

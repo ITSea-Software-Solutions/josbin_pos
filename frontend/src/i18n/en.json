@@ -69,7 +69,11 @@
       "editItem": "Edit item",
       "clear": "Clear",
       "clearTitle": "Clear cart?",
-      "clearBody": "All {{count}} items will be removed. This cannot be undone."
+      "clearBody": "All {{count}} items will be removed. This cannot be undone.",
+      "addDiscount": "+ add",
+      "remove": "Remove",
+      "itemCount_one": "{{count}} item",
+      "itemCount_other": "{{count}} items"
     },
     "holdBill": "Hold Bill",
     "openBills": "Open Bills",
@@ -293,6 +297,13 @@
       "reasonExport": "Export",
       "apply": "Apply exemption",
       "receiptLine": "BTW exempt"
+    },
+    "userMenu": {
+      "switchStore": "Switch store",
+      "keyboard": "On-screen keyboard"
+    },
+    "closeRegister": {
+      "action": "Close register"
     }
   },
   "reports": {
@@ -382,6 +393,12 @@
     "lockedAt": "Time"
   },
   "settings": {
+    "appearance": {
+      "title": "Appearance",
+      "night": "Night",
+      "day": "Day",
+      "help": "Match the light where the till stands. Night is the default because a shop opens before sunrise; Day reads better in daylight or under a skylight."
+    },
     "title": "Settings",
     "language": "Language",
     "dateFormat": "Date format",
@@ -520,5 +537,18 @@
     "notFound": "Not found",
     "unauthorized": "Access denied",
     "validationError": "Please check the entered data"
+  },
+  "roles": {
+    "super_admin": "Super Admin",
+    "organisation_admin": "Organisation Admin",
+    "store_manager": "Store Manager",
+    "cashier": "Cashier",
+    "auditor": "Auditor",
+    "tax_inspector": "Tax Inspector",
+    "api_integration": "API Integration"
+  },
+  "common": {
+    "on": "On",
+    "off": "Off"
   }
 }

@@ -69,7 +69,11 @@
       "editItem": "Artikel bewerken",
       "clear": "Leegmaken",
       "clearTitle": "Winkelwagen leegmaken?",
-      "clearBody": "Alle {{count}} artikelen worden verwijderd. Dit kan niet ongedaan worden gemaakt."
+      "clearBody": "Alle {{count}} artikelen worden verwijderd. Dit kan niet ongedaan worden gemaakt.",
+      "addDiscount": "+ toevoegen",
+      "remove": "Verwijderen",
+      "itemCount_one": "{{count}} artikel",
+      "itemCount_other": "{{count}} artikelen"
     },
     "holdBill": "Bon bewaren",
     "openBills": "Bewaarde bonnen",
@@ -293,6 +297,13 @@
       "reasonExport": "Export",
       "apply": "Vrijstelling toepassen",
       "receiptLine": "BTW vrijgesteld"
+    },
+    "userMenu": {
+      "switchStore": "Vestiging wisselen",
+      "keyboard": "Schermtoetsenbord"
+    },
+    "closeRegister": {
+      "action": "Kassa sluiten"
     }
   },
   "reports": {
@@ -382,6 +393,12 @@
     "lockedAt": "Tijd"
   },
   "settings": {
+    "appearance": {
+      "title": "Weergave",
+      "night": "Nacht",
+      "day": "Dag",
+      "help": "Kies wat past bij het licht op de toonbank. Nacht is standaard omdat een winkel voor zonsopgang opengaat; Dag leest beter bij daglicht of onder een dakraam."
+    },
     "title": "Instellingen",
     "language": "Taal",
     "dateFormat": "Datumformaat",
@@ -520,5 +537,18 @@
     "notFound": "Niet gevonden",
     "unauthorized": "Geen toegang",
     "validationError": "Controleer de ingevulde gegevens"
+  },
+  "roles": {
+    "super_admin": "Superbeheerder",
+    "organisation_admin": "Organisatiebeheerder",
+    "store_manager": "Filiaalmanager",
+    "cashier": "Kassier",
+    "auditor": "Auditor",
+    "tax_inspector": "Belastinginspecteur",
+    "api_integration": "API-integratie"
+  },
+  "common": {
+    "on": "Aan",
+    "off": "Uit"
   }
 }

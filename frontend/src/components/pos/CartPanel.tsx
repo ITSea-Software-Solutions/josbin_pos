@@ -71,7 +71,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
         {!isEmpty && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--text-secondary)' }}>
-              {items.length} {isNl ? 'artikel' : 'item'}{items.length !== 1 ? 's' : ''}
+              {t('pos.cart.itemCount', { count: items.length })}
             </span>
             <button
               onClick={() => setClearConfirmOpen(true)}
@@ -144,7 +144,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
                   </span>
                   <span
                     role="button"
-                    title={isNl ? 'Verwijderen' : 'Remove'}
+                    title={t('pos.cart.remove')}
                     onClick={(e) => { e.stopPropagation(); clearSaleDiscount() }}
                     style={{ marginLeft: 6, width: 18, height: 18, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1 }}
                   >×</span>
@@ -152,7 +152,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
               )}
             </span>
             <span className="currency-srd" style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-discount)' }}>
-              {saleDiscount.value > 0 ? `- SRD ${totals.saleDiscountAmount}` : '+ toevoegen'}
+              {saleDiscount.value > 0 ? `- SRD ${totals.saleDiscountAmount}` : t('pos.cart.addDiscount')}
             </span>
           </div>
 
@@ -179,7 +179,7 @@ export default function CartPanel({ onCheckout, onHoldBill }: CartPanelProps) {
                   </span>
                   <span
                     role="button"
-                    title={isNl ? 'Verwijderen' : 'Remove'}
+                    title={t('pos.cart.remove')}
                     onClick={(e) => { e.stopPropagation(); clearBtwExemption() }}
                     data-testid="btw-exempt-clear"
                     style={{ marginLeft: 6, width: 18, height: 18, borderRadius: '50%', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-elevated)', color: 'var(--text-secondary)', fontSize: 12, lineHeight: 1, cursor: 'pointer', flexShrink: 0 }}
