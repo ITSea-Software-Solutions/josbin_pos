@@ -50,6 +50,22 @@ class SurinameCatalogueSeeder extends Seeder
                 ->get()
                 ->keyBy(fn ($c) => mb_strtolower($c->name_nl));
 
+            // An organisation with none of the retail categories is not a shop
+            // — the vendor's own org, a ministry, a tenant mid-setup. Skip it
+            // rather than pushing a supermarket catalogue into it.
+            //
+            // The distinction matters, and the first run got it wrong: the
+            // guard below is meant to catch a MISSPELLED category, which is a
+            // bug in this file. A tenant that simply is not a supermarket is
+            // not a bug, and failing the whole seed on one was the actual
+            // error. Some-but-not-all still throws.
+            $needed = collect($this->lines())->pluck('category')
+                ->map(fn ($c) => mb_strtolower($c))->unique();
+            if ($needed->intersect($categories->keys())->isEmpty()) {
+                $this->command?->info("  skipped {$org->name} — no retail categories, not a shop");
+                continue;
+            }
+
             foreach ($this->lines() as $line) {
                 $cat = $categories[mb_strtolower($line['category'])] ?? null;
                 if (! $cat) {
@@ -57,9 +73,12 @@ class SurinameCatalogueSeeder extends Seeder
                     // afterwards: the product just quietly gets the fallback
                     // glyph and appears under no category filter, and nobody
                     // finds out until a shopkeeper cannot find their rice.
+                    // Reached only when the org HAS retail categories but not
+                    // this one — i.e. the name in lines() is wrong.
                     throw new \RuntimeException(
-                        "SurinameCatalogueSeeder: no category '{$line['category']}' for organisation "
-                        . "{$org->name}. Run CategoriesSeeder first, or correct the name."
+                        "SurinameCatalogueSeeder: organisation '{$org->name}' has retail categories "
+                        . "but not '{$line['category']}' — the name in lines() is wrong. "
+                        . 'Available: ' . $categories->keys()->implode(', ')
                     );
                 }
 
