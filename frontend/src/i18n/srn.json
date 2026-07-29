@@ -470,7 +470,8 @@
       "usbUnavailable": "USB-printi abi a Android-app fanowdu (versi 1.4.1 noso moro nyun). Installeri a moro nyun APK baka fu a downloadpagina.",
       "usbNone": "No wan USB-sani feni. Luku a kabel èn efu a printer de na tapu.",
       "usbNotPrinter": "no wan printer",
-      "usbDenied": "A USB-primisi weigri — fasi baka tapu Tai èn gi primisi."
+      "usbDenied": "A USB-primisi weigri — fasi baka tapu Tai èn gi primisi.",
+      "timing": "Bon meki na ini {{build}} ms · seni go na a printer na ini {{send}} ms · {{kb}} kB"
     },
     "system": {
       "title": "Systeem",

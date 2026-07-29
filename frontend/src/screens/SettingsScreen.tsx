@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useSettingsStore } from '@/store/settingsStore'
-import { getStore } from '@/api/stores'
+import { getStore, getReceiptMarks } from '@/api/stores'
 import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform, needsPrinterTypeHeal } from '@/lib/hardware'
 import { probeUsbPrinters, UsbPrinter, type UsbDeviceInfo, type UsbProbe } from '@/lib/usbPrinter'
 import { buildReceiptBytes, drawerVariants } from '@/lib/escpos'
@@ -35,6 +35,17 @@ export default function SettingsScreen() {
 
   // Bank options for the simulated-terminal preselect come from the org's
   // configured payment options (same source as the payment modal's chips).
+  const stampEnabled = useSettingsStore((s) => s.receiptStamp)
+
+  // Same query key as ReceiptModal, so both read one cache entry — the test
+  // print adds no round trip of its own.
+  const { data: marks } = useQuery({
+    queryKey: ['receipt-marks', storeId],
+    queryFn: () => getReceiptMarks(storeId!),
+    enabled: !!storeId,
+    staleTime: 60 * 60_000,
+  })
+
   const { data: settingsStoreData } = useQuery({
     queryKey: ['store', storeId],
     queryFn: () => getStore(storeId!),
@@ -62,6 +73,8 @@ export default function SettingsScreen() {
   const [sweepAt, setSweepAt] = useState<number | null>(null)
   const [sweepLog, setSweepLog] = useState<Array<{ id: number; label: string; ok: boolean; error?: string }>>([])
   const [receiptTestStatus, setReceiptTestStatus] = useState<HardwareTestStatus>('idle')
+  /** Measured cost of the last test print — see testReceiptPrint(). */
+  const [printMs, setPrintMs] = useState<{ build: number; send: number; bytes: number } | null>(null)
   const [labelTestStatus, setLabelTestStatus] = useState<HardwareTestStatus>('idle')
   const printerShareEnabled = useSettingsStore((s) => s.printerShareEnabled)
   const setPrinterShareEnabled = useSettingsStore((s) => s.setPrinterShareEnabled)
@@ -127,7 +140,13 @@ export default function SettingsScreen() {
   // takes (CP858 encoding, paper width, platform routing) — so a green test
   // here means sales will print.
   async function testReceiptPrint() {
-    setReceiptTestStatus('testing'); setHwError(null)
+    setReceiptTestStatus('testing'); setHwError(null); setPrintMs(null)
+    // "It still takes time" is not something we can act on, and guessing at
+    // the cause has already cost two wrong theories. The slip now reports how
+    // long it actually took, split at the only boundary that matters: making
+    // the bytes (ours, on the CPU) versus handing them to the printer (the
+    // USB/TCP round trip). Whichever number is large is the one to attack.
+    const t0 = performance.now()
     try {
       const locale = i18n.language === 'nl' ? 'nl' : 'en'
       const bytes = buildReceiptBytes({
@@ -156,14 +175,32 @@ export default function SettingsScreen() {
             btw_exempt: false,
           }],
         },
+        // The real store, not a placeholder. This slip is what a shop holds
+        // up to check its own header, footer and BTW number — printing
+        // "Josbin POS" told them nothing about their own setup.
         store: {
-          name: 'Josbin POS',
+          name:           settingsStoreData?.name ?? 'Josbin POS',
+          receipt_header: settingsStoreData?.receipt_header,
           receipt_footer: locale === 'nl' ? 'Testbon — geen verkoop' : 'Test receipt — not a sale',
+          btw_number:     settingsStoreData?.settings?.receipt_btw_number
+                          || settingsStoreData?.organisation?.btw_number || undefined,
         },
         locale,
         paperWidth: printer.paperWidth ?? 80,
+        // ...and the artwork. Without these the test slip could never show the
+        // header logo or the footer stamp, so "I uploaded it and the test
+        // print doesn't show it" was the test lying, not the upload failing.
+        ...(marks?.logo  ? { logoBits:  marks.logo }  : {}),
+        ...(stampEnabled && marks?.stamp ? { stampBits: marks.stamp } : {}),
       })
+      const tBuilt = performance.now()
       const result = await printEscPos(bytes, printer)
+      const tDone = performance.now()
+      setPrintMs({
+        build: Math.round(tBuilt - t0),
+        send:  Math.round(tDone - tBuilt),
+        bytes: bytes.length,
+      })
       setReceiptTestStatus(result.success ? 'ok' : 'error')
       if (!result.success) setHwError(result.error ?? null)
     } catch (e) {
@@ -800,6 +837,20 @@ export default function SettingsScreen() {
                receiptTestStatus === 'error'   ? `✗ ${t('settings.printer.printError')}` :
                `🧾 ${t('settings.printer.testPrint')}`}
             </button>
+          )}
+
+          {/* Where the time actually went. "It still takes time" cannot be
+              acted on; "sent in 2,840 ms" points straight at the hardware
+              round trip, and a large build number would point at us instead. */}
+          {printMs && (
+            <p
+              data-testid="print-timing"
+              style={{ fontSize: 11, color: 'var(--text-muted)', margin: '-4px 0 0', fontVariantNumeric: 'tabular-nums' }}
+            >
+              {t('settings.printer.timing', {
+                build: printMs.build, send: printMs.send, kb: (printMs.bytes / 1024).toFixed(1),
+              })}
+            </p>
           )}
 
           {printer.type !== 'none' && (

@@ -470,7 +470,8 @@
       "usbUnavailable": "USB-printen vereist de Android-app (versie 1.4.1 of nieuwer). Installeer de nieuwste APK opnieuw via de downloadpagina.",
       "usbNone": "Geen USB-apparaten gevonden. Controleer de kabel en of de printer aanstaat.",
       "usbNotPrinter": "geen printer",
-      "usbDenied": "USB-toestemming geweigerd — tik opnieuw op Verbinden en sta het toe."
+      "usbDenied": "USB-toestemming geweigerd — tik opnieuw op Verbinden en sta het toe.",
+      "timing": "Bon opgebouwd in {{build}} ms · naar printer gestuurd in {{send}} ms · {{kb}} kB"
     },
     "system": {
       "title": "Systeem",

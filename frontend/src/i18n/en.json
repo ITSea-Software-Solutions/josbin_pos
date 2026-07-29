@@ -470,7 +470,8 @@
       "usbUnavailable": "USB printing needs the Android app (version 1.4.1 or newer). Reinstall the latest APK from the download page.",
       "usbNone": "No USB devices found. Check the cable and that the printer is switched on.",
       "usbNotPrinter": "not a printer",
-      "usbDenied": "USB permission was refused — tap Connect again and allow it."
+      "usbDenied": "USB permission was refused — tap Connect again and allow it.",
+      "timing": "Receipt built in {{build}} ms · sent to printer in {{send}} ms · {{kb}} kB"
     },
     "system": {
       "title": "System",

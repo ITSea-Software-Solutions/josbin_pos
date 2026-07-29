@@ -53,9 +53,18 @@ class ReceiptStampService
     /** How much of a rubber stamp's tilt to imitate. Degrees, anticlockwise. */
     private const STAMP_ROTATE_DEG = 11.0;
 
-    /** Fraction of the stamp's dots actually burned. ~45% reads as a faded
-     *  ink impression and lets the printed text show through it. */
-    private const STAMP_KEEP = 0.45;
+    /** Fraction of the stamp's dots actually burned.
+     *
+     *  This started at 0.45, which looked right on a screen and came out of a
+     *  thermal printer as a barely-there smudge. A screen renders a dropped
+     *  dot as white next to a black one and the eye averages them into grey;
+     *  an 80 mm thermal head at 203 dpi burns a dot that is already smaller
+     *  than its cell, so dropping every other one leaves gaps rather than grey
+     *  — and the 11 degree tilt thins the diagonal strokes again on resample.
+     *  0.70 still reads as a faded impression with the text showing through,
+     *  and still survives a warm head and cheap paper. Do not lower it without
+     *  printing one on real hardware. */
+    private const STAMP_KEEP = 0.70;
 
     /** Ordered 4x4 dither. Spreading the dropped dots evenly looks like
      *  lighter ink; dropping them in blocks would look like a printing fault. */

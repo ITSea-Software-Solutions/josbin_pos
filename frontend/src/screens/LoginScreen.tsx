@@ -621,7 +621,7 @@ export default function LoginScreen() {
             )}
           </div>
           <div style={{ fontSize: 11, color: 'rgba(148,163,184,0.3)', letterSpacing: '0.3px' }}>
-            Josbin POS v1.0 &nbsp;·&nbsp; © 2026
+            Josbin POS v{__APP_VERSION__} &nbsp;·&nbsp; © 2026
           </div>
         </div>
       </div>
