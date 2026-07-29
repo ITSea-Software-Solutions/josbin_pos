@@ -727,6 +727,36 @@ Two more from the same fix, both worth their own rule:
   derived from the single source, never mirrored — a mirror is a thing that
   drifts silently, and the drift only shows up on the device.
 
+  **G-054 (verified the wrong artifact).** 1.7.0's APK shipped a web bundle
+  from a PREVIOUS build. `npx cap sync` aborted on a Node >=22 guard, the
+  build command ended in `| tail -3` so the failure scrolled past unseen, and
+  Gradle packaged whatever was already in `android/app/src/main/assets/public`
+  — stamping it 1.7.0 on the way. Everything else that day passed: 156 tests
+  green, tsc clean, the exe correct, and the *web* deploy on :8091 served the
+  new code, which is what I checked. So a real verification was recorded
+  against an artifact nobody was installing, while the terminal in the field
+  ran the old UI and the user reported the features "missing".
+
+  Three rules out of it:
+  1. **Verify the artifact, not its inputs.** Source, tests and a parallel
+     deploy of the same code prove nothing about what is inside the .apk/.exe.
+     `scripts/verify-artifacts.sh <version>` now greps the packaged bundle for
+     feature markers and refuses to ship when they are absent. It was written
+     against the broken 1.7.0 APK and rejects it.
+  2. **Never `| tail -N` a build step whose failure you need to see.** Grep for
+     the failure signatures instead. A copy step that fails without failing the
+     build is invisible at the tail.
+  3. **A version stamp is applied to whatever is found, not to what was built.**
+     Gradle wrote versionName 1.7.0 onto stale assets quite happily, so the
+     APK reported the right version while containing the wrong app — which is
+     precisely why "which version am I on?" was unanswerable from the device.
+
+  That last point is why the same release also had to fix the login screen,
+  which had printed a hardcoded "v1.0" since 1.0.0: with no truthful version
+  anywhere in the UI, neither the shop nor we could tell a stale install from
+  a stale build. Version is now on the login screen AND in the profile menu.
+
+
   Also worth recording: the release APKs are signed with the **Android debug
   keystore** (`~/.android/debug.keystore`, alias `androiddebugkey`), the same
   key since 1.0.0. That is deliberate for sideloaded terminal installs — the

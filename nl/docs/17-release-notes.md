@@ -11,7 +11,27 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.7.0 — 29 juli 2026 *(actueel)*
+## 1.7.1 — 29 juli 2026 *(actueel)*
+
+- **De app laat nu zien welke versie er draait.** Zowel het inlogscherm als het
+  menu onder uw naam tonen het. Tot nu toe stond er altijd "v1.0" op het
+  inlogscherm, ongeacht wat er geïnstalleerd was — er was dus geen manier om
+  een bijgewerkte kassa te onderscheiden van een overgeslagen kassa, de meest
+  voorkomende oorzaak van "de nieuwe functie staat er niet".
+- **De testbon drukt nu uw eigen logo en stempel af.** Hij werd opgebouwd uit
+  een voorbeeldwinkel en bevatte helemaal geen afbeeldingen, dus hij kon ze
+  nooit tonen, hoe het uploaden ook was verlopen. Hij gebruikt nu de naam,
+  koptekst en het BTW-nummer van uw eigen winkel, en dezelfde afbeeldingen als
+  een echte bon.
+- **De voetstempel drukt donkerder af.** Hij was zo ver vervaagd dat een
+  thermische printer er nauwelijks iets van overliet. Hij oogt nog steeds als
+  een stempel waar de tekst doorheen leesbaar blijft — er ligt nu alleen genoeg
+  inkt op het papier om hem te zien.
+- **De testafdruk meldt hoe lang hij duurde**, gesplitst tussen het opmaken van
+  de bon en het versturen naar de printer, zodat een trage kassa aan het juiste
+  onderdeel kan worden toegeschreven in plaats van geraden.
+
+## 1.7.0 — 29 juli 2026
 
 - **Een dagweergave.** De kassa was altijd donker — juist voor een winkel die
   vóór zonsopgang opengaat, verkeerd voor een toonbank onder een lichtkoepel om

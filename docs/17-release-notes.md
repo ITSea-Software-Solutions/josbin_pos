@@ -11,7 +11,25 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.7.0 — 29 July 2026 *(current)*
+## 1.7.1 — 29 July 2026 *(current)*
+
+- **The app now tells you which version it is.** The sign-in screen and the
+  menu under your name both show it. Until now the sign-in screen always read
+  "v1.0" whatever was installed, so there was no way to tell an updated till
+  from one that had been missed — the commonest cause of "the new feature
+  isn't there".
+- **The test slip now prints your own logo and stamp.** It was built from a
+  placeholder shop and carried no artwork at all, so it could never show them
+  however the upload had gone. It now uses your shop's name, header and BTW
+  number, and the same images a real receipt uses.
+- **The footer stamp prints darker.** It had been faded so far that a thermal
+  printer left barely a mark. It still reads as a stamp with the text showing
+  through — there is just enough ink on the paper to see it.
+- **The test print reports how long it took**, split between preparing the
+  receipt and sending it to the printer, so a slow till can be pinned on the
+  right thing instead of guessed at.
+
+## 1.7.0 — 29 July 2026
 
 - **A day screen.** The till has always been dark, which is right for a shop
   that opens before sunrise and wrong for a counter under a skylight at noon.
