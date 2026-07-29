@@ -78,6 +78,13 @@ class StoreController extends Controller
             // End-of-day freedom knobs (morning-recovery batch): each store
             // picks its own closing hour and whether/when the nightly
             // auto-close seals forgotten sessions.
+            // Receipt registrations. Validated explicitly because the merge
+            // only keeps keys that appear in this list — a key that is not
+            // named here is accepted with a 200 and then silently dropped,
+            // which is exactly how receipt_kkf_number looked like it saved and
+            // never reached a receipt.
+            'settings.receipt_btw_number' => ['nullable', 'string', 'max:40'],
+            'settings.receipt_kkf_number' => ['nullable', 'string', 'max:40'],
             'settings.closing_time'       => ['nullable', 'date_format:H:i'],
             'settings.auto_close_enabled' => ['sometimes', 'boolean'],
             'settings.auto_close_time'    => ['nullable', 'date_format:H:i'],
