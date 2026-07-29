@@ -48,8 +48,12 @@ class ReceiptStampService
      */
     private const LOGO_WIDTH  = 380;
     private const LOGO_MAX_H  = 110;
-    private const STAMP_WIDTH = 150;
-    private const STAMP_MAX_H = 110;
+    // Small on purpose. A countersign at the foot of a ticket is a mark, not
+    // a second logo — and every dot of its height is time the customer stands
+    // at the counter waiting for the paper. ~13 mm wide at 203 dpi; the tilt
+    // grows the bounding box a little beyond these on the way out.
+    private const STAMP_WIDTH = 100;
+    private const STAMP_MAX_H = 80;
 
     /** Tallest we will let a stamp be, in dots. A tall image is metres of
      *  paper across a trading day, and nobody notices until the roll runs out
@@ -91,7 +95,7 @@ class ReceiptStampService
      * 0.45 to 0.70 ink fix looked like it had not shipped: correct code
      * deployed, stale bitmap served.
      */
-    private const RASTER_REVISION = 3;
+    private const RASTER_REVISION = 4;
 
     /** Ordered 4x4 dither. Spreading the dropped dots evenly looks like
      *  lighter ink; dropping them in blocks would look like a printing fault. */
