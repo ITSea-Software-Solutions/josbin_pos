@@ -51,7 +51,7 @@ class ReceiptStampService
     private const LUMA_CUTOFF = 190;
 
     /**
-     * @return array{b64:string,width:int,height:int}|null
+     * @return array{b64:string,width:int,height:int,coverage:float}|null
      */
     public function forStore(Store $store): ?array
     {
@@ -117,7 +117,7 @@ class ReceiptStampService
     }
 
     /**
-     * @return array{b64:string,width:int,height:int}|null
+     * @return array{b64:string,width:int,height:int,coverage:float}|null
      */
     private function rasterise(string $bytes): ?array
     {
@@ -174,18 +174,29 @@ class ReceiptStampService
         }
         imagedestroy($dst);
 
-        // Refuse the two failure modes that produce a ruined receipt rather
-        // than a missing logo: a blank stamp, and a black bar. Returning null
-        // makes the till fall back to its built-in mark.
+        // Refuse only what is genuinely broken — a blank stamp, or a solid
+        // slab of ink. NOT merely "dark".
+        //
+        // The first ceiling here was 60%, and it silently rejected a real
+        // logo that measured 60.6%: a mark with a coloured background and the
+        // letters knocked out in white, which is an entirely normal way for a
+        // logo to be drawn. It printed nothing, said nothing, and cost a day.
+        // 85% still catches an all-black rectangle while letting a
+        // solid-background mark through.
+        //
+        // Coverage travels back with the bitmap so the upload screen can warn
+        // that a dark image will come out heavy on thermal paper — a warning
+        // the shop can act on beats a refusal it never sees.
         $coverage = $inked / ($w * $h);
-        if ($coverage < 0.01 || $coverage > 0.60) {
+        if ($coverage < 0.01 || $coverage > 0.85) {
             return null;
         }
 
         return [
-            'b64'    => base64_encode(pack('C*', ...$packed)),
-            'width'  => $w,
-            'height' => $h,
+            'b64'      => base64_encode(pack('C*', ...$packed)),
+            'width'    => $w,
+            'height'   => $h,
+            'coverage' => round($coverage, 3),
         ];
     }
 }
