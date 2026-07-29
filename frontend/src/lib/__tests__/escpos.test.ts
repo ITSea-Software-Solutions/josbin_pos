@@ -335,22 +335,39 @@ describe('escpos — the shop\'s own footer stamp', () => {
     // Getting these two backwards is the classic way to print noise.
     const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp }))
     const at = indexOfSubsequence(bytes, GS_V_0)
-    expect(bytes[at + 4] | (bytes[at + 5] << 8)).toBe(72)   // 576-dot head, 80 mm
+    // The IMAGE's own width, not the head's. Padding every row out to the
+    // full head tripled the payload and made the printer chew through blank
+    // dots on every receipt; centring is done by moving the head instead.
+    expect(bytes[at + 4] | (bytes[at + 5] << 8)).toBe(30)   // 240 dots / 8
     expect(bytes[at + 6] | (bytes[at + 7] << 8)).toBe(16)
   })
 
-  it('narrows to the 384-dot head on 58 mm paper', () => {
-    const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp, paperWidth: 58 }))
-    const at = indexOfSubsequence(bytes, GS_V_0)
-    expect(bytes[at + 4] | (bytes[at + 5] << 8)).toBe(48)
+  it('ships the same image bytes whatever the paper width', () => {
+    // Paper width now changes only the INDENT, never the payload — a 58 mm
+    // roll should not cost a different number of bytes for the same image.
+    const wide   = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp }))
+    const narrow = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp, paperWidth: 58 }))
+    for (const b of [wide, narrow]) {
+      const at = indexOfSubsequence(b, GS_V_0)
+      expect(b[at + 4] | (b[at + 5] << 8)).toBe(30)
+    }
   })
 
-  it('centres by padding rows, not with an alignment command', () => {
-    // Several ESC/POS clones ignore ESC a for raster data and left-align it.
+  it('centres by moving the head (ESC $), not by padding the data', () => {
+    // Several ESC/POS clones ignore ESC a for raster data and left-align it,
+    // so justification is not an option — but ESC $, an absolute horizontal
+    // position in dots, is widely honoured and costs no bytes per row.
     const bytes = buildReceiptBytes(makeReceiptOptions({ stampBits: fakeStamp }))
     const at = indexOfSubsequence(bytes, GS_V_0)
-    const pad = Math.floor((72 - 30) / 2)
-    for (let i = 0; i < pad; i++) expect(bytes[at + 8 + i]).toBe(0x00)
+    // ESC $ nL nH immediately precedes the raster header.
+    expect(bytes[at - 4]).toBe(0x1b)
+    expect(bytes[at - 3]).toBe(0x24)
+    const indent = bytes[at - 2] | (bytes[at - 1] << 8)
+    expect(indent).toBe(Math.floor(((72 - 30) / 2) * 8))   // centred on a 576-dot head
+
+    // ...and the first row is IMAGE data, not the blank padding it used to be.
+    const firstRow = bytes.slice(at + 8, at + 8 + 30)
+    expect(firstRow.some((b) => b !== 0x00)).toBe(true)
   })
 
   it('prints no QR — the verification code was removed from the receipt', () => {
