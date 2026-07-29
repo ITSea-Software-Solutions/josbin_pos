@@ -92,7 +92,11 @@ class SurinameCatalogueSeeder extends Seeder
                         'cost_price'  => round($line['price'] * 0.72, 2),
                         'btw_rate'    => $line['exempt'] ? '0.00' : '10.00',
                         'btw_exempt'  => $line['exempt'],
-                        'unit'        => $line['unit'] ?? 'stuk',
+                        // products.unit carries a CHECK constraint (each|kg|g|l|ml|pak), so the
+                        // Dutch words a shopkeeper would say — stuk, zak — are not valid
+                        // here. 'each' is the neutral default the schema expects; the
+                        // human-readable size already lives in the product name.
+                        'unit'        => $line['unit'] ?? 'each',
                         'is_active'   => true,
                     ]
                 );
@@ -127,7 +131,7 @@ class SurinameCatalogueSeeder extends Seeder
             ['barcode' => '8712000000172', 'nl' => 'Kokoswater 33 cl',            'en' => 'Coconut water 33 cl',          'category' => 'Dranken',   'price' => 15.00, 'exempt' => false],
 
             // ── Rijst & droge waren (basisvoedsel — BTW-vrij) ───────────────
-            ['barcode' => '8712000000210', 'nl' => 'A1 Rijst Nickerie 5 kg',      'en' => 'A1 Rice Nickerie 5 kg',        'category' => 'Rijst & Pasta',     'price' => 78.00, 'exempt' => true, 'unit' => 'zak'],
+            ['barcode' => '8712000000210', 'nl' => 'A1 Rijst Nickerie 5 kg',      'en' => 'A1 Rice Nickerie 5 kg',        'category' => 'Rijst & Pasta',     'price' => 78.00, 'exempt' => true, 'unit' => 'pak'],
             ['barcode' => '8712000000227', 'nl' => 'Witte rijst los per kg',      'en' => 'White rice loose per kg',      'category' => 'Rijst & Pasta',     'price' => 16.50, 'exempt' => true, 'unit' => 'kg'],
             ['barcode' => '8712000000234', 'nl' => 'Bruine bonen 500 g',          'en' => 'Brown beans 500 g',            'category' => 'Rijst & Pasta',     'price' => 18.00, 'exempt' => true],
             ['barcode' => '8712000000241', 'nl' => 'Zwarte ogen bonen 500 g',     'en' => 'Black-eyed peas 500 g',        'category' => 'Rijst & Pasta',     'price' => 17.50, 'exempt' => true],
