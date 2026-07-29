@@ -66,6 +66,24 @@ class PlatformBrandingController extends Controller
             'stamp' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
         ]);
 
+        // Refuse an image this server cannot actually decode, HERE, while the
+        // person who chose it is still looking at the screen.
+        //
+        // Laravel's `image` rule uses getimagesize(), which reads a header and
+        // needs no GD support for the format. So a JPEG uploaded to a build
+        // whose GD lacks JPEG passed validation, stored happily, and then
+        // produced nothing on paper — with no error anywhere, on any screen.
+        // The upload said "Uploaded ✓" and the receipt came out blank, which
+        // is the worst way for software to fail.
+        $probe = @imagecreatefromstring((string) file_get_contents($request->file('stamp')->getRealPath()));
+        if ($probe === false) {
+            return response()->json([
+                'message' => __('errors.image_not_decodable'),
+                'code'    => 'IMAGE_NOT_DECODABLE',
+            ], 422);
+        }
+        imagedestroy($probe);
+
         $old = AppSetting::get(self::STAMP_KEY);
 
         $path = $request->file('stamp')->store('branding', 'public');

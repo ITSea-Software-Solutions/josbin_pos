@@ -81,6 +81,26 @@ export interface PrinterInfo {
 
 // ── Print raw ESC/POS bytes ─────────────────────────────────────────────────
 
+/**
+ * Bytes → base64, for handing a print job to the native layer.
+ *
+ * `Array.from(bytes)` sent every single byte across the Capacitor bridge as
+ * its own JSON number: a 3 KB receipt became ~3,000 array entries to
+ * serialise in JavaScript, marshal through the WebView, and read back one at
+ * a time in Java. On a till terminal that is seconds of work before the
+ * printer is even addressed — and it happens on the Settings test print too,
+ * which touches no network, which is how the delay was finally spotted.
+ * Base64 is ~1.3 KB of string and one decode call on the other side.
+ */
+function bytesToBase64(bytes: Uint8Array): string {
+  let bin = ''
+  const CHUNK = 0x8000 // apply() has an argument-count ceiling
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode(...bytes.subarray(i, i + CHUNK))
+  }
+  return btoa(bin)
+}
+
 export async function printEscPos(
   bytes: Uint8Array,
   config: PrinterConfig,
@@ -122,7 +142,7 @@ export async function printEscPos(
         await UsbPrinter.print({
           vendorId: config.usbVendorId,
           productId: config.usbProductId,
-          data: Array.from(bytes),
+          dataB64: bytesToBase64(bytes),
         })
         return { success: true }
       } catch (err: any) {

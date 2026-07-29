@@ -11,7 +11,25 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.5.9 — 28 July 2026 *(current)*
+## 1.6.0 — 29 July 2026 *(current)*
+
+- **Printing is much faster on Android terminals.** The receipt was being
+  handed to the printer one byte at a time — a three-kilobyte receipt meant
+  three thousand separate values to package up and unpack again before the
+  printer was even opened. It now goes across in one piece. This is what made
+  the till feel slow before printing started, including on the Settings test
+  print, which never touched the network at all.
+- **The test receipt shows the date the way a real receipt does** — Suriname
+  time, day first, in the store's chosen order. It was still printing the raw
+  technical timestamp, which made it look as though the date had never been
+  fixed.
+- **An image the server cannot read is now refused when you upload it.** JPEG
+  images were accepted, stored, and then silently ignored at print time,
+  because this server's image library was built without JPEG support. Both
+  are fixed: JPEG now works, and anything still unreadable is rejected on the
+  spot with a message instead of quietly printing nothing.
+
+## 1.5.9 — 28 July 2026
 
 - **The receipt never waits for the server.** The shop's details are now
   fetched when the POS screen opens rather than at the moment a receipt is

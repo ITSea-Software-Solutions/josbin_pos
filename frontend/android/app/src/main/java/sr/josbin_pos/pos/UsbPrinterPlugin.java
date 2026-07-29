@@ -230,11 +230,9 @@ public class UsbPrinterPlugin extends Plugin {
     public void print(PluginCall call) {
         int vendorId = call.getInt("vendorId", -1);
         int productId = call.getInt("productId", -1);
+        // Either form is acceptable; the payload is validated where it is
+        // decoded below, so that one place decides what "missing" means.
         JSArray data = call.getArray("data");
-        if (data == null) {
-            call.reject("data is required");
-            return;
-        }
 
         UsbDevice device = findDevice(vendorId, productId);
         if (device == null) {
@@ -261,9 +259,28 @@ public class UsbPrinterPlugin extends Plugin {
 
         byte[] bytes;
         try {
-            bytes = new byte[data.length()];
-            for (int i = 0; i < data.length(); i++) {
-                bytes[i] = (byte) data.getInt(i);
+            // Base64 is the fast path and what the app sends.
+            //
+            // The payload used to arrive as a JSON array of integers — one
+            // entry per byte — so a 3 KB receipt meant ~3,000 numbers to
+            // serialise in JavaScript, marshal across the WebView bridge, and
+            // read back one at a time through getInt(). That cost seconds on a
+            // till terminal, before the printer was even opened, and it showed
+            // up on the Settings test print too, which touches no network at
+            // all. One decode replaces the whole loop.
+            String b64 = call.getString("dataB64");
+            if (b64 != null) {
+                bytes = android.util.Base64.decode(b64, android.util.Base64.DEFAULT);
+            } else if (data != null) {
+                // Older callers. Kept so a mismatched app/plugin pair degrades
+                // to slow rather than broken.
+                bytes = new byte[data.length()];
+                for (int i = 0; i < data.length(); i++) {
+                    bytes[i] = (byte) data.getInt(i);
+                }
+            } else {
+                call.reject("data or dataB64 is required");
+                return;
             }
         } catch (Exception e) {
             call.reject("Bad print payload: " + e.getMessage());

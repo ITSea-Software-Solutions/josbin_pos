@@ -47,7 +47,7 @@ export interface UsbProbe {
 interface UsbPrinterPlugin {
   listDevices(): Promise<UsbProbe>
   requestPermission(options: { vendorId: number; productId: number }): Promise<{ granted: boolean }>
-  print(options: { vendorId: number; productId: number; data: number[] }): Promise<{ success: boolean; bytes: number }>
+  print(options: { vendorId: number; productId: number; dataB64?: string; data?: number[] }): Promise<{ success: boolean; bytes: number }>
 }
 
 export const UsbPrinter = registerPlugin<UsbPrinterPlugin>('UsbPrinter')

@@ -11,7 +11,25 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.5.9 — 28 juli 2026 *(actueel)*
+## 1.6.0 — 29 juli 2026 *(actueel)*
+
+- **Printen is veel sneller op Android-terminals.** De bon werd byte voor byte
+  aan de printer doorgegeven — een bon van drie kilobyte betekende drieduizend
+  losse waarden inpakken en weer uitpakken vóórdat de printer überhaupt werd
+  aangesproken. Dat gaat nu in één keer. Dit veroorzaakte de traagheid vóór het
+  printen, ook bij de testbon in Instellingen, die helemaal geen netwerk
+  gebruikt.
+- **De testbon toont de datum zoals een echte bon dat doet** — Surinaamse tijd,
+  dag eerst, in de volgorde die de winkel heeft gekozen. Er stond nog de ruwe
+  technische tijdcode, waardoor het leek alsof de datum nooit was gecorrigeerd.
+- **Een afbeelding die de server niet kan lezen wordt nu geweigerd bij het
+  uploaden.** JPEG-afbeeldingen werden geaccepteerd, opgeslagen en vervolgens
+  stilzwijgend genegeerd bij het printen, omdat de beeldbibliotheek van deze
+  server zonder JPEG-ondersteuning was gebouwd. Beide zijn verholpen: JPEG
+  werkt nu, en wat alsnog onleesbaar is wordt direct met een melding
+  geweigerd in plaats van stilletjes niets te printen.
+
+## 1.5.9 — 28 juli 2026
 
 - **De bon wacht nooit meer op de server.** De winkelgegevens worden nu
   opgehaald zodra het kassascherm opent, in plaats van op het moment dat er een

@@ -5,6 +5,9 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     libpng-dev \
+    libjpeg62-turbo-dev \
+    libwebp-dev \
+    libfreetype6-dev \
     libonig-dev \
     libxml2-dev \
     libpq-dev \
@@ -13,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libicu-dev \
     zip \
     unzip \
+    && docker-php-ext-configure gd --with-jpeg --with-webp --with-freetype \
     && docker-php-ext-install \
         pdo \
         pdo_pgsql \

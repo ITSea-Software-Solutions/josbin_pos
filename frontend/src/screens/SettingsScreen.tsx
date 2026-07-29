@@ -6,6 +6,7 @@ import { getStore } from '@/api/stores'
 import { listPrinters, openCashDrawer, printEscPos, printHtmlSheet, detectPlatform, needsPrinterTypeHeal } from '@/lib/hardware'
 import { probeUsbPrinters, UsbPrinter, type UsbDeviceInfo, type UsbProbe } from '@/lib/usbPrinter'
 import { buildReceiptBytes, drawerVariants } from '@/lib/escpos'
+import { formatDateTime } from '@/utils/date'
 import { LABEL_SIZES, PX_PER_MM, barcodeDataUrl, generateLabelSheetHTML } from '@/lib/labelSheet'
 import type { ProductDisplay } from '@/store/settingsStore'
 import type { PrinterConfig } from '@/lib/hardware'
@@ -131,7 +132,11 @@ export default function SettingsScreen() {
       const bytes = buildReceiptBytes({
         sale: {
           sale_number: 'TEST-0001',
-          occurred_at: new Date().toISOString(),
+          // Format it the way a real receipt does — AST, day-first, the
+          // store's chosen order. The test slip is what a shop checks the
+          // layout against, so printing a raw ISO timestamp here made it look
+          // like the date fix had never shipped.
+          occurred_at: formatDateTime(new Date().toISOString(), dateFormat, locale),
           cashier_name: 'Josbin POS',
           payment_method: 'cash',
           subtotal_srd: '10.00',
