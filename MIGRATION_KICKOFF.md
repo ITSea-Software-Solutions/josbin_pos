@@ -12,12 +12,12 @@ session begins with the conclusions rather than re-deriving them.
 
 | | Where | What it is |
 |---|---|---|
-| Plan, ch 19–24 | `migration-architecture-plan/` · live at `http://142.93.88.143:8095/migration-architecture-plan` | The whole target architecture, decisions, and build list |
+| Plan, ch 19–25 | `migration-architecture-plan/` · live at `http://142.93.88.143:8095/migration-architecture-plan` | The whole target architecture, decisions, and build list |
 | `CLAUDE_WORKING_GUIDE.md` | repo root | How we work — surfaces checklist §2, journeys §3, gotcha registry §4 (now through G-058) |
 | `FEATURES_AND_FLOWS.md` | repo root | 220 catalogued features with status. The disposition table in ch 21 is generated from it |
 | `HANDOVER.md` | repo root | Live infra, ports, secret locations (names only), standing rules |
 
-The five plan chapters:
+The seven plan chapters:
 
 - **19 — Three-node architecture.** Target shape, the four wires, offline licence verification.
 - **20 — Split build plan.** Freeze list, nine critical journeys (five must not change), seven steps with a gate each.
@@ -25,6 +25,7 @@ The five plan chapters:
 - **22 — Authentication & security.** Two keypairs, payload signing, the tax wire, what a stolen disk gets you.
 - **23 — Installs & artifacts.** What a customer receives, three shop shapes, the standalone Android node.
 - **24 — Release engineering, operations & compliance.** CI releases, update channel, contract tests, migrations, RTO/RPO, what compliance docs must become.
+- **25 — Deployment topologies.** The six shapes a shop can be sold (T1–T6), a connection diagram each, which sell offline, relay-vs-re-sign, and the transitions between them.
 
 ---
 
@@ -59,9 +60,11 @@ The shop is the system of record; control holds rollups (megabytes a year for 20
 shops) and object storage holds per-shop encrypted dumps we cannot read. Archive
 key escrowed in control, **separately from the archive store**, every use logged.
 
-Later decisions, in ch 23–24: one repo; images not repos to customers; one Android
+Later decisions, in ch 23–25: one repo; images not repos to customers; one Android
 APK with two modes; native Kotlin node with the React UI over the bridge;
-standalone is single-till and licence-enforced.
+standalone is single-till and licence-enforced; six deployment topologies of which
+**T1/T2 (cloud-hosted node) cannot sell offline** and must not go to the interior;
+our cloud may relay a filing but must never re-sign it.
 
 ---
 
