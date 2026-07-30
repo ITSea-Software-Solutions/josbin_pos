@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getReportSeries } from '@/api/reports'
 import { BreakdownBars, ChartCard, Legend, NoData, StatTile, TrendChart } from './Charts'
-import { INK, srd } from './viz'
+import { INK, SERIES, srd } from './viz'
 
 /**
  * The graphs, shared by every role that gets them.
@@ -17,12 +17,16 @@ import { INK, srd } from './viz'
  * than one store, so a single-shop manager is not shown a bar chart with one bar.
  */
 export default function AnalyticsPanel({
-  storeId, organisationId, dateFrom, dateTo,
+  storeId, organisationId, dateFrom, dateTo, palette = SERIES,
 }: {
   storeId?: string
   organisationId?: string
   dateFrom: string
   dateTo: string
+  /** Categorical slots. The tax-inspector screens pass SERIES_BD so the charts
+   *  wear the national green rather than Josbin's navy — a chart that ignores
+   *  the screen it sits on reads as a bolted-on widget. */
+  palette?: readonly string[]
 }) {
   const { t, i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
@@ -107,15 +111,15 @@ export default function AnalyticsPanel({
 
       <ChartCard title={L.trend} hint={L.trendHint} height={250}
         right={<Legend items={[{ key: 'sales', label: L.sales }, { key: 'btw', label: L.btw }]}
-                       domain={['sales', 'btw']} />}>
+                       domain={['sales', 'btw']} palette={palette} />}>
         {nothing ? <NoData message={L.empty} />
-                 : <TrendChart data={data.trend} labels={{ sales: L.sales, btw: L.btw, txns: L.txns }} />}
+                 : <TrendChart data={data.trend} palette={palette} labels={{ sales: L.sales, btw: L.btw, txns: L.txns }} />}
       </ChartCard>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: 14 }}>
         <ChartCard title={L.products} height={barsH(data.products.length)}>
           {data.products.length === 0 ? <NoData message={L.empty} /> : (
-            <BreakdownBars valueLabel={L.revenue} domain={prodDomain}
+            <BreakdownBars palette={palette} valueLabel={L.revenue} domain={prodDomain}
               data={data.products.map((p) => ({
                 key: p.name, label: p.name.length > 22 ? p.name.slice(0, 21) + '…' : p.name,
                 value: p.revenue, sub: `${p.qty} × `,
@@ -125,7 +129,7 @@ export default function AnalyticsPanel({
 
         <ChartCard title={L.payments} height={barsH(data.payments.length)}>
           {data.payments.length === 0 ? <NoData message={L.empty} /> : (
-            <BreakdownBars valueLabel={L.revenue} domain={payDomain}
+            <BreakdownBars palette={palette} valueLabel={L.revenue} domain={payDomain}
               data={data.payments.map((p) => ({
                 key: p.method, label: payLabel(p.method), value: p.total,
                 sub: `${p.txns} ${L.txns.toLowerCase()}`,
@@ -142,7 +146,7 @@ export default function AnalyticsPanel({
               every rate shows up; the BTW figure rides along as the sub-label
               and in the tooltip. */}
           {data.btw.length === 0 ? <NoData message={L.empty} /> : (
-            <BreakdownBars valueLabel={L.turnover} domain={btwDomain}
+            <BreakdownBars palette={palette} valueLabel={L.turnover} domain={btwDomain}
               data={data.btw.map((b) => ({
                 key: b.rate, label: b.rate, value: b.base,
                 sub: `BTW ${srd(b.btw)}`,
@@ -152,7 +156,7 @@ export default function AnalyticsPanel({
 
         <ChartCard title={L.cashiers} height={barsH(data.cashiers.length)}>
           {data.cashiers.length === 0 ? <NoData message={L.empty} /> : (
-            <BreakdownBars valueLabel={L.revenue} domain={cashDomain}
+            <BreakdownBars palette={palette} valueLabel={L.revenue} domain={cashDomain}
               data={data.cashiers.map((c) => ({
                 key: c.name, label: c.name, value: c.total,
                 sub: `${c.txns} × · ${srd(c.basket ?? 0)}`,
@@ -164,7 +168,7 @@ export default function AnalyticsPanel({
             manager does not need a bar chart with one bar in it. */}
         {data.stores.length > 1 && (
           <ChartCard title={L.stores} height={barsH(data.stores.length)}>
-            <BreakdownBars valueLabel={L.revenue} domain={storeDomain}
+            <BreakdownBars palette={palette} valueLabel={L.revenue} domain={storeDomain}
               data={data.stores.map((s) => ({
                 key: s.name, label: s.name, value: s.total,
                 sub: `${s.txns} × · BTW ${srd(s.btw ?? 0)}`,

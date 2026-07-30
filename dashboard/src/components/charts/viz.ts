@@ -34,6 +34,30 @@ export const SERIES = [
   '#A0522D', // 8 sienna
 ] as const
 
+/**
+ * Belastingdienst variant. The tax-inspector screens carry their own identity —
+ * the national green, not Josbin's navy — and a chart that ignores that reads as
+ * a bolted-on widget. Same method, different first hue: green leads, the flag's
+ * red follows, then hues chosen to separate rather than to decorate.
+ *
+ * Validated exactly like SERIES:
+ *   node scripts/validate_palette.js "#2E8B57,#C1121F,#B8860B,#1E5C9E,#A0522D,#6B4FA8,#0F9BB5,#8A8F2E" --mode light
+ *
+ * Two earlier attempts FAILED and are worth not repeating: violet beside navy
+ * separates by only ΔE 2.3 for a protan reader, and a muted teal fell under the
+ * chroma floor and read as grey.
+ */
+export const SERIES_BD = [
+  '#2E8B57', // 1 green   — Belastingdienst
+  '#C1121F', // 2 red     — the flag's other colour
+  '#B8860B', // 3 gold
+  '#1E5C9E', // 4 navy
+  '#A0522D', // 5 sienna
+  '#6B4FA8', // 6 violet
+  '#0F9BB5', // 7 teal
+  '#8A8F2E', // 8 olive
+] as const
+
 /** Magnitude, one hue light→dark. Never a rainbow. */
 export const SEQUENTIAL = ['#D6E4F0', '#A8C6E0', '#6F9FCB', '#3B7CB3', '#1E5C9E', '#123D6B']
 
@@ -74,11 +98,15 @@ export const MARK = {
  * currently visible subset. Pass the same domain everywhere and a store keeps
  * its colour whether it is shown alone or beside nine others.
  */
-export function seriesColor(key: string, keys: readonly string[]): string {
+export function seriesColor(
+  key: string,
+  keys: readonly string[],
+  palette: readonly string[] = SERIES,
+): string {
   const i = keys.indexOf(key)
   if (i < 0) return INK.muted
   // A 9th entity does not invent a hue — see rule 2.
-  return i < SERIES.length ? SERIES[i] : INK.muted
+  return i < palette.length ? palette[i] : INK.muted
 }
 
 /** SRD, grouped, two decimals — the format every money figure in the product

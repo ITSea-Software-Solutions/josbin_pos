@@ -11,6 +11,7 @@ import {
 import { useDashboardAuthStore } from '@/store/authStore'
 import { useState } from 'react'
 import AnalyticsPanel from '@/components/charts/AnalyticsPanel'
+import { SERIES_BD } from '@/components/charts/viz'
 import { BD, bdCard } from '@/theme/belastingdienst'
 import { BelastingdienstHeader } from '@/components/shared/BelastingdienstHeader'
 
@@ -292,7 +293,7 @@ export default function TaxInspectorDashboard({ onNavigateToSubmissions }: Props
           </label>
         </div>
 
-        <AnalyticsPanel organisationId={orgFilter || undefined} dateFrom={anaFrom} dateTo={anaTo} />
+        <AnalyticsPanel organisationId={orgFilter || undefined} dateFrom={anaFrom} dateTo={anaTo} palette={SERIES_BD} />
       </section>
 
       <p style={{ fontSize: 11, color: BD.muted, textAlign: 'right', marginTop: 14 }}>

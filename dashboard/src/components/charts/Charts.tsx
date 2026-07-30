@@ -102,17 +102,18 @@ export interface TrendPoint { date: string; sales: number; btw: number; txns: nu
  * deliberately NOT plotted here: it is a different unit, and a second y-axis is
  * the single most misleading thing a chart can do. It lives in its own tile.
  */
-export function TrendChart({ data, labels }: {
+export function TrendChart({ data, labels, palette = SERIES }: {
   data: TrendPoint[]
   labels: { sales: string; btw: string; txns: string }
+  palette?: readonly string[]
 }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <AreaChart data={data} margin={{ top: 6, right: 8, left: -18, bottom: 0 }}>
         <defs>
           <linearGradient id="jbSales" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={SERIES[0]} stopOpacity={0.26} />
-            <stop offset="100%" stopColor={SERIES[0]} stopOpacity={0.02} />
+            <stop offset="0%" stopColor={palette[0]} stopOpacity={0.26} />
+            <stop offset="100%" stopColor={palette[0]} stopOpacity={0.02} />
           </linearGradient>
         </defs>
         <CartesianGrid stroke={INK.grid} strokeDasharray="2 4" vertical={false} />
@@ -125,16 +126,16 @@ export function TrendChart({ data, labels }: {
             if (!active || !payload?.length) return null
             const p = payload[0].payload as TrendPoint
             return <Card title={String(label)} rows={[
-              [labels.sales, srd(p.sales), SERIES[0]],
-              [labels.btw, srd(p.btw), SERIES[1]],
+              [labels.sales, srd(p.sales), palette[0]],
+              [labels.btw, srd(p.btw), palette[1]],
               [labels.txns, String(p.txns), undefined],
             ]} />
           }}
           cursor={{ stroke: INK.muted, strokeDasharray: '3 3' }}
         />
-        <Area type="monotone" dataKey="sales" stroke={SERIES[0]} strokeWidth={MARK.lineWidth}
+        <Area type="monotone" dataKey="sales" stroke={palette[0]} strokeWidth={MARK.lineWidth}
               fill="url(#jbSales)" activeDot={{ r: 4, strokeWidth: 2, stroke: INK.surface }} />
-        <Area type="monotone" dataKey="btw" stroke={SERIES[1]} strokeWidth={MARK.lineWidth}
+        <Area type="monotone" dataKey="btw" stroke={palette[1]} strokeWidth={MARK.lineWidth}
               fill="none" strokeDasharray="4 3" activeDot={{ r: 4, strokeWidth: 2, stroke: INK.surface }} />
       </AreaChart>
     </ResponsiveContainer>
@@ -155,10 +156,11 @@ export interface Slice { key: string; label: string; value: number; sub?: string
  * `domain` is the FULL key list, so a colour belongs to the entity and does not
  * shuffle when the ranking changes.
  */
-export function BreakdownBars({ data, domain, valueLabel }: {
+export function BreakdownBars({ data, domain, valueLabel, palette = SERIES }: {
   data: Slice[]
   domain: readonly string[]
   valueLabel: string
+  palette?: readonly string[]
 }) {
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -174,7 +176,7 @@ export function BreakdownBars({ data, domain, valueLabel }: {
             if (!active || !payload?.length) return null
             const s = payload[0].payload as Slice
             return <Card title={s.label} rows={[
-              [valueLabel, srd(s.value), seriesColor(s.key, domain)],
+              [valueLabel, srd(s.value), seriesColor(s.key, domain, palette)],
               ...(s.sub ? [['', s.sub] as [string, string]] : []),
             ]} />
           }}
@@ -188,7 +190,7 @@ export function BreakdownBars({ data, domain, valueLabel }: {
         <Bar dataKey="value" radius={[0, MARK.barRadius, MARK.barRadius, 0]} barSize={16}
              minPointSize={3}>
           {data.map((s) => (
-            <Cell key={s.key} fill={seriesColor(s.key, domain)}
+            <Cell key={s.key} fill={seriesColor(s.key, domain, palette)}
                   stroke={INK.surface} strokeWidth={MARK.gap} />
           ))}
         </Bar>
@@ -199,9 +201,10 @@ export function BreakdownBars({ data, domain, valueLabel }: {
 
 /** Legend. Present whenever there are two or more series, so identity is never
  *  colour alone — the skill's rule, and the reason a printed report still works. */
-export function Legend({ items, domain }: {
+export function Legend({ items, domain, palette = SERIES }: {
   items: Array<{ key: string; label: string }>
   domain: readonly string[]
+  palette?: readonly string[]
 }) {
   if (items.length < 2) return null
   return (
@@ -211,7 +214,7 @@ export function Legend({ items, domain }: {
     }}>
       {items.map((i) => (
         <li key={i.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <i style={{ width: 9, height: 9, borderRadius: 2, background: seriesColor(i.key, domain), display: 'inline-block' }} />
+          <i style={{ width: 9, height: 9, borderRadius: 2, background: seriesColor(i.key, domain, palette), display: 'inline-block' }} />
           {i.label}
         </li>
       ))}
