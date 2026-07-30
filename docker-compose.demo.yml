@@ -55,6 +55,10 @@ services:
       POSTGRES_DB: josbin_pos_demo
     volumes: !override
       - ./docker/postgres-demo/data:/var/lib/postgresql/data
+      # !override replaces the base list, so init.sql must be restated or a
+      # fresh demo DB is created with NO extensions (vector/pgcrypto/pg_trgm)
+      # and migrate dies at the first vector() column.
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     ports: !override
       - "55433:5432"
 

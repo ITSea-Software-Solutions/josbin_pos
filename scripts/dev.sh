@@ -37,13 +37,23 @@ port_up() {
 }
 
 start_vite() {
-  local name="$1" dir="$2" port="$3" logfile="$LOG_DIR/${name}.log"
+  # One assignment per `local` — macOS bash 3.2 + `set -u` errors on a local
+  # that references another local declared in the same statement.
+  local name="$1"
+  local dir="$2"
+  local port="$3"
+  local logfile="$LOG_DIR/${name}.log"
   if [ "$(port_up "$port")" = "200" ]; then
     green "  ✓ ${name} already running on :${port}"
     return
   fi
-  cd "$dir"
-  VITE_API_URL="$API_URL" nohup npx vite --port "$port" --host > "$logfile" 2>&1 &
+  # docs-site is VitePress — plain `vite` serves its directory and 404s every
+  # page, which is why local docs never worked before this check existed.
+  local cmd="npx vite"
+  [ "$name" = "docs" ] && cmd="npx vitepress dev"
+  # Subshell so the cd never leaks — the script's own `bash "$0" status`
+  # re-invocation breaks if the working directory has moved.
+  ( cd "$dir" && VITE_API_URL="$API_URL" nohup $cmd --port "$port" --host > "$logfile" 2>&1 & )
   echo "  → ${name} starting on :${port} (log: $logfile)"
 }
 
