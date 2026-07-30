@@ -6,6 +6,10 @@
 #   bash scripts/dev.sh down    # stop everything cleanly
 #   bash scripts/dev.sh status  # show what's running and where
 #   bash scripts/dev.sh logs    # tail the four log files
+#   bash scripts/dev.sh test    # run the backend PHPUnit suite (inside the app
+#                               # container — the only place DB_HOST=postgres
+#                               # resolves). Extra args pass through, e.g.
+#                               #   bash scripts/dev.sh test --filter=BtwCalc
 #
 # Stack defaults to DEMO (8082). To target LIVE instead, set: JOSBIN_STACK=live
 set -uo pipefail
@@ -111,8 +115,22 @@ case "${1:-status}" in
     tail -f "$LOG_DIR/pos.log" "$LOG_DIR/dashboard.log" "$LOG_DIR/docs.log" 2>/dev/null
     ;;
 
+  test)
+    shift
+    bold "==> backend test suite ($STACK stack — runs inside the app container)"
+    cd "$ROOT"
+    # phpunit.xml force-pins DB_HOST=postgres / DB_DATABASE=josbin_pos_test,
+    # which only resolves on the stack's docker network — hence exec, not a
+    # host-side phpunit. The test DB inherits vector/pgcrypto/pg_trgm from
+    # template1 (docker/postgres/init.sql). Run ONE suite per container at a
+    # time: parallel runs share the test DB and collide.
+    docker compose $COMPOSE_ARGS exec -T postgres sh -c \
+      "psql -U \"\$POSTGRES_USER\" -d postgres -tAc \"SELECT 1 FROM pg_database WHERE datname='josbin_pos_test'\" | grep -q 1 || createdb -U \"\$POSTGRES_USER\" josbin_pos_test"
+    docker compose $COMPOSE_ARGS exec -T app php artisan test "$@"
+    ;;
+
   *)
-    echo "Usage: bash scripts/dev.sh [up|down|status|logs]"
+    echo "Usage: bash scripts/dev.sh [up|down|status|logs|test]"
     echo "Stack: JOSBIN_STACK=${STACK} (set to live|demo|sandbox to switch)"
     exit 1
     ;;

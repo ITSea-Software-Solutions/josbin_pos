@@ -52,6 +52,13 @@ One DigitalOcean droplet, IP **142.93.88.143**, repo cloned at
 
 Facts that bite if forgotten:
 
+- **The droplet ALSO runs the `josbin_pos_v2` test stack** (since 2026-07-30):
+  `josbin_v2_*` containers from `/var/www/josbin_v2` — API **9080**, dashboard
+  **9090**, POS web **9091**, docs **9095**, Reverb **6002**; own postgres +
+  redis; WAL archive `/var/backups/josbin_v2/wal` (never the live one's dir).
+  Deployed only via v2's `scripts/deploy-server.sh` (its guard refuses
+  `/var/www/html`). The live 8xxx stack is untouched by v2 deploys.
+
 - **Ports 80/443 on this droplet belong to a DIFFERENT project** (`ams_*`
   containers — unrelated client app). The production domain plan (playbook
   `docs/14-client-deployment-playbook.md` Phase 1) therefore means either a
