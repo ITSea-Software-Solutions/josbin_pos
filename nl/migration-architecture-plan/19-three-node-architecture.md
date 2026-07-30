@@ -199,7 +199,7 @@ jaar één — bouw het in vóórdat er een vloot is.
 ## 19.7 Openstaande beslissingen
 
 > **Inmiddels besloten.** Dit is allemaal beslist — zie
-> [hoofdstuk 21](/nl/plan/21-migration-record) voor de keuzes en de onderbouwing.
+> [hoofdstuk 21](/nl/migration-architecture-plan/21-migration-record) voor de keuzes en de onderbouwing.
 > Hieronder bewaard als vastlegging van wat openstond.
 
 Deze punten waren nog niet vastgesteld en staan hier zodat niemand iets aanneemt:

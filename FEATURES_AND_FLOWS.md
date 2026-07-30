@@ -24,7 +24,7 @@ When updating status, walk [`CLAUDE_WORKING_GUIDE.md` §2 surfaces checklist](CL
 
 ---
 
-> **Splitting the product into three nodes?** `plan/20-split-build-plan.md`
+> **Splitting the product into three nodes?** `migration-architecture-plan/20-split-build-plan.md`
 > maps every area below to the node that will own it, and flags the ones that
 > split across two — which is where features get quietly lost. This inventory is
 > the freeze list: the refactor is only done when every ✅ row below still works.

@@ -23,17 +23,17 @@ knooppunten**:
 
 ## De drie hoofdstukken
 
-**[19. Drie knooppunten](/nl/plan/19-three-node-architecture)** — de doelvorm en
+**[19. Drie knooppunten](/nl/migration-architecture-plan/19-three-node-architecture)** — de doelvorm en
 het contract tussen de knooppunten. Wat elk knooppunt bezit, de vier verbindingen
 ertussen, en hoe een licentie volledig zonder netwerk gecontroleerd wordt. Lees
 dit eerst; dit is het ontwerp.
 
-**[20. Bouwplan opsplitsing](/nl/plan/20-split-build-plan)** — hoe we daar komen
+**[20. Bouwplan opsplitsing](/nl/migration-architecture-plan/20-split-build-plan)** — hoe we daar komen
 zonder iets te verliezen. De vrieslijst van wat moet blijven werken, de negen
 kritieke trajecten (waarvan vijf helemaal niet mogen veranderen), de zeven stappen
 en de poort bij elke stap.
 
-**[21. Migratieregister](/nl/plan/21-migration-record)** — wat er werkelijk is
+**[21. Migratieregister](/nl/migration-architecture-plan/21-migration-record)** — wat er werkelijk is
 besloten en waarom. Zes beslissingen met de onderbouwing erbij, twee
 grensdiagrammen, en de bestemming van **alle 220 gecatalogiseerde functies**:
 welke naar de winkel gaan, welke in onze cloud blijven, waarvan elk knooppunt een
@@ -48,7 +48,7 @@ beslissingen die nu in hoofdstuk 21 staan.
 
 Eén ding blokkeert stap 1: de poort is *"de volledige suite groen, geen test
 aangepast"*, en er is nu nergens waar dat kan draaien. Zie
-[§21.6](/nl/plan/21-migration-record).
+[§21.6](/nl/migration-architecture-plan/21-migration-record).
 
 ## Wat er met dit onderdeel gebeurt
 

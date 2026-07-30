@@ -1,8 +1,8 @@
 # 21. Migration to the three-node architecture
 
 The decision record and the feature-by-feature disposition for splitting Josbin
-POS into three nodes. [Chapter 19](/plan/19-three-node-architecture) is the
-target shape and [chapter 20](/plan/20-split-build-plan) is the order of work —
+POS into three nodes. [Chapter 19](/migration-architecture-plan/19-three-node-architecture) is the
+target shape and [chapter 20](/migration-architecture-plan/20-split-build-plan) is the order of work —
 **this chapter is what was decided and where every feature lands.**
 
 Nothing here is a proposal. These are settled calls, with the reasoning kept so

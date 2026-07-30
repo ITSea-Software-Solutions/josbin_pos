@@ -1,6 +1,6 @@
 # 20. Bouwplan voor de opsplitsing — waarom, wat verhuist, en wat niet mag breken
 
-[Hoofdstuk 19](/nl/plan/19-three-node-architecture) beschrijft het doel: drie
+[Hoofdstuk 19](/nl/migration-architecture-plan/19-three-node-architecture) beschrijft het doel: drie
 zelfstandige knooppunten. Dit hoofdstuk gaat over hoe we daar komen **zonder iets
 te verliezen wat we al hebben**.
 
@@ -158,14 +158,14 @@ maand lang mist.
 
 Stap 1 tot en met 3 zijn zuivere herstructurering en kunnen nu al beginnen. Stap 4
 tot en met 7 hangen af van de beslissingen die inmiddels in
-[hoofdstuk 21](/nl/plan/21-migration-record) zijn vastgelegd.
+[hoofdstuk 21](/nl/migration-architecture-plan/21-migration-record) zijn vastgelegd.
 
 ---
 
 ## 20.6 Inmiddels besloten
 
 > Dit waren de openstaande punten. Ze zijn nu beslist — zie
-> [hoofdstuk 21](/nl/plan/21-migration-record) voor de keuzes en de onderbouwing:
+> [hoofdstuk 21](/nl/migration-architecture-plan/21-migration-record) voor de keuzes en de onderbouwing:
 > knooppunten per vestiging met het schema intact, afschalen in plaats van
 > buitensluiten plus broncode-escrow, wij hosten het belastingknooppunt als apart
 > systeem, laag 3 in het beheerknooppunt, en één beheerdatabase plus versleutelde

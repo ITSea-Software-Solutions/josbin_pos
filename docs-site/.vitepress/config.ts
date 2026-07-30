@@ -50,13 +50,13 @@ export default defineConfig({
     // Section index rewrites — each manual carries its README.md as the
     // entry page so folder URLs resolve to the README contents.
     'docs/README.md':                 'docs/index.md',
-    'plan/README.md':                 'plan/index.md',
+    'migration-architecture-plan/README.md': 'migration-architecture-plan/index.md',
     'user_manual/README.md':          'user_manual/index.md',
     'dashboard_manual/README.md':     'dashboard_manual/index.md',
     'trainer_cheatsheets/README.md':  'trainer_cheatsheets/index.md',
     // Dutch mirrors
     'nl/docs/README.md':                'nl/docs/index.md',
-    'nl/plan/README.md':                'nl/plan/index.md',
+    'nl/migration-architecture-plan/README.md': 'nl/migration-architecture-plan/index.md',
     'nl/user_manual/README.md':         'nl/user_manual/index.md',
     'nl/dashboard_manual/README.md':    'nl/dashboard_manual/index.md',
     'nl/trainer_cheatsheets/README.md': 'nl/trainer_cheatsheets/index.md',
@@ -91,18 +91,17 @@ export default defineConfig({
           { text: 'Handleiding POS',   link: '/nl/user_manual/' },
           { text: 'Handleiding Dashboard', link: '/nl/dashboard_manual/' },
           { text: 'Trainersbladen',    link: '/nl/trainer_cheatsheets/' },
-          { text: '🧭 Architectuurplan', link: '/nl/plan/' },
         ],
         sidebar: {
-          '/nl/plan/': [
+          '/nl/migration-architecture-plan/': [
             {
               text: '🧭 Architectuurplan',
               collapsed: false,
               items: [
-                { text: 'Waarom we opsplitsen',        link: '/nl/plan/' },
-                { text: '19. Drie knooppunten',        link: '/nl/plan/19-three-node-architecture' },
-                { text: '20. Bouwplan opsplitsing',    link: '/nl/plan/20-split-build-plan' },
-                { text: '21. Migratieregister',        link: '/nl/plan/21-migration-record' },
+                { text: 'Waarom we opsplitsen',        link: '/nl/migration-architecture-plan/' },
+                { text: '19. Drie knooppunten',        link: '/nl/migration-architecture-plan/19-three-node-architecture' },
+                { text: '20. Bouwplan opsplitsing',    link: '/nl/migration-architecture-plan/20-split-build-plan' },
+                { text: '21. Migratieregister',        link: '/nl/migration-architecture-plan/21-migration-record' },
               ],
             },
             {
@@ -318,19 +317,18 @@ export default defineConfig({
       { text: 'User Manual',     link: '/user_manual/' },
       { text: 'Dashboard Manual',link: '/dashboard_manual/' },
       { text: 'Trainer Sheets',  link: '/trainer_cheatsheets/' },
-      { text: '🧭 Architecture plan', link: '/plan/' },
     ],
 
     sidebar: {
-      '/plan/': [
+      '/migration-architecture-plan/': [
         {
           text: '🧭 Architecture plan',
           collapsed: false,
           items: [
-            { text: 'Why we are splitting',        link: '/plan/' },
-            { text: '19. Three-node architecture', link: '/plan/19-three-node-architecture' },
-            { text: '20. Split build plan',        link: '/plan/20-split-build-plan' },
-            { text: '21. Migration record',        link: '/plan/21-migration-record' },
+            { text: 'Why we are splitting',        link: '/migration-architecture-plan/' },
+            { text: '19. Three-node architecture', link: '/migration-architecture-plan/19-three-node-architecture' },
+            { text: '20. Split build plan',        link: '/migration-architecture-plan/20-split-build-plan' },
+            { text: '21. Migration record',        link: '/migration-architecture-plan/21-migration-record' },
           ],
         },
         {

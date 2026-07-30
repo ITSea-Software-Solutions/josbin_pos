@@ -22,17 +22,17 @@ This section is the plan to split it into **three independent nodes**:
 
 ## The three chapters
 
-**[19. Three-node architecture](/plan/19-three-node-architecture)** — the target
+**[19. Three-node architecture](/migration-architecture-plan/19-three-node-architecture)** — the target
 shape and the contract between the nodes. What each one owns, the four wires
 between them, and how a licence gets verified with no network at all. Read this
 first; it is the design.
 
-**[20. Split build plan](/plan/20-split-build-plan)** — how we get there without
+**[20. Split build plan](/migration-architecture-plan/20-split-build-plan)** — how we get there without
 losing anything. The freeze list of what must still work, the nine critical
 journeys (five of which must not change at all), the seven steps and the gate on
 each one.
 
-**[21. Migration record](/plan/21-migration-record)** — what was actually decided
+**[21. Migration record](/migration-architecture-plan/21-migration-record)** — what was actually decided
 and why. Six decisions with the reasoning kept, two boundary diagrams, and the
 disposition of **all 220 catalogued features**: which move to the shop, which
 stay in our cloud, which every node needs its own copy of — and the 70 that
@@ -46,7 +46,7 @@ start; steps 4–7 depend on the decisions now recorded in chapter 21.
 
 One thing blocks step 1: its gate is *"full suite green, no test edited"*, and
 there is currently nowhere that can be run. See
-[§21.6](/plan/21-migration-record).
+[§21.6](/migration-architecture-plan/21-migration-record).
 
 ## What happens to this section
 

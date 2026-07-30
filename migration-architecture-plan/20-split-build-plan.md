@@ -1,6 +1,6 @@
 # 20. Split build plan — why, what moves, and what must not break
 
-[Chapter 19](/plan/19-three-node-architecture) describes the target: three
+[Chapter 19](/migration-architecture-plan/19-three-node-architecture) describes the target: three
 independent nodes. This chapter is how we get there **without losing anything we
 already have**.
 
@@ -152,13 +152,13 @@ Mixing them is how a refactor loses a feature nobody notices for a month.
 | 7 | Direct BTW filing, shop-signed | Flow 8 rewalked; a filing verifies against the shop's key |
 
 Steps 1–3 are pure refactor and safe to start now. Steps 4–7 need the three open
-decisions in [§19.7](/plan/19-three-node-architecture) answered first.
+decisions in [§19.7](/migration-architecture-plan/19-three-node-architecture) answered first.
 
 ---
 
 ## 20.6 Still undecided
 
-> **Now decided** — see [chapter 21](/plan/21-migration-record). Per-store nodes with the schema
+> **Now decided** — see [chapter 21](/migration-architecture-plan/21-migration-record). Per-store nodes with the schema
 > intact, degrade-not-lock plus source escrow, we host the tax node as a separate
 > system, Layer 3 in the control plane, one control database plus per-shop
 > encrypted archives.

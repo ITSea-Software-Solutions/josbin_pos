@@ -1,8 +1,8 @@
 # 21. Migratie naar de architectuur met drie knooppunten
 
 Het beslissingsregister en de bestemming per functie voor het opsplitsen van
-Josbin POS in drie knooppunten. [Hoofdstuk 19](/nl/plan/19-three-node-architecture)
-is de doelvorm en [hoofdstuk 20](/nl/plan/20-split-build-plan) de volgorde van
+Josbin POS in drie knooppunten. [Hoofdstuk 19](/nl/migration-architecture-plan/19-three-node-architecture)
+is de doelvorm en [hoofdstuk 20](/nl/migration-architecture-plan/20-split-build-plan) de volgorde van
 werken — **dit hoofdstuk is wat is besloten en waar elke functie landt.**
 
 Niets hierin is een voorstel. Dit zijn vastgestelde keuzes, met de onderbouwing
