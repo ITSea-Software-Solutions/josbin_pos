@@ -21,7 +21,7 @@ knooppunten**:
 | ☁️ **Beheer** | Wij hosten dit | Organisaties, licenties, de vloot, het geconsolideerde beeld. Bewaart de ondertekensleutel van de licentie. |
 | 🏛 **Belasting** | Aparte installatie, op verzoek door ons gehost | Alleen BTW-aangiften, eigen database. Bevat nooit commerciële gegevens. |
 
-## De vier hoofdstukken
+## De vijf hoofdstukken
 
 **[19. Drie knooppunten](/nl/migration-architecture-plan/19-three-node-architecture)** — de doelvorm en
 het contract tussen de knooppunten. Wat elk knooppunt bezit, de vier verbindingen
@@ -45,6 +45,12 @@ hoe elk knooppunt bewijst wie het is. Twee sleutelparen die tegengesteld wijzen,
 waarom de signatuur *binnenin* de payload zit in plaats van in de TLS-verbinding,
 hoe een winkel BTW aangeeft zonder dat wij in de bewijsketen zitten, en een
 eerlijk verhaal over wat iemand krijgt die met de winkel-pc wegloopt.
+
+**[23. Installaties & artefacten](/nl/migration-architecture-plan/23-installs-and-artifacts)** —
+wat een klant werkelijk krijgt: een image, en nooit de repository. De drie
+winkelopstellingen (één Android-terminal, een pc in de achterkamer, een aparte
+server), hoe het team het kloont en draait, en het plan voor een zelfstandig
+Android-knooppunt met een native Kotlin-kern.
 
 ## Waar we staan
 

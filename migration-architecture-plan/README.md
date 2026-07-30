@@ -20,7 +20,7 @@ This section is the plan to split it into **three independent nodes**:
 | ☁️ **Control** | We host it | Organisations, licences, the fleet, the consolidated view. Holds the licence signing key. |
 | 🏛 **Tax** | Separate deployment, we host on request | BTW filings only, own database. Never holds commercial data. |
 
-## The four chapters
+## The five chapters
 
 **[19. Three-node architecture](/migration-architecture-plan/19-three-node-architecture)** — the target
 shape and the contract between the nodes. What each one owns, the four wires
@@ -44,6 +44,12 @@ how each node proves who it is. Two keypairs pointing opposite ways, why the
 signature goes *inside* the payload rather than being the TLS connection, how a
 shop files BTW without us sitting in the chain of custody, and an honest account
 of what someone gets by walking off with the shop's PC.
+
+**[23. Installs & artifacts](/migration-architecture-plan/23-installs-and-artifacts)** —
+what a customer actually receives, which is an image and never the repository.
+The three shop setups (a lone Android terminal, a PC in the back, a dedicated
+server), how the team clones and runs it, and the plan for a standalone Android
+node with a native Kotlin core.
 
 ## Where we are
 
