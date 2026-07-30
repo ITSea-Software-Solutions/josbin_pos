@@ -98,6 +98,9 @@ log "Restarting app (opcache full-cache mode), queue, Reverb, and frontend conta
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE restart reverb dashboard-web pos-web"
 # docs-web may be new on first deploy — `up -d` creates it, no-op afterwards.
 "${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE up -d docs-web"
+# nginx.conf is a bind mount, so `up -d` sees no spec change and leaves the old
+# config loaded. Restart so edits to docker/frontends/docs.conf actually apply.
+"${SSH[@]}" "cd '$REMOTE_DIR' && $COMPOSE restart docs-web"
 
 # ── 5. Health checks ──────────────────────────────────────────────────────────
 log "Health checks"
