@@ -11,7 +11,42 @@ Android-terminals op gelijke software draaien. Elk bestand op de
 op het inlogscherm), draai de nieuwere installer / installeer de nieuwere
 APK over de oude — instellingen, serveradres en login blijven bewaard.
 
-## 1.7.2 — 29 juli 2026 *(actueel)*
+## 1.8.0 — 29 juli 2026 *(actueel)*
+
+- **Een tab "Populair", vooraan in de rij.** Gerangschikt op wat uw winkel
+  werkelijk verkoopt over de laatste 30 dagen, zodat de artikelen die het
+  grootste deel van uw dag vormen met één tik bereikbaar zijn. Elke winkel
+  verdient zijn eigen tab, en die wordt beter naarmate u verkoopt. Een nieuwe
+  winkel heeft nog geen tab tot er verkopen zijn.
+- **Kies hoeveel producten er op het scherm passen** — 4, 6, 8 of 12 naast
+  elkaar, zoals een fotogalerij op een telefoon. De knoppen staan aan het eind
+  van de categorierij. Grotere tegels als u iets opzoekt, meer tegels als u weet
+  wat u aanslaat. Elke kassa onthoudt zijn eigen instelling.
+- **KKF-nummer (Kamer van Koophandel) op bonnen en facturen.** In te stellen bij
+  Vestigingsinstellingen naast het BTW-nummer; het wordt afgedrukt op de
+  kassabon, de pdf en de e-mailversie. De boekhouding van een koper heeft het
+  nodig, en een overheidsdienst accepteert geen factuur zonder.
+- **Echte Surinaamse producten in de demo-catalogus** — Parbo en de djogo,
+  Fernandes, A1-rijst uit Nickerie, bakkeljauw, kwikwi, Madame Jeanette, cassave,
+  tayerblad, roti, bara, pom. Veel ervan met een foto. BTW-vrijstelling staat
+  waar die werkelijk valt: basisproducten op 0%, dranken op 10%.
+- **Productfoto's verschijnen nu op de kassa.** Ze waren alleen zichtbaar in de
+  productlijst van het dashboard — de kassa kreeg ze nooit toegestuurd, dus
+  "Naam en foto" had niets om te tonen.
+- **Een bestand dat u zelf hebt geëxporteerd kan nu worden geïmporteerd.** Uw
+  producten exporteren en datzelfde bestand terugimporteren wees elke regel af
+  wegens een ontbrekende naam die er wel degelijk stond.
+
+## 1.7.3 — 29 juli 2026
+
+- **Bonnen worden in een fractie van de tijd afgedrukt.** De kassa behandelde een
+  printer met een volle buffer als een defecte printer: hij wachtte vijf
+  seconden, besloot dat de printer het had opgegeven, herstelde de verbinding en
+  probeerde het opnieuw — wat lukte, dus de bon kwam ongeveer tien seconden te
+  laat. Nu wacht hij het moment dat een printer werkelijk nodig heeft. Dit begon
+  pas toen bonnen afbeeldingen gingen meedragen.
+
+## 1.7.2 — 29 juli 2026
 
 - **Bonnen worden afgedrukt zonder op internet te wachten.** De kassa haalde uw
   logo en stempel bij de server op voordat het papier kon bewegen — een

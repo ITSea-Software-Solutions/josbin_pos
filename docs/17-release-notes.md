@@ -11,7 +11,41 @@ are on matching software. Every file on the
 login screen), run the newer installer / install the newer APK over the
 old one — settings, server address and login survive.
 
-## 1.7.2 — 29 July 2026 *(current)*
+## 1.8.0 — 29 July 2026 *(current)*
+
+- **A Popular tab, first in the row.** Ranked by what your shop actually sells
+  over the last 30 days, so the dozen lines that make up most of your day are one
+  tap away instead of hunted for in a category. Each shop earns its own, and it
+  improves as you trade. A brand-new shop has no tab until it has sales.
+- **Choose how many products fit on screen** — 4, 6, 8 or 12 across, the way a
+  phone photo gallery works. The buttons sit at the end of the category row.
+  Bigger tiles when you are looking something up, more of them when you know what
+  you are ringing. Each till remembers its own setting.
+- **Chamber of Commerce (KKF) number on receipts and invoices.** Set it in Store
+  Settings beside the BTW number; it prints on the till receipt, the PDF and the
+  emailed copy. A buyer's bookkeeping needs it, and a government department will
+  not accept an invoice without it.
+- **Real Surinamese products in the demo catalogue** — Parbo and the djogo,
+  Fernandes, A1 rice from Nickerie, bakkeljauw, kwikwi, Madame Jeanette, cassave,
+  tayerblad, roti, bara, pom. Many now show a photograph. BTW-exempt is set where
+  it really falls, so staples ring at 0% and drinks at 10%.
+- **Product photos now appear on the till.** They were only ever visible in the
+  dashboard product list — the till was never sent them, so "Name and photo" had
+  nothing to show.
+- **Importing a file you exported now works.** Exporting your products and
+  importing that same file back rejected every row for a missing name it plainly
+  had.
+
+## 1.7.3 — 29 July 2026
+
+- **Receipts print in a fraction of the time.** The till was treating a printer
+  with a full buffer as a broken one: it waited five seconds, decided the printer
+  had failed, reset the connection and tried again — which worked, so the receipt
+  arrived about ten seconds late. It now waits the moment or two a printer
+  actually needs. This only began once receipts started carrying images, which is
+  why it appeared overnight.
+
+## 1.7.2 — 29 July 2026
 
 - **Receipts print without waiting on the internet.** The till was fetching
   your logo and stamp from the server before the paper could move — a round
