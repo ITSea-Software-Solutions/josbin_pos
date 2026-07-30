@@ -1,0 +1,843 @@
+{
+    "_readme": [
+        "BTW cross-vector contract — ONE input set, TWO consumers:",
+        "  backend/tests/Unit/BtwCrossVectorTest.php   (BtwCalculationService, bcmath)",
+        "  frontend/src/store/__tests__/btwCrossVectors.test.ts (cart engine, fixed-point)",
+        "Expected values are GENERATED from the bcmath engine by",
+        "  backend/scripts/generate-btw-vectors.php  (run inside the app container)",
+        "and then FROZEN — regenerating is a deliberate contract change and must be",
+        "reviewed line by line against the Belastingdienst rules (discount before",
+        "BTW extraction, tax-inclusive prices, half-up rounding to the cent).",
+        "Rules frozen by this file:",
+        "  - money is decimal; intermediates at scale 4 with TRUNCATING mul/div",
+        "  - final figures round HALF-UP to 2 decimals (never binary-float rounding)",
+        "  - item pct discount converts to SRD as round2(line_gross * pct / 100)",
+        "    BEFORE entering the engine (this is what the POS sends on the wire)",
+        "  - sale pct discount stays a pct on the wire; engine takes trunc4(subtotal*pct/100)",
+        "  - sale SRD + pct combine additively (scope 'php': the POS UI offers one at a time)",
+        "  - sale-level exemption strips per-UNIT price to round2(price / (1+rate/100))",
+        "scope: 'both' = both engines must reproduce; 'php' = backend-only shapes"
+    ],
+    "version": 1,
+    "vectors": [
+        {
+            "id": "V01",
+            "title": "canonical 10% single unit",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "11.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "11.00",
+                "sale_discount": "0.00",
+                "btw_total": "1.00",
+                "total": "11.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "1.00",
+                        "line_total": "11.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V02",
+            "title": "quantity 2",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "11.00",
+                    "quantity": "2",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "22.00",
+                "sale_discount": "0.00",
+                "btw_total": "2.00",
+                "total": "22.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "2.00",
+                        "line_total": "22.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V03",
+            "title": "weighed goods 0.5 kg",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "10.00",
+                    "quantity": "0.5",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "5.00",
+                "sale_discount": "0.00",
+                "btw_total": "0.45",
+                "total": "5.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.45",
+                        "line_total": "5.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V04",
+            "title": "half-up boundary — btw lands on x.xx5",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "0.605",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "0.61",
+                "sale_discount": "0.00",
+                "btw_total": "0.06",
+                "total": "0.61",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.06",
+                        "line_total": "0.61"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V05",
+            "title": "exempt product",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "25.00",
+                    "quantity": "3",
+                    "btw_rate": "10",
+                    "btw_exempt": true
+                }
+            ],
+            "expected": {
+                "subtotal": "75.00",
+                "sale_discount": "0.00",
+                "btw_total": "0.00",
+                "total": "75.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "75.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V06",
+            "title": "zero rate, not exempt",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "7.35",
+                    "quantity": "2",
+                    "btw_rate": "0",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "14.70",
+                "sale_discount": "0.00",
+                "btw_total": "0.00",
+                "total": "14.70",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "14.70"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V07",
+            "title": "item fixed SRD discount",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "20.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false,
+                    "discount_srd": "5.00"
+                }
+            ],
+            "expected": {
+                "subtotal": "15.00",
+                "sale_discount": "0.00",
+                "btw_total": "1.36",
+                "total": "15.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "5.00",
+                        "btw_amount": "1.36",
+                        "line_total": "15.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V08",
+            "title": "item fixed discount larger than line — capped",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "4.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false,
+                    "discount_srd": "9.99"
+                }
+            ],
+            "expected": {
+                "subtotal": "0.00",
+                "sale_discount": "0.00",
+                "btw_total": "0.00",
+                "total": "0.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "9.99",
+                        "btw_amount": "0.00",
+                        "line_total": "0.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V09",
+            "title": "item pct discount, repeating decimal (3.33% of 10.01)",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "10.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false,
+                    "discount_pct": "3.33"
+                }
+            ],
+            "expected": {
+                "subtotal": "9.68",
+                "sale_discount": "0.00",
+                "btw_total": "0.88",
+                "total": "9.68",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.33",
+                        "btw_amount": "0.88",
+                        "line_total": "9.68"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V10",
+            "title": "item pct 33.33% of 9.99",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "9.99",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false,
+                    "discount_pct": "33.33"
+                }
+            ],
+            "expected": {
+                "subtotal": "6.66",
+                "sale_discount": "0.00",
+                "btw_total": "0.61",
+                "total": "6.66",
+                "lines": [
+                    {
+                        "discount_srd_wire": "3.33",
+                        "btw_amount": "0.61",
+                        "line_total": "6.66"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V11",
+            "title": "sale fixed discount over 3 mixed lines (10% / 0% / exempt)",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "12.50",
+                    "quantity": "2",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "6.00",
+                    "quantity": "1",
+                    "btw_rate": "0",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "9.75",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": true
+                }
+            ],
+            "sale_discount_srd": "5.00",
+            "expected": {
+                "subtotal": "40.75",
+                "sale_discount": "5.00",
+                "btw_total": "1.99",
+                "total": "35.75",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "1.99",
+                        "line_total": "21.93"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "5.26"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "8.55"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V12",
+            "title": "sale pct 10% over 3 mixed lines",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "12.50",
+                    "quantity": "2",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "6.00",
+                    "quantity": "1",
+                    "btw_rate": "0",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "9.75",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": true
+                }
+            ],
+            "sale_discount_pct": "10",
+            "expected": {
+                "subtotal": "40.75",
+                "sale_discount": "4.08",
+                "btw_total": "2.05",
+                "total": "36.68",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "2.05",
+                        "line_total": "22.50"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "5.40"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "8.77"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V13",
+            "title": "sale pct truncation at scale 4 (3.33% of 10.01)",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "10.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "sale_discount_pct": "3.33",
+            "expected": {
+                "subtotal": "10.01",
+                "sale_discount": "0.33",
+                "btw_total": "0.88",
+                "total": "9.68",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.88",
+                        "line_total": "9.68"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V14",
+            "title": "sale discount larger than subtotal — capped",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "3.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "sale_discount_srd": "10.00",
+            "expected": {
+                "subtotal": "3.00",
+                "sale_discount": "3.00",
+                "btw_total": "0.00",
+                "total": "0.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "0.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V15",
+            "title": "sale SRD and pct combined (additive — dashboard rules path)",
+            "scope": "php",
+            "items": [
+                {
+                    "unit_price": "50.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "30.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "sale_discount_srd": "8.00",
+            "sale_discount_pct": "5",
+            "expected": {
+                "subtotal": "80.00",
+                "sale_discount": "12.00",
+                "btw_total": "6.18",
+                "total": "68.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "3.86",
+                        "line_total": "42.50"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "2.32",
+                        "line_total": "25.50"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V16",
+            "title": "zero-price line",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "0.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "5.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "5.00",
+                "sale_discount": "0.00",
+                "btw_total": "0.45",
+                "total": "5.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "0.00"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.45",
+                        "line_total": "5.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V17",
+            "title": "penny cascade — 7 lines of 1.01 with sale discount 0.50",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "1.01",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "sale_discount_srd": "0.50",
+            "expected": {
+                "subtotal": "7.07",
+                "sale_discount": "0.50",
+                "btw_total": "0.63",
+                "total": "6.57",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "0.94"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V18",
+            "title": "sale-level BTW exemption — canonical strip 11.00 to 10.00",
+            "scope": "both",
+            "sale_btw_exempt": true,
+            "items": [
+                {
+                    "unit_price": "11.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "10.00",
+                "sale_discount": "0.00",
+                "btw_total": "0.00",
+                "total": "10.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "10.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V19",
+            "title": "exempt-sale strip with odd price 9.99",
+            "scope": "both",
+            "sale_btw_exempt": true,
+            "items": [
+                {
+                    "unit_price": "9.99",
+                    "quantity": "2",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "18.16",
+                "sale_discount": "0.00",
+                "btw_total": "0.00",
+                "total": "18.16",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "18.16"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V20",
+            "title": "exempt-sale strip then sale discount on net prices",
+            "scope": "both",
+            "sale_btw_exempt": true,
+            "items": [
+                {
+                    "unit_price": "11.00",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "5.50",
+                    "quantity": "2",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "sale_discount_srd": "2.00",
+            "expected": {
+                "subtotal": "20.00",
+                "sale_discount": "2.00",
+                "btw_total": "0.00",
+                "total": "18.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "9.00"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.00",
+                        "line_total": "9.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V21",
+            "title": "future higher rate 25%",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "12.49",
+                    "quantity": "1",
+                    "btw_rate": "25",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "12.49",
+                "sale_discount": "0.00",
+                "btw_total": "2.50",
+                "total": "12.49",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "2.50",
+                        "line_total": "12.49"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V22",
+            "title": "3-decimal quantity with truncation dust (1.333 x 0.75)",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "0.75",
+                    "quantity": "1.333",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "1.00",
+                "sale_discount": "0.00",
+                "btw_total": "0.09",
+                "total": "1.00",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.09",
+                        "line_total": "1.00"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V23",
+            "title": "large amounts",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "99999.99",
+                    "quantity": "3",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "299999.97",
+                "sale_discount": "0.00",
+                "btw_total": "27272.72",
+                "total": "299999.97",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "27272.72",
+                        "line_total": "299999.97"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V24",
+            "title": "float classic — 0.10 + 0.20 lines",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "0.10",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                },
+                {
+                    "unit_price": "0.20",
+                    "quantity": "1",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "0.30",
+                "sale_discount": "0.00",
+                "btw_total": "0.03",
+                "total": "0.30",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.01",
+                        "line_total": "0.10"
+                    },
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.02",
+                        "line_total": "0.20"
+                    }
+                ]
+            }
+        },
+        {
+            "id": "V25",
+            "title": "weighed goods dust — 0.335 kg x 8.05",
+            "scope": "both",
+            "items": [
+                {
+                    "unit_price": "8.05",
+                    "quantity": "0.335",
+                    "btw_rate": "10",
+                    "btw_exempt": false
+                }
+            ],
+            "expected": {
+                "subtotal": "2.70",
+                "sale_discount": "0.00",
+                "btw_total": "0.25",
+                "total": "2.70",
+                "lines": [
+                    {
+                        "discount_srd_wire": "0.00",
+                        "btw_amount": "0.25",
+                        "line_total": "2.70"
+                    }
+                ]
+            }
+        }
+    ]
+}

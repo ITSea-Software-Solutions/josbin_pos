@@ -1,58 +1,71 @@
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 import type { CartItem, CartDiscount, CartTotals, Customer, Product } from '@/types/models'
+import {
+  computeCart,
+  computeLine,
+  mul4,
+  parse,
+  pctToSrd,
+  stripUnitPrice,
+  toMoney,
+  type CartLineInput,
+  type Dec4,
+} from '@/lib/btwMath'
 
-// All arithmetic uses string-based decimal math to avoid floating point.
-// We rely on toFixed(2) for display and comparison — the backend
-// re-validates every figure before persisting. This is intentional.
+// All money arithmetic lives in lib/btwMath.ts — exact fixed-point decimal
+// that mirrors the backend's BtwCalculationService operation for operation
+// (same truncating scale-4 intermediates, same half-up cent rounding, same
+// sale-discount allocation). Both engines are pinned against the shared
+// vectors in backend/tests/Fixtures/btw_vectors.json, so the figures the
+// cart shows are the figures the server will persist — a requirement once
+// standalone tills keep their own books.
 
-function toDecimal(val: string | number): number {
-  return parseFloat(String(val)) || 0
-}
+/** Derive the exact-decimal line input the engine (and the wire) sees. */
+function toLineInput(item: Omit<CartItem, 'computed'>, saleExempt: boolean): CartLineInput {
+  const unitPrice = String(item.unitPriceOverride ?? item.product.price)
+  const btwRate = String(item.btwRateOverride ?? item.product.btw_rate)
 
-function fmt(n: number): string {
-  return n.toFixed(2)
+  // Sale-level BTW exemption (vrijstelling): the buyer pays the price
+  // WITHOUT the BTW component — strip it per unit, rounded to the cent,
+  // exactly like the backend's stripBtwForExemptSale.
+  const stripped =
+    saleExempt && !item.product.btw_exempt && parse(btwRate) > 0n
+      ? stripUnitPrice(unitPrice, btwRate)
+      : undefined
+
+  const price4: Dec4 = stripped ?? parse(unitPrice)
+
+  let discountSrd4: Dec4 | undefined
+  if (item.discount && item.discount.value > 0) {
+    discountSrd4 =
+      item.discount.type === 'percent'
+        ? pctToSrd(mul4(price4, parse(String(item.quantity))), item.discount.value)
+        : parse(String(item.discount.value))
+  }
+
+  return {
+    unitPrice,
+    unitPrice4: stripped,
+    quantity: item.quantity,
+    btwRate,
+    btwExempt: saleExempt ? true : item.product.btw_exempt,
+    discountSrd4,
+  }
 }
 
 function computeItem(item: Omit<CartItem, 'computed'>, saleExempt = false): CartItem['computed'] {
-  let unitPrice = toDecimal(item.unitPriceOverride ?? item.product.price)
-  const rateForStrip = toDecimal(item.btwRateOverride ?? item.product.btw_rate)
-  // Sale-level BTW exemption (vrijstelling): the buyer pays the price
-  // WITHOUT the BTW component, so strip it from the unit price. Rounded to
-  // the cent per unit — the exact rule the backend applies, so the cart
-  // shows the same figures the server will persist.
-  if (saleExempt && !item.product.btw_exempt && rateForStrip > 0) {
-    unitPrice = Math.round((unitPrice / (1 + rateForStrip / 100)) * 100) / 100
-  }
-  const qty = item.quantity
-  const subtotal = unitPrice * qty
-
-  // Item-level discount
-  let discountAmount = 0
-  if (item.discount) {
-    discountAmount =
-      item.discount.type === 'percent'
-        ? subtotal * (item.discount.value / 100)
-        : Math.min(item.discount.value, subtotal)
-  }
-
-  const taxableBase = subtotal - discountAmount
-
-  // BTW extracted from taxable base (inclusive method — correct for SRD/BTW)
-  const btwRateDecimal = toDecimal(item.btwRateOverride ?? item.product.btw_rate) / 100
-  const btwAmount = item.product.btw_exempt || saleExempt
-    ? 0
-    : taxableBase - taxableBase / (1 + btwRateDecimal)
-
-  const lineTotal = taxableBase
+  const input = toLineInput(item, saleExempt)
+  const line = computeLine(input)
+  const price4 = input.unitPrice4 ?? parse(input.unitPrice)
 
   return {
-    unitPrice: fmt(unitPrice),
-    subtotal: fmt(subtotal),
-    discountAmount: fmt(discountAmount),
-    taxableBase: fmt(taxableBase),
-    btwAmount: fmt(btwAmount),
-    lineTotal: fmt(lineTotal),
+    unitPrice: toMoney(price4),
+    subtotal: toMoney(line.lineGross),
+    discountAmount: toMoney(line.appliedDiscount4),
+    taxableBase: toMoney(line.lineNet),
+    btwAmount: toMoney(line.btwAmount),
+    lineTotal: toMoney(line.lineTotal),
   }
 }
 
@@ -94,33 +107,20 @@ function normalizeHeldItem(raw: unknown): Omit<CartItem, 'computed'> {
 }
 
 function computeTotals(items: CartItem[], saleDiscount: CartDiscount, saleExempt = false): CartTotals {
-  const subtotal = items.reduce((sum, i) => sum + toDecimal(i.computed.taxableBase), 0)
+  const inputs = items.map((i) => toLineInput(i, saleExempt))
 
-  let saleDiscountAmount = 0
-  if (saleDiscount.value > 0) {
-    saleDiscountAmount =
-      saleDiscount.type === 'percent'
-        ? subtotal * (saleDiscount.value / 100)
-        : Math.min(saleDiscount.value, subtotal)
-  }
+  const saleDiscountSrd4 =
+    saleDiscount.type === 'fixed' && saleDiscount.value > 0 ? parse(String(saleDiscount.value)) : 0n
+  const saleDiscountPct =
+    saleDiscount.type === 'percent' && saleDiscount.value > 0 ? saleDiscount.value : 0
 
-  // Re-distribute sale discount proportionally across items to get correct BTW
-  const postSaleDiscountTotal = subtotal - saleDiscountAmount
-  const ratio = subtotal > 0 ? postSaleDiscountTotal / subtotal : 1
-
-  const btwTotal = saleExempt ? 0 : items.reduce((sum, i) => {
-    if (i.product.btw_exempt) return sum
-    const adjustedBase = toDecimal(i.computed.taxableBase) * ratio
-    const btwRate = toDecimal(i.btwRateOverride ?? i.product.btw_rate) / 100
-    const btw = adjustedBase - adjustedBase / (1 + btwRate)
-    return sum + btw
-  }, 0)
+  const cart = computeCart(inputs, saleDiscountSrd4, saleDiscountPct)
 
   return {
-    subtotal: fmt(subtotal),
-    saleDiscountAmount: fmt(saleDiscountAmount),
-    btwTotal: fmt(btwTotal),
-    total: fmt(subtotal - saleDiscountAmount),
+    subtotal: toMoney(cart.subtotal),
+    saleDiscountAmount: toMoney(cart.saleDiscount),
+    btwTotal: toMoney(cart.btwTotal),
+    total: toMoney(cart.total),
   }
 }
 
