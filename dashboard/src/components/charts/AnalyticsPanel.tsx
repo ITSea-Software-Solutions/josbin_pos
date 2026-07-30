@@ -53,10 +53,11 @@ export default function AnalyticsPanel({
     payments: isNl ? 'Betaalwijze' : 'Payment method',
     btwRate:  isNl ? 'BTW per tarief' : 'BTW by rate',
     btwHint:  isNl
-      ? 'Vrijgestelde regels staan op 0% — apart van het standaardtarief, zoals de Belastingdienst ze wil zien.'
-      : 'Exempt lines sit at 0% — separate from the standard rate, the way the Belastingdienst wants them.',
+      ? 'Balklengte is de omzet bij dat tarief; het BTW-bedrag staat erbij. Vrijgestelde regels staan op 0% — apart van het standaardtarief, zoals de Belastingdienst ze wil zien.'
+      : 'Bar length is the turnover at that rate, with the BTW amount beside it. Exempt lines sit at 0% — separate from the standard rate, the way the Belastingdienst wants them.',
     empty:    isNl ? 'Geen verkopen in deze periode.' : 'No sales in this period.',
     revenue:  isNl ? 'Omzet' : 'Revenue',
+    turnover: isNl ? 'Omzet bij dit tarief' : 'Turnover at this rate',
   }
 
   if (isLoading) {
@@ -129,9 +130,19 @@ export default function AnalyticsPanel({
         </ChartCard>
 
         <ChartCard title={L.btwRate} hint={L.btwHint} height={230}>
+          {/* Bar length is TURNOVER at that rate, not the BTW amount. Plotting
+              the BTW made the 0% exempt row a zero-length bar — invisible — and
+              that row is the whole point of this chart to a tax inspector:
+              nearly half a Suriname shop's trade is exempt staples, and it
+              rendered as nothing at all. Turnover is non-zero for every rate, so
+              every rate shows up; the BTW figure rides along as the sub-label
+              and in the tooltip. */}
           {data.btw.length === 0 ? <NoData message={L.empty} /> : (
-            <BreakdownBars valueLabel="BTW" domain={btwDomain}
-              data={data.btw.map((b) => ({ key: b.rate, label: b.rate, value: b.btw, sub: srd(b.base) }))} />
+            <BreakdownBars valueLabel={L.turnover} domain={btwDomain}
+              data={data.btw.map((b) => ({
+                key: b.rate, label: b.rate, value: b.base,
+                sub: `BTW ${srd(b.btw)}`,
+              }))} />
           )}
         </ChartCard>
 
