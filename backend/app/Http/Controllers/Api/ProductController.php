@@ -454,6 +454,24 @@ class ProductController extends Controller
      * Headers are trimmed; rows are plain numeric-indexed arrays so the
      * same downstream loop works for any format.
      */
+    /**
+     * Normalise a header cell.
+     *
+     * Our OWN export writes a UTF-8 BOM so Excel opens accented product names
+     * correctly — and the importer then could not read it back, because a BOM
+     * is the bytes EF BB BF and trim() only removes whitespace. The first
+     * header arrived as "\u{FEFF}name_nl", never matched "name_nl", and every
+     * row failed with "name_nl is required". Export → import, our two halves of
+     * the same feature, round-tripped at zero percent.
+     *
+     * Lower-cased too: a shopkeeper who opens the template in Excel and retypes
+     * a header as "Name_NL" should not have their import silently skip.
+     */
+    private function cleanHeader(string $v): string
+    {
+        return mb_strtolower(trim(preg_replace('/^\x{FEFF}/u', '', $v) ?? $v));
+    }
+
     private function readImportFile(string $path, string $ext): array
     {
         if (in_array($ext, ['xlsx', 'xls'], true)) {
@@ -466,13 +484,29 @@ class ProductController extends Controller
             if (empty($rows)) {
                 return [[], []];
             }
-            $headers = array_map(fn ($v) => trim((string) $v), array_shift($rows));
+            $headers = array_map(fn ($v) => $this->cleanHeader((string) $v), array_shift($rows));
             return [$headers, $rows];
         }
 
         // CSV / TXT
-        $rows    = array_map('str_getcsv', file($path));
-        $headers = array_map('trim', array_shift($rows));
+        //
+        // fgetcsv, not file() + str_getcsv: a product name containing a newline
+        // is legal inside a quoted CSV field, and splitting on lines first tears
+        // that row in half.
+        $rows = [];
+        if (($fh = fopen($path, 'r')) !== false) {
+            while (($row = fgetcsv($fh)) !== false) {
+                if ($row === [null]) continue;   // blank line
+                $rows[] = $row;
+            }
+            fclose($fh);
+        }
+        if (empty($rows)) {
+            return [[], []];
+        }
+
+        $headers = array_map(fn ($v) => $this->cleanHeader((string) $v), array_shift($rows));
+
         return [$headers, $rows];
     }
 
