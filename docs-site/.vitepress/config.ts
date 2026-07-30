@@ -104,6 +104,7 @@ export default defineConfig({
                 { text: '21. Migratieregister',        link: '/nl/migration-architecture-plan/21-migration-record' },
                 { text: '22. Authenticatie & beveiliging', link: '/nl/migration-architecture-plan/22-node-authentication' },
                 { text: '23. Installaties & artefacten', link: '/nl/migration-architecture-plan/23-installs-and-artifacts' },
+                { text: '24. Release & operatie', link: '/nl/migration-architecture-plan/24-release-and-operations' },
               ],
             },
             {
@@ -296,6 +297,7 @@ export default defineConfig({
     'CLAUDE_WORKING_GUIDE.md',
     'FEATURES_AND_FLOWS.md',
     'HANDOVER.md',
+    'MIGRATION_KICKOFF.md',
     'PENDING.md',
     'FIELD_RUNBOOK.md',
     'OPS_CHEATSHEET.md',
@@ -333,6 +335,7 @@ export default defineConfig({
             { text: '21. Migration record',        link: '/migration-architecture-plan/21-migration-record' },
             { text: '22. Authentication & security', link: '/migration-architecture-plan/22-node-authentication' },
             { text: '23. Installs & artifacts', link: '/migration-architecture-plan/23-installs-and-artifacts' },
+            { text: '24. Release & operations', link: '/migration-architecture-plan/24-release-and-operations' },
           ],
         },
         {

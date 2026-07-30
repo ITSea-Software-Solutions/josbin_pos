@@ -21,7 +21,7 @@ knooppunten**:
 | ☁️ **Beheer** | Wij hosten dit | Organisaties, licenties, de vloot, het geconsolideerde beeld. Bewaart de ondertekensleutel van de licentie. |
 | 🏛 **Belasting** | Aparte installatie, op verzoek door ons gehost | Alleen BTW-aangiften, eigen database. Bevat nooit commerciële gegevens. |
 
-## De vijf hoofdstukken
+## De zes hoofdstukken
 
 **[19. Drie knooppunten](/nl/migration-architecture-plan/19-three-node-architecture)** — de doelvorm en
 het contract tussen de knooppunten. Wat elk knooppunt bezit, de vier verbindingen
@@ -51,6 +51,12 @@ wat een klant werkelijk krijgt: een image, en nooit de repository. De drie
 winkelopstellingen (één Android-terminal, een pc in de achterkamer, een aparte
 server), hoe het team het kloont en draait, en het plan voor een zelfstandig
 Android-knooppunt met een native Kotlin-kern.
+
+**[24. Releasebeheer, operatie & naleving](/nl/migration-architecture-plan/24-release-and-operations)** —
+hoe een ondertekende image ontstaat en veilig bij een winkel komt, contracttests
+voor de verbindingen, migraties die eerst uitbreiden en later opruimen, wat we
+beloven als het misgaat, en welke nalevingsdocumenten herschreven moeten worden
+zodra er drie knooppunten zijn.
 
 ## Waar we staan
 

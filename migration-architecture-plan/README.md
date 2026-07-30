@@ -20,7 +20,7 @@ This section is the plan to split it into **three independent nodes**:
 | ☁️ **Control** | We host it | Organisations, licences, the fleet, the consolidated view. Holds the licence signing key. |
 | 🏛 **Tax** | Separate deployment, we host on request | BTW filings only, own database. Never holds commercial data. |
 
-## The five chapters
+## The six chapters
 
 **[19. Three-node architecture](/migration-architecture-plan/19-three-node-architecture)** — the target
 shape and the contract between the nodes. What each one owns, the four wires
@@ -50,6 +50,11 @@ what a customer actually receives, which is an image and never the repository.
 The three shop setups (a lone Android terminal, a PC in the back, a dedicated
 server), how the team clones and runs it, and the plan for a standalone Android
 node with a native Kotlin core.
+
+**[24. Release engineering, operations & compliance](/migration-architecture-plan/24-release-and-operations)** —
+how a signed image comes to exist and reaches a shop safely, contract tests for
+the wires, expand-then-contract migrations, what we promise when things break, and
+which compliance documents have to be rewritten once there are three nodes.
 
 ## Where we are
 
