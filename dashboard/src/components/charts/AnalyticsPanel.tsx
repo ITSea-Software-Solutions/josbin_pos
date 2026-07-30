@@ -81,6 +81,10 @@ export default function AnalyticsPanel({
   const storeDomain = data.stores.map((s) => s.name)
   const btwDomain   = data.btw.map((b) => b.rate)
 
+  /** ~34 px a row plus room for the axis. Keeps a 2-row chart compact instead
+   *  of stranding two bars in a tall empty box. */
+  const barsH = (rows: number) => Math.max(120, Math.min(230, 52 + rows * 34))
+
   const payLabel = (m: string) => ({
     cash:            isNl ? 'Contant' : 'Cash',
     card:            isNl ? 'Pin/kaart' : 'Card',
@@ -109,7 +113,7 @@ export default function AnalyticsPanel({
       </ChartCard>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(330px, 1fr))', gap: 14 }}>
-        <ChartCard title={L.products} height={230}>
+        <ChartCard title={L.products} height={barsH(data.products.length)}>
           {data.products.length === 0 ? <NoData message={L.empty} /> : (
             <BreakdownBars valueLabel={L.revenue} domain={prodDomain}
               data={data.products.map((p) => ({
@@ -119,7 +123,7 @@ export default function AnalyticsPanel({
           )}
         </ChartCard>
 
-        <ChartCard title={L.payments} height={230}>
+        <ChartCard title={L.payments} height={barsH(data.payments.length)}>
           {data.payments.length === 0 ? <NoData message={L.empty} /> : (
             <BreakdownBars valueLabel={L.revenue} domain={payDomain}
               data={data.payments.map((p) => ({
@@ -129,7 +133,7 @@ export default function AnalyticsPanel({
           )}
         </ChartCard>
 
-        <ChartCard title={L.btwRate} hint={L.btwHint} height={230}>
+        <ChartCard title={L.btwRate} hint={L.btwHint} height={barsH(data.btw.length)}>
           {/* Bar length is TURNOVER at that rate, not the BTW amount. Plotting
               the BTW made the 0% exempt row a zero-length bar — invisible — and
               that row is the whole point of this chart to a tax inspector:
@@ -146,7 +150,7 @@ export default function AnalyticsPanel({
           )}
         </ChartCard>
 
-        <ChartCard title={L.cashiers} height={230}>
+        <ChartCard title={L.cashiers} height={barsH(data.cashiers.length)}>
           {data.cashiers.length === 0 ? <NoData message={L.empty} /> : (
             <BreakdownBars valueLabel={L.revenue} domain={cashDomain}
               data={data.cashiers.map((c) => ({
@@ -159,7 +163,7 @@ export default function AnalyticsPanel({
         {/* Only when there is more than one store to compare. A single-shop
             manager does not need a bar chart with one bar in it. */}
         {data.stores.length > 1 && (
-          <ChartCard title={L.stores} height={230}>
+          <ChartCard title={L.stores} height={barsH(data.stores.length)}>
             <BreakdownBars valueLabel={L.revenue} domain={storeDomain}
               data={data.stores.map((s) => ({
                 key: s.name, label: s.name, value: s.total,

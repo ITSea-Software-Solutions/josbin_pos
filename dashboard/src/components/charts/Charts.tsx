@@ -179,7 +179,14 @@ export function BreakdownBars({ data, domain, valueLabel }: {
             ]} />
           }}
         />
-        <Bar dataKey="value" radius={[0, MARK.barRadius, MARK.barRadius, 0]} barSize={16}>
+        {/* minPointSize: a small-but-real value must still draw something.
+            Without it a payment method taking SRD 5 beside a cash total of
+            SRD 1,200 renders as a sub-pixel bar — indistinguishable from a
+            category with no sales at all, which is a different fact entirely.
+            Same failure as plotting a zero-able measure; this is the rounding
+            version of it. */}
+        <Bar dataKey="value" radius={[0, MARK.barRadius, MARK.barRadius, 0]} barSize={16}
+             minPointSize={3}>
           {data.map((s) => (
             <Cell key={s.key} fill={seriesColor(s.key, domain)}
                   stroke={INK.surface} strokeWidth={MARK.gap} />
