@@ -9,6 +9,8 @@ import {
   setStoreFilingPeriod,
 } from '@/api/btwSubmissions'
 import { useDashboardAuthStore } from '@/store/authStore'
+import { useState } from 'react'
+import AnalyticsPanel from '@/components/charts/AnalyticsPanel'
 import { BD, bdCard } from '@/theme/belastingdienst'
 import { BelastingdienstHeader } from '@/components/shared/BelastingdienstHeader'
 
@@ -42,6 +44,15 @@ export default function TaxInspectorDashboard({ onNavigateToSubmissions }: Props
   const user = useDashboardAuthStore((s) => s.user)
   const isInspector = user?.role === 'tax_inspector'
   const canManageOverdue = user?.role === 'tax_inspector' || user?.role === 'super_admin'
+
+  // Filters for the analysis section below the standing figures. Default is a
+  // 30-day window across every organisation — which is the inspector's actual
+  // job. Narrowing to one organisation is a deliberate act, not the default.
+  const [orgFilter, setOrgFilter]   = useState('')
+  const [anaFrom, setAnaFrom]       = useState(() => {
+    const d = new Date(); d.setDate(d.getDate() - 29); return d.toISOString().slice(0, 10)
+  })
+  const [anaTo, setAnaTo]           = useState(() => new Date().toISOString().slice(0, 10))
 
   const { data, isLoading } = useQuery({
     queryKey: ['btw-inspector-dashboard'],
@@ -233,6 +244,56 @@ export default function TaxInspectorDashboard({ onNavigateToSubmissions }: Props
       </div>
 
       {canManageOverdue && <OverdueFilingsPanel isNl={isNl} />}
+
+      {/* Analysis. The figures above answer "who has filed"; this answers "what
+          does the trade behind those filings look like" — turnover by day, the
+          exempt/standard split, which stores and which products.
+
+          Organisations are offered from the rankings this screen already holds,
+          (top_orgs_month), which means an organisation with no BTW at all this month is
+          not in the list. Acceptable for now: an inspector reaches a silent
+          organisation through Submissions, and the default here is ALL of them,
+          which is the view that matters. A proper organisation index for this
+          role is the better fix when one is needed. */}
+      <section style={{ marginTop: 26 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: BD.ink, margin: '0 0 4px' }}>
+          {isNl ? 'Analyse' : 'Analysis'}
+        </h2>
+        <p style={{ fontSize: 13, color: BD.muted, margin: '0 0 12px' }}>
+          {isNl
+            ? 'Omzet en BTW achter de aangiftes. Standaard alle organisaties.'
+            : 'The turnover and BTW behind the filings. All organisations by default.'}
+        </p>
+
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end',
+          background: '#fff', border: '1px solid #e4e9ee', borderRadius: 10,
+          padding: '12px 14px', marginBottom: 14,
+        }}>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: BD.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            {isNl ? 'Organisatie' : 'Organisation'}
+            <select value={orgFilter} onChange={(e) => setOrgFilter(e.target.value)}
+              style={{ fontSize: 13, padding: '7px 10px', borderRadius: 8, border: '1px solid #d8e3e9', minWidth: 210, color: BD.ink, fontWeight: 500, textTransform: 'none', letterSpacing: 0 }}>
+              <option value="">{isNl ? 'Alle organisaties' : 'All organisations'}</option>
+              {[...new Map(
+                  (data.top_orgs_month ?? []).map((o) => [o.organisation_id, o.organisation_name] as const)
+                ).entries()].map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: BD.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            {isNl ? 'Van' : 'From'}
+            <input type="date" value={anaFrom} onChange={(e) => setAnaFrom(e.target.value)}
+              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #d8e3e9', color: BD.ink }} />
+          </label>
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: 11, color: BD.muted, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            {isNl ? 'Tot' : 'To'}
+            <input type="date" value={anaTo} onChange={(e) => setAnaTo(e.target.value)}
+              style={{ fontSize: 13, padding: '6px 10px', borderRadius: 8, border: '1px solid #d8e3e9', color: BD.ink }} />
+          </label>
+        </div>
+
+        <AnalyticsPanel organisationId={orgFilter || undefined} dateFrom={anaFrom} dateTo={anaTo} />
+      </section>
 
       <p style={{ fontSize: 11, color: BD.muted, textAlign: 'right', marginTop: 14 }}>
         {isNl ? 'Bijgewerkt:' : 'Updated:'} {new Date(data.generated_at).toLocaleString('nl-NL', { dateStyle: 'short', timeStyle: 'short' })} · {isNl ? 'auto-ververst elke 60s' : 'auto-refresh 60s'}
