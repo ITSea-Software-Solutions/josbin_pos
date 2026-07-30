@@ -10,6 +10,12 @@
 #                               # container — the only place DB_HOST=postgres
 #                               # resolves). Extra args pass through, e.g.
 #                               #   bash scripts/dev.sh test --filter=BtwCalc
+#   bash scripts/dev.sh full    # SERVER-SHAPED local stack: built SPAs served
+#                               # by the same nginx containers the droplet runs
+#                               # (API 8080, dashboard 8090, POS 8091, docs 8095).
+#                               # Verify here, then deploy-server.sh ships the
+#                               # same thing. No hot reload — use `up` to code.
+#   bash scripts/dev.sh full-down  # stop the server-shaped stack
 #
 # Stack defaults to DEMO (8082). To target LIVE instead, set: JOSBIN_STACK=live
 set -uo pipefail
@@ -129,8 +135,61 @@ case "${1:-status}" in
     docker compose $COMPOSE_ARGS exec -T app php artisan test "$@"
     ;;
 
+  full)
+    bold "==> FULL local stack — the server shape (built SPAs, docker nginx frontends)"
+    cd "$ROOT"
+    FULL_COMPOSE="docker compose -p josbin_pos -f docker-compose.yml -f docker-compose.frontends.yml"
+    # Shift db/redis/pgbouncer host ports off the common defaults so other
+    # local projects can't collide. (The server closes these ports entirely
+    # via docker-compose.prod.yml — the one overlay this mode deliberately
+    # skips: opcache freeze + WAL archiving to /var/backups don't belong on a
+    # dev laptop and macOS can't bind-mount that path anyway.)
+    export DB_PORT_EXTERNAL=55432 REDIS_PORT_EXTERNAL=56379 PGBOUNCER_PORT=55434
+    # 8080 is often taken on dev laptops (Docker Desktop / other projects); the
+    # SPAs reach the API same-origin via their own nginx, so the host API port
+    # is only for direct curl/browsing and can move freely.
+    export APP_PORT="${FULL_APP_PORT:-8180}"
+
+    REVERB_KEY="$(grep '^REVERB_APP_KEY=' backend/.env | cut -d= -f2)"
+    bold "==> building SPAs + docs with localhost URLs (API stays same-origin /api)"
+    ( cd dashboard && VITE_API_URL=/api VITE_POS_URL=http://localhost:8091 \
+        VITE_REVERB_HOST=localhost VITE_REVERB_PORT=6001 VITE_REVERB_SCHEME=http \
+        VITE_REVERB_APP_KEY="$REVERB_KEY" VITE_DOCS_URL=http://localhost:8095 \
+        npx vite build ) || { red "dashboard build failed"; exit 1; }
+    ( cd frontend && VITE_API_URL=/api VITE_POS_URL=http://localhost:8091 \
+        VITE_REVERB_HOST=localhost VITE_REVERB_PORT=6001 VITE_REVERB_SCHEME=http \
+        VITE_REVERB_APP_KEY="$REVERB_KEY" VITE_DOCS_URL=http://localhost:8095 \
+        npx vite build --config vite.config.ts ) || { red "POS build failed"; exit 1; }
+    ( cd docs-site && npm run build ) || { red "docs build failed"; exit 1; }
+    node scripts/build-internal-docs.mjs || true
+    cp docs/flows.html docs/architecture.html docs/card-payments.html docs-site/.vitepress/dist/ 2>/dev/null || true
+
+    bold "==> starting the full docker stack"
+    # Explicit service list: dashboard-tls needs host-generated certs that a
+    # fresh clone doesn't have — everything else comes up.
+    $FULL_COMPOSE up -d --wait postgres redis pgbouncer app nginx \
+      || { red "core stack failed"; exit 1; }
+    docker exec josbin_pos_app php artisan migrate --force || { red "migrate failed"; exit 1; }
+    docker exec josbin_pos_app php artisan db:seed --force || { red "seed failed"; exit 1; }
+    $FULL_COMPOSE up -d reverb horizon scheduler dashboard-web pos-web docs-web
+
+    echo
+    bold "==> server-shaped stack up:"
+    echo "  Backend API   http://localhost:${APP_PORT}/api/health"
+    echo "  Dashboard     http://localhost:8090/"
+    echo "  POS web       http://localhost:8091/"
+    echo "  Docs site     http://localhost:8095/"
+    echo "  Same logins as 'status'. Deploying this exact shape: scripts/deploy-server.sh"
+    ;;
+
+  full-down)
+    bold "==> stopping the server-shaped local stack"
+    cd "$ROOT"
+    docker compose -p josbin_pos -f docker-compose.yml -f docker-compose.frontends.yml down
+    ;;
+
   *)
-    echo "Usage: bash scripts/dev.sh [up|down|status|logs|test]"
+    echo "Usage: bash scripts/dev.sh [up|down|status|logs|test|full|full-down]"
     echo "Stack: JOSBIN_STACK=${STACK} (set to live|demo|sandbox to switch)"
     exit 1
     ;;
