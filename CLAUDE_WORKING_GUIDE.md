@@ -793,6 +793,31 @@ Two more from the same fix, both worth their own rule:
   entry chunk is not the app.** Comparing the local and remote chunk FILENAME is
   the fastest real check: same hash, same build.
 
+  **G-057 (nginx redirects drop the port).** `http://host:8095/docs` 301'd to
+  `http://host/docs/` — port gone, and port 80 is a different site on that box.
+  Cause: a folder URL without a trailing slash falls through `try_files` to the
+  directory rule, and nginx's `absolute_redirect` (on by default) rebuilds
+  `Location` from `server_name` + the LISTEN port — :80 inside the container,
+  never the published :8095. Every folder URL on the docs site had been broken
+  this whole time; nobody noticed because we always link with the slash. A local
+  workaround already existed on the `/downloads/` route, which is the tell: a
+  fix scoped to one location for a server-wide default. **Rule: `absolute_redirect
+  off;` belongs at server level on any container published on a non-80 port.**
+  And when checking a URL, follow the redirect (`curl -L -w '%{url_effective}'`)
+  — a bare 301 tells you nothing about where it lands.
+
+  **G-058 (a generated table is only as complete as its extractor).** The
+  feature-disposition table in the migration record was generated from the
+  catalogue rather than typed, which is right — but the extractor's prefix rules
+  silently dropped one whole section (all 29 BTW filing rows, the single most
+  split-relevant area) plus the 13 cross-cutting features. It produced 177
+  confident-looking rows out of 220 and no error. The count in the neighbouring
+  chapter said 223, typed by hand, and the two never met. **Rule: when you
+  generate from a source, reconcile BACK to it — assert the generated row count
+  equals the source row count, and diff the ID sets both ways.** `in source but
+  not in output` is the check that finds a dropped section; `in output but not
+  in source` only finds invented ones.
+
   Also: `products.unit` carries an English-only CHECK (`each|kg|g|l|ml|pak`), so
   Dutch words a shopkeeper would say — `stuk`, `zak` — fail at insert. Small
   wart in a product built for a Dutch-speaking market; not worth a migration
