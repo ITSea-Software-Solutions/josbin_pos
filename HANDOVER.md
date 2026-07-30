@@ -131,6 +131,12 @@ if queued classes read it — G-026).
 changelog in `CLAUDE_WORKING_GUIDE.md` §10. `BUILD_STATUS.md` is historical,
 frozen at 2026-05-25.)*
 
+**2026-07-30 — three-node split builds in a separate repo:** `josbin_pos_v2`
+(private, same org) — full-history copy cut @ `4ed3028` (v1.8.0). This repo is
+**live 1.x maintenance only** from now on; every post-cut commit here needs a
+row in v2's `FORWARD_PORTS.md` (cherry-pick or skip with reason). v2's deploy
+script refuses this droplet as a target; v2 has no server of its own yet.
+
 **Where the build stands:** Phases 1–3 functionally complete and deployed to
 the test droplet; Phase-4 hardening in progress. Recent highlights: 7 payment
 methods incl. Mopé/Uni5Pay+ static-QR wallets (per-store QR upload + on-screen

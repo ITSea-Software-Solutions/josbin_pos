@@ -94,6 +94,14 @@ wrong, independent of the split.
 
 ## 4. Repo and branching — settled
 
+> **Superseded 2026-07-30 (user decision):** the split is built in a separate
+> repo — **`josbin_pos_v2`** (private, same org; full-history copy cut @
+> `4ed3028` / v1.8.0). THIS repo keeps the live 1.x product and hotfixes only.
+> Every post-cut commit on this repo's main must get a row in v2's
+> `FORWARD_PORTS.md` (cherry-picked or consciously skipped) — that log now does
+> the anti-drift job the one-repo rule below was for. Start split sessions from
+> the v2 clone at `~/project/josbin/josbin_pos_v2`.
+
 - **One repo.** Not three. Three copies of the BTW engine is the failure mode ch 20
   exists to prevent.
 - **No long-lived split branch.** Steps 1–3 are behaviour-preserving by design, so
