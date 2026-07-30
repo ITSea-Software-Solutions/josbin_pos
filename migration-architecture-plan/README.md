@@ -20,7 +20,7 @@ This section is the plan to split it into **three independent nodes**:
 | ☁️ **Control** | We host it | Organisations, licences, the fleet, the consolidated view. Holds the licence signing key. |
 | 🏛 **Tax** | Separate deployment, we host on request | BTW filings only, own database. Never holds commercial data. |
 
-## The six chapters
+## The seven chapters
 
 **[19. Three-node architecture](/migration-architecture-plan/19-three-node-architecture)** — the target
 shape and the contract between the nodes. What each one owns, the four wires
@@ -55,6 +55,12 @@ node with a native Kotlin core.
 how a signed image comes to exist and reaches a shop safely, contract tests for
 the wires, expand-then-contract migrations, what we promise when things break, and
 which compliance documents have to be rewritten once there are three nodes.
+
+**[25. Deployment topologies](/migration-architecture-plan/25-deployment-topologies)** —
+the six shapes a shop can be sold, with a connection diagram for each: node in our
+cloud or on their premises, one machine or several, and the standalone device with
+no Docker at all. Which ones sell offline, which ones must never be sold to the
+interior, and how a customer moves between them.
 
 ## Where we are
 

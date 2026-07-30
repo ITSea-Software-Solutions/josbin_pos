@@ -105,6 +105,7 @@ export default defineConfig({
                 { text: '22. Authenticatie & beveiliging', link: '/nl/migration-architecture-plan/22-node-authentication' },
                 { text: '23. Installaties & artefacten', link: '/nl/migration-architecture-plan/23-installs-and-artifacts' },
                 { text: '24. Release & operatie', link: '/nl/migration-architecture-plan/24-release-and-operations' },
+                { text: '25. Opstellingen', link: '/nl/migration-architecture-plan/25-deployment-topologies' },
               ],
             },
             {
@@ -336,6 +337,7 @@ export default defineConfig({
             { text: '22. Authentication & security', link: '/migration-architecture-plan/22-node-authentication' },
             { text: '23. Installs & artifacts', link: '/migration-architecture-plan/23-installs-and-artifacts' },
             { text: '24. Release & operations', link: '/migration-architecture-plan/24-release-and-operations' },
+            { text: '25. Deployment topologies', link: '/migration-architecture-plan/25-deployment-topologies' },
           ],
         },
         {

@@ -21,7 +21,7 @@ knooppunten**:
 | ☁️ **Beheer** | Wij hosten dit | Organisaties, licenties, de vloot, het geconsolideerde beeld. Bewaart de ondertekensleutel van de licentie. |
 | 🏛 **Belasting** | Aparte installatie, op verzoek door ons gehost | Alleen BTW-aangiften, eigen database. Bevat nooit commerciële gegevens. |
 
-## De zes hoofdstukken
+## De zeven hoofdstukken
 
 **[19. Drie knooppunten](/nl/migration-architecture-plan/19-three-node-architecture)** — de doelvorm en
 het contract tussen de knooppunten. Wat elk knooppunt bezit, de vier verbindingen
@@ -57,6 +57,12 @@ hoe een ondertekende image ontstaat en veilig bij een winkel komt, contracttests
 voor de verbindingen, migraties die eerst uitbreiden en later opruimen, wat we
 beloven als het misgaat, en welke nalevingsdocumenten herschreven moeten worden
 zodra er drie knooppunten zijn.
+
+**[25. Opstellingen](/nl/migration-architecture-plan/25-deployment-topologies)** —
+de zes vormen waarin een winkel verkocht kan worden, met een verbindingsdiagram per
+vorm: knooppunt in onze cloud of bij hen op locatie, één machine of meerdere, en het
+zelfstandige apparaat zonder Docker. Welke offline verkopen, welke nooit aan het
+binnenland verkocht mogen worden, en hoe een klant van vorm wisselt.
 
 ## Waar we staan
 
