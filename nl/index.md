@@ -12,8 +12,17 @@ hero:
     - theme: alt
       text: POS-handleiding
       link: /nl/user_manual/
+    - theme: alt
+      text: 🧭 Architectuurplan
+      link: /nl/plan/
 
 features:
+  - icon: 🧭
+    title: Waar we naartoe gaan
+    details: Het plan om het product op te splitsen in drie onafhankelijke knooppunten — winkel, beheer, belasting. Doelarchitectuur, de vrieslijst van wat niet mag breken, en waar alle 220 functies landen. Een plan, niet wat vandaag draait.
+    linkText: Open het architectuurplan
+    link: /nl/plan/
+
   - icon: 🏗️
     title: Voor ontwikkelaars
     details: Architectuur, request-levenscyclus, BTW-pipeline, sync-flow, code-overzicht. Lees op volgorde of spring naar een hoofdstuk.

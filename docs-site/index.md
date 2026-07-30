@@ -15,6 +15,9 @@ hero:
     - theme: alt
       text: 🎬 Video's & presentatie
       link: /videos.html
+    - theme: alt
+      text: 🧭 Architecture plan
+      link: /plan/
 
 features:
   - icon: 🏗️
@@ -46,6 +49,12 @@ features:
     details: The platform presentation (13 chapters, ±3 min, NL/EN with voice-over) plus the promo and teaser — ideal for a team session or a first demo.
     linkText: Open the video overview
     link: /videos.html
+
+  - icon: 🧭
+    title: Where we're heading
+    details: The plan to split the product into three independent nodes — shop, control, tax. Target architecture, the freeze list of what must not break, and where all 220 features land. A plan, not what runs today.
+    linkText: Open the architecture plan
+    link: /plan/
 
   - icon: 📐
     title: Architecture in one read

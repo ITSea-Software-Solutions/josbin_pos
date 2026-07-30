@@ -191,6 +191,11 @@ one — build it in before there is a fleet.
 
 ## 19.7 Open decisions
 
+> **Settled since this chapter was written.** All of these are now decided —
+> see [chapter 21](/plan/21-migration-record) for the calls and the reasoning. Kept below for the
+> record of what was open.
+
+
 These are not yet settled and are called out so nobody assumes:
 
 1. **One shop node per organisation, or per store?** A chain with five branches:

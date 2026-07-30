@@ -1,15 +1,15 @@
-# 20. Bouwplan voor de opsplitsing — waarom, wat verhuist, en wat niet mag breken
+# 20. Split build plan — why, what moves, and what must not break
 
-[Hoofdstuk 19](/nl/nl/docs/19-three-node-architecture) beschrijft het doel: drie
-zelfstandige knooppunten. Dit hoofdstuk gaat over hoe we daar komen **zonder
-iets te verliezen wat we al hebben**.
+[Chapter 19](/plan/19-three-node-architecture) describes the target: three
+independent nodes. This chapter is how we get there **without losing anything we
+already have**.
 
-Lees §20.3 vóór u code schrijft. Het is de lijst van wat vandaag werkt, en de
-herstructurering is pas geslaagd als dat alles daarna nog steeds werkt.
+Read §20.3 before writing any code. It is the list of things that work today,
+and the refactor is only successful if every one of them still works after.
 
 ---
 
-## 20.1 Waarom we dit doen
+## 20.1 Why we are doing this
 
 Four reasons, in the order they matter.
 
@@ -34,7 +34,7 @@ down a filing deadline.
 
 ---
 
-## 20.2 Wat we bouwen
+## 20.2 What we are building
 
 One repository, one shared domain core, three deployable nodes.
 
@@ -73,9 +73,9 @@ modules load. A shop build physically does not contain `nodes/Control`.
 
 ---
 
-## 20.3 De vrieslijst — wat moet blijven werken
+## 20.3 The freeze list — what must still work
 
-**223 catalogued features: 194 shipped, 13 partial, 16 not started.** The full
+**220 catalogued features: 193 shipped, 12 partial, 15 not started.** The full
 inventory with per-feature status lives in the feature catalogue; this table is
 the ownership map, which is the part the split can get wrong.
 
@@ -83,23 +83,24 @@ The dangerous rows are the ones that **split**. A feature owned by one node move
 cleanly. A feature that exists in two nodes is where behaviour quietly goes
 missing, because each side assumes the other kept it.
 
-| Gebied | Rijen | Gaat naar | Risico |
+| Area | Rows | Goes to | Risk |
 |---|---|---|---|
-| **POS — register & sales** | 43 | Shop | Schone verhuizing |
-| **Catalogue & inventory** | 23 | Shop | Schone verhuizing |
-| **Settings & device** | 20 | Shop, mostly | ⚠️ **Splitst** — org-level policy stays in Control |
-| **Reports** | 16 | All three | ⚠️ **Splitst in drieën** — own-store / consolidated / filings |
-| **Auth & session** | 11 | All three | ⚠️ **Splitst in drieën** — three independent user tables |
-| **Licence** | 10 | Control issues, Shop verifies | ⚠️ **Splitst** — the whole point of the change |
-| **Org & user management** | 10 + 5 | ⚠️ **Splitst** | Control owns the org record; Shop owns its own users |
-| **Integration API (Layer 3)** | 10 | **Onbesloten** | ⚠️ See §20.6 |
+| **POS — register & sales** | 43 | Shop | Clean move |
+| **Catalogue & inventory** | 23 | Shop | Clean move |
+| **Settings & device** | 20 | Shop, mostly | ⚠️ **Splits** — org-level policy stays in Control |
+| **Reports** | 16 | All three | ⚠️ **Splits 3 ways** — own-store / consolidated / filings |
+| **BTW filings** | 29 | Shop files, Tax receives | ⚠️ **Most split area** — 12 of 29 cut in half |
+| **Auth & session** | 11 | All three | ⚠️ **Splits 3 ways** — three independent user tables |
+| **Licence** | 10 | Control issues, Shop verifies | ⚠️ **Splits** — the whole point of the change |
+| **Org & user management** | 10 + 5 | ⚠️ **Splits** | Control owns the org record; Shop owns its own users |
+| **Integration API (Layer 3)** | 10 | **Undecided** | ⚠️ See §20.6 |
 | **Audit & compliance** | 9 | All three, independently | Each node keeps its own append-only log |
-| **Sync & offline** | 8 | Shop client + Control server | ⚠️ **Splitst** — it *is* the wire |
+| **Sync & offline** | 8 | Shop client + Control server | ⚠️ **Splits** — it *is* the wire |
 | **AI layer** | 7 | Control | Needs internet; cannot live in an offline node |
-| **Hardware (printer, drawer, scanner)** | 2 | Shop | Schone verhuizing |
+| **Hardware (printer, drawer, scanner)** | 2 | Shop | Clean move |
 | **Customers** | 2 | Shop | Never leaves the shop — WBP-S |
 
-### De negen kritieke doorlopen
+### The nine critical flows
 
 These are end-to-end journeys, and every one must be walked on real hardware
 after the split. A green test suite is not evidence for these.
@@ -117,16 +118,16 @@ after the split. A green test suite is not evidence for these.
 Five of the nine must come through untouched. If any of them behaves differently
 afterwards, the refactor is wrong — not the flow.
 
-### Verlies het onafgemaakte werk niet
+### Do not lose the unfinished work
 
-13 features are partial and 16 are unstarted. They are easy to drop in a big
+12 features are partial and 15 are unstarted. They are easy to drop in a big
 move because nothing fails when they vanish. Carry the catalogue rows across
 with their status intact, including the Sranantongo review that is still
 outstanding and the deferred sale-number and refund-discount items.
 
 ---
 
-## 20.4 De regel voor elke stap
+## 20.4 The rule for every step
 
 **No step changes behaviour and moves code at the same time.**
 
@@ -138,9 +139,9 @@ Mixing them is how a refactor loses a feature nobody notices for a month.
 
 ---
 
-## 20.5 Volgorde van werken, met de poort per stap
+## 20.5 Order of work, with the gate on each
 
-| # | Stap | Poort voordat u verdergaat |
+| # | Step | Gate before moving on |
 |---|---|---|
 | 1 | Extract `domain/` — BTW, money, receipt | Full suite green, **no test edited**. If a test needed changing, behaviour changed. |
 | 2 | Carve `nodes/Shop` · `Control` · `Tax`, still one deployment | All 9 flows walked; app still boots as one |
@@ -151,11 +152,17 @@ Mixing them is how a refactor loses a feature nobody notices for a month.
 | 7 | Direct BTW filing, shop-signed | Flow 8 rewalked; a filing verifies against the shop's key |
 
 Steps 1–3 are pure refactor and safe to start now. Steps 4–7 need the three open
-decisions in [§19.7](/nl/docs/19-three-node-architecture) answered first.
+decisions in [§19.7](/plan/19-three-node-architecture) answered first.
 
 ---
 
-## 20.6 Nog niet besloten
+## 20.6 Still undecided
+
+> **Now decided** — see [chapter 21](/plan/21-migration-record). Per-store nodes with the schema
+> intact, degrade-not-lock plus source escrow, we host the tax node as a separate
+> system, Layer 3 in the control plane, one control database plus per-shop
+> encrypted archives.
+
 
 Carried forward from chapter 19, plus one this chapter surfaces:
 
@@ -171,7 +178,7 @@ Carried forward from chapter 19, plus one this chapter surfaces:
 
 ---
 
-## 20.7 Wat we uitdrukkelijk niet wijzigen
+## 20.7 What we are explicitly not changing
 
 So nobody optimistically "tidies" these mid-refactor:
 

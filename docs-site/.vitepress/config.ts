@@ -50,11 +50,13 @@ export default defineConfig({
     // Section index rewrites — each manual carries its README.md as the
     // entry page so folder URLs resolve to the README contents.
     'docs/README.md':                 'docs/index.md',
+    'plan/README.md':                 'plan/index.md',
     'user_manual/README.md':          'user_manual/index.md',
     'dashboard_manual/README.md':     'dashboard_manual/index.md',
     'trainer_cheatsheets/README.md':  'trainer_cheatsheets/index.md',
     // Dutch mirrors
     'nl/docs/README.md':                'nl/docs/index.md',
+    'nl/plan/README.md':                'nl/plan/index.md',
     'nl/user_manual/README.md':         'nl/user_manual/index.md',
     'nl/dashboard_manual/README.md':    'nl/dashboard_manual/index.md',
     'nl/trainer_cheatsheets/README.md': 'nl/trainer_cheatsheets/index.md',
@@ -89,8 +91,29 @@ export default defineConfig({
           { text: 'Handleiding POS',   link: '/nl/user_manual/' },
           { text: 'Handleiding Dashboard', link: '/nl/dashboard_manual/' },
           { text: 'Trainersbladen',    link: '/nl/trainer_cheatsheets/' },
+          { text: '🧭 Architectuurplan', link: '/nl/plan/' },
         ],
         sidebar: {
+          '/nl/plan/': [
+            {
+              text: '🧭 Architectuurplan',
+              collapsed: false,
+              items: [
+                { text: 'Waarom we opsplitsen',        link: '/nl/plan/' },
+                { text: '19. Drie knooppunten',        link: '/nl/plan/19-three-node-architecture' },
+                { text: '20. Bouwplan opsplitsing',    link: '/nl/plan/20-split-build-plan' },
+                { text: '21. Migratieregister',        link: '/nl/plan/21-migration-record' },
+              ],
+            },
+            {
+              text: 'Wat er vandaag draait',
+              collapsed: false,
+              items: [
+                { text: 'Ontwikkelaarsdocs',           link: '/nl/docs/' },
+                { text: 'Architectuur van nu',         link: '/nl/docs/01-architecture' },
+              ],
+            },
+          ],
           '/nl/docs/': [
             {
               text: 'Aan de slag',
@@ -122,8 +145,6 @@ export default defineConfig({
                 { text: '16. De vier opstellingen', link: '/nl/docs/16-deployment-options' },
                 { text: '17. Releasenotities', link: '/nl/docs/17-release-notes' },
                 { text: '18. Testplan', link: '/nl/docs/18-test-plan' },
-                { text: '19. Drie knooppunten', link: '/nl/docs/19-three-node-architecture' },
-                { text: '20. Bouwplan opsplitsing', link: '/nl/docs/20-split-build-plan' },
                 { text: 'QR-wallet betalingen (flow & use cases)', link: '/nl/docs/qr-payment-flow' },
                 { text: 'Systeemflows (end-to-end diagrammen)', link: '/nl/docs/system-flows' },
               ],
@@ -297,9 +318,30 @@ export default defineConfig({
       { text: 'User Manual',     link: '/user_manual/' },
       { text: 'Dashboard Manual',link: '/dashboard_manual/' },
       { text: 'Trainer Sheets',  link: '/trainer_cheatsheets/' },
+      { text: '🧭 Architecture plan', link: '/plan/' },
     ],
 
     sidebar: {
+      '/plan/': [
+        {
+          text: '🧭 Architecture plan',
+          collapsed: false,
+          items: [
+            { text: 'Why we are splitting',        link: '/plan/' },
+            { text: '19. Three-node architecture', link: '/plan/19-three-node-architecture' },
+            { text: '20. Split build plan',        link: '/plan/20-split-build-plan' },
+            { text: '21. Migration record',        link: '/plan/21-migration-record' },
+          ],
+        },
+        {
+          text: 'What runs today',
+          collapsed: false,
+          items: [
+            { text: 'Developer docs',              link: '/docs/' },
+            { text: "Today's architecture",        link: '/docs/01-architecture' },
+          ],
+        },
+      ],
       // ── Developer Documentation ────────────────────────────────────────────
       '/docs/': [
         {
@@ -332,8 +374,6 @@ export default defineConfig({
                 { text: '16. The four setups', link: '/docs/16-deployment-options' },
                 { text: '17. Release notes', link: '/docs/17-release-notes' },
                 { text: '18. Test plan', link: '/docs/18-test-plan' },
-                { text: '19. Three-node architecture', link: '/docs/19-three-node-architecture' },
-                { text: '20. Split build plan', link: '/docs/20-split-build-plan' },
                 { text: 'QR-wallet betalingen (flow & use cases)', link: '/docs/qr-payment-flow' },
                 { text: 'System flows (end-to-end diagrams)', link: '/docs/system-flows' },
                 { text: 'System flow map (plain language)',   link: '/docs/FLOWS' },
