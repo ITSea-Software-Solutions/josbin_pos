@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Events\ZReportSubmitted;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
+use App\Models\User;
+use App\Models\Store;
+use App\Models\SaleItem;
 use App\Models\ZReport;
 use App\Support\AstDates;
 use App\Support\ReportCache;
@@ -21,6 +24,163 @@ class ReportController extends Controller
     // ─── Daily Report ─────────────────────────────────────────────────────
 
     /** GET /api/reports/daily */
+    /**
+     * GET /api/reports/series
+     *
+     * Everything the report charts plot, in one request:
+     *   trend[]     one bucket per day  — sales, BTW, transactions, basket
+     *   payments[]  totals per payment method over the window
+     *   btw[]       totals per BTW rate, exempt split out
+     *   products[]  top 8 by revenue
+     *   cashiers[]  totals per cashier
+     *   stores[]    totals per store (only when the window spans more than one)
+     *
+     * One endpoint rather than six because every chart on the screen shares the
+     * same filters — six endpoints would mean six round trips that can disagree
+     * with each other while the user changes a date.
+     *
+     * Scope follows the caller, not a parameter:
+     *   store_id given  → that store, if they may see it
+     *   omitted         → every store in their own organisation
+     * A tax inspector reads across organisations (that is the role's whole
+     * purpose) and may narrow with organisation_id.
+     */
+    public function series(Request $request): JsonResponse
+    {
+        abort_unless($request->user()?->can('reports.daily'), 403);
+
+        $request->validate([
+            'store_id'        => ['nullable', 'uuid'],
+            'organisation_id' => ['nullable', 'uuid'],
+            'date_from'       => ['nullable', 'date_format:Y-m-d'],
+            'date_to'         => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        $user = $request->user();
+        $to   = $request->input('date_to', today()->toDateString());
+        $from = $request->input('date_from', today()->subDays(29)->toDateString());
+
+        // AST, not UTC. A day boundary an hour out puts a late-evening sale in
+        // the wrong bucket, and the whole point of the trend is which day.
+        $tz    = config('app.timezone');
+        $start = \Carbon\Carbon::parse($from, $tz)->startOfDay();
+        $end   = \Carbon\Carbon::parse($to, $tz)->endOfDay();
+
+        $sales = Sale::query()
+            ->where('status', 'completed')
+            ->whereBetween('occurred_at', [$start, $end]);
+
+        if ($storeId = $request->input('store_id')) {
+            abort_unless($user->canAccessStore($storeId), 403);
+            $sales->where('store_id', $storeId);
+        } elseif ($user->role === User::ROLE_TAX_INSPECTOR) {
+            // Cross-organisation by design; narrowable to one.
+            if ($orgId = $request->input('organisation_id')) {
+                $sales->whereIn('store_id', Store::where('organisation_id', $orgId)->pluck('id'));
+            }
+        } else {
+            $sales->whereIn('store_id', Store::where('organisation_id', $user->organisation_id)->pluck('id'));
+        }
+
+        $ids = (clone $sales)->pluck('id');
+
+        return response()->json(['data' => [
+            'date_from' => $from,
+            'date_to'   => $to,
+            'trend'     => $this->seriesTrend(clone $sales, $tz),
+            'payments'  => $this->seriesPayments(clone $sales),
+            'btw'       => $this->seriesBtw($ids),
+            'products'  => $this->seriesProducts($ids),
+            'cashiers'  => $this->seriesCashiers(clone $sales),
+            'stores'    => $this->seriesStores(clone $sales),
+        ]]);
+    }
+
+    /** One row per day. Days with no sales are filled in as zero — a gap in a
+     *  line chart reads as missing data, but a closed Sunday is a real zero. */
+    private function seriesTrend($sales, string $tz): array
+    {
+        $rows = $sales->selectRaw("
+                (occurred_at AT TIME ZONE ?)::date AS d,
+                SUM(total_srd)  AS sales,
+                SUM(btw_srd)    AS btw,
+                COUNT(*)        AS txns
+            ", [$tz])
+            ->groupBy('d')->orderBy('d')->get();
+
+        return $rows->map(fn ($r) => [
+            'date'   => (string) $r->d,
+            'sales'  => round((float) $r->sales, 2),
+            'btw'    => round((float) $r->btw, 2),
+            'txns'   => (int) $r->txns,
+            'basket' => $r->txns > 0 ? round((float) $r->sales / (int) $r->txns, 2) : 0.0,
+        ])->values()->all();
+    }
+
+    private function seriesPayments($sales): array
+    {
+        return $sales->selectRaw('payment_method AS method, SUM(total_srd) AS total, COUNT(*) AS txns')
+            ->groupBy('payment_method')->orderByRaw('SUM(total_srd) DESC')->get()
+            ->map(fn ($r) => [
+                'method' => (string) $r->method,
+                'total'  => round((float) $r->total, 2),
+                'txns'   => (int) $r->txns,
+            ])->all();
+    }
+
+    /** Per BTW rate, with the exemption kept as its own row — the two are
+     *  different things to the Belastingdienst and must not be summed. */
+    private function seriesBtw($saleIds): array
+    {
+        return SaleItem::whereIn('sale_id', $saleIds)
+            ->selectRaw('btw_rate AS rate, SUM(line_total_srd) AS base, SUM(btw_srd) AS btw')
+            ->groupBy('btw_rate')->orderBy('btw_rate')->get()
+            ->map(fn ($r) => [
+                'rate' => rtrim(rtrim(number_format((float) $r->rate, 2, '.', ''), '0'), '.') . '%',
+                'base' => round((float) $r->base, 2),
+                'btw'  => round((float) $r->btw, 2),
+            ])->all();
+    }
+
+    private function seriesProducts($saleIds): array
+    {
+        return SaleItem::whereIn('sale_id', $saleIds)
+            ->selectRaw('product_name_snapshot AS name, SUM(quantity) AS qty, SUM(line_total_srd) AS revenue')
+            ->groupBy('product_name_snapshot')
+            ->orderByRaw('SUM(line_total_srd) DESC')->limit(8)->get()
+            ->map(fn ($r) => [
+                'name'    => (string) $r->name,
+                'qty'     => round((float) $r->qty, 3),
+                'revenue' => round((float) $r->revenue, 2),
+            ])->all();
+    }
+
+    private function seriesCashiers($sales): array
+    {
+        return $sales->with('cashier:id,name')
+            ->selectRaw('cashier_id, SUM(total_srd) AS total, COUNT(*) AS txns')
+            ->groupBy('cashier_id')->orderByRaw('SUM(total_srd) DESC')->get()
+            ->map(fn ($r) => [
+                'name'   => $r->cashier?->name ?? '—',
+                'total'  => round((float) $r->total, 2),
+                'txns'   => (int) $r->txns,
+                'basket' => $r->txns > 0 ? round((float) $r->total / (int) $r->txns, 2) : 0.0,
+            ])->all();
+    }
+
+    private function seriesStores($sales): array
+    {
+        return $sales->with('store:id,name')
+            ->selectRaw('store_id, SUM(total_srd) AS total, SUM(btw_srd) AS btw, COUNT(*) AS txns')
+            ->groupBy('store_id')->orderByRaw('SUM(total_srd) DESC')->get()
+            ->map(fn ($r) => [
+                'name'  => $r->store?->name ?? '—',
+                'total' => round((float) $r->total, 2),
+                'btw'   => round((float) $r->btw, 2),
+                'txns'  => (int) $r->txns,
+            ])->all();
+    }
+
     public function daily(Request $request): JsonResponse
     {
         abort_unless($request->user()?->can('reports.daily'), 403);

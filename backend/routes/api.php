@@ -370,6 +370,8 @@ Route::middleware(['auth:sanctum', 'two_factor', 'session.timeout'])->group(func
 
     // Reports (SPOS-209)
     Route::prefix('reports')->name('reports.')->group(function () {
+        // Everything the report charts plot, in one request — see series().
+        Route::get('series',         [ReportController::class, 'series'])->name('series');
         Route::get('daily',         [ReportController::class, 'daily'])->name('daily');
         Route::get('monthly',       [ReportController::class, 'monthly'])->name('monthly');
         Route::get('custom',        [ReportController::class, 'custom'])->name('custom');

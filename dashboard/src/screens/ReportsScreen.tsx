@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import AnalyticsPanel from '@/components/charts/AnalyticsPanel'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { getConsolidatedReport, getConsolidatedBtwReport, getBtwExemptionsReport, getProfitReport, exportReport } from '@/api/dashboard'
@@ -9,7 +10,7 @@ import { format, subDays, startOfMonth } from 'date-fns'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useDashboardAuthStore } from '@/store/authStore'
 
-type ReportTab = 'consolidated' | 'btw' | 'exemptions' | 'profit'
+type ReportTab = 'graphs' | 'consolidated' | 'btw' | 'exemptions' | 'profit'
 
 function today() { return format(new Date(), 'yyyy-MM-dd') }
 function monthStart() { return format(startOfMonth(new Date()), 'yyyy-MM-dd') }
@@ -43,7 +44,7 @@ export default function ReportsScreen() {
   const { i18n } = useTranslation()
   const isNl = i18n.language === 'nl'
 
-  const [tab, setTab] = useState<ReportTab>('consolidated')
+  const [tab, setTab] = useState<ReportTab>('graphs')
   const [dateFrom, setDateFrom] = useState(monthStart())
   const [dateTo, setDateTo] = useState(today())
 
@@ -121,8 +122,8 @@ export default function ReportsScreen() {
     enabled: tab === 'profit',
   })
 
-  const isLoading  = tab === 'consolidated' ? cLoading  : tab === 'btw' ? bLoading  : tab === 'exemptions' ? eLoading  : pLoading
-  const isFetching = tab === 'consolidated' ? cFetching : tab === 'btw' ? bFetching : tab === 'exemptions' ? eFetching : pFetching
+  const isLoading  = tab === 'graphs' ? false : tab === 'consolidated' ? cLoading  : tab === 'btw' ? bLoading  : tab === 'exemptions' ? eLoading  : pLoading
+  const isFetching = tab === 'graphs' ? false : tab === 'consolidated' ? cFetching : tab === 'btw' ? bFetching : tab === 'exemptions' ? eFetching : pFetching
   const refetch    = tab === 'consolidated' ? cRefetch  : tab === 'btw' ? bRefetch  : tab === 'exemptions' ? eRefetch  : pRefetch
 
   // Profit tab gated to roles with catalogue ownership (matches
@@ -187,6 +188,7 @@ export default function ReportsScreen() {
   }
 
   const tabs = [
+    { id: 'graphs'       as const, nl: 'Grafieken',      en: 'Graphs'       },
     { id: 'consolidated' as const, nl: 'Geconsolideerd', en: 'Consolidated' },
     { id: 'btw'          as const, nl: 'BTW-overzicht',  en: 'BTW Report'   },
     { id: 'exemptions'   as const, nl: 'BTW-vrijstellingen', en: 'BTW exemptions' },
@@ -353,6 +355,10 @@ export default function ReportsScreen() {
       </div>
 
       {/* ── Consolidated Report ─────────────────────────────────────────── */}
+      {tab === 'graphs' && (
+        <AnalyticsPanel storeId={storeId} dateFrom={dateFrom} dateTo={dateTo} />
+      )}
+
       {tab === 'consolidated' && (
         <>
           {/* KPI cards */}
