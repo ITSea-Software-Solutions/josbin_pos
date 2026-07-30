@@ -21,7 +21,7 @@ knooppunten**:
 | ☁️ **Beheer** | Wij hosten dit | Organisaties, licenties, de vloot, het geconsolideerde beeld. Bewaart de ondertekensleutel van de licentie. |
 | 🏛 **Belasting** | Aparte installatie, op verzoek door ons gehost | Alleen BTW-aangiften, eigen database. Bevat nooit commerciële gegevens. |
 
-## De drie hoofdstukken
+## De vier hoofdstukken
 
 **[19. Drie knooppunten](/nl/migration-architecture-plan/19-three-node-architecture)** — de doelvorm en
 het contract tussen de knooppunten. Wat elk knooppunt bezit, de vier verbindingen
@@ -40,7 +40,19 @@ welke naar de winkel gaan, welke in onze cloud blijven, waarvan elk knooppunt ee
 eigen exemplaar nodig heeft — en de 70 die **over twee knooppunten splitsen**,
 waar gedrag verdwijnt omdat elke kant aanneemt dat de andere het heeft behouden.
 
+**[22. Authenticatie & beveiliging](/nl/migration-architecture-plan/22-node-authentication)** —
+hoe elk knooppunt bewijst wie het is. Twee sleutelparen die tegengesteld wijzen,
+waarom de signatuur *binnenin* de payload zit in plaats van in de TLS-verbinding,
+hoe een winkel BTW aangeeft zonder dat wij in de bewijsketen zitten, en een
+eerlijk verhaal over wat iemand krijgt die met de winkel-pc wegloopt.
+
 ## Waar we staan
+
+**De AI-laag valt buiten de opsplitsing.** Zeven gecatalogiseerde functies —
+slim zoeken, fraudedetectie, het weekoverzicht, automatisch categoriseren en de
+fase 2-onderdelen — zijn er bewust uit gehaald. Ze hebben internet nodig en
+konden dus toch alleen in het beheerknooppunt wonen; de opsplitsing blokkeert ze
+niet en zij blokkeren de opsplitsing niet.
 
 Er is nog niets gebouwd. Stap 1 tot en met 3 van hoofdstuk 20 zijn zuivere
 herstructurering en kunnen beginnen; stap 4 tot en met 7 hangen af van de

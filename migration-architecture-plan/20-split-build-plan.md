@@ -96,7 +96,7 @@ missing, because each side assumes the other kept it.
 | **Integration API (Layer 3)** | 10 | **Undecided** | ⚠️ See §20.6 |
 | **Audit & compliance** | 9 | All three, independently | Each node keeps its own append-only log |
 | **Sync & offline** | 8 | Shop client + Control server | ⚠️ **Splits** — it *is* the wire |
-| **AI layer** | 7 | Control | Needs internet; cannot live in an offline node |
+| **AI layer** | 7 | ⏸️ **Dropped** | Deferred out of the split entirely — chapter 21 §21.5 |
 | **Hardware (printer, drawer, scanner)** | 2 | Shop | Clean move |
 | **Customers** | 2 | Shop | Never leaves the shop — WBP-S |
 

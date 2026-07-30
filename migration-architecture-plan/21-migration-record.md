@@ -169,7 +169,7 @@ it in the DPA.
 
 **Storage boundary — what our cloud actually keeps**
 
-<svg viewBox="0 0 680 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The shop node is the system of record; rollups go to one control database and encrypted archives go to object storage" style="max-width:680px;width:100%;height:auto;font-family:sans-serif">
+<svg viewBox="0 0 680 285" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="The shop node is the system of record; rollups go to one control database and encrypted archives go to object storage" style="max-width:680px;width:100%;height:auto;font-family:sans-serif">
   <rect x="14" y="66" width="164" height="78" rx="10" fill="#293371"/>
   <text x="96" y="94" text-anchor="middle" font-size="13" font-weight="700" fill="#ffffff">🗄 Shop node</text>
   <text x="96" y="112" text-anchor="middle" font-size="10.5" fill="#c9d2ee">SYSTEM OF RECORD</text>
@@ -195,6 +195,20 @@ it in the DPA.
   <rect x="522" y="128" width="144" height="60" rx="8" fill="#e9f7ef"/>
   <text x="594" y="150" text-anchor="middle" font-size="11" fill="#1d7a46">disaster recovery</text>
   <text x="594" y="168" text-anchor="middle" font-size="11" fill="#1d7a46">key escrowed apart</text>
+
+  <!-- The third destination. Filings do NOT pass through our cloud (D4) — drawn
+       from the node, past the control boxes, so that is visible rather than stated. -->
+  <line x1="96" y1="196" x2="96" y2="232" stroke="#1f6b3b" stroke-width="2"/>
+  <line x1="96" y1="232" x2="286" y2="232" stroke="#1f6b3b" stroke-width="2"/>
+  <polygon points="286,232 275,228 275,237" fill="#1f6b3b"/>
+  <text x="20" y="252" font-size="10.5" font-weight="600" fill="#1f6b3b">BTW filing — straight past us</text>
+  <text x="20" y="266" font-size="10" fill="#6b7280">signed by the shop · totals per rate, no lines</text>
+  <rect x="292" y="214" width="216" height="38" rx="7" fill="#ffffff" stroke="#1f6b3b" stroke-width="2"/>
+  <text x="400" y="231" text-anchor="middle" font-size="11.5" font-weight="700" fill="#0e1a14">🏛 Tax node — own database</text>
+  <text x="400" y="245" text-anchor="middle" font-size="10" fill="#5b6b62">no commercial data, ever</text>
+  <line x1="508" y1="222" x2="566" y2="196" stroke="#9aa3b8" stroke-width="1.6" stroke-dasharray="3 4"/>
+  <polygon points="566,196 555,196 560,205" fill="#9aa3b8"/>
+  <text x="516" y="266" font-size="10" fill="#6b7280">receipt only → control</text>
 </svg>
 
 ---
@@ -208,9 +222,10 @@ it in the DPA.
 |---|---|---|
 | 🏪 **Shop** | **97** | Moves cleanly into the node |
 | ⚠️ **Splits** | **70** | Exists in two nodes — **where behaviour gets lost** |
-| ☁️ **Control** | **23** | Stays in our cloud |
+| ☁️ **Control** | **16** | Stays in our cloud |
 | ◆ **All three** | **18** | Each node needs its own |
 | 🏛 **Tax** | **12** | Belastingdienst-facing; moves whole |
+| ⏸️ **Dropped** | **7** | Deferred out of the split — the AI layer |
 
 **70 is the number to worry about.** A feature that moves to one node
 either works or obviously doesn't. A feature that splits is where each side
@@ -481,17 +496,17 @@ every node.
 | `AUD-08` | Rekenkamer audit export (full transaction trail, signed PDF) | ✅ | ◆ All three | Each node keeps its own append-only log. |
 | `AUD-09` | Verwerkersovereenkomst PDF template (NL) | 🔲 | ◆ All three | Each node keeps its own append-only log. |
 
-### AI Layer  ·  7 features
+### AI Layer  ·  7 features — **dropped for now**
 
 | ID | Feature | Now | Goes to | Note |
 |---|---|---|---|---|
-| `AI-01` | Smart product search (pgvector semantic) | 🟡 | ☁️ Control | Needs internet; cannot live in an offline node. |
-| `AI-02` | Fraud anomaly detection (queued post-sale) | 🟡 | ☁️ Control | Needs internet; cannot live in an offline node. |
-| `AI-03` | Weekly AI sales summary | 🔲 | ☁️ Control | Needs internet; cannot live in an offline node. |
-| `AI-04` | Auto product categorisation + BTW suggestion on add | 🔲 | ☁️ Control | Needs internet; cannot live in an offline node. |
-| `AI-05` | Natural-language reports (Phase 2) | 🔲 | ☁️ Control | Needs internet; cannot live in an offline node. |
-| `AI-06` | Stock reorder prediction (Phase 2) | 🔲 | ☁️ Control | Needs internet; cannot live in an offline node. |
-| `AI-07` | Invoice OCR (Phase 2) | 🔲 | ☁️ Control | Needs internet; cannot live in an offline node. |
+| `AI-01` | Smart product search (pgvector semantic) | 🟡 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
+| `AI-02` | Fraud anomaly detection (queued post-sale) | 🟡 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
+| `AI-03` | Weekly AI sales summary | 🔲 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
+| `AI-04` | Auto product categorisation + BTW suggestion on add | 🔲 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
+| `AI-05` | Natural-language reports (Phase 2) | 🔲 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
+| `AI-06` | Stock reorder prediction (Phase 2) | 🔲 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
+| `AI-07` | Invoice OCR (Phase 2) | 🔲 | ⏸️ Dropped | Deferred out of the split — see §21.5. |
 
 ---
 
@@ -549,6 +564,12 @@ None of this exists today. The migration is incomplete until it does.
   answer to this one.
 - **Layer 3 pushing *into* a shop's catalogue or stock.** Only reporting sales in
   is supported. Revisit when someone actually asks.
+- **The whole AI layer (7 features).** Smart search, fraud anomaly detection,
+  the weekly summary, auto-categorisation and the three Phase-2 items. Two are
+  partial, five never started, and none is load-bearing for a shop that sells,
+  files BTW and syncs. They need internet, so they could only ever live in the
+  control plane — which means the split does not block them and they do not
+  block the split. Revisit once the three nodes are real.
 - **A dashboard dark theme.** Unrelated to the split and the dark palette failed
   validation. Not in this work.
 - **Re-touching the BTW engine, receipt bytes, money precision, AST handling or

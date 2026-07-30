@@ -102,6 +102,7 @@ export default defineConfig({
                 { text: '19. Drie knooppunten',        link: '/nl/migration-architecture-plan/19-three-node-architecture' },
                 { text: '20. Bouwplan opsplitsing',    link: '/nl/migration-architecture-plan/20-split-build-plan' },
                 { text: '21. Migratieregister',        link: '/nl/migration-architecture-plan/21-migration-record' },
+                { text: '22. Authenticatie & beveiliging', link: '/nl/migration-architecture-plan/22-node-authentication' },
               ],
             },
             {
@@ -329,6 +330,7 @@ export default defineConfig({
             { text: '19. Three-node architecture', link: '/migration-architecture-plan/19-three-node-architecture' },
             { text: '20. Split build plan',        link: '/migration-architecture-plan/20-split-build-plan' },
             { text: '21. Migration record',        link: '/migration-architecture-plan/21-migration-record' },
+            { text: '22. Authentication & security', link: '/migration-architecture-plan/22-node-authentication' },
           ],
         },
         {
