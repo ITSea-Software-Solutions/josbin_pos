@@ -767,6 +767,38 @@ Two more from the same fix, both worth their own rule:
 
 - **2026-07-25 (labels on Android + Settings hardware tests)** — Field test: the Labels print button did nothing on the Posiflex Android build. **G-045 (4th packaged-context bug — the class from G-042/043/044 continues):** `window.print()` is a **silent no-op inside the Android Capacitor WebView** — Android's WebView never implemented it (Chrome-the-browser has it; the embedded WebView doesn't). Dev (vite in a real browser), the exe and the POS web build all print fine, so nothing surfaced until the APK ran on real hardware — no error, no dialog, nothing. Fix: HTML printing routes through `hardware.ts::printHtmlSheet` — Android → `CapacitorPrinter.printHtml` (`@capgo/capacitor-printer` → PrintManager), Electron/web → hidden-iframe `window.print()`; sheet generation shared in `lib/labelSheet.ts`; failures surface in the UI instead of vanishing. Alongside (user request): Settings → Printer & Cash Drawer gained three test buttons — receipt (real `buildReceiptBytes`→`printEscPos` sale path — a green test means sales print), drawer, label (works with type **None**; exercises the printHtmlSheet path) — so any till, Windows or Android, proves its printing without ringing a sale. Also killed the stale `helpAndroid` i18n (referenced the G-043 phantom-plugin era `@anuradev` package and "see README" — dev-speak in client copy, G-014's rule). i18n `pos.labels.*` + `settings.printer.*` in en/nl/srn; 109 vitest (+10), tsc clean; live-walked web on the demo stack; APK rebuilt, sha256-verified onto the droplet, installer API confirmed serving it. **Lesson:** extend the packaged-context checklist (CSP G-042, phantom plugins G-043, CORS G-044) with **"BOM APIs that delegate to the embedder"** — `window.print`, notifications, file pickers: if the embedder (WebView) chose not to implement it, the call silently no-ops. Route such features through an explicit platform bridge and return a result the UI can show, never fire-and-forget.
 
+- **2026-07-29 (report charts + import round-trip)** — Reports gained a Graphs
+  tab on a new `GET /reports/series` (trend, payments, BTW by rate, top
+  products, cashiers, stores in one request). Chart tokens live in
+  `dashboard/src/components/charts/viz.ts`; the categorical palette was RUN
+  through the dataviz validator, not eyeballed, and slots 1–2 are Josbin navy
+  and orange. Re-run it if you touch a hex.
+
+  **G-055 (import could not read export).** Product export writes a UTF-8 BOM
+  so Excel opens accented names; the importer read headers with `trim()`, and a
+  BOM is bytes `EF BB BF`, not whitespace — so `name_nl` arrived as
+  `\u{FEFF}name_nl`, matched nothing, and every row was rejected for a missing
+  name it had. Export→import round-tripped at 0%. Both halves were individually
+  correct and nobody had ever fed one into the other. **Rule: for any
+  export/import pair, the round trip IS the test.** Feed the real export back in
+  and assert row counts, not just that each endpoint returns 200.
+
+  **G-056 (grepping the wrong chunk — G-054's cousin).** Verified the dashboard
+  deploy by grepping every JS file named in `index.html` for a feature marker,
+  got zero, and concluded the deploy had failed. It had not: `ReportsScreen` is
+  a lazy chunk, referenced from inside the bundle, never from the HTML. G-054
+  was verifying the wrong *artifact*; this is verifying the wrong *file inside
+  the right artifact*. **Rule: for a code-split SPA, enumerate `dist/assets/`
+  (or the remote directory) and grep the chunk that owns the feature — the
+  entry chunk is not the app.** Comparing the local and remote chunk FILENAME is
+  the fastest real check: same hash, same build.
+
+  Also: `products.unit` carries an English-only CHECK (`each|kg|g|l|ml|pak`), so
+  Dutch words a shopkeeper would say — `stuk`, `zak` — fail at insert. Small
+  wart in a product built for a Dutch-speaking market; not worth a migration
+  over every existing row today, but worth knowing before writing a seeder.
+
+
 ---
 
 *When in doubt, walk the journey. When still in doubt, ask.*
