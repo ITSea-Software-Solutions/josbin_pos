@@ -121,7 +121,11 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 8080 || exit 1"]
+      # The base image has no `nc`; use curl (present in the image). Reverb
+      # returns 404 on / which still proves the server is up, so we only
+      # check connectivity, not the status code. A broken healthcheck here is
+      # not cosmetic: `up --wait` (CI smoke, deploys) fails on it.
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8080 || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5

@@ -27,6 +27,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Prepare backend env (fresh checkout has no .env — it is gitignored)
+        run: cp backend/.env.example backend/.env
+
+      - name: Hand the bind mounts to the container user
+        # The PHP containers run as uid 1000 (surapos); the runner's checkout
+        # is uid 1001. The image chowns /var/www/html but the bind mount
+        # shadows that — without this, composer cannot create vendor/ and
+        # Laravel cannot write storage/logs (same failure the first droplet
+        # install hit).
+        # Repo-root storage/ (the ./storage/logs mount) is untracked — a fresh
+        # checkout doesn't have it; docker would create it root-owned.
+        run: |
+          mkdir -p storage/logs
+          sudo chown -R 1000:1000 backend storage
+        # .env.example is docker-native (DB_HOST=postgres, redis defaults) and
+        # the demo overlay's container env overrides DB_DATABASE. APP_KEY is
+        # generated below once vendor exists.
+
+      - name: Install backend dependencies
+        # vendor/ is bind-mounted into every PHP container; without it the
+        # horizon/reverb/scheduler workers crash-loop and `up --wait` fails on
+        # their healthchecks — this workflow could never pass without this
+        # step. `compose run` boots postgres/redis/pgbouncer (depends_on)
+        # first, which also runs init.sql on the fresh data dir (extensions).
+        run: |
+          docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml \
+            run --rm app composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Generate APP_KEY
+        run: |
+          docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml \
+            run --rm app php artisan key:generate --force
+
       - name: Boot demo stack
         run: |
           docker compose -p josbin_demo -f docker-compose.yml -f docker-compose.demo.yml up -d --wait

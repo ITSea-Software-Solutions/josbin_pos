@@ -38,12 +38,18 @@ jobs:
 
       - name: Run Vitest
         working-directory: frontend
+        # --coverage needs @vitest/coverage-v8 pinned to the same minor as
+        # vitest itself — it went missing in the vitest-4 bump and this step
+        # had NEVER passed.
         run: npm run test:run -- --reporter=verbose --coverage
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
+      - name: Upload coverage artifact
+        # codecov needs an account token on private repos; the report as a
+        # build artifact costs nothing and blocks nothing.
+        uses: actions/upload-artifact@v4
         with:
-          flags: frontend
+          name: frontend-coverage
+          path: frontend/coverage
 
   build:
     name: Production build check
